@@ -1,7 +1,7 @@
 [project]
-name = "ssh-pivot-tracker"
+name = "lockpick"
 version = "0.1.0"
-description = "SSH Pivot Tracker — Red Team Operation Manager"
+description = "Lockpick — Red Team Operation Manager"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.0",

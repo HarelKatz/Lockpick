@@ -149,7 +149,7 @@ export default function OpSelector({ onSelectOp }: Props) {
           <div>
             <h1 className={styles.title}>
               <span className={styles.titleIcon}>⚡</span>
-              SSH Pivot Tracker
+              Lockpick
             </h1>
             <p className={styles.subtitle}>Select an operation to continue, or create a new one</p>
           </div>

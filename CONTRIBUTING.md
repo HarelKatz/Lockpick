@@ -1,4 +1,4 @@
-# Contributing to SSH Pivot Tracker
+# Contributing to Lockpick
 
 ## Architecture Overview
 

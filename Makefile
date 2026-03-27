@@ -10,7 +10,7 @@ logs:
 	docker compose logs -f
 
 backup:
-	tar czf pivot-tracker-backup-$(shell date +%Y%m%d-%H%M%S).tar.gz data/
+	tar czf lockpick-backup-$(shell date +%Y%m%d-%H%M%S).tar.gz data/
 
 dev-backend:
 	cd backend && uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000

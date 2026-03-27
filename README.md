@@ -1,4 +1,4 @@
-# SSH Pivot Tracker
+# Lockpick
 
 A web-based tool for red teams to collaboratively organize SSH credentials, host relationships, and pivot paths during operations. The core value is **visualizing lateral movement opportunities** by correlating SSH keys, connection logs, and host data across an engagement.
 
@@ -81,7 +81,7 @@ data/
 This directory is **gitignored**. To move the tool to another machine:
 
 ```bash
-tar czf pivot-tracker-backup.tar.gz data/
+tar czf lockpick-backup.tar.gz data/
 # Transfer and extract on new machine
 make up
 ```
@@ -111,7 +111,7 @@ When the backend is running, full interactive API documentation is available at:
 ## Architecture
 
 ```
-ssh-pivot-tracker/
+lockpick/
 ├── backend/          # Python/FastAPI backend
 ├── frontend/         # React/Vite/TypeScript frontend
 ├── tests/            # pytest test suite

@@ -1,4 +1,4 @@
-# SSH Pivot Tracker — Red Team Operation Manager
+# Lockpick — Red Team Operation Manager
 
 ## Project Overview
 
@@ -26,7 +26,7 @@ docker compose up -d
 docker compose down
 
 # Move to another machine
-tar czf pivot-tracker-backup.tar.gz .
+tar czf lockpick-backup.tar.gz .
 # transfer to new machine, extract, docker compose up -d
 
 # All state lives in ./data/ (SQLite DB, uploaded files)
@@ -389,7 +389,7 @@ chore(docker): add multi-stage build with uv caching
 ## File Structure
 
 ```
-ssh-pivot-tracker/
+lockpick/
 ├── docker-compose.yml
 ├── Makefile
 ├── README.md

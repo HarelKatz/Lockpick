@@ -1,4 +1,4 @@
-"""SQLAlchemy ORM models for SSH Pivot Tracker."""
+"""SQLAlchemy ORM models for Lockpick."""
 import uuid
 from datetime import datetime, timezone
 

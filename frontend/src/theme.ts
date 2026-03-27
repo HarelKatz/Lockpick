@@ -1,5 +1,5 @@
 /**
- * Dark theme CSS custom properties for SSH Pivot Tracker.
+ * Dark theme CSS custom properties for Lockpick.
  * Inspired by GitHub dark theme palette.
  */
 export const theme = {

@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="SSH Pivot Tracker",
+    title="Lockpick",
     description="Red Team Operation Manager — track SSH credentials, hosts, and pivot paths",
     version="0.1.0",
     lifespan=lifespan,
@@ -60,4 +60,4 @@ app.include_router(connections.router, prefix="/api")
 
 @app.get("/api/health")
 def health_check():
-    return {"status": "ok", "service": "ssh-pivot-tracker"}
+    return {"status": "ok", "service": "lockpick"}
