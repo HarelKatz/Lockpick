@@ -169,17 +169,17 @@ Implement these phases **sequentially**. Each phase should be a working, testabl
 
 ### Phase 1 — Project Skeleton & Infrastructure
 
-- [ ] Docker Compose setup (backend + frontend services, ./data/ volume)
-- [ ] Makefile with: up, down, logs, backup, dev-backend, dev-frontend
-- [ ] Initialize FastAPI backend with SQLAlchemy + SQLite (DB path: ./data/tracker.db)
-- [ ] Initialize React frontend with Vite + TypeScript
-- [ ] Implement the full database schema with migrations (alembic)
-- [ ] CRUD API endpoints for: Operations, Hosts, HostIPs, HostUsers, Credentials, CredentialLinks, ConnectionRecords
-- [ ] Basic API tests (pytest)
-- [ ] Simple frontend shell: operation selector screen (list/create ops)
-- [ ] Dark theme from the start (all components)
-- [ ] README.md with setup instructions (Docker and local dev)
-- [ ] CONTRIBUTING.md with architecture overview and how-to-add-a-parser guide
+- [x] Docker Compose setup (backend + frontend services, ./data/ volume)
+- [x] Makefile with: up, down, logs, backup, dev-backend, dev-frontend
+- [x] Initialize FastAPI backend with SQLAlchemy + SQLite (DB path: ./data/tracker.db)
+- [x] Initialize React frontend with Vite + TypeScript
+- [x] Implement the full database schema with migrations (alembic)
+- [x] CRUD API endpoints for: Operations, Hosts, HostIPs, HostUsers, Credentials, CredentialLinks, ConnectionRecords
+- [x] Basic API tests (pytest)
+- [x] Simple frontend shell: operation selector screen (list/create ops)
+- [x] Dark theme from the start (all components)
+- [x] README.md with setup instructions (Docker and local dev)
+- [x] CONTRIBUTING.md with architecture overview and how-to-add-a-parser guide
 
 ### Phase 2 — Manual Data Entry
 
@@ -502,9 +502,9 @@ ssh-pivot-tracker/
 
 ## Current Status
 
-**Phase**: Not started
-**Last completed**: —
-**Next step**: Phase 1 — Project skeleton & infrastructure
+**Phase**: Phase 1 complete
+**Last completed**: Phase 1 — Project Skeleton & Infrastructure
+**Next step**: Phase 2 — Manual Data Entry
 
 ## Notes for the Agent
 
