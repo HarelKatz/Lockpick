@@ -21,7 +21,6 @@ def upgrade() -> None:
     # Rebuild credential_links without host_user_id FK, adding username string instead.
     # SQLite doesn't support DROP COLUMN / ALTER COLUMN directly, so use batch mode.
     with op.batch_alter_table("credential_links") as batch_op:
-        batch_op.drop_constraint("fk_credential_links_host_user_id", type_="foreignkey")
         batch_op.drop_column("host_user_id")
         batch_op.add_column(sa.Column("username", sa.String(255), nullable=True))
 
