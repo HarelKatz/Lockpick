@@ -1,6 +1,14 @@
 # Lockpick
 
-A web-based tool for red teams to collaboratively organize SSH credentials, host relationships, and pivot paths during operations. The core value is **visualizing lateral movement opportunities** by correlating SSH keys, connection logs, and host data across an engagement.
+## What is this?
+
+SSH-based pivoting is a core red team technique: you land on a box, find a private key in `~/.ssh/`, and use it to jump to the next host — then the next. In a large environment this quickly becomes a maze. Which key unlocks which user on which host? Where was that key found? Who connected to whom, and when?
+
+Lockpick is a shared web tool for tracking all of that during an operation. It ingests raw evidence — SSH private keys found on compromised hosts, `authorized_keys` files, `auth.log` entries, bash history, `known_hosts` — and builds a relationship graph across the environment. The graph shows you pivot paths: "this private key found on HostA as `bob` is authorized on HostB as `root`". That's a confirmed pivot, and Lockpick surfaces it so you don't miss it in the noise.
+
+It is designed to run as a shared server in a trusted network. Every operator reads and writes to the same state, so information one person uncovers is immediately visible to the rest of the team. Deployment is a single `docker compose up -d` — no database server, no cloud dependencies, no configuration beyond standing up the container.
+
+**Core value:** visualizing lateral movement opportunities by correlating SSH keys, connection logs, and host data across an engagement.
 
 ## Quick Start (Docker)
 
