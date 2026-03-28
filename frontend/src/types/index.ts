@@ -13,19 +13,9 @@ export interface HostIP {
   id: string
   host_id: string
   ip_address: string
-  cidr: string | null
   interface_name: string | null
   source: 'manual' | 'parsed'
   first_seen_at: string
-}
-
-export interface HostUser {
-  id: string
-  host_id: string
-  username: string
-  shell: string | null
-  home_dir: string | null
-  source: 'manual' | 'passwd_file' | 'authorized_keys' | 'home_dir_found' | 'log_evidence'
 }
 
 export interface Host {
@@ -35,7 +25,6 @@ export interface Host {
   comment: string | null
   created_at: string
   ips: HostIP[]
-  users: HostUser[]
 }
 
 export interface Credential {
@@ -53,7 +42,7 @@ export interface CredentialLink {
   id: string
   credential_id: string
   host_id: string
-  host_user_id: string | null
+  username: string | null
   relationship_type: 'found_on_disk' | 'authorized_key' | 'accepted_password' | 'used_in_connection'
   file_source: string | null
 }
@@ -89,16 +78,8 @@ export interface CreateHostRequest {
 
 export interface CreateHostIPRequest {
   ip_address: string
-  cidr?: string | null
   interface_name?: string | null
   source?: 'manual' | 'parsed'
-}
-
-export interface CreateHostUserRequest {
-  username: string
-  shell?: string | null
-  home_dir?: string | null
-  source: 'manual' | 'passwd_file' | 'authorized_keys' | 'home_dir_found' | 'log_evidence'
 }
 
 export interface CreateCredentialRequest {
@@ -112,7 +93,7 @@ export interface CreateCredentialRequest {
 export interface CreateCredentialLinkRequest {
   credential_id: string
   host_id: string
-  host_user_id?: string | null
+  username?: string | null
   relationship_type: 'found_on_disk' | 'authorized_key' | 'accepted_password' | 'used_in_connection'
   file_source?: string | null
 }

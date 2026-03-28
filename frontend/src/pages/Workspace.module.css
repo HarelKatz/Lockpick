@@ -214,12 +214,6 @@
   color: var(--text-primary);
 }
 
-.hostBadges {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
 .badge {
   background: var(--bg-surface-3);
   border: 1px solid var(--border);
@@ -240,21 +234,6 @@
   background: var(--bg-surface-2);
   border-radius: var(--radius-sm);
   color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  padding: 2px 7px;
-}
-
-.hostUsers {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.userChip {
-  background: var(--bg-surface-2);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
   padding: 2px 7px;

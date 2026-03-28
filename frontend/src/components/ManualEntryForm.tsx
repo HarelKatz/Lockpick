@@ -1,22 +1,21 @@
 /**
- * ManualEntryForm — four sub-forms for adding data manually.
- * Sub-forms: Host | User | Credential | Connection
+ * ManualEntryForm — three sub-forms for adding data manually.
+ * Sub-forms: Host | Credential | Connection
  */
 import { useState, useCallback } from 'react'
 import type {
   Host,
   CreateHostIPRequest,
-  CreateHostUserRequest,
   CreateCredentialRequest,
   CreateCredentialLinkRequest,
   CreateConnectionRequest,
 } from '../types'
-import { createHost, addHostIP, addHostUser } from '../api/hosts'
+import { createHost, addHostIP } from '../api/hosts'
 import { createCredential, createCredentialLink } from '../api/credentials'
 import { createConnection } from '../api/connections'
 import styles from './ManualEntryForm.module.css'
 
-type FormType = 'host' | 'user' | 'credential' | 'connection'
+type FormType = 'host' | 'credential' | 'connection'
 
 interface Props {
   opId: string
@@ -28,19 +27,18 @@ interface Props {
 
 interface IPEntry {
   ip_address: string
-  cidr: string
   interface_name: string
 }
 
 function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) {
   const [nickname, setNickname] = useState('')
   const [comment, setComment] = useState('')
-  const [ips, setIps] = useState<IPEntry[]>([{ ip_address: '', cidr: '', interface_name: '' }])
+  const [ips, setIps] = useState<IPEntry[]>([{ ip_address: '', interface_name: '' }])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   function addIpRow() {
-    setIps(prev => [...prev, { ip_address: '', cidr: '', interface_name: '' }])
+    setIps(prev => [...prev, { ip_address: '', interface_name: '' }])
   }
 
   function removeIpRow(idx: number) {
@@ -64,11 +62,9 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
         nickname: nickname.trim(),
         comment: comment.trim() || null,
       })
-      // Add IPs (skip empty rows)
       const validIps = ips.filter(ip => ip.ip_address.trim())
       for (const ip of validIps) {
         const payload: CreateHostIPRequest = { ip_address: ip.ip_address.trim() }
-        if (ip.cidr.trim()) payload.cidr = ip.cidr.trim()
         if (ip.interface_name.trim()) payload.interface_name = ip.interface_name.trim()
         await addHostIP(host.id, payload)
       }
@@ -120,17 +116,9 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
               />
               <input
                 type="text"
-                value={ip.cidr}
-                onChange={e => updateIp(idx, 'cidr', e.target.value)}
-                placeholder="CIDR"
-                className={styles.ipCidr}
-                disabled={loading}
-              />
-              <input
-                type="text"
                 value={ip.interface_name}
                 onChange={e => updateIp(idx, 'interface_name', e.target.value)}
-                placeholder="Interface"
+                placeholder="Interface (e.g. eth0)"
                 className={styles.ipIface}
                 disabled={loading}
               />
@@ -158,146 +146,6 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
       <div className={styles.formActions}>
         <button type="submit" className={styles.btnPrimary} disabled={loading}>
           {loading ? 'Saving…' : 'Add Host'}
-        </button>
-      </div>
-    </form>
-  )
-}
-
-// ─── User form ────────────────────────────────────────────────────────────────
-
-const USER_SOURCES: { value: CreateHostUserRequest['source']; label: string }[] = [
-  { value: 'manual', label: 'Manual entry' },
-  { value: 'passwd_file', label: '/etc/passwd' },
-  { value: 'authorized_keys', label: 'authorized_keys' },
-  { value: 'home_dir_found', label: 'Home directory found' },
-  { value: 'log_evidence', label: 'Log evidence (auth.log / wtmp)' },
-]
-
-function UserForm({
-  hosts,
-  onSuccess,
-}: {
-  hosts: Host[]
-  onSuccess: () => void
-}) {
-  const [hostId, setHostId] = useState(hosts[0]?.id ?? '')
-  const [username, setUsername] = useState('')
-  const [source, setSource] = useState<CreateHostUserRequest['source']>('manual')
-  const [shell, setShell] = useState('')
-  const [homeDir, setHomeDir] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!hostId) {
-      setError('Select a host')
-      return
-    }
-    if (!username.trim()) {
-      setError('Username is required')
-      return
-    }
-    if (!source) {
-      setError('Evidence source is required')
-      return
-    }
-    setError(null)
-    setLoading(true)
-    try {
-      const payload: CreateHostUserRequest = {
-        username: username.trim(),
-        source,
-        shell: shell.trim() || null,
-        home_dir: homeDir.trim() || null,
-      }
-      await addHostUser(hostId, payload)
-      onSuccess()
-    } catch {
-      setError('Failed to add user. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (hosts.length === 0) {
-    return (
-      <div className={styles.emptyHint}>
-        Add a host first before adding users.
-      </div>
-    )
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className={styles.form}>
-      <div className={styles.field}>
-        <label>Host *</label>
-        <select value={hostId} onChange={e => setHostId(e.target.value)} disabled={loading}>
-          {hosts.map(h => (
-            <option key={h.id} value={h.id}>
-              {h.nickname}{h.ips.length > 0 ? ` (${h.ips[0].ip_address})` : ''}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className={styles.field}>
-        <label>Username *</label>
-        <input
-          type="text"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
-          placeholder="e.g. root, bob"
-          autoFocus
-          disabled={loading}
-        />
-      </div>
-
-      <div className={styles.field}>
-        <label>Evidence Source *</label>
-        <select
-          value={source}
-          onChange={e => setSource(e.target.value as CreateHostUserRequest['source'])}
-          disabled={loading}
-        >
-          {USER_SOURCES.map(s => (
-            <option key={s.value} value={s.value}>{s.label}</option>
-          ))}
-        </select>
-        <span className={styles.fieldHint}>
-          HostUser entries require concrete evidence the user exists on the host.
-        </span>
-      </div>
-
-      <div className={styles.row}>
-        <div className={styles.field}>
-          <label>Shell</label>
-          <input
-            type="text"
-            value={shell}
-            onChange={e => setShell(e.target.value)}
-            placeholder="/bin/bash"
-            disabled={loading}
-          />
-        </div>
-        <div className={styles.field}>
-          <label>Home Directory</label>
-          <input
-            type="text"
-            value={homeDir}
-            onChange={e => setHomeDir(e.target.value)}
-            placeholder="/home/bob"
-            disabled={loading}
-          />
-        </div>
-      </div>
-
-      {error && <p className={styles.error}>{error}</p>}
-
-      <div className={styles.formActions}>
-        <button type="submit" className={styles.btnPrimary} disabled={loading}>
-          {loading ? 'Saving…' : 'Add User'}
         </button>
       </div>
     </form>
@@ -334,12 +182,10 @@ function CredentialForm({
   const [keyType, setKeyType] = useState('')
   const [link, setLink] = useState(false)
   const [linkHostId, setLinkHostId] = useState(hosts[0]?.id ?? '')
-  const [linkUserId, setLinkUserId] = useState('')
+  const [linkUsername, setLinkUsername] = useState('')
   const [relationship, setRelationship] = useState<CreateCredentialLinkRequest['relationship_type']>('found_on_disk')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-
-  const selectedHost = hosts.find(h => h.id === linkHostId)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -364,7 +210,7 @@ function CredentialForm({
         await createCredentialLink({
           credential_id: cred.id,
           host_id: linkHostId,
-          host_user_id: linkUserId || null,
+          username: linkUsername.trim() || null,
           relationship_type: relationship,
         })
       }
@@ -445,36 +291,32 @@ function CredentialForm({
 
           {link && (
             <div className={styles.linkFields}>
-              <div className={styles.field}>
-                <label>Host *</label>
-                <select
-                  value={linkHostId}
-                  onChange={e => { setLinkHostId(e.target.value); setLinkUserId('') }}
-                  disabled={loading}
-                >
-                  {hosts.map(h => (
-                    <option key={h.id} value={h.id}>
-                      {h.nickname}{h.ips.length > 0 ? ` (${h.ips[0].ip_address})` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {selectedHost && selectedHost.users.length > 0 && (
+              <div className={styles.row}>
                 <div className={styles.field}>
-                  <label>User</label>
+                  <label>Host *</label>
                   <select
-                    value={linkUserId}
-                    onChange={e => setLinkUserId(e.target.value)}
+                    value={linkHostId}
+                    onChange={e => setLinkHostId(e.target.value)}
                     disabled={loading}
                   >
-                    <option value="">— any user —</option>
-                    {selectedHost.users.map(u => (
-                      <option key={u.id} value={u.id}>{u.username}</option>
+                    {hosts.map(h => (
+                      <option key={h.id} value={h.id}>
+                        {h.nickname}{h.ips.length > 0 ? ` (${h.ips[0].ip_address})` : ''}
+                      </option>
                     ))}
                   </select>
                 </div>
-              )}
+                <div className={styles.field}>
+                  <label>Username</label>
+                  <input
+                    type="text"
+                    value={linkUsername}
+                    onChange={e => setLinkUsername(e.target.value)}
+                    placeholder="e.g. root, bob"
+                    disabled={loading}
+                  />
+                </div>
+              </div>
 
               <div className={styles.field}>
                 <label>Relationship *</label>
@@ -535,7 +377,6 @@ function ConnectionForm({
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  // Auto-fill IP when a known host is selected
   function handleSrcHostChange(id: string) {
     setSrcHostId(id)
     if (id) {
@@ -590,7 +431,6 @@ function ConnectionForm({
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
       <div className={styles.connGrid}>
-        {/* Source */}
         <div className={styles.connSide}>
           <p className={styles.connSideLabel}>Source</p>
           <div className={styles.field}>
@@ -628,7 +468,6 @@ function ConnectionForm({
 
         <div className={styles.connArrow}>→</div>
 
-        {/* Destination */}
         <div className={styles.connSide}>
           <p className={styles.connSideLabel}>Destination</p>
           <div className={styles.field}>
@@ -698,15 +537,12 @@ function ConnectionForm({
 
 const FORM_TYPES: { value: FormType; label: string }[] = [
   { value: 'host', label: 'Host' },
-  { value: 'user', label: 'User' },
   { value: 'credential', label: 'Credential' },
   { value: 'connection', label: 'Connection' },
 ]
 
 export default function ManualEntryForm({ opId, hosts, onSuccess }: Props) {
   const [formType, setFormType] = useState<FormType>('host')
-
-  // Reset key to re-mount the sub-form after a successful save
   const [resetKey, setResetKey] = useState(0)
 
   const handleSuccess = useCallback(() => {
@@ -732,9 +568,6 @@ export default function ManualEntryForm({ opId, hosts, onSuccess }: Props) {
       <div key={`${formType}-${resetKey}`}>
         {formType === 'host' && (
           <HostForm opId={opId} onSuccess={handleSuccess} />
-        )}
-        {formType === 'user' && (
-          <UserForm hosts={hosts} onSuccess={handleSuccess} />
         )}
         {formType === 'credential' && (
           <CredentialForm opId={opId} hosts={hosts} onSuccess={handleSuccess} />

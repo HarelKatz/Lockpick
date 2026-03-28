@@ -19,18 +19,11 @@ function HostCard({ host }: { host: Host }) {
     <div className={styles.hostCard}>
       <div className={styles.hostCardHeader}>
         <span className={styles.hostNickname}>{host.nickname}</span>
-        <div className={styles.hostBadges}>
-          {host.users.length > 0 && (
-            <span className={styles.badge} title="Users">
-              {host.users.length} user{host.users.length !== 1 ? 's' : ''}
-            </span>
-          )}
-          {host.ips.length > 0 && (
-            <span className={styles.badge} title="IPs">
-              {host.ips.length} IP{host.ips.length !== 1 ? 's' : ''}
-            </span>
-          )}
-        </div>
+        {host.ips.length > 0 && (
+          <span className={styles.badge} title="IPs">
+            {host.ips.length} IP{host.ips.length !== 1 ? 's' : ''}
+          </span>
+        )}
       </div>
 
       {host.ips.length > 0 && (
@@ -38,18 +31,7 @@ function HostCard({ host }: { host: Host }) {
           {host.ips.map(ip => (
             <span key={ip.id} className={styles.ipChip}>
               {ip.ip_address}
-              {ip.cidr ? `/${ip.cidr}` : ''}
               {ip.interface_name ? ` (${ip.interface_name})` : ''}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {host.users.length > 0 && (
-        <div className={styles.hostUsers}>
-          {host.users.map(u => (
-            <span key={u.id} className={styles.userChip}>
-              {u.username}
             </span>
           ))}
         </div>

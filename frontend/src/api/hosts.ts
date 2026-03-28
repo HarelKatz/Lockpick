@@ -1,14 +1,12 @@
 /**
- * API functions for Hosts, HostIPs, and HostUsers.
+ * API functions for Hosts and HostIPs.
  */
 import { api } from './client'
 import type {
   Host,
   HostIP,
-  HostUser,
   CreateHostRequest,
   CreateHostIPRequest,
-  CreateHostUserRequest,
 } from '../types'
 
 export async function listHosts(opId: string): Promise<Host[]> {
@@ -37,12 +35,4 @@ export async function addHostIP(hostId: string, data: CreateHostIPRequest): Prom
 
 export async function deleteHostIP(hostId: string, ipId: string): Promise<void> {
   return api.delete(`/hosts/${hostId}/ips/${ipId}`)
-}
-
-export async function addHostUser(hostId: string, data: CreateHostUserRequest): Promise<HostUser> {
-  return api.post<HostUser>(`/hosts/${hostId}/users`, data)
-}
-
-export async function deleteHostUser(hostId: string, userId: string): Promise<void> {
-  return api.delete(`/hosts/${hostId}/users/${userId}`)
 }
