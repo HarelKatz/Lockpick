@@ -21,6 +21,7 @@ const CRED_TYPE_LABELS: Record<Credential['cred_type'], string> = {
 }
 
 export default function EditCredentialForm({ credential, onSaved, onClose }: Props) {
+  const [name, setName] = useState(credential.name ?? '')
   const [value, setValue] = useState(credential.value)
   const [passphrase, setPassphrase] = useState(credential.passphrase ?? '')
   const [comment, setComment] = useState(credential.comment ?? '')
@@ -39,6 +40,7 @@ export default function EditCredentialForm({ credential, onSaved, onClose }: Pro
     setLoading(true)
     try {
       const updated = await updateCredential(credential.id, {
+        name: name !== (credential.name ?? '') ? (name || null) : undefined,
         value: value !== credential.value ? value : undefined,
         passphrase: passphrase !== (credential.passphrase ?? '') ? (passphrase || null) : undefined,
         comment: comment !== (credential.comment ?? '') ? (comment || null) : undefined,
@@ -56,6 +58,17 @@ export default function EditCredentialForm({ credential, onSaved, onClose }: Pro
       <div className={styles.field}>
         <label>Type</label>
         <div className={styles.fieldReadOnly}>{CRED_TYPE_LABELS[credential.cred_type]}</div>
+      </div>
+
+      <div className={styles.field}>
+        <label>Name</label>
+        <input
+          type="text"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="e.g. id_rsa for root@web01"
+          disabled={loading}
+        />
       </div>
 
       <div className={styles.field}>

@@ -3,6 +3,15 @@
  */
 import { useState } from 'react'
 import type { AuthMethod, ConnectionRecord, Credential, Host } from '../types'
+
+function credLabel(c: Credential): string {
+  if (c.name) return c.name
+  if (c.cred_type === 'password') return c.comment ? `[password] (${c.comment})` : '[password]'
+  const parts: string[] = [c.key_type ?? 'key']
+  if (c.fingerprint) parts.push(c.fingerprint.slice(7, 19) + '…')
+  if (c.comment) parts.push(`(${c.comment})`)
+  return parts.join(' ')
+}
 import { updateConnection } from '../api/connections'
 import styles from './EditModal.module.css'
 
@@ -45,7 +54,8 @@ export default function EditConnectionForm({ connection, hosts, credentials, onS
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const privateKeys = credentials.filter(c => c.cred_type === 'private_key')
+  const linkedCredType = authMethod === 'publickey' ? 'private_key' : authMethod === 'password' ? 'password' : null
+  const linkedCreds = linkedCredType ? credentials.filter(c => c.cred_type === linkedCredType) : []
 
   function handleSrcHostChange(id: string) {
     setSrcHostId(id)
@@ -161,22 +171,18 @@ export default function EditConnectionForm({ connection, hosts, credentials, onS
       <div className={styles.row}>
         <div className={styles.field}>
           <label>Auth Method</label>
-          <select value={authMethod} onChange={e => setAuthMethod(e.target.value as AuthMethod | '')} disabled={loading}>
+          <select value={authMethod} onChange={e => { setAuthMethod(e.target.value as AuthMethod | ''); setCredentialId('') }} disabled={loading}>
             <option value="">— unknown / not recorded —</option>
             {AUTH_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select>
         </div>
-        {authMethod === 'publickey' && (
+        {linkedCredType && (
           <div className={styles.field}>
-            <label>Private Key Used</label>
+            <label>{authMethod === 'publickey' ? 'Private Key Used' : 'Password Used'}</label>
             <select value={credentialId} onChange={e => setCredentialId(e.target.value)} disabled={loading}>
               <option value="">— none / unknown —</option>
-              {privateKeys.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.key_type ?? 'key'}
-                  {c.fingerprint ? ` ${c.fingerprint.slice(7, 27)}…` : ''}
-                  {c.comment ? ` (${c.comment})` : ''}
-                </option>
+              {linkedCreds.map(c => (
+                <option key={c.id} value={c.id}>{credLabel(c)}</option>
               ))}
             </select>
           </div>

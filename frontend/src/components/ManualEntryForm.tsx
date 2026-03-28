@@ -248,6 +248,17 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
   )
 }
 
+// ─── Shared helper ────────────────────────────────────────────────────────────
+
+function credLabel(c: { name: string | null; cred_type: string; key_type: string | null; fingerprint: string | null; comment: string | null }): string {
+  if (c.name) return c.name
+  if (c.cred_type === 'password') return c.comment ? `[password] (${c.comment})` : '[password]'
+  const parts: string[] = [c.key_type ?? 'key']
+  if (c.fingerprint) parts.push(c.fingerprint.slice(7, 19) + '…')
+  if (c.comment) parts.push(`(${c.comment})`)
+  return parts.join(' ')
+}
+
 // ─── Credential form ──────────────────────────────────────────────────────────
 
 const CRED_TYPES: { value: CreateCredentialRequest['cred_type']; label: string }[] = [
@@ -273,6 +284,7 @@ function CredentialForm({
   onSuccess: () => void
 }) {
   const [credType, setCredType] = useState<CreateCredentialRequest['cred_type']>('private_key')
+  const [name, setName] = useState('')
   const [value, setValue] = useState('')
   const [passphrase, setPassphrase] = useState('')
   const [comment, setComment] = useState('')
@@ -298,6 +310,7 @@ function CredentialForm({
     try {
       const cred = await createCredential(opId, {
         cred_type: credType,
+        name: name.trim() || null,
         value: value.trim(),
         passphrase: passphrase.trim() || null,
         comment: comment.trim() || null,
@@ -331,6 +344,17 @@ function CredentialForm({
             <option key={c.value} value={c.value}>{c.label}</option>
           ))}
         </select>
+      </div>
+
+      <div className={styles.field}>
+        <label>Name</label>
+        <input
+          type="text"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="e.g. id_rsa for root@web01"
+          disabled={loading}
+        />
       </div>
 
       <div className={styles.field}>
@@ -646,25 +670,23 @@ function ConnectionForm({
       <div className={styles.row}>
         <div className={styles.field}>
           <label>Auth Method</label>
-          <select value={authMethod} onChange={e => setAuthMethod(e.target.value as AuthMethod | '')} disabled={loading}>
+          <select value={authMethod} onChange={e => { setAuthMethod(e.target.value as AuthMethod | ''); setCredentialId('') }} disabled={loading}>
             <option value="">— unknown / not recorded —</option>
             {AUTH_METHODS.map(m => (
               <option key={m.value} value={m.value}>{m.label}</option>
             ))}
           </select>
         </div>
-        {authMethod === 'publickey' && (
+        {(authMethod === 'publickey' || authMethod === 'password') && (
           <div className={styles.field}>
-            <label>Private Key Used</label>
+            <label>{authMethod === 'publickey' ? 'Private Key Used' : 'Password Used'}</label>
             <select value={credentialId} onChange={e => setCredentialId(e.target.value)} disabled={loading}>
               <option value="">— none / unknown —</option>
-              {credentials.filter(c => c.cred_type === 'private_key').map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.key_type ?? 'key'}
-                  {c.fingerprint ? ` ${c.fingerprint.slice(7, 27)}…` : ''}
-                  {c.comment ? ` (${c.comment})` : ''}
-                </option>
-              ))}
+              {credentials
+                .filter(c => authMethod === 'publickey' ? c.cred_type === 'private_key' : c.cred_type === 'password')
+                .map(c => (
+                  <option key={c.id} value={c.id}>{credLabel(c)}</option>
+                ))}
             </select>
           </div>
         )}

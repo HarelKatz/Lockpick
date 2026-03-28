@@ -92,12 +92,14 @@ class HostRead(BaseModel):
 
 class CredentialCreate(BaseModel):
     cred_type: Literal["password", "private_key", "public_key"]
+    name: Optional[str] = None
     value: str
     passphrase: Optional[str] = None  # for encrypted private keys
     comment: Optional[str] = None
 
 
 class CredentialUpdate(BaseModel):
+    name: Optional[str] = None
     value: Optional[str] = None
     passphrase: Optional[str] = None
     comment: Optional[str] = None
@@ -109,6 +111,7 @@ class CredentialRead(BaseModel):
     id: str
     op_id: str
     cred_type: str
+    name: Optional[str]
     value: str
     fingerprint: Optional[str]   # inferred on save
     key_type: Optional[str]      # inferred on save

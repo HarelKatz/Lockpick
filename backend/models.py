@@ -104,6 +104,7 @@ class Credential(Base):
         Enum("password", "private_key", "public_key", name="cred_type"),
         nullable=False,
     )
+    name = Column(String(255), nullable=True)  # human-readable label, e.g. "id_rsa for root@web01"
     value = Column(Text, nullable=False)
     fingerprint = Column(String(255), nullable=True)  # SHA256 for SSH keys
     key_type = Column(String(64), nullable=True)  # inferred: rsa, ed25519, ecdsa, etc.
