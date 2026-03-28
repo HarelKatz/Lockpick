@@ -1,0 +1,286 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ─── Type selector tabs ─────────────────────────────────────────────────── */
+
+.typeSelector {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.typeBtn {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 16px;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  margin-bottom: -1px;
+}
+
+.typeBtn:hover {
+  color: var(--text-primary);
+}
+
+.typeBtnActive {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+/* ─── Form layout ────────────────────────────────────────────────────────── */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+
+.field label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.field input,
+.field select,
+.field textarea {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--accent);
+}
+
+.field input:disabled,
+.field select:disabled,
+.field textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.field select {
+  cursor: pointer;
+}
+
+.fieldHint {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+}
+
+.row .field {
+  flex: 1;
+}
+
+/* ─── IP list ────────────────────────────────────────────────────────────── */
+
+.ipList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ipRow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.ipMain {
+  flex: 3;
+}
+
+.ipCidr {
+  flex: 1;
+  min-width: 60px;
+}
+
+.ipIface {
+  flex: 2;
+}
+
+.removeBtn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  padding: 4px 8px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.removeBtn:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.addRowBtn {
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  padding: 5px 10px;
+  text-align: left;
+  transition: border-color 0.15s ease, color 0.15s ease;
+  width: fit-content;
+}
+
+.addRowBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ─── Credential link section ────────────────────────────────────────────── */
+
+.linkSection {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+.linkFields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ─── Code textarea ──────────────────────────────────────────────────────── */
+
+.codeArea {
+  font-family: var(--font-mono) !important;
+  font-size: var(--font-size-xs) !important;
+  resize: vertical;
+}
+
+/* ─── Connection grid ────────────────────────────────────────────────────── */
+
+.connGrid {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.connSide {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.connSideLabel {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.connArrow {
+  font-size: 20px;
+  color: var(--text-muted);
+  padding-top: 32px;
+  flex-shrink: 0;
+}
+
+/* ─── Empty hint ─────────────────────────────────────────────────────────── */
+
+.emptyHint {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  padding: 24px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+}
+
+/* ─── Shared form actions ────────────────────────────────────────────────── */
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+.btnPrimary {
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-inverse);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  padding: 8px 18px;
+  transition: background-color 0.15s ease;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.btnPrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error {
+  font-size: var(--font-size-xs);
+  color: var(--danger);
+  margin: 0;
+}

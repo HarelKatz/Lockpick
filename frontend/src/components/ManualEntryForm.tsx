@@ -1,0 +1,748 @@
+/**
+ * ManualEntryForm — four sub-forms for adding data manually.
+ * Sub-forms: Host | User | Credential | Connection
+ */
+import { useState, useCallback } from 'react'
+import type {
+  Host,
+  CreateHostIPRequest,
+  CreateHostUserRequest,
+  CreateCredentialRequest,
+  CreateCredentialLinkRequest,
+  CreateConnectionRequest,
+} from '../types'
+import { createHost, addHostIP, addHostUser } from '../api/hosts'
+import { createCredential, createCredentialLink } from '../api/credentials'
+import { createConnection } from '../api/connections'
+import styles from './ManualEntryForm.module.css'
+
+type FormType = 'host' | 'user' | 'credential' | 'connection'
+
+interface Props {
+  opId: string
+  hosts: Host[]
+  onSuccess: () => void
+}
+
+// ─── Host form ────────────────────────────────────────────────────────────────
+
+interface IPEntry {
+  ip_address: string
+  cidr: string
+  interface_name: string
+}
+
+function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) {
+  const [nickname, setNickname] = useState('')
+  const [comment, setComment] = useState('')
+  const [ips, setIps] = useState<IPEntry[]>([{ ip_address: '', cidr: '', interface_name: '' }])
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  function addIpRow() {
+    setIps(prev => [...prev, { ip_address: '', cidr: '', interface_name: '' }])
+  }
+
+  function removeIpRow(idx: number) {
+    setIps(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  function updateIp(idx: number, field: keyof IPEntry, value: string) {
+    setIps(prev => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row))
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!nickname.trim()) {
+      setError('Nickname is required')
+      return
+    }
+    setError(null)
+    setLoading(true)
+    try {
+      const host = await createHost(opId, {
+        nickname: nickname.trim(),
+        comment: comment.trim() || null,
+      })
+      // Add IPs (skip empty rows)
+      const validIps = ips.filter(ip => ip.ip_address.trim())
+      for (const ip of validIps) {
+        const payload: CreateHostIPRequest = { ip_address: ip.ip_address.trim() }
+        if (ip.cidr.trim()) payload.cidr = ip.cidr.trim()
+        if (ip.interface_name.trim()) payload.interface_name = ip.interface_name.trim()
+        await addHostIP(host.id, payload)
+      }
+      onSuccess()
+    } catch {
+      setError('Failed to create host. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className={styles.form}>
+      <div className={styles.field}>
+        <label>Nickname *</label>
+        <input
+          type="text"
+          value={nickname}
+          onChange={e => setNickname(e.target.value)}
+          placeholder="e.g. web01, dc01"
+          autoFocus
+          disabled={loading}
+        />
+      </div>
+
+      <div className={styles.field}>
+        <label>Comment</label>
+        <input
+          type="text"
+          value={comment}
+          onChange={e => setComment(e.target.value)}
+          placeholder="Optional notes"
+          disabled={loading}
+        />
+      </div>
+
+      <div className={styles.field}>
+        <label>IP Addresses</label>
+        <div className={styles.ipList}>
+          {ips.map((ip, idx) => (
+            <div key={idx} className={styles.ipRow}>
+              <input
+                type="text"
+                value={ip.ip_address}
+                onChange={e => updateIp(idx, 'ip_address', e.target.value)}
+                placeholder="IP address"
+                className={styles.ipMain}
+                disabled={loading}
+              />
+              <input
+                type="text"
+                value={ip.cidr}
+                onChange={e => updateIp(idx, 'cidr', e.target.value)}
+                placeholder="CIDR"
+                className={styles.ipCidr}
+                disabled={loading}
+              />
+              <input
+                type="text"
+                value={ip.interface_name}
+                onChange={e => updateIp(idx, 'interface_name', e.target.value)}
+                placeholder="Interface"
+                className={styles.ipIface}
+                disabled={loading}
+              />
+              {ips.length > 1 && (
+                <button
+                  type="button"
+                  className={styles.removeBtn}
+                  onClick={() => removeIpRow(idx)}
+                  disabled={loading}
+                  aria-label="Remove IP"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+          <button type="button" className={styles.addRowBtn} onClick={addIpRow} disabled={loading}>
+            + Add IP
+          </button>
+        </div>
+      </div>
+
+      {error && <p className={styles.error}>{error}</p>}
+
+      <div className={styles.formActions}>
+        <button type="submit" className={styles.btnPrimary} disabled={loading}>
+          {loading ? 'Saving…' : 'Add Host'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// ─── User form ────────────────────────────────────────────────────────────────
+
+const USER_SOURCES: { value: CreateHostUserRequest['source']; label: string }[] = [
+  { value: 'manual', label: 'Manual entry' },
+  { value: 'passwd_file', label: '/etc/passwd' },
+  { value: 'authorized_keys', label: 'authorized_keys' },
+  { value: 'home_dir_found', label: 'Home directory found' },
+  { value: 'log_evidence', label: 'Log evidence (auth.log / wtmp)' },
+]
+
+function UserForm({
+  hosts,
+  onSuccess,
+}: {
+  hosts: Host[]
+  onSuccess: () => void
+}) {
+  const [hostId, setHostId] = useState(hosts[0]?.id ?? '')
+  const [username, setUsername] = useState('')
+  const [source, setSource] = useState<CreateHostUserRequest['source']>('manual')
+  const [shell, setShell] = useState('')
+  const [homeDir, setHomeDir] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!hostId) {
+      setError('Select a host')
+      return
+    }
+    if (!username.trim()) {
+      setError('Username is required')
+      return
+    }
+    if (!source) {
+      setError('Evidence source is required')
+      return
+    }
+    setError(null)
+    setLoading(true)
+    try {
+      const payload: CreateHostUserRequest = {
+        username: username.trim(),
+        source,
+        shell: shell.trim() || null,
+        home_dir: homeDir.trim() || null,
+      }
+      await addHostUser(hostId, payload)
+      onSuccess()
+    } catch {
+      setError('Failed to add user. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (hosts.length === 0) {
+    return (
+      <div className={styles.emptyHint}>
+        Add a host first before adding users.
+      </div>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className={styles.form}>
+      <div className={styles.field}>
+        <label>Host *</label>
+        <select value={hostId} onChange={e => setHostId(e.target.value)} disabled={loading}>
+          {hosts.map(h => (
+            <option key={h.id} value={h.id}>
+              {h.nickname}{h.ips.length > 0 ? ` (${h.ips[0].ip_address})` : ''}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className={styles.field}>
+        <label>Username *</label>
+        <input
+          type="text"
+          value={username}
+          onChange={e => setUsername(e.target.value)}
+          placeholder="e.g. root, bob"
+          autoFocus
+          disabled={loading}
+        />
+      </div>
+
+      <div className={styles.field}>
+        <label>Evidence Source *</label>
+        <select
+          value={source}
+          onChange={e => setSource(e.target.value as CreateHostUserRequest['source'])}
+          disabled={loading}
+        >
+          {USER_SOURCES.map(s => (
+            <option key={s.value} value={s.value}>{s.label}</option>
+          ))}
+        </select>
+        <span className={styles.fieldHint}>
+          HostUser entries require concrete evidence the user exists on the host.
+        </span>
+      </div>
+
+      <div className={styles.row}>
+        <div className={styles.field}>
+          <label>Shell</label>
+          <input
+            type="text"
+            value={shell}
+            onChange={e => setShell(e.target.value)}
+            placeholder="/bin/bash"
+            disabled={loading}
+          />
+        </div>
+        <div className={styles.field}>
+          <label>Home Directory</label>
+          <input
+            type="text"
+            value={homeDir}
+            onChange={e => setHomeDir(e.target.value)}
+            placeholder="/home/bob"
+            disabled={loading}
+          />
+        </div>
+      </div>
+
+      {error && <p className={styles.error}>{error}</p>}
+
+      <div className={styles.formActions}>
+        <button type="submit" className={styles.btnPrimary} disabled={loading}>
+          {loading ? 'Saving…' : 'Add User'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// ─── Credential form ──────────────────────────────────────────────────────────
+
+const CRED_TYPES: { value: CreateCredentialRequest['cred_type']; label: string }[] = [
+  { value: 'private_key', label: 'Private Key (SSH)' },
+  { value: 'public_key', label: 'Public Key (SSH)' },
+  { value: 'password', label: 'Password' },
+]
+
+const RELATIONSHIP_TYPES: { value: CreateCredentialLinkRequest['relationship_type']; label: string }[] = [
+  { value: 'found_on_disk', label: 'Found on disk' },
+  { value: 'authorized_key', label: 'Authorized key (grants access)' },
+  { value: 'accepted_password', label: 'Accepted password' },
+  { value: 'used_in_connection', label: 'Used in connection' },
+]
+
+function CredentialForm({
+  opId,
+  hosts,
+  onSuccess,
+}: {
+  opId: string
+  hosts: Host[]
+  onSuccess: () => void
+}) {
+  const [credType, setCredType] = useState<CreateCredentialRequest['cred_type']>('private_key')
+  const [value, setValue] = useState('')
+  const [comment, setComment] = useState('')
+  const [keyType, setKeyType] = useState('')
+  const [link, setLink] = useState(false)
+  const [linkHostId, setLinkHostId] = useState(hosts[0]?.id ?? '')
+  const [linkUserId, setLinkUserId] = useState('')
+  const [relationship, setRelationship] = useState<CreateCredentialLinkRequest['relationship_type']>('found_on_disk')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const selectedHost = hosts.find(h => h.id === linkHostId)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!value.trim()) {
+      setError('Credential value is required')
+      return
+    }
+    if (link && !linkHostId) {
+      setError('Select a host for the link')
+      return
+    }
+    setError(null)
+    setLoading(true)
+    try {
+      const cred = await createCredential(opId, {
+        cred_type: credType,
+        value: value.trim(),
+        comment: comment.trim() || null,
+        key_type: keyType.trim() || null,
+      })
+      if (link && linkHostId) {
+        await createCredentialLink({
+          credential_id: cred.id,
+          host_id: linkHostId,
+          host_user_id: linkUserId || null,
+          relationship_type: relationship,
+        })
+      }
+      onSuccess()
+    } catch {
+      setError('Failed to save credential. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const isKey = credType === 'private_key' || credType === 'public_key'
+
+  return (
+    <form onSubmit={handleSubmit} className={styles.form}>
+      <div className={styles.field}>
+        <label>Type *</label>
+        <select
+          value={credType}
+          onChange={e => setCredType(e.target.value as CreateCredentialRequest['cred_type'])}
+          disabled={loading}
+        >
+          {CRED_TYPES.map(c => (
+            <option key={c.value} value={c.value}>{c.label}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className={styles.field}>
+        <label>Value *</label>
+        <textarea
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          placeholder={isKey ? '-----BEGIN OPENSSH PRIVATE KEY-----\n…' : 'Password value'}
+          rows={isKey ? 5 : 2}
+          className={styles.codeArea}
+          autoFocus
+          disabled={loading}
+        />
+      </div>
+
+      <div className={styles.row}>
+        {isKey && (
+          <div className={styles.field}>
+            <label>Key Type</label>
+            <input
+              type="text"
+              value={keyType}
+              onChange={e => setKeyType(e.target.value)}
+              placeholder="rsa, ed25519, ecdsa…"
+              disabled={loading}
+            />
+          </div>
+        )}
+        <div className={styles.field}>
+          <label>Comment</label>
+          <input
+            type="text"
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            placeholder="Optional note"
+            disabled={loading}
+          />
+        </div>
+      </div>
+
+      {hosts.length > 0 && (
+        <div className={styles.linkSection}>
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              checked={link}
+              onChange={e => setLink(e.target.checked)}
+              disabled={loading}
+            />
+            Link to a host
+          </label>
+
+          {link && (
+            <div className={styles.linkFields}>
+              <div className={styles.field}>
+                <label>Host *</label>
+                <select
+                  value={linkHostId}
+                  onChange={e => { setLinkHostId(e.target.value); setLinkUserId('') }}
+                  disabled={loading}
+                >
+                  {hosts.map(h => (
+                    <option key={h.id} value={h.id}>
+                      {h.nickname}{h.ips.length > 0 ? ` (${h.ips[0].ip_address})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedHost && selectedHost.users.length > 0 && (
+                <div className={styles.field}>
+                  <label>User</label>
+                  <select
+                    value={linkUserId}
+                    onChange={e => setLinkUserId(e.target.value)}
+                    disabled={loading}
+                  >
+                    <option value="">— any user —</option>
+                    {selectedHost.users.map(u => (
+                      <option key={u.id} value={u.id}>{u.username}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className={styles.field}>
+                <label>Relationship *</label>
+                <select
+                  value={relationship}
+                  onChange={e => setRelationship(e.target.value as CreateCredentialLinkRequest['relationship_type'])}
+                  disabled={loading}
+                >
+                  {RELATIONSHIP_TYPES.map(r => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {error && <p className={styles.error}>{error}</p>}
+
+      <div className={styles.formActions}>
+        <button type="submit" className={styles.btnPrimary} disabled={loading}>
+          {loading ? 'Saving…' : 'Add Credential'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// ─── Connection form ──────────────────────────────────────────────────────────
+
+const CONN_TYPES: { value: CreateConnectionRequest['connection_type']; label: string }[] = [
+  { value: 'ssh', label: 'SSH' },
+  { value: 'scp', label: 'SCP' },
+  { value: 'rsync', label: 'rsync' },
+  { value: 'sftp', label: 'SFTP' },
+  { value: 'ssh_copy_id', label: 'ssh-copy-id' },
+  { value: 'unknown', label: 'Unknown' },
+]
+
+function ConnectionForm({
+  opId,
+  hosts,
+  onSuccess,
+}: {
+  opId: string
+  hosts: Host[]
+  onSuccess: () => void
+}) {
+  const [srcHostId, setSrcHostId] = useState('')
+  const [srcIp, setSrcIp] = useState('')
+  const [srcUser, setSrcUser] = useState('')
+  const [dstHostId, setDstHostId] = useState('')
+  const [dstIp, setDstIp] = useState('')
+  const [dstUser, setDstUser] = useState('')
+  const [connType, setConnType] = useState<CreateConnectionRequest['connection_type']>('ssh')
+  const [direction, setDirection] = useState<CreateConnectionRequest['direction_context']>('from_src_logs')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  // Auto-fill IP when a known host is selected
+  function handleSrcHostChange(id: string) {
+    setSrcHostId(id)
+    if (id) {
+      const h = hosts.find(h => h.id === id)
+      if (h && h.ips.length > 0) setSrcIp(h.ips[0].ip_address)
+    }
+  }
+
+  function handleDstHostChange(id: string) {
+    setDstHostId(id)
+    if (id) {
+      const h = hosts.find(h => h.id === id)
+      if (h && h.ips.length > 0) setDstIp(h.ips[0].ip_address)
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const resolvedSrcIp = srcIp.trim() || (srcHostId ? (hosts.find(h => h.id === srcHostId)?.ips[0]?.ip_address ?? '') : '')
+    const resolvedDstIp = dstIp.trim() || (dstHostId ? (hosts.find(h => h.id === dstHostId)?.ips[0]?.ip_address ?? '') : '')
+
+    if (!resolvedSrcIp) {
+      setError('Source IP is required (or select a known host with an IP)')
+      return
+    }
+    if (!resolvedDstIp) {
+      setError('Destination IP is required (or select a known host with an IP)')
+      return
+    }
+    setError(null)
+    setLoading(true)
+    try {
+      await createConnection(opId, {
+        src_host_id: srcHostId || null,
+        src_ip: resolvedSrcIp,
+        src_user: srcUser.trim() || null,
+        dst_host_id: dstHostId || null,
+        dst_ip: resolvedDstIp,
+        dst_user: dstUser.trim() || null,
+        connection_type: connType,
+        direction_context: direction,
+        source_file: 'manual',
+      })
+      onSuccess()
+    } catch {
+      setError('Failed to add connection. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className={styles.form}>
+      <div className={styles.connGrid}>
+        {/* Source */}
+        <div className={styles.connSide}>
+          <p className={styles.connSideLabel}>Source</p>
+          <div className={styles.field}>
+            <label>Host</label>
+            <select value={srcHostId} onChange={e => handleSrcHostChange(e.target.value)} disabled={loading}>
+              <option value="">— unknown —</option>
+              {hosts.map(h => (
+                <option key={h.id} value={h.id}>
+                  {h.nickname}{h.ips.length > 0 ? ` (${h.ips[0].ip_address})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={styles.field}>
+            <label>IP Address *</label>
+            <input
+              type="text"
+              value={srcIp}
+              onChange={e => setSrcIp(e.target.value)}
+              placeholder="10.0.0.5"
+              disabled={loading}
+            />
+          </div>
+          <div className={styles.field}>
+            <label>Username</label>
+            <input
+              type="text"
+              value={srcUser}
+              onChange={e => setSrcUser(e.target.value)}
+              placeholder="bob"
+              disabled={loading}
+            />
+          </div>
+        </div>
+
+        <div className={styles.connArrow}>→</div>
+
+        {/* Destination */}
+        <div className={styles.connSide}>
+          <p className={styles.connSideLabel}>Destination</p>
+          <div className={styles.field}>
+            <label>Host</label>
+            <select value={dstHostId} onChange={e => handleDstHostChange(e.target.value)} disabled={loading}>
+              <option value="">— unknown —</option>
+              {hosts.map(h => (
+                <option key={h.id} value={h.id}>
+                  {h.nickname}{h.ips.length > 0 ? ` (${h.ips[0].ip_address})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={styles.field}>
+            <label>IP Address *</label>
+            <input
+              type="text"
+              value={dstIp}
+              onChange={e => setDstIp(e.target.value)}
+              placeholder="10.0.0.8"
+              disabled={loading}
+            />
+          </div>
+          <div className={styles.field}>
+            <label>Username</label>
+            <input
+              type="text"
+              value={dstUser}
+              onChange={e => setDstUser(e.target.value)}
+              placeholder="root"
+              disabled={loading}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.row}>
+        <div className={styles.field}>
+          <label>Connection Type</label>
+          <select value={connType} onChange={e => setConnType(e.target.value as CreateConnectionRequest['connection_type'])} disabled={loading}>
+            {CONN_TYPES.map(c => (
+              <option key={c.value} value={c.value}>{c.label}</option>
+            ))}
+          </select>
+        </div>
+        <div className={styles.field}>
+          <label>Evidence Source</label>
+          <select value={direction} onChange={e => setDirection(e.target.value as CreateConnectionRequest['direction_context'])} disabled={loading}>
+            <option value="from_src_logs">From source's logs / bash_history</option>
+            <option value="from_dst_logs">From destination's logs (auth.log)</option>
+          </select>
+        </div>
+      </div>
+
+      {error && <p className={styles.error}>{error}</p>}
+
+      <div className={styles.formActions}>
+        <button type="submit" className={styles.btnPrimary} disabled={loading}>
+          {loading ? 'Saving…' : 'Add Connection'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// ─── Top-level ManualEntryForm ─────────────────────────────────────────────────
+
+const FORM_TYPES: { value: FormType; label: string }[] = [
+  { value: 'host', label: 'Host' },
+  { value: 'user', label: 'User' },
+  { value: 'credential', label: 'Credential' },
+  { value: 'connection', label: 'Connection' },
+]
+
+export default function ManualEntryForm({ opId, hosts, onSuccess }: Props) {
+  const [formType, setFormType] = useState<FormType>('host')
+
+  // Reset key to re-mount the sub-form after a successful save
+  const [resetKey, setResetKey] = useState(0)
+
+  const handleSuccess = useCallback(() => {
+    setResetKey(k => k + 1)
+    onSuccess()
+  }, [onSuccess])
+
+  return (
+    <div className={styles.root}>
+      <div className={styles.typeSelector}>
+        {FORM_TYPES.map(ft => (
+          <button
+            key={ft.value}
+            type="button"
+            className={`${styles.typeBtn} ${formType === ft.value ? styles.typeBtnActive : ''}`}
+            onClick={() => setFormType(ft.value)}
+          >
+            {ft.label}
+          </button>
+        ))}
+      </div>
+
+      <div key={`${formType}-${resetKey}`}>
+        {formType === 'host' && (
+          <HostForm opId={opId} onSuccess={handleSuccess} />
+        )}
+        {formType === 'user' && (
+          <UserForm hosts={hosts} onSuccess={handleSuccess} />
+        )}
+        {formType === 'credential' && (
+          <CredentialForm opId={opId} hosts={hosts} onSuccess={handleSuccess} />
+        )}
+        {formType === 'connection' && (
+          <ConnectionForm opId={opId} hosts={hosts} onSuccess={handleSuccess} />
+        )}
+      </div>
+    </div>
+  )
+}
