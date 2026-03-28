@@ -9,7 +9,7 @@ from config import settings
 from database import engine
 import models  # noqa: F401 — ensures models are registered before migrations
 
-from routers import connections, credentials, hosts, operations
+from routers import connections, credentials, graph, hosts, operations
 
 
 @asynccontextmanager
@@ -56,6 +56,7 @@ app.include_router(operations.router, prefix="/api")
 app.include_router(hosts.router, prefix="/api")
 app.include_router(credentials.router, prefix="/api")
 app.include_router(connections.router, prefix="/api")
+app.include_router(graph.router, prefix="/api")
 
 
 @app.get("/api/health")

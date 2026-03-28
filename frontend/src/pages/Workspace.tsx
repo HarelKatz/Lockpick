@@ -1,6 +1,7 @@
 /**
  * Workspace — main page for a selected operation.
- * Shows hosts, credentials, and connections with edit/delete controls.
+ * Shows hosts, credentials, and connections with edit/delete controls,
+ * plus an interactive graph visualization tab.
  */
 import { useState, useEffect, useCallback } from 'react'
 import type {
@@ -17,7 +18,10 @@ import EditHostForm from '../components/EditHostForm'
 import EditCredentialForm from '../components/EditCredentialForm'
 import EditCredentialLinkForm from '../components/EditCredentialLinkForm'
 import EditConnectionForm from '../components/EditConnectionForm'
+import GraphView from './GraphView'
 import styles from './Workspace.module.css'
+
+type WorkspaceTab = 'data' | 'graph'
 
 interface Props {
   op: Operation
@@ -209,6 +213,7 @@ function ConnectionRow({ conn, hosts, onEdit, onDelete }: ConnectionRowProps) {
 // ─── Workspace ────────────────────────────────────────────────────────────────
 
 export default function Workspace({ op, onBack }: Props) {
+  const [tab, setTab] = useState<WorkspaceTab>('data')
   const [hosts, setHosts] = useState<Host[]>([])
   const [credentials, setCredentials] = useState<Credential[]>([])
   const [links, setLinks] = useState<CredentialLink[]>([])
@@ -332,10 +337,29 @@ export default function Workspace({ op, onBack }: Props) {
             <span className={styles.opDescription}>{op.description}</span>
           )}
         </div>
+        <div className={styles.tabBar}>
+          <button
+            className={`${styles.tabBtn} ${tab === 'data' ? styles.tabActive : ''}`}
+            onClick={() => setTab('data')}
+          >
+            Data
+          </button>
+          <button
+            className={`${styles.tabBtn} ${tab === 'graph' ? styles.tabActive : ''}`}
+            onClick={() => setTab('graph')}
+          >
+            Graph
+          </button>
+        </div>
       </header>
 
-      {/* Main content */}
-      <main className={styles.main}>
+      {/* Graph tab */}
+      {tab === 'graph' && (
+        <GraphView op={op} allHosts={hosts} />
+      )}
+
+      {/* Data tab */}
+      <main className={styles.main} style={tab !== 'data' ? { display: 'none' } : undefined}>
         {loading && (
           <div className={styles.state}>
             <p className={styles.stateText}>Loading…</p>

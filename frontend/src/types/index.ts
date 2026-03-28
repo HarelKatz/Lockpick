@@ -156,6 +156,52 @@ export interface CreateHostUserRequest {
   source?: HostUser['source']
 }
 
+// ─── Graph ────────────────────────────────────────────────────────────────────
+
+export type Confidence = 'confirmed' | 'observed' | 'indicator'
+
+export type EvidenceType = 'key_match' | 'connection_log' | 'bash_history' | 'known_hosts'
+
+export interface EvidenceItem {
+  type: EvidenceType
+  detail: string
+  credential_id: string | null
+  src_user: string | null
+  dst_user: string | null
+  auth_method: string | null
+  timestamp: string | null
+  source_file: string | null
+  confidence: Confidence
+}
+
+export interface PivotableUser {
+  src_user: string
+  dst_user: string
+  method: 'key' | 'password' | 'connection'
+  credential_id: string | null
+}
+
+export interface GraphNode {
+  host_id: string
+  nickname: string
+  ips: string[]
+  user_count: number
+  credential_count: number
+}
+
+export interface GraphEdge {
+  src_host_id: string
+  dst_host_id: string
+  confidence: Confidence
+  evidence: EvidenceItem[]
+  pivotable_users: PivotableUser[]
+}
+
+export interface GraphResponse {
+  nodes: GraphNode[]
+  edges: GraphEdge[]
+}
+
 export interface CreateConnectionRequest {
   src_host_id?: string | null
   src_ip: string

@@ -70,6 +70,38 @@
   text-overflow: ellipsis;
 }
 
+/* ─── Tab bar ────────────────────────────────────────────────────────────── */
+
+.tabBar {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-surface-2);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  flex-shrink: 0;
+}
+
+.tabBtn {
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  padding: 5px 16px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tabBtn:hover {
+  color: var(--text-primary);
+}
+
+.tabActive {
+  background: var(--bg-surface-3);
+  color: var(--text-primary);
+}
+
 /* ─── Main ───────────────────────────────────────────────────────────────── */
 
 .main {

@@ -207,3 +207,45 @@ class ConnectionRecordRead(BaseModel):
     raw_line: Optional[str]
     source_file: str
     created_at: datetime
+
+
+# ─── Graph ────────────────────────────────────────────────────────────────────
+
+class EvidenceItem(BaseModel):
+    type: Literal["key_match", "connection_log", "bash_history", "known_hosts"]
+    detail: str
+    credential_id: Optional[str] = None
+    src_user: Optional[str] = None
+    dst_user: Optional[str] = None
+    auth_method: Optional[str] = None
+    timestamp: Optional[datetime] = None
+    source_file: Optional[str] = None
+    confidence: Literal["confirmed", "observed", "indicator"]
+
+
+class PivotableUser(BaseModel):
+    src_user: str
+    dst_user: str
+    method: Literal["key", "password", "connection"]
+    credential_id: Optional[str] = None
+
+
+class GraphNode(BaseModel):
+    host_id: str
+    nickname: str
+    ips: list[str]
+    user_count: int
+    credential_count: int
+
+
+class GraphEdge(BaseModel):
+    src_host_id: str
+    dst_host_id: str
+    confidence: Literal["confirmed", "observed", "indicator"]
+    evidence: list[EvidenceItem]
+    pivotable_users: list[PivotableUser]
+
+
+class GraphResponse(BaseModel):
+    nodes: list[GraphNode]
+    edges: list[GraphEdge]
