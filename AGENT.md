@@ -182,17 +182,15 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed phase: Phase 3 — Edit & Delete** (commit `20e7140`)
+**Last completed phase: Phase 4 — HostUser & Schema Hardening** (commit `0e1a05f`)
 
 **Post-phase fixes applied:**
-- Credential form host-selector bug: `linkHostId` initialized as `''` with an explicit placeholder option, preventing phantom validation errors when hosts load asynchronously (commit `f95a9af`)
-- Client-side IPv4/IPv6 validation in both `HostForm` (ManualEntryForm) and `EditHostForm` (commit `f95a9af`)
-- Page-refresh persistence: `App.tsx` saves selected op to `sessionStorage`; Workspace handles 404 on load by calling `onBack()` so a stale session entry doesn't leave the user stuck (commit `f95a9af`)
-- Docker: added `backend/.dockerignore` (excludes `.venv`, `__pycache__`, `.pyc`) and `--no-dev` on `uv run` in CMD — prevents packages being re-downloaded on every container start (commit `7cc6b56`)
-- Migration `a1b2c3d4e5f6`: removed `drop_constraint("fk_credential_links_host_user_id")` — SQLite does not store named FK constraints so batch mode raised `ValueError`; column drop alone is sufficient (commit `bdfa1b5`)
-- Connection form: IP address field becomes a dropdown of the host's known IPs when a host is selected; falls back to free-text when no host is selected or host has no IPs (commit `1f27941`)
+- `CreateHostUserRequest` was missing `home_dir` field (mismatch with backend `HostUserCreate`)
+- `CredentialLinkUpdate` was missing `host_user_id` — added to schema and router handler
+- `PATCH /connections/{id}` could not clear `auth_method`/`credential_id` to null; fixed using `model_fields_set`
+- File upload placeholder text updated from "Phase 4" to "Phase 6"
 
-**Next phase: Phase 4 — HostUser & Schema Hardening**
+**Next phase: Phase 5 — Host Selection & Graph Visualization**
 
 ---
 
@@ -294,32 +292,32 @@ Implement the `HostUser` entity and the `ConnectionRecord` authentication fields
 
 #### Backend
 
-- [ ] Add `HostUser` ORM model (`backend/models.py`): `id`, `host_id` (FK→hosts, cascade), `username`, `shell` (nullable), `home_dir` (nullable), `source` enum (`manual | passwd_file | authorized_keys | log_evidence`), `created_at`
-- [ ] Add `users` relationship to `Host` model (cascade delete)
-- [ ] Add `host_user_id` nullable FK (→ host_users, SET NULL on delete) to `CredentialLink` model; keep existing `username` string — it stays the authoritative pivot-query field
-- [ ] Add `auth_method` nullable enum (`publickey | password | keyboard-interactive | hostbased | unknown`) to `ConnectionRecord`
-- [ ] Add `credential_id` nullable FK (→ credentials, SET NULL on delete) to `ConnectionRecord`
-- [ ] New Alembic migration: create `host_users` table; add `host_user_id` to `credential_links`; add `auth_method` + `credential_id` to `connection_records` (all via `batch_alter_table` for SQLite)
-- [ ] Add `HostUserCreate` / `HostUserRead` Pydantic schemas (`backend/schemas.py`)
-- [ ] Update `HostRead` to include `users: list[HostUserRead] = []`
-- [ ] Update `CredentialLinkCreate` / `CredentialLinkRead` to include optional `host_user_id`
-- [ ] Update `ConnectionRecordCreate` / `ConnectionRecordRead` to include optional `auth_method` and `credential_id`
-- [ ] Add HostUser endpoints to `backend/routers/hosts.py`:
+- [x] Add `HostUser` ORM model (`backend/models.py`): `id`, `host_id` (FK→hosts, cascade), `username`, `shell` (nullable), `home_dir` (nullable), `source` enum (`manual | passwd_file | authorized_keys | log_evidence`), `created_at`
+- [x] Add `users` relationship to `Host` model (cascade delete)
+- [x] Add `host_user_id` nullable FK (→ host_users, SET NULL on delete) to `CredentialLink` model; keep existing `username` string — it stays the authoritative pivot-query field
+- [x] Add `auth_method` nullable enum (`publickey | password | keyboard-interactive | hostbased | unknown`) to `ConnectionRecord`
+- [x] Add `credential_id` nullable FK (→ credentials, SET NULL on delete) to `ConnectionRecord`
+- [x] New Alembic migration: create `host_users` table; add `host_user_id` to `credential_links`; add `auth_method` + `credential_id` to `connection_records` (all via `batch_alter_table` for SQLite)
+- [x] Add `HostUserCreate` / `HostUserRead` Pydantic schemas (`backend/schemas.py`)
+- [x] Update `HostRead` to include `users: list[HostUserRead] = []`
+- [x] Update `CredentialLinkCreate` / `CredentialLinkRead` to include optional `host_user_id`
+- [x] Update `ConnectionRecordCreate` / `ConnectionRecordRead` to include optional `auth_method` and `credential_id`
+- [x] Add HostUser endpoints to `backend/routers/hosts.py`:
   - `POST /api/hosts/{host_id}/users`
   - `GET /api/hosts/{host_id}/users`
   - `DELETE /api/hosts/{host_id}/users/{user_id}`
-- [ ] Update `POST /api/ops/{op_id}/connections` in `backend/routers/connections.py` to accept and persist `auth_method` and `credential_id`; validate `credential_id` belongs to the same op if provided
-- [ ] Tests: `tests/test_api/test_host_users.py` (create, list, delete, host-read includes users, optional FK on credential-link); extend `tests/test_api/test_connections.py` (auth_method, credential_id, nil fields still work)
+- [x] Update `POST /api/ops/{op_id}/connections` in `backend/routers/connections.py` to accept and persist `auth_method` and `credential_id`; validate `credential_id` belongs to the same op if provided
+- [x] Tests: `tests/test_api/test_host_users.py` (create, list, delete, host-read includes users, optional FK on credential-link); extend `tests/test_api/test_connections.py` (auth_method, credential_id, nil fields still work)
 
 #### Frontend
 
-- [ ] Add `HostUser` interface and `CreateHostUserRequest` to `frontend/src/types/index.ts`
-- [ ] Update `Host` interface: add `users: HostUser[]`
-- [ ] Update `CredentialLink` interface: add `host_user_id: string | null`
-- [ ] Update `ConnectionRecord` / `CreateConnectionRequest`: add `auth_method` and `credential_id` fields
-- [ ] Add `listHostUsers`, `createHostUser`, `deleteHostUser` to `frontend/src/api/hosts.ts`
-- [ ] `ManualEntryForm` — HostForm: add repeatable "Known Users" rows (username, optional shell, source selector); calls `createHostUser` per row after host is created — same add/remove pattern as IP rows
-- [ ] `ManualEntryForm` — ConnectionForm: add `auth_method` dropdown and optional credential selector (loaded from current op)
+- [x] Add `HostUser` interface and `CreateHostUserRequest` to `frontend/src/types/index.ts`
+- [x] Update `Host` interface: add `users: HostUser[]`
+- [x] Update `CredentialLink` interface: add `host_user_id: string | null`
+- [x] Update `ConnectionRecord` / `CreateConnectionRequest`: add `auth_method` and `credential_id` fields
+- [x] Add `listHostUsers`, `createHostUser`, `deleteHostUser` to `frontend/src/api/hosts.ts`
+- [x] `ManualEntryForm` — HostForm: add repeatable "Known Users" rows (username, optional shell, source selector); calls `createHostUser` per row after host is created — same add/remove pattern as IP rows
+- [x] `ManualEntryForm` — ConnectionForm: add `auth_method` dropdown and optional credential selector (loaded from current op)
 
 ### Phase 5 — Host Selection & Graph Visualization
 

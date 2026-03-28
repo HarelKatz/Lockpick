@@ -149,6 +149,7 @@ export interface CreateCredentialLinkRequest {
 export interface CreateHostUserRequest {
   username: string
   shell?: string | null
+  home_dir?: string | null
   source?: HostUser['source']
 }
 

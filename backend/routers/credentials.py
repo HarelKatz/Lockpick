@@ -180,6 +180,8 @@ def update_credential_link(link_id: str, body: CredentialLinkUpdate, db: Session
         raise HTTPException(status_code=404, detail="Credential link not found")
     if body.username is not None:
         link.username = body.username
+    if body.host_user_id is not None:
+        link.host_user_id = body.host_user_id
     if body.relationship_type is not None:
         link.relationship_type = body.relationship_type
     if body.file_source is not None:

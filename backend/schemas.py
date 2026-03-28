@@ -121,6 +121,7 @@ class CredentialRead(BaseModel):
 
 class CredentialLinkUpdate(BaseModel):
     username: Optional[str] = None
+    host_user_id: Optional[str] = None
     relationship_type: Optional[Literal[
         "found_on_disk", "authorized_key", "accepted_password", "used_in_connection"
     ]] = None

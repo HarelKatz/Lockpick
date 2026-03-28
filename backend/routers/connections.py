@@ -87,12 +87,15 @@ def update_connection(connection_id: str, body: ConnectionRecordUpdate, db: Sess
         "src_host_id", "src_ip", "src_user",
         "dst_host_id", "dst_ip", "dst_user",
         "connection_type", "direction_context",
-        "auth_method", "credential_id",
         "timestamp", "raw_line", "source_file",
     ):
         val = getattr(body, field)
         if val is not None:
             setattr(record, field, val)
+    # auth_method and credential_id can be explicitly cleared to null
+    for field in ("auth_method", "credential_id"):
+        if field in body.model_fields_set:
+            setattr(record, field, getattr(body, field))
     db.commit()
     db.refresh(record)
     return record
