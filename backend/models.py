@@ -66,7 +66,6 @@ class HostIP(Base):
     id = Column(String(36), primary_key=True, default=_uuid)
     host_id = Column(String(36), ForeignKey("hosts.id", ondelete="CASCADE"), nullable=False)
     ip_address = Column(String(45), nullable=False)  # IPv6 max length
-    interface_name = Column(String(64), nullable=True)  # e.g. "eth0"
     source = Column(
         Enum("manual", "parsed", name="hostip_source"),
         nullable=False,

@@ -13,7 +13,6 @@ export interface HostIP {
   id: string
   host_id: string
   ip_address: string
-  interface_name: string | null
   source: 'manual' | 'parsed'
   first_seen_at: string
 }
@@ -79,7 +78,6 @@ export interface CreateHostRequest {
 
 export interface CreateHostIPRequest {
   ip_address: string
-  interface_name?: string | null
   source?: 'manual' | 'parsed'
 }
 

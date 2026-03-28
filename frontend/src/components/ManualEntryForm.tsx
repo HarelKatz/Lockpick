@@ -5,7 +5,6 @@
 import { useState, useCallback } from 'react'
 import type {
   Host,
-  CreateHostIPRequest,
   CreateCredentialRequest,
   CreateCredentialLinkRequest,
   CreateConnectionRequest,
@@ -27,18 +26,17 @@ interface Props {
 
 interface IPEntry {
   ip_address: string
-  interface_name: string
 }
 
 function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) {
   const [nickname, setNickname] = useState('')
   const [comment, setComment] = useState('')
-  const [ips, setIps] = useState<IPEntry[]>([{ ip_address: '', interface_name: '' }])
+  const [ips, setIps] = useState<IPEntry[]>([{ ip_address: '' }])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   function addIpRow() {
-    setIps(prev => [...prev, { ip_address: '', interface_name: '' }])
+    setIps(prev => [...prev, { ip_address: '' }])
   }
 
   function removeIpRow(idx: number) {
@@ -64,9 +62,7 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
       })
       const validIps = ips.filter(ip => ip.ip_address.trim())
       for (const ip of validIps) {
-        const payload: CreateHostIPRequest = { ip_address: ip.ip_address.trim() }
-        if (ip.interface_name.trim()) payload.interface_name = ip.interface_name.trim()
-        await addHostIP(host.id, payload)
+        await addHostIP(host.id, { ip_address: ip.ip_address.trim() })
       }
       onSuccess()
     } catch {
@@ -112,14 +108,6 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
                 onChange={e => updateIp(idx, 'ip_address', e.target.value)}
                 placeholder="IP address"
                 className={styles.ipMain}
-                disabled={loading}
-              />
-              <input
-                type="text"
-                value={ip.interface_name}
-                onChange={e => updateIp(idx, 'interface_name', e.target.value)}
-                placeholder="Interface (e.g. eth0)"
-                className={styles.ipIface}
                 disabled={loading}
               />
               {ips.length > 1 && (

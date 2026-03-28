@@ -94,12 +94,11 @@ def host(client, op):
 def test_add_host_ip(client, host):
     resp = client.post(
         f"/api/hosts/{host['id']}/ips",
-        json={"ip_address": "192.168.1.100", "interface_name": "eth0"},
+        json={"ip_address": "192.168.1.100"},
     )
     assert resp.status_code == 201
     data = resp.json()
     assert data["ip_address"] == "192.168.1.100"
-    assert data["interface_name"] == "eth0"
     assert data["source"] == "manual"
 
 

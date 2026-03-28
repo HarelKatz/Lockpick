@@ -30,7 +30,6 @@ class OperationRead(BaseModel):
 
 class HostIPCreate(BaseModel):
     ip_address: str
-    interface_name: Optional[str] = None
     source: Literal["manual", "parsed"] = "manual"
 
 
@@ -40,7 +39,6 @@ class HostIPRead(BaseModel):
     id: str
     host_id: str
     ip_address: str
-    interface_name: Optional[str]
     source: str
     first_seen_at: datetime
 

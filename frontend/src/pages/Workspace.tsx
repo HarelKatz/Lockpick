@@ -31,7 +31,6 @@ function HostCard({ host }: { host: Host }) {
           {host.ips.map(ip => (
             <span key={ip.id} className={styles.ipChip}>
               {ip.ip_address}
-              {ip.interface_name ? ` (${ip.interface_name})` : ''}
             </span>
           ))}
         </div>
