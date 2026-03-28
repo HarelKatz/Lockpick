@@ -182,13 +182,17 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed phase: Phase 4 — HostUser & Schema Hardening** (commit `0e1a05f`)
+**Last completed phase: Phase 4 — HostUser & Schema Hardening** (commit `a2088f8`)
 
 **Post-phase fixes applied:**
 - `CreateHostUserRequest` was missing `home_dir` field (mismatch with backend `HostUserCreate`)
 - `CredentialLinkUpdate` was missing `host_user_id` — added to schema and router handler
 - `PATCH /connections/{id}` could not clear `auth_method`/`credential_id` to null; fixed using `model_fields_set`
 - File upload placeholder text updated from "Phase 4" to "Phase 6"
+- `HostCard` was not displaying known users — added user chips (with shell/source in tooltip)
+- `ManualEntryForm` ConnectionForm credential selector was showing all credential types; corrected to show only `private_key` credentials (authentication is always via private key; public keys are not used directly for auth)
+- `EditHostForm` was missing the Known Users section — added add/remove with immediate API calls, same pattern as IPs
+- `EditConnectionForm` was missing `auth_method` and `credential_id` fields — added auth method dropdown and private key selector, pre-filled from existing record; wired `credentials` prop through Workspace
 
 **Next phase: Phase 5 — Host Selection & Graph Visualization**
 
