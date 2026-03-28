@@ -26,6 +26,27 @@ class OperationRead(BaseModel):
     created_at: datetime
 
 
+# ─── HostUser ────────────────────────────────────────────────────────────────
+
+class HostUserCreate(BaseModel):
+    username: str
+    shell: Optional[str] = None
+    home_dir: Optional[str] = None
+    source: Literal["manual", "passwd_file", "authorized_keys", "log_evidence"] = "manual"
+
+
+class HostUserRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    host_id: str
+    username: str
+    shell: Optional[str]
+    home_dir: Optional[str]
+    source: str
+    created_at: datetime
+
+
 # ─── HostIP ───────────────────────────────────────────────────────────────────
 
 class HostIPCreate(BaseModel):
@@ -64,6 +85,7 @@ class HostRead(BaseModel):
     comment: Optional[str]
     created_at: datetime
     ips: list[HostIPRead] = []
+    users: list[HostUserRead] = []
 
 
 # ─── Credential ───────────────────────────────────────────────────────────────
@@ -109,6 +131,7 @@ class CredentialLinkCreate(BaseModel):
     credential_id: str
     host_id: str
     username: Optional[str] = None
+    host_user_id: Optional[str] = None
     relationship_type: Literal[
         "found_on_disk", "authorized_key", "accepted_password", "used_in_connection"
     ]
@@ -122,6 +145,7 @@ class CredentialLinkRead(BaseModel):
     credential_id: str
     host_id: str
     username: Optional[str]
+    host_user_id: Optional[str]
     relationship_type: str
     file_source: Optional[str]
 
@@ -137,6 +161,8 @@ class ConnectionRecordUpdate(BaseModel):
     dst_user: Optional[str] = None
     connection_type: Optional[Literal["ssh", "scp", "rsync", "sftp", "ssh_copy_id", "unknown"]] = None
     direction_context: Optional[Literal["from_src_logs", "from_dst_logs"]] = None
+    auth_method: Optional[Literal["publickey", "password", "keyboard-interactive", "hostbased", "unknown"]] = None
+    credential_id: Optional[str] = None
     timestamp: Optional[datetime] = None
     raw_line: Optional[str] = None
     source_file: Optional[str] = None
@@ -151,6 +177,8 @@ class ConnectionRecordCreate(BaseModel):
     dst_user: Optional[str] = None
     connection_type: Literal["ssh", "scp", "rsync", "sftp", "ssh_copy_id", "unknown"] = "unknown"
     direction_context: Literal["from_src_logs", "from_dst_logs"]
+    auth_method: Optional[Literal["publickey", "password", "keyboard-interactive", "hostbased", "unknown"]] = None
+    credential_id: Optional[str] = None
     timestamp: Optional[datetime] = None
     raw_line: Optional[str] = None
     source_file: str
@@ -169,6 +197,8 @@ class ConnectionRecordRead(BaseModel):
     dst_user: Optional[str]
     connection_type: str
     direction_context: str
+    auth_method: Optional[str]
+    credential_id: Optional[str]
     timestamp: Optional[datetime]
     raw_line: Optional[str]
     source_file: str

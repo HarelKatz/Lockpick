@@ -47,6 +47,7 @@ class Host(Base):
 
     operation = relationship("Operation", back_populates="hosts")
     ips = relationship("HostIP", back_populates="host", cascade="all, delete-orphan")
+    users = relationship("HostUser", back_populates="host", cascade="all, delete-orphan")
     credential_links = relationship("CredentialLink", back_populates="host", cascade="all, delete-orphan")
     src_connections = relationship(
         "ConnectionRecord",
@@ -76,6 +77,24 @@ class HostIP(Base):
     host = relationship("Host", back_populates="ips")
 
 
+class HostUser(Base):
+    __tablename__ = "host_users"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    host_id = Column(String(36), ForeignKey("hosts.id", ondelete="CASCADE"), nullable=False)
+    username = Column(String(255), nullable=False)
+    shell = Column(String(255), nullable=True)
+    home_dir = Column(String(512), nullable=True)
+    source = Column(
+        Enum("manual", "passwd_file", "authorized_keys", "log_evidence", name="hostuser_source"),
+        nullable=False,
+        default="manual",
+    )
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+
+    host = relationship("Host", back_populates="users")
+
+
 class Credential(Base):
     __tablename__ = "credentials"
 
@@ -102,7 +121,8 @@ class CredentialLink(Base):
     id = Column(String(36), primary_key=True, default=_uuid)
     credential_id = Column(String(36), ForeignKey("credentials.id", ondelete="CASCADE"), nullable=False)
     host_id = Column(String(36), ForeignKey("hosts.id", ondelete="CASCADE"), nullable=False)
-    username = Column(String(255), nullable=True)  # which user this link is for
+    username = Column(String(255), nullable=True)  # authoritative pivot-query field
+    host_user_id = Column(String(36), ForeignKey("host_users.id", ondelete="SET NULL"), nullable=True)
     relationship_type = Column(
         "relationship",
         Enum(
@@ -118,6 +138,7 @@ class CredentialLink(Base):
 
     credential = relationship("Credential", back_populates="links")
     host = relationship("Host", back_populates="credential_links")
+    host_user = relationship("HostUser")
 
 
 class ConnectionRecord(Base):
@@ -140,6 +161,11 @@ class ConnectionRecord(Base):
         Enum("from_src_logs", "from_dst_logs", name="direction_context"),
         nullable=False,
     )
+    auth_method = Column(
+        Enum("publickey", "password", "keyboard-interactive", "hostbased", "unknown", name="auth_method"),
+        nullable=True,
+    )
+    credential_id = Column(String(36), ForeignKey("credentials.id", ondelete="SET NULL"), nullable=True)
     timestamp = Column(DateTime(timezone=True), nullable=True)
     raw_line = Column(Text, nullable=True)
     source_file = Column(String(512), nullable=False)
@@ -156,3 +182,4 @@ class ConnectionRecord(Base):
         foreign_keys=[dst_host_id],
         back_populates="dst_connections",
     )
+    credential = relationship("Credential")

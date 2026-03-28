@@ -5,13 +5,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Host, HostIP, Operation
+from models import Host, HostIP, HostUser, Operation
 from schemas import (
     HostCreate,
     HostIPCreate,
     HostIPRead,
     HostRead,
     HostUpdate,
+    HostUserCreate,
+    HostUserRead,
 )
 
 router = APIRouter(tags=["hosts"])
@@ -107,4 +109,38 @@ def delete_host_ip(host_id: str, ip_id: str, db: Session = Depends(get_db)):
     if not ip:
         raise HTTPException(status_code=404, detail="IP not found")
     db.delete(ip)
+    db.commit()
+
+
+# ─── HostUsers ────────────────────────────────────────────────────────────────
+
+@router.post("/hosts/{host_id}/users", response_model=HostUserRead, status_code=201)
+def create_host_user(host_id: str, body: HostUserCreate, db: Session = Depends(get_db)):
+    _get_host_or_404(host_id, db)
+    user = HostUser(
+        host_id=host_id,
+        username=body.username,
+        shell=body.shell,
+        home_dir=body.home_dir,
+        source=body.source,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.get("/hosts/{host_id}/users", response_model=List[HostUserRead])
+def list_host_users(host_id: str, db: Session = Depends(get_db)):
+    _get_host_or_404(host_id, db)
+    return db.query(HostUser).filter(HostUser.host_id == host_id).all()
+
+
+@router.delete("/hosts/{host_id}/users/{user_id}", status_code=204)
+def delete_host_user(host_id: str, user_id: str, db: Session = Depends(get_db)):
+    _get_host_or_404(host_id, db)
+    user = db.query(HostUser).filter(HostUser.id == user_id, HostUser.host_id == host_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    db.delete(user)
     db.commit()

@@ -152,6 +152,7 @@ def create_credential_link(body: CredentialLinkCreate, db: Session = Depends(get
         credential_id=body.credential_id,
         host_id=body.host_id,
         username=body.username,
+        host_user_id=body.host_user_id,
         relationship_type=body.relationship_type,
         file_source=body.file_source,
     )

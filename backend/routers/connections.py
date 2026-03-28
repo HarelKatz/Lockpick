@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import ConnectionRecord, Operation
+from models import ConnectionRecord, Credential, Operation
 from schemas import ConnectionRecordCreate, ConnectionRecordRead, ConnectionRecordUpdate
 
 router = APIRouter(tags=["connections"])
@@ -25,6 +25,13 @@ def create_connection(
     db: Session = Depends(get_db),
 ):
     _get_op_or_404(op_id, db)
+    if body.credential_id is not None:
+        cred = db.query(Credential).filter(
+            Credential.id == body.credential_id,
+            Credential.op_id == op_id,
+        ).first()
+        if not cred:
+            raise HTTPException(status_code=400, detail="credential_id not found in this operation")
     record = ConnectionRecord(
         op_id=op_id,
         src_host_id=body.src_host_id,
@@ -35,6 +42,8 @@ def create_connection(
         dst_user=body.dst_user,
         connection_type=body.connection_type,
         direction_context=body.direction_context,
+        auth_method=body.auth_method,
+        credential_id=body.credential_id,
         timestamp=body.timestamp,
         raw_line=body.raw_line,
         source_file=body.source_file,
@@ -78,6 +87,7 @@ def update_connection(connection_id: str, body: ConnectionRecordUpdate, db: Sess
         "src_host_id", "src_ip", "src_user",
         "dst_host_id", "dst_ip", "dst_user",
         "connection_type", "direction_context",
+        "auth_method", "credential_id",
         "timestamp", "raw_line", "source_file",
     ):
         val = getattr(body, field)
