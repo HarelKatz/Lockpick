@@ -258,7 +258,7 @@ export default function OpSelector({ onSelectOp }: Props) {
                     <div className={styles.opCardMain}>
                       <div className={styles.opNameRow}>
                         <span className={styles.opName}>{op.name}</span>
-                        <span className={styles.opId}>#{op.id}</span>
+                        <span className={styles.opId}>#{op.id.split('-')[0]}</span>
                       </div>
                       {op.description && (
                         <span className={styles.opDesc}>{op.description}</span>

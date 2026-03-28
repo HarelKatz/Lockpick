@@ -74,6 +74,17 @@
   font-size: var(--font-size-sm);
 }
 
+.opUuid {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.opDescription {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
 .placeholderNote {
   color: var(--text-muted) !important;
   font-size: var(--font-size-xs) !important;
