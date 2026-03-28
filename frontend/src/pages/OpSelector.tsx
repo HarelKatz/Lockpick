@@ -256,7 +256,10 @@ export default function OpSelector({ onSelectOp }: Props) {
                     onClick={() => onSelectOp(op)}
                   >
                     <div className={styles.opCardMain}>
-                      <span className={styles.opName}>{op.name}</span>
+                      <div className={styles.opNameRow}>
+                        <span className={styles.opName}>{op.name}</span>
+                        <span className={styles.opId}>#{op.id}</span>
+                      </div>
                       {op.description && (
                         <span className={styles.opDesc}>{op.description}</span>
                       )}

@@ -209,6 +209,13 @@
   min-width: 0;
 }
 
+.opNameRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
 .opName {
   font-size: var(--font-size-md);
   font-weight: 600;
@@ -216,6 +223,14 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.opId {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .opDesc {
