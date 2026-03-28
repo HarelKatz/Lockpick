@@ -96,6 +96,10 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
       return
     }
     const validIps = ips.filter(ip => ip.ip_address.trim())
+    if (validIps.length === 0) {
+      setError('At least one IP address is required')
+      return
+    }
     for (const ip of validIps) {
       if (!isValidIP(ip.ip_address.trim())) {
         setError(`"${ip.ip_address.trim()}" is not a valid IP address`)
@@ -649,7 +653,7 @@ function ConnectionForm({
             ))}
           </select>
         </div>
-        {credentials.filter(c => c.cred_type === 'private_key').length > 0 && (
+        {authMethod === 'publickey' && (
           <div className={styles.field}>
             <label>Private Key Used</label>
             <select value={credentialId} onChange={e => setCredentialId(e.target.value)} disabled={loading}>

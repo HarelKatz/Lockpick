@@ -166,7 +166,7 @@ export default function EditConnectionForm({ connection, hosts, credentials, onS
             {AUTH_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select>
         </div>
-        {privateKeys.length > 0 && (
+        {authMethod === 'publickey' && (
           <div className={styles.field}>
             <label>Private Key Used</label>
             <select value={credentialId} onChange={e => setCredentialId(e.target.value)} disabled={loading}>
