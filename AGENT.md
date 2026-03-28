@@ -144,19 +144,19 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed phase: Phase 4 — HostUser & Schema Hardening**
+**Last completed phase: Phase 5 — Host Selection & Graph Visualization**
 
-Phases 1–4 are fully implemented and tested. See git history for details.
+Phases 1–5 are fully implemented and tested. See git history for details.
 
-**Next phase: Phase 5 — Host Selection & Graph Visualization**
+**Next phase: Phase 6 — File Upload & Parsing Engine**
 
 ---
 
 ## Implementation Phases
 
-### Phases 1–4 — Complete
+### Phases 1–5 — Complete
 
-See git history for details. All infrastructure, CRUD APIs, edit/delete UI, HostUser entity, and schema hardening (auth_method + credential_id on ConnectionRecord; name field on Credential) are implemented and tested.
+See git history for details. All infrastructure, CRUD APIs, edit/delete UI, HostUser entity, schema hardening, and the graph visualization layer (backend aggregation service + cytoscape.js frontend) are implemented and tested.
 
 ### Phase 5 — Host Selection & Graph Visualization
 
