@@ -384,18 +384,14 @@ function ConnectionForm({
 
   function handleSrcHostChange(id: string) {
     setSrcHostId(id)
-    if (id) {
-      const h = hosts.find(h => h.id === id)
-      if (h && h.ips.length > 0) setSrcIp(h.ips[0].ip_address)
-    }
+    const h = hosts.find(h => h.id === id)
+    setSrcIp(h && h.ips.length > 0 ? h.ips[0].ip_address : '')
   }
 
   function handleDstHostChange(id: string) {
     setDstHostId(id)
-    if (id) {
-      const h = hosts.find(h => h.id === id)
-      if (h && h.ips.length > 0) setDstIp(h.ips[0].ip_address)
-    }
+    const h = hosts.find(h => h.id === id)
+    setDstIp(h && h.ips.length > 0 ? h.ips[0].ip_address : '')
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -451,13 +447,21 @@ function ConnectionForm({
           </div>
           <div className={styles.field}>
             <label>IP Address *</label>
-            <input
-              type="text"
-              value={srcIp}
-              onChange={e => setSrcIp(e.target.value)}
-              placeholder="10.0.0.5"
-              disabled={loading}
-            />
+            {srcHostId && (hosts.find(h => h.id === srcHostId)?.ips.length ?? 0) > 0 ? (
+              <select value={srcIp} onChange={e => setSrcIp(e.target.value)} disabled={loading}>
+                {hosts.find(h => h.id === srcHostId)!.ips.map(ip => (
+                  <option key={ip.id} value={ip.ip_address}>{ip.ip_address}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                value={srcIp}
+                onChange={e => setSrcIp(e.target.value)}
+                placeholder="10.0.0.5"
+                disabled={loading}
+              />
+            )}
           </div>
           <div className={styles.field}>
             <label>Username</label>
@@ -488,13 +492,21 @@ function ConnectionForm({
           </div>
           <div className={styles.field}>
             <label>IP Address *</label>
-            <input
-              type="text"
-              value={dstIp}
-              onChange={e => setDstIp(e.target.value)}
-              placeholder="10.0.0.8"
-              disabled={loading}
-            />
+            {dstHostId && (hosts.find(h => h.id === dstHostId)?.ips.length ?? 0) > 0 ? (
+              <select value={dstIp} onChange={e => setDstIp(e.target.value)} disabled={loading}>
+                {hosts.find(h => h.id === dstHostId)!.ips.map(ip => (
+                  <option key={ip.id} value={ip.ip_address}>{ip.ip_address}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                value={dstIp}
+                onChange={e => setDstIp(e.target.value)}
+                placeholder="10.0.0.8"
+                disabled={loading}
+              />
+            )}
           </div>
           <div className={styles.field}>
             <label>Username</label>
