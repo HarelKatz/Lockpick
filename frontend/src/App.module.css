@@ -32,11 +32,34 @@
   background-color: var(--bg-surface-2);
 }
 
+.opInfo {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
 .opName {
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--text-primary);
-  flex: 1;
+  white-space: nowrap;
+}
+
+.opUuid {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.opDescription {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .badge {
@@ -70,17 +93,6 @@
 }
 
 .placeholder p {
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.opUuid {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
-}
-
-.opDescription {
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
 }

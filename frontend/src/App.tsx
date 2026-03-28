@@ -13,14 +13,16 @@ function WorkspacePlaceholder({ op, onBack }: { op: Operation; onBack: () => voi
         <button className={styles.backBtn} onClick={onBack}>
           ← Operations
         </button>
-        <span className={styles.opName}>{op.name}</span>
+        <div className={styles.opInfo}>
+          <span className={styles.opName}>{op.name}</span>
+          <span className={styles.opUuid}>{op.id}</span>
+          {op.description && <span className={styles.opDescription}>{op.description}</span>}
+        </div>
         <span className={styles.badge}>Phase 2 coming soon</span>
       </header>
       <main className={styles.workspaceMain}>
         <div className={styles.placeholder}>
           <h2>{op.name}</h2>
-          <p className={styles.opUuid}>{op.id}</p>
-          {op.description && <p className={styles.opDescription}>{op.description}</p>}
           <p className={styles.placeholderNote}>
             The main workspace (graph view, manual entry, file upload) will be implemented in Phase 2.
           </p>
