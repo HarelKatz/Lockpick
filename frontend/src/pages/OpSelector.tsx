@@ -140,8 +140,7 @@ export default function OpSelector({ onSelectOp }: Props) {
   }, [fetchOps])
 
   function handleCreated(op: Operation) {
-    setShowCreate(false)
-    setOperations(prev => [op, ...prev])
+    onSelectOp(op)
   }
 
   function formatDate(iso: string): string {
