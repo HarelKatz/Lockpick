@@ -4,21 +4,55 @@ A web-based tool for red teams to collaboratively organize SSH credentials, host
 
 ## Quick Start (Docker)
 
+### First run / after pulling updates
+
 ```bash
-# Start all services
-make up
+# Build images (required on first run and after any code change)
+docker compose build
 
-# View logs
-make logs
-
-# Stop
-make down
-
-# Backup all state (DB + uploaded files)
-make backup
+# Start all services in the background
+docker compose up -d
 ```
 
 The frontend is available at **http://localhost:3000** and the backend API at **http://localhost:8000**.
+
+### Day-to-day
+
+```bash
+# Start (images already built)
+docker compose up -d
+
+# View live logs
+docker compose logs -f
+
+# Stop
+docker compose down
+
+# Rebuild + restart in one step (use after pulling/editing code)
+docker compose up -d --build
+```
+
+### Makefile shortcuts
+
+```bash
+make up       # docker compose up -d
+make down     # docker compose down
+make logs     # docker compose logs -f
+make backup   # tar the ./data/ directory with a timestamp
+make test     # run pytest suite
+```
+
+### Backup & move to another machine
+
+```bash
+# On source machine — stop, archive data and images
+docker compose down
+tar czf lockpick-backup.tar.gz data/
+
+# On destination machine — extract and start
+tar xzf lockpick-backup.tar.gz
+docker compose up -d --build
+```
 
 ## Local Development (without Docker)
 
