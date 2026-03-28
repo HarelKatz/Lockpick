@@ -16,6 +16,19 @@ interface CreateModalProps {
   onCreated: (op: Operation) => void
 }
 
+function LockpickLogo({ size = 32 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="5" y="17" width="17" height="12" rx="3" fill="#58a6ff"/>
+      <path d="M8 17V11C8 7.686 10.686 5 13.5 5S19 7.686 19 11v2" stroke="#58a6ff" strokeWidth="2.5" strokeLinecap="round"/>
+      <circle cx="13.5" cy="22" r="1.8" fill="#0d1117"/>
+      <rect x="12.6" y="22" width="1.8" height="3" rx="0.9" fill="#0d1117"/>
+      <path d="M21 10 L27 6" stroke="#a5d6ff" strokeWidth="1.8" strokeLinecap="round"/>
+      <circle cx="27" cy="6" r="1.2" fill="#a5d6ff"/>
+    </svg>
+  )
+}
+
 function CreateOpModal({ onClose, onCreated }: CreateModalProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -45,7 +58,6 @@ function CreateOpModal({ onClose, onCreated }: CreateModalProps) {
     }
   }
 
-  // Close on Escape
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
@@ -107,6 +119,7 @@ export default function OpSelector({ onSelectOp }: Props) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
+  const [search, setSearch] = useState('')
 
   const fetchOps = useCallback(async () => {
     setLoading(true)
@@ -141,6 +154,12 @@ export default function OpSelector({ onSelectOp }: Props) {
     })
   }
 
+  const apiBase = `http://${window.location.hostname}:8000`
+
+  const filteredOps = operations.filter(op =>
+    op.name.toLowerCase().includes(search.toLowerCase())
+  )
+
   return (
     <div className={styles.page}>
       <div className={styles.container}>
@@ -148,18 +167,48 @@ export default function OpSelector({ onSelectOp }: Props) {
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>
-              <span className={styles.titleIcon}>⚡</span>
+              <LockpickLogo size={32} />
               Lockpick
             </h1>
             <p className={styles.subtitle}>Select an operation to continue, or create a new one</p>
           </div>
-          <button
-            className={styles.btnPrimary}
-            onClick={() => setShowCreate(true)}
-          >
-            + New Operation
-          </button>
+          <div className={styles.headerActions}>
+            <div className={styles.apiLinks}>
+              <a href={`${apiBase}/docs`} target="_blank" rel="noopener noreferrer" className={styles.apiLink}>
+                Swagger
+              </a>
+              <a href={`${apiBase}/redoc`} target="_blank" rel="noopener noreferrer" className={styles.apiLink}>
+                ReDoc
+              </a>
+            </div>
+            <button
+              className={styles.btnPrimary}
+              onClick={() => setShowCreate(true)}
+            >
+              + New Operation
+            </button>
+          </div>
         </div>
+
+        {/* Search bar — only shown when there are ops */}
+        {!loading && !error && operations.length > 0 && (
+          <div className={styles.searchBar}>
+            <span className={styles.searchIcon}>⌕</span>
+            <input
+              type="text"
+              placeholder="Search operations…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className={styles.searchInput}
+              autoComplete="off"
+            />
+            {search && (
+              <button className={styles.searchClear} onClick={() => setSearch('')} aria-label="Clear search">
+                ✕
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Content */}
         <div className={styles.content}>
@@ -180,6 +229,7 @@ export default function OpSelector({ onSelectOp }: Props) {
 
           {!loading && !error && operations.length === 0 && (
             <div className={styles.state}>
+              <LockpickLogo size={48} />
               <p className={styles.stateTitle}>No operations yet</p>
               <p className={styles.stateText}>
                 Create your first operation to start tracking SSH pivot paths.
@@ -190,9 +240,16 @@ export default function OpSelector({ onSelectOp }: Props) {
             </div>
           )}
 
-          {!loading && !error && operations.length > 0 && (
+          {!loading && !error && operations.length > 0 && filteredOps.length === 0 && (
+            <div className={styles.state}>
+              <p className={styles.stateTitle}>No results</p>
+              <p className={styles.stateText}>No operations match "{search}"</p>
+            </div>
+          )}
+
+          {!loading && !error && filteredOps.length > 0 && (
             <ul className={styles.opList}>
-              {operations.map(op => (
+              {filteredOps.map(op => (
                 <li key={op.id}>
                   <button
                     className={styles.opCard}
