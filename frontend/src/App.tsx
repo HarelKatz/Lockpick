@@ -14,8 +14,10 @@ function WorkspacePlaceholder({ op, onBack }: { op: Operation; onBack: () => voi
           ← Operations
         </button>
         <div className={styles.opInfo}>
-          <span className={styles.opName}>{op.name}</span>
-          <span className={styles.opUuid}>{op.id}</span>
+          <div className={styles.opNameRow}>
+            <span className={styles.opName}>{op.name}</span>
+            <span className={styles.opUuid}>{op.id}</span>
+          </div>
           {op.description && <span className={styles.opDescription}>{op.description}</span>}
         </div>
         <span className={styles.badge}>Phase 2 coming soon</span>

@@ -14,7 +14,7 @@
   padding: 12px 24px;
   background-color: var(--bg-surface);
   border-bottom: 1px solid var(--border);
-  height: 52px;
+  min-height: 52px;
 }
 
 .backBtn {
@@ -34,10 +34,16 @@
 
 .opInfo {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
+  flex-direction: column;
+  gap: 2px;
   flex: 1;
   min-width: 0;
+}
+
+.opNameRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
 }
 
 .opName {
