@@ -17,6 +17,16 @@ export interface HostIP {
   first_seen_at: string
 }
 
+export interface HostUser {
+  id: string
+  host_id: string
+  username: string
+  shell: string | null
+  home_dir: string | null
+  source: 'manual' | 'passwd_file' | 'authorized_keys' | 'log_evidence'
+  created_at: string
+}
+
 export interface Host {
   id: string
   op_id: string
@@ -24,6 +34,7 @@ export interface Host {
   comment: string | null
   created_at: string
   ips: HostIP[]
+  users: HostUser[]
 }
 
 export interface Credential {
@@ -43,9 +54,12 @@ export interface CredentialLink {
   credential_id: string
   host_id: string
   username: string | null
+  host_user_id: string | null
   relationship_type: 'found_on_disk' | 'authorized_key' | 'accepted_password' | 'used_in_connection'
   file_source: string | null
 }
+
+export type AuthMethod = 'publickey' | 'password' | 'keyboard-interactive' | 'hostbased' | 'unknown'
 
 export interface ConnectionRecord {
   id: string
@@ -58,6 +72,8 @@ export interface ConnectionRecord {
   dst_user: string | null
   connection_type: 'ssh' | 'scp' | 'rsync' | 'sftp' | 'ssh_copy_id' | 'unknown'
   direction_context: 'from_src_logs' | 'from_dst_logs'
+  auth_method: AuthMethod | null
+  credential_id: string | null
   timestamp: string | null
   raw_line: string | null
   source_file: string
@@ -92,6 +108,8 @@ export interface UpdateConnectionRequest {
   dst_user?: string | null
   connection_type?: ConnectionRecord['connection_type']
   direction_context?: ConnectionRecord['direction_context']
+  auth_method?: AuthMethod | null
+  credential_id?: string | null
   timestamp?: string | null
   raw_line?: string | null
   source_file?: string
@@ -123,8 +141,15 @@ export interface CreateCredentialLinkRequest {
   credential_id: string
   host_id: string
   username?: string | null
+  host_user_id?: string | null
   relationship_type: 'found_on_disk' | 'authorized_key' | 'accepted_password' | 'used_in_connection'
   file_source?: string | null
+}
+
+export interface CreateHostUserRequest {
+  username: string
+  shell?: string | null
+  source?: HostUser['source']
 }
 
 export interface CreateConnectionRequest {
@@ -136,6 +161,8 @@ export interface CreateConnectionRequest {
   dst_user?: string | null
   connection_type: 'ssh' | 'scp' | 'rsync' | 'sftp' | 'ssh_copy_id' | 'unknown'
   direction_context: 'from_src_logs' | 'from_dst_logs'
+  auth_method?: AuthMethod | null
+  credential_id?: string | null
   timestamp?: string | null
   raw_line?: string | null
   source_file: string
