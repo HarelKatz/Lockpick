@@ -1,0 +1,127 @@
+/**
+ * AddDataModal — floating action button (FAB) + modal with Manual Entry / File Upload tabs.
+ * The File Upload tab is a placeholder for Phase 4.
+ */
+import { useState, useEffect } from 'react'
+import type { Host } from '../types'
+import ManualEntryForm from './ManualEntryForm'
+import styles from './AddDataModal.module.css'
+
+type Tab = 'manual' | 'upload'
+
+interface Props {
+  opId: string
+  hosts: Host[]
+  onDataAdded: () => void
+}
+
+function UploadPlaceholder() {
+  return (
+    <div className={styles.uploadPlaceholder}>
+      <div className={styles.uploadIcon}>⬆</div>
+      <p className={styles.uploadTitle}>File Upload</p>
+      <p className={styles.uploadDesc}>
+        File parsing (authorized_keys, known_hosts, auth.log, bash_history, etc.)
+        will be implemented in Phase 4.
+      </p>
+    </div>
+  )
+}
+
+function Modal({
+  opId,
+  hosts,
+  onClose,
+  onDataAdded,
+}: {
+  opId: string
+  hosts: Host[]
+  onClose: () => void
+  onDataAdded: () => void
+}) {
+  const [tab, setTab] = useState<Tab>('manual')
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  function handleDataAdded() {
+    onDataAdded()
+    // Keep modal open so user can add more entries
+  }
+
+  return (
+    <div className={styles.overlay} onClick={onClose}>
+      <div className={styles.modal} onClick={e => e.stopPropagation()}>
+        {/* Modal header */}
+        <div className={styles.modalHeader}>
+          <div className={styles.tabs}>
+            <button
+              className={`${styles.tab} ${tab === 'manual' ? styles.tabActive : ''}`}
+              onClick={() => setTab('manual')}
+            >
+              Manual Entry
+            </button>
+            <button
+              className={`${styles.tab} ${tab === 'upload' ? styles.tabActive : ''}`}
+              onClick={() => setTab('upload')}
+            >
+              File Upload
+            </button>
+          </div>
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
+            ✕
+          </button>
+        </div>
+
+        {/* Modal body */}
+        <div className={styles.modalBody}>
+          {tab === 'manual' && (
+            <ManualEntryForm opId={opId} hosts={hosts} onSuccess={handleDataAdded} />
+          )}
+          {tab === 'upload' && <UploadPlaceholder />}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function AddDataModal({ opId, hosts, onDataAdded }: Props) {
+  const [open, setOpen] = useState(false)
+
+  function handleClose() {
+    setOpen(false)
+  }
+
+  function handleDataAdded() {
+    onDataAdded()
+  }
+
+  return (
+    <>
+      {/* FAB */}
+      <button
+        className={styles.fab}
+        onClick={() => setOpen(true)}
+        aria-label="Add data"
+        title="Add data"
+      >
+        +
+      </button>
+
+      {/* Modal */}
+      {open && (
+        <Modal
+          opId={opId}
+          hosts={hosts}
+          onClose={handleClose}
+          onDataAdded={handleDataAdded}
+        />
+      )}
+    </>
+  )
+}
