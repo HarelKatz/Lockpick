@@ -167,3 +167,114 @@ def test_delete_connection(client, op, conn):
     resp = client.delete(f"/api/connections/{conn['id']}")
     assert resp.status_code == 204
     assert client.get(f"/api/connections/{conn['id']}").status_code == 404
+
+
+# ─── auth_method and credential_id ───────────────────────────────────────────
+
+@pytest.fixture
+def cred(client, op):
+    resp = client.post(
+        f"/api/ops/{op['id']}/credentials",
+        json={"cred_type": "password", "value": "s3cr3t"},
+    )
+    return resp.json()
+
+
+def test_create_connection_with_auth_method(client, op):
+    resp = client.post(
+        f"/api/ops/{op['id']}/connections",
+        json={
+            "src_ip": "10.0.0.1",
+            "dst_ip": "10.0.0.2",
+            "direction_context": "from_dst_logs",
+            "source_file": "auth.log",
+            "auth_method": "publickey",
+        },
+    )
+    assert resp.status_code == 201
+    assert resp.json()["auth_method"] == "publickey"
+
+
+def test_create_connection_all_auth_methods(client, op):
+    for method in ("publickey", "password", "keyboard-interactive", "hostbased", "unknown"):
+        resp = client.post(
+            f"/api/ops/{op['id']}/connections",
+            json={
+                "src_ip": "1.1.1.1",
+                "dst_ip": "2.2.2.2",
+                "direction_context": "from_dst_logs",
+                "source_file": "auth.log",
+                "auth_method": method,
+            },
+        )
+        assert resp.status_code == 201, method
+        assert resp.json()["auth_method"] == method
+
+
+def test_create_connection_with_credential_id(client, op, cred):
+    resp = client.post(
+        f"/api/ops/{op['id']}/connections",
+        json={
+            "src_ip": "10.0.0.1",
+            "dst_ip": "10.0.0.2",
+            "direction_context": "from_dst_logs",
+            "source_file": "auth.log",
+            "auth_method": "publickey",
+            "credential_id": cred["id"],
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["credential_id"] == cred["id"]
+    assert data["auth_method"] == "publickey"
+
+
+def test_create_connection_credential_wrong_op(client, op, cred):
+    """credential_id from a different op must be rejected."""
+    other_op = client.post("/api/ops", json={"name": "Other Op"}).json()
+    resp = client.post(
+        f"/api/ops/{other_op['id']}/connections",
+        json={
+            "src_ip": "10.0.0.1",
+            "dst_ip": "10.0.0.2",
+            "direction_context": "from_dst_logs",
+            "source_file": "auth.log",
+            "credential_id": cred["id"],
+        },
+    )
+    assert resp.status_code == 400
+
+
+def test_create_connection_nil_auth_fields(client, op):
+    """auth_method and credential_id default to null when omitted."""
+    resp = client.post(
+        f"/api/ops/{op['id']}/connections",
+        json={
+            "src_ip": "10.0.0.1",
+            "dst_ip": "10.0.0.2",
+            "direction_context": "from_src_logs",
+            "source_file": "bash_history",
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["auth_method"] is None
+    assert data["credential_id"] is None
+
+
+def test_update_connection_auth_method(client, conn):
+    resp = client.patch(
+        f"/api/connections/{conn['id']}",
+        json={"auth_method": "password"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["auth_method"] == "password"
+
+
+def test_update_connection_credential_id(client, op, conn, cred):
+    resp = client.patch(
+        f"/api/connections/{conn['id']}",
+        json={"credential_id": cred["id"]},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["credential_id"] == cred["id"]
