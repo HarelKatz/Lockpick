@@ -1,6 +1,6 @@
 /**
  * AddDataModal — floating action button (FAB) + modal with Manual Entry / File Upload tabs.
- * The File Upload tab is a placeholder for Phase 4.
+ * The File Upload tab is a placeholder for Phase 6.
  */
 import { useState, useEffect } from 'react'
 import type { Host, Credential } from '../types'
@@ -23,7 +23,7 @@ function UploadPlaceholder() {
       <p className={styles.uploadTitle}>File Upload</p>
       <p className={styles.uploadDesc}>
         File parsing (authorized_keys, known_hosts, auth.log, bash_history, etc.)
-        will be implemented in Phase 4.
+        will be implemented in Phase 6.
       </p>
     </div>
   )
