@@ -200,9 +200,20 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 Implement these phases **sequentially**. Each phase should be a working, testable increment. Write tests as you go. Update this document's "Current Status" section after completing each phase.
 
-**Commit discipline:** commit at natural checkpoints within a phase — typically after each logical unit (e.g. backend done, frontend components done, page wiring done). Use conventional commit prefixes (`feat`, `fix`, `test`, `refactor`, `docs`). Never leave a phase's work uncommitted. At minimum, commit once when the phase is fully complete.
-
-**When implementing in tasks (e.g. "stop before each task"): commit at the end of every task, not at the end of the phase.** Each task should be a standalone commit before moving on. Do not batch multiple tasks into one commit.
+> ### ⚠️ COMMIT DISCIPLINE — NON-NEGOTIABLE
+>
+> **You MUST commit after every logical unit of work. No exceptions.**
+>
+> - Commit after each backend change (models, schemas, endpoints)
+> - Commit after tests
+> - Commit after frontend changes
+> - **When working through named tasks: commit at the end of EVERY task before stopping.**
+>   Do NOT batch multiple tasks into one commit.
+>
+> Use conventional prefixes: `feat`, `fix`, `test`, `refactor`, `docs`.
+> Scope to the area changed: `backend`, `frontend`, `schema`, `parsers`, `docker`.
+>
+> **Never finish a task or stop to wait for the user without committing first.**
 
 ### Phase 1 — Project Skeleton & Infrastructure
 
