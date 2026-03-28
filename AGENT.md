@@ -191,7 +191,8 @@ Implement these phases **sequentially**. Each phase should be a working, testabl
 - [x] Initialize FastAPI backend with SQLAlchemy + SQLite (DB path: ./data/tracker.db)
 - [x] Initialize React frontend with Vite + TypeScript
 - [x] Implement the full database schema with migrations (alembic)
-- [x] CRUD API endpoints for: Operations, Hosts, HostIPs, HostUsers, Credentials, CredentialLinks, ConnectionRecords
+- [x] CRUD API endpoints for: Operations, Hosts, HostIPs, Credentials, CredentialLinks, ConnectionRecords
+- [ ] CRUD API endpoints for: HostUsers (moved to Phase 4 — HostUser & Schema Hardening)
 - [x] Basic API tests (pytest)
 - [x] Simple frontend shell: operation selector screen (list/create ops)
 - [x] Dark theme from the start (all components)
@@ -202,7 +203,7 @@ Implement these phases **sequentially**. Each phase should be a working, testabl
 
 - [x] Frontend: after selecting an op, show the main workspace (creating an op auto-navigates into it)
 - [x] Floating action button (bottom-right corner, + icon)
-- [x] Clicking FAB opens a modal with tabs: "Manual Entry" | "File Upload" (upload tab is placeholder for Phase 5)
+- [x] Clicking FAB opens a modal with tabs: "Manual Entry" | "File Upload" (upload tab is placeholder for Phase 6)
 - [x] Manual entry form — three sub-forms (Host / Credential / Connection):
   - **Host**: nickname, one or more IPs, comment
   - **Credential**: type (password / private_key / public_key), value, optional passphrase (for encrypted private keys), optional comment; optionally linked to a host + username + relationship type. `key_type` and `fingerprint` are inferred by the backend — not user input.
@@ -256,7 +257,40 @@ Full edit and delete capabilities for every entity. The backend already exposes 
 - [ ] `api/connections.ts`: add `updateConnection(connectionId, data)`
 - [ ] `types/index.ts`: add `UpdateOperationRequest`, `UpdateCredentialRequest`, `UpdateCredentialLinkRequest`, `UpdateConnectionRequest`
 
-### Phase 4 — Host Selection & Graph Visualization
+### Phase 4 — HostUser & Schema Hardening
+
+Implement the `HostUser` entity and the `ConnectionRecord` authentication fields before the graph visualization phase needs them. All changes are additive — no existing endpoints or data break.
+
+#### Backend
+
+- [ ] Add `HostUser` ORM model (`backend/models.py`): `id`, `host_id` (FK→hosts, cascade), `username`, `shell` (nullable), `home_dir` (nullable), `source` enum (`manual | passwd_file | authorized_keys | log_evidence`), `created_at`
+- [ ] Add `users` relationship to `Host` model (cascade delete)
+- [ ] Add `host_user_id` nullable FK (→ host_users, SET NULL on delete) to `CredentialLink` model; keep existing `username` string — it stays the authoritative pivot-query field
+- [ ] Add `auth_method` nullable enum (`publickey | password | keyboard-interactive | hostbased | unknown`) to `ConnectionRecord`
+- [ ] Add `credential_id` nullable FK (→ credentials, SET NULL on delete) to `ConnectionRecord`
+- [ ] New Alembic migration: create `host_users` table; add `host_user_id` to `credential_links`; add `auth_method` + `credential_id` to `connection_records` (all via `batch_alter_table` for SQLite)
+- [ ] Add `HostUserCreate` / `HostUserRead` Pydantic schemas (`backend/schemas.py`)
+- [ ] Update `HostRead` to include `users: list[HostUserRead] = []`
+- [ ] Update `CredentialLinkCreate` / `CredentialLinkRead` to include optional `host_user_id`
+- [ ] Update `ConnectionRecordCreate` / `ConnectionRecordRead` to include optional `auth_method` and `credential_id`
+- [ ] Add HostUser endpoints to `backend/routers/hosts.py`:
+  - `POST /api/hosts/{host_id}/users`
+  - `GET /api/hosts/{host_id}/users`
+  - `DELETE /api/hosts/{host_id}/users/{user_id}`
+- [ ] Update `POST /api/ops/{op_id}/connections` in `backend/routers/connections.py` to accept and persist `auth_method` and `credential_id`; validate `credential_id` belongs to the same op if provided
+- [ ] Tests: `tests/test_api/test_host_users.py` (create, list, delete, host-read includes users, optional FK on credential-link); extend `tests/test_api/test_connections.py` (auth_method, credential_id, nil fields still work)
+
+#### Frontend
+
+- [ ] Add `HostUser` interface and `CreateHostUserRequest` to `frontend/src/types/index.ts`
+- [ ] Update `Host` interface: add `users: HostUser[]`
+- [ ] Update `CredentialLink` interface: add `host_user_id: string | null`
+- [ ] Update `ConnectionRecord` / `CreateConnectionRequest`: add `auth_method` and `credential_id` fields
+- [ ] Add `listHostUsers`, `createHostUser`, `deleteHostUser` to `frontend/src/api/hosts.ts`
+- [ ] `ManualEntryForm` — HostForm: add repeatable "Known Users" rows (username, optional shell, source selector); calls `createHostUser` per row after host is created — same add/remove pattern as IP rows
+- [ ] `ManualEntryForm` — ConnectionForm: add `auth_method` dropdown and optional credential selector (loaded from current op)
+
+### Phase 5 — Host Selection & Graph Visualization
 
 - [ ] Host query/filter panel: show all hosts in current op as a searchable/filterable list with checkboxes
 - [ ] Selected hosts render on a cytoscape.js canvas as labeled nodes
@@ -284,7 +318,7 @@ Full edit and delete capabilities for every entity. The backend already exposes 
   - "Hide this edge" — remove from canvas
 - [ ] Hidden nodes/edges can be restored via "Show all" button or re-selecting from the host list
 
-### Phase 5 — File Upload & Parsing Engine
+### Phase 6 — File Upload & Parsing Engine
 
 Build a parsing engine on the backend. Each parser is a module in `backend/parsers/`. All parsers implement a common interface.
 
@@ -373,7 +407,7 @@ class BaseParser:
   - "New pivot opportunity: HostA(bob) → HostC(root) via key SHA256:xyz..."
 - Support uploading multiple files in sequence (form resets but keeps host/user selection)
 
-### Phase 6 — Pivot Path Analysis
+### Phase 7 — Pivot Path Analysis
 
 - [ ] Backend endpoint: given two hosts, find all pivot paths (BFS on aggregated edge graph)
 - [ ] Path results include: each hop's evidence, required credentials, confidence per hop
@@ -382,7 +416,7 @@ class BaseParser:
 - [ ] Path detail panel showing each hop with full evidence breakdown
 - [ ] Ability to filter paths by minimum confidence level
 
-### Phase 7 — Polish & UX
+### Phase 8 — Polish & UX
 
 - [ ] Global search across all data (hosts, IPs, users, key fingerprints, comments)
 - [ ] Export op data as JSON (full op state: hosts, creds, connections, everything)
@@ -393,7 +427,7 @@ class BaseParser:
 - [ ] Activity log (who added what, when — basic audit trail, stored in DB)
 - [ ] Notification banner when data has changed since your last query ("15 new records since your last refresh" — click to refresh)
 
-### Phase 8 — MCP Server
+### Phase 9 — MCP Server
 
 A standalone MCP (Model Context Protocol) server that lets an AI agent (e.g. Claude Desktop) help a red teamer navigate the operation data and find pivot paths using natural language. This phase is last — implement only when all other phases are complete and stable.
 
@@ -416,7 +450,7 @@ A standalone MCP (Model Context Protocol) server that lets an AI agent (e.g. Cla
 | `list_credentials(op_id)` | credentials + credential-links | Creds with fingerprints and host count |
 | `list_connections(op_id)` | `GET /ops/{id}/connections` | Raw connection records |
 | `find_pivot_paths(op_id, src_host_id, dst_host_id)` | connections + credential-links | BFS pivot paths with evidence and confidence |
-| `search(op_id, query)` | Phase 7 search endpoint (client-side fallback if unavailable) | Global search |
+| `search(op_id, query)` | Phase 8 search endpoint (client-side fallback if unavailable) | Global search |
 
 `find_pivot_paths` performs BFS in the MCP layer: builds an adjacency graph from connection records and credential key matches (same fingerprint: `found_on_disk` on A + `authorized_key` on B), caps at depth 6 and 50 paths, annotates each edge with confidence (`confirmed` = key match, `observed` = connection log).
 
@@ -530,8 +564,8 @@ lockpick/
 │   │   ├── hosts.py
 │   │   ├── credentials.py
 │   │   ├── connections.py
-│   │   ├── upload.py            # File upload + parsing trigger (Phase 5)
-│   │   └── graph.py             # Graph queries: expand node, find path, aggregated edges (Phase 4)
+│   │   ├── upload.py            # File upload + parsing trigger (Phase 6)
+│   │   └── graph.py             # Graph queries: expand node, find path, aggregated edges (Phase 5)
 │   ├── parsers/
 │   │   ├── __init__.py          # BaseParser, ParseResult, parser registry
 │   │   ├── authorized_keys.py
@@ -545,8 +579,8 @@ lockpick/
 │   ├── services/
 │   │   ├── ip_resolver.py       # Match IPs to existing hosts
 │   │   ├── key_matcher.py       # Cross-reference key fingerprints across op
-│   │   ├── pivot_analysis.py    # BFS path finding between hosts (Phase 6)
-│   │   └── graph_builder.py     # Aggregate evidence into edge objects for frontend (Phase 4)
+│   │   ├── pivot_analysis.py    # BFS path finding between hosts (Phase 7)
+│   │   └── graph_builder.py     # Aggregate evidence into edge objects for frontend (Phase 5)
 │   └── alembic/
 │       └── ...
 ├── frontend/
@@ -570,26 +604,26 @@ lockpick/
 │       │   ├── EditCredentialForm.tsx   # Edit credential value/passphrase/comment (Phase 3)
 │       │   ├── EditCredentialLinkForm.tsx # Edit credential link fields (Phase 3)
 │       │   ├── EditConnectionForm.tsx   # Edit connection record fields (Phase 3)
-│       │   ├── FileUploadTab.tsx        # File upload UI (Phase 5)
-│       │   ├── GraphCanvas.tsx          # cytoscape.js wrapper (Phase 4)
-│       │   ├── NodeContextMenu.tsx      # Right-click menu for nodes (Phase 4)
-│       │   ├── EdgeContextMenu.tsx      # Right-click menu for edges (Phase 4)
-│       │   ├── HostDetailSidebar.tsx    # Host info panel on node click (Phase 4)
-│       │   ├── EdgeDetailPanel.tsx      # All evidence for an edge (Phase 4)
-│       │   ├── HostSelector.tsx         # Checkbox list for selecting hosts to display (Phase 4)
-│       │   ├── PathFinder.tsx           # Two-node path analysis UI (Phase 6)
-│       │   └── PathDetail.tsx           # Path result display (Phase 6)
+│       │   ├── FileUploadTab.tsx        # File upload UI (Phase 6)
+│       │   ├── GraphCanvas.tsx          # cytoscape.js wrapper (Phase 5)
+│       │   ├── NodeContextMenu.tsx      # Right-click menu for nodes (Phase 5)
+│       │   ├── EdgeContextMenu.tsx      # Right-click menu for edges (Phase 5)
+│       │   ├── HostDetailSidebar.tsx    # Host info panel on node click (Phase 5)
+│       │   ├── EdgeDetailPanel.tsx      # All evidence for an edge (Phase 5)
+│       │   ├── HostSelector.tsx         # Checkbox list for selecting hosts to display (Phase 5)
+│       │   ├── PathFinder.tsx           # Two-node path analysis UI (Phase 7)
+│       │   └── PathDetail.tsx           # Path result display (Phase 7)
 │       ├── api/                         # Typed API client functions
 │       │   ├── client.ts
 │       │   ├── operations.ts
 │       │   ├── hosts.ts
 │       │   ├── credentials.ts
 │       │   ├── connections.ts
-│       │   ├── graph.ts                 # Graph queries (Phase 4)
-│       │   └── upload.ts               # File upload (Phase 5)
+│       │   ├── graph.ts                 # Graph queries (Phase 5)
+│       │   └── upload.ts               # File upload (Phase 6)
 │       └── types/                       # TypeScript interfaces matching backend schemas
 │           └── index.ts
-├── mcp/                                 # MCP server — AI agent companion (Phase 8)
+├── mcp/                                 # MCP server — AI agent companion (Phase 9)
 │   ├── Dockerfile
 │   ├── pyproject.toml
 │   ├── uv.lock
@@ -651,7 +685,7 @@ lockpick/
 
 **Phase**: Phase 2 complete
 **Last completed**: Phase 2 — Manual Data Entry
-**Next step**: Schema update (add HostUser table, add auth_method + credential_id to ConnectionRecord, add host_user_id to CredentialLink) → then Phase 3 — Edit & Delete
+**Next step**: Phase 3 — Edit & Delete
 
 ## Notes for the Agent
 
