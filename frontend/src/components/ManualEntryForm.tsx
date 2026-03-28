@@ -178,8 +178,8 @@ function CredentialForm({
 }) {
   const [credType, setCredType] = useState<CreateCredentialRequest['cred_type']>('private_key')
   const [value, setValue] = useState('')
+  const [passphrase, setPassphrase] = useState('')
   const [comment, setComment] = useState('')
-  const [keyType, setKeyType] = useState('')
   const [link, setLink] = useState(false)
   const [linkHostId, setLinkHostId] = useState(hosts[0]?.id ?? '')
   const [linkUsername, setLinkUsername] = useState('')
@@ -203,8 +203,8 @@ function CredentialForm({
       const cred = await createCredential(opId, {
         cred_type: credType,
         value: value.trim(),
+        passphrase: passphrase.trim() || null,
         comment: comment.trim() || null,
-        key_type: keyType.trim() || null,
       })
       if (link && linkHostId) {
         await createCredentialLink({
@@ -221,8 +221,6 @@ function CredentialForm({
       setLoading(false)
     }
   }
-
-  const isKey = credType === 'private_key' || credType === 'public_key'
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
@@ -244,8 +242,8 @@ function CredentialForm({
         <textarea
           value={value}
           onChange={e => setValue(e.target.value)}
-          placeholder={isKey ? '-----BEGIN OPENSSH PRIVATE KEY-----\n…' : 'Password value'}
-          rows={isKey ? 5 : 2}
+          placeholder={credType !== 'password' ? '-----BEGIN OPENSSH PRIVATE KEY-----\n…' : 'Password value'}
+          rows={credType !== 'password' ? 5 : 2}
           className={styles.codeArea}
           autoFocus
           disabled={loading}
@@ -253,14 +251,14 @@ function CredentialForm({
       </div>
 
       <div className={styles.row}>
-        {isKey && (
+        {credType === 'private_key' && (
           <div className={styles.field}>
-            <label>Key Type</label>
+            <label>Passphrase</label>
             <input
-              type="text"
-              value={keyType}
-              onChange={e => setKeyType(e.target.value)}
-              placeholder="rsa, ed25519, ecdsa…"
+              type="password"
+              value={passphrase}
+              onChange={e => setPassphrase(e.target.value)}
+              placeholder="Leave blank if unencrypted"
               disabled={loading}
             />
           </div>

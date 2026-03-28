@@ -32,8 +32,9 @@ export interface Credential {
   op_id: string
   cred_type: 'password' | 'private_key' | 'public_key'
   value: string
-  fingerprint: string | null
-  key_type: string | null
+  fingerprint: string | null   // inferred by backend
+  key_type: string | null      // inferred by backend
+  passphrase: string | null
   comment: string | null
   created_at: string
 }
@@ -85,8 +86,7 @@ export interface CreateHostIPRequest {
 export interface CreateCredentialRequest {
   cred_type: 'password' | 'private_key' | 'public_key'
   value: string
-  fingerprint?: string | null
-  key_type?: string | null
+  passphrase?: string | null   // for encrypted private keys
   comment?: string | null
 }
 

@@ -88,7 +88,8 @@ class Credential(Base):
     )
     value = Column(Text, nullable=False)
     fingerprint = Column(String(255), nullable=True)  # SHA256 for SSH keys
-    key_type = Column(String(64), nullable=True)  # rsa, ed25519, ecdsa, etc.
+    key_type = Column(String(64), nullable=True)  # inferred: rsa, ed25519, ecdsa, etc.
+    passphrase = Column(String(1024), nullable=True)  # for encrypted private keys
     comment = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
 

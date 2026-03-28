@@ -1,11 +1,15 @@
 """CRUD endpoints for Credentials and CredentialLinks."""
-from typing import List
+import base64
+import hashlib
+import io
+import logging
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Credential, CredentialLink, Operation
+from models import Credential, CredentialLink, Host, Operation
 from schemas import (
     CredentialCreate,
     CredentialLinkCreate,
@@ -14,7 +18,41 @@ from schemas import (
     CredentialUpdate,
 )
 
+log = logging.getLogger(__name__)
+
 router = APIRouter(tags=["credentials"])
+
+
+def _infer_key_info(value: str, passphrase: Optional[str]) -> tuple[Optional[str], Optional[str]]:
+    """Parse a private key with paramiko and return (key_type, sha256_fingerprint).
+
+    Returns (None, None) on any failure — never raises.
+    """
+    try:
+        import paramiko
+
+        pw = passphrase.encode() if passphrase else None
+        f = io.StringIO(value)
+
+        for cls in (
+            paramiko.RSAKey,
+            paramiko.Ed25519Key,
+            paramiko.ECDSAKey,
+            paramiko.DSSKey,
+        ):
+            try:
+                key = cls.from_private_key(f, password=pw)
+                pub_bytes = key.asbytes()
+                digest = hashlib.sha256(pub_bytes).digest()
+                fingerprint = "SHA256:" + base64.b64encode(digest).rstrip(b"=").decode()
+                return key.get_name(), fingerprint
+            except Exception:
+                f.seek(0)
+
+    except Exception:
+        log.debug("paramiko key inference failed", exc_info=True)
+
+    return None, None
 
 
 def _get_op_or_404(op_id: str, db: Session) -> Operation:
@@ -36,12 +74,18 @@ def _get_cred_or_404(cred_id: str, db: Session) -> Credential:
 @router.post("/ops/{op_id}/credentials", response_model=CredentialRead, status_code=201)
 def create_credential(op_id: str, body: CredentialCreate, db: Session = Depends(get_db)):
     _get_op_or_404(op_id, db)
+
+    key_type, fingerprint = None, None
+    if body.cred_type == "private_key":
+        key_type, fingerprint = _infer_key_info(body.value, body.passphrase)
+
     cred = Credential(
         op_id=op_id,
         cred_type=body.cred_type,
         value=body.value,
-        fingerprint=body.fingerprint,
-        key_type=body.key_type,
+        passphrase=body.passphrase,
+        fingerprint=fingerprint,
+        key_type=key_type,
         comment=body.comment,
     )
     db.add(cred)
@@ -71,10 +115,6 @@ def update_credential(cred_id: str, body: CredentialUpdate, db: Session = Depend
     cred = _get_cred_or_404(cred_id, db)
     if body.comment is not None:
         cred.comment = body.comment
-    if body.fingerprint is not None:
-        cred.fingerprint = body.fingerprint
-    if body.key_type is not None:
-        cred.key_type = body.key_type
     db.commit()
     db.refresh(cred)
     return cred
@@ -91,9 +131,7 @@ def delete_credential(cred_id: str, db: Session = Depends(get_db)):
 
 @router.post("/credential-links", response_model=CredentialLinkRead, status_code=201)
 def create_credential_link(body: CredentialLinkCreate, db: Session = Depends(get_db)):
-    # Validate referenced entities exist
     _get_cred_or_404(body.credential_id, db)
-    from models import Host
     host = db.query(Host).filter(Host.id == body.host_id).first()
     if not host:
         raise HTTPException(status_code=404, detail="Host not found")
@@ -101,7 +139,7 @@ def create_credential_link(body: CredentialLinkCreate, db: Session = Depends(get
     link = CredentialLink(
         credential_id=body.credential_id,
         host_id=body.host_id,
-        host_user_id=body.host_user_id,
+        username=body.username,
         relationship_type=body.relationship_type,
         file_source=body.file_source,
     )
