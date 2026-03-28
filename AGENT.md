@@ -202,6 +202,8 @@ Implement these phases **sequentially**. Each phase should be a working, testabl
 
 **Commit discipline:** commit at natural checkpoints within a phase — typically after each logical unit (e.g. backend done, frontend components done, page wiring done). Use conventional commit prefixes (`feat`, `fix`, `test`, `refactor`, `docs`). Never leave a phase's work uncommitted. At minimum, commit once when the phase is fully complete.
 
+**When implementing in tasks (e.g. "stop before each task"): commit at the end of every task, not at the end of the phase.** Each task should be a standalone commit before moving on. Do not batch multiple tasks into one commit.
+
 ### Phase 1 — Project Skeleton & Infrastructure
 
 - [x] Docker Compose setup (backend + frontend services, ./data/ volume)
