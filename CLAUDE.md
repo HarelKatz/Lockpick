@@ -41,6 +41,10 @@ backend/
 ├── routers/         # operations.py, hosts.py, credentials.py, connections.py
 ├── parsers/         # File parsers implementing BaseParser
 ├── services/        # Graph builder, IP resolver, pivot analysis
+│   ├── graph_builder.py   # Aggregate CredentialLinks + ConnectionRecords → edge objects
+│   ├── ip_resolver.py     # Match IPs/hostnames to known hosts (best-effort)
+│   ├── key_matcher.py     # Cross-reference fingerprints across an op
+│   └── pivot_analysis.py  # BFS path finding between hosts (Phase 7)
 └── alembic/         # Migrations
 
 frontend/src/
@@ -80,6 +84,31 @@ tests/
 
 - **Always use `batch_alter_table`** — SQLite does not support `ALTER COLUMN`
 - **Never drop constraints by name** — SQLite does not store named FK constraints; dropping by name raises `ValueError`; dropping the column alone is sufficient
+
+## Parser Pattern
+
+All parsers in `backend/parsers/` implement `BaseParser` (defined in `parsers/__init__.py`):
+
+```python
+class ParseResult:
+    hosts_found: list[HostData]
+    credentials_found: list[CredentialData]
+    connections_found: list[ConnectionData]
+    warnings: list[str]
+    stats: dict
+
+class BaseParser:
+    def parse(self, content: bytes, metadata: UploadMetadata) -> ParseResult: ...
+```
+
+Parsers **must never crash** on bad input — catch exceptions, append to `warnings`, and continue. Fixture files for parser tests live in `tests/fixtures/`.
+
+## Key Architecture Rules
+
+- **Edges are not stored** — computed on demand by `services/graph_builder.py` from CredentialLinks + ConnectionRecords
+- **IP resolution is best-effort** — create an unresolved host if no existing host matches; user merges later
+- **Frontend never touches the DB** — all data flows through the REST API
+- **No authentication** — trusted network tool; see AGENT.md for full architecture rules
 
 ## Frontend Conventions
 

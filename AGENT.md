@@ -4,53 +4,13 @@
 
 A web-based tool for red teams to collaboratively organize SSH credentials, host relationships, and pivot paths during operations. Runs as a shared server — the entire team accesses it, and any data one person adds is visible to everyone on their next query. The core value is **visualizing lateral movement opportunities** by correlating SSH keys, connection logs, and host data across an engagement.
 
-## Tech Stack
+**Portability:** This tool may run on a VPS for a week, get zipped up, moved to another box, and resumed. All state lives in `./data/` — the only thing to back up or move. No external dependencies.
 
-- **Backend**: Python 3.12+ with FastAPI
-- **Database**: SQLite (single file, lives in a Docker volume for portability)
-- **Frontend**: React (Vite) with TypeScript
-- **Graph Visualization**: cytoscape.js for the interactive network graph
-- **File Parsing**: Python stdlib + paramiko (for SSH key handling)
-- **Package Manager**: uv (for Python dependency management — fast, lockfile-based)
-- **Deployment**: Docker Compose (one command up/down, entire state in one directory)
+> For tech stack, dev commands, repo layout, migration rules, frontend conventions, and git format — see **CLAUDE.md**.
 
-## Deployment & Portability
-
-The project **must** be trivial to deploy, stop, move, and restart. This is a red team tool — it might run on a VPS for a week, get zipped up, moved to another box, and resumed.
-
-```
-# Start
-docker compose up -d
-
-# Stop
-docker compose down
-
-# Move to another machine
-tar czf lockpick-backup.tar.gz .
-# transfer to new machine, extract, docker compose up -d
-
-# All state lives in ./data/ (SQLite DB, uploaded files)
-```
-
-### Docker setup:
-
-- `docker-compose.yml` at project root
-- Two services: `backend` (Python/FastAPI) and `frontend` (nginx serving built React app)
-- A `./data/` directory mounted as a volume holds the SQLite DB and any uploaded raw files
-- Backend serves on a single port, frontend proxies API calls to backend
-- No external dependencies (no Redis, no Postgres, no cloud services)
-- `Makefile` with convenience targets: `make up`, `make down`, `make logs`, `make backup`, `make dev-backend` (runs `uv run uvicorn`), `make dev-frontend` (runs `vite dev`), `make test` (runs `uv run pytest`)
-
-### Contributing
-
-- `README.md` with clear setup instructions for local development (without Docker)
-- `CONTRIBUTING.md` with code style, how to add a new parser, how to add a new relationship type
-- Backend and frontend can each be run independently for development (`uv run uvicorn` + `vite dev`)
-- All parsers follow a common interface so adding a new file type is mechanical
+---
 
 ## Data Model
-
-Design the schema with these entities and relationships. Use SQLAlchemy ORM.
 
 ### Core Entities
 
@@ -81,7 +41,7 @@ Credential (standalone entity — a key or password can unlock multiple hosts)
 ├── passphrase (nullable — for encrypted private keys)
 ├── fingerprint (SHA256, inferred automatically by backend via paramiko — never user-supplied)
 ├── key_type (nullable, e.g. ssh-rsa, ssh-ed25519 — inferred automatically, never user-supplied)
-├── comment (nullable), created_at
+├── name (nullable — human-readable label), comment (nullable), created_at
 │
 ├── CredentialLink (junction: where was this credential found and what does it grant?)
 │   └── id, credential_id (FK), host_id (FK)
@@ -180,28 +140,13 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 **Edge rendering on the graph should reflect ALL evidence**, not just the "best" one. The edge tooltip/detail panel should list every piece of evidence.
 
+---
+
 ## Current Status
 
-**Last completed phase: Phase 4 — HostUser & Schema Hardening** (commit `a2088f8`)
+**Last completed phase: Phase 4 — HostUser & Schema Hardening**
 
-**Post-phase fixes applied (batch 1):**
-- `CreateHostUserRequest` was missing `home_dir` field (mismatch with backend `HostUserCreate`)
-- `CredentialLinkUpdate` was missing `host_user_id` — added to schema and router handler
-- `PATCH /connections/{id}` could not clear `auth_method`/`credential_id` to null; fixed using `model_fields_set`
-- File upload placeholder text updated from "Phase 4" to "Phase 6"
-- `HostCard` was not displaying known users — added user chips (with shell/source in tooltip)
-- `ManualEntryForm` ConnectionForm credential selector was showing all credential types; corrected to show only `private_key` credentials (authentication is always via private key; public keys are not used directly for auth)
-- `EditHostForm` was missing the Known Users section — added add/remove with immediate API calls, same pattern as IPs
-- `EditConnectionForm` was missing `auth_method` and `credential_id` fields — added auth method dropdown and private key selector, pre-filled from existing record; wired `credentials` prop through Workspace
-
-**Post-phase fixes applied (batch 2):**
-- `ManualEntryForm` HostForm now requires at least one IP address before submitting
-- `EditHostForm` now blocks removing the last IP (error shown inline)
-- `ManualEntryForm` + `EditConnectionForm`: credential dropdown was conditioned on private keys existing in the op; changed to appear whenever auth method is `publickey` (private key creds) or `password` (password creds)
-- `Credential` model: added optional `name` field (migration `e5f6a7b8c9d0`) so credentials can be given a human-readable label in addition to `comment`; `name` surfaces in `CredentialCreate`, `CredentialUpdate`, `CredentialRead`, frontend types, and both credential forms
-- `credentials` router: `name` field was accepted by the schema but never written to the DB — fixed in both `create_credential` and `update_credential`
-- Credential dropdown labels now use `name` > `comment` > `[unnamed key/password]` — no fingerprints in dropdowns
-- Full create-vs-edit constraint audit: all other edit forms (Operation, Credential, CredentialLink, Connection) already enforce their required fields
+Phases 1–4 are fully implemented and tested. See git history for details.
 
 **Next phase: Phase 5 — Host Selection & Graph Visualization**
 
@@ -209,130 +154,59 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Implementation Phases
 
-Implement these phases **sequentially**. Each phase should be a working, testable increment. Write tests as you go. Update this document's "Current Status" section after completing each phase.
+### Phases 1–4 — Complete
 
-> ### ⚠️ COMMIT DISCIPLINE — NON-NEGOTIABLE
->
-> **You MUST commit after every logical unit of work. No exceptions.**
->
-> - Commit after each backend change (models, schemas, endpoints)
-> - Commit after tests
-> - Commit after frontend changes
-> - **When working through named tasks: commit at the end of EVERY task before stopping.**
->   Do NOT batch multiple tasks into one commit.
->
-> Use conventional prefixes: `feat`, `fix`, `test`, `refactor`, `docs`.
-> Scope to the area changed: `backend`, `frontend`, `schema`, `parsers`, `docker`.
->
-> **Never finish a task or stop to wait for the user without committing first.**
-
-### Phase 1 — Project Skeleton & Infrastructure
-
-- [x] Docker Compose setup (backend + frontend services, ./data/ volume)
-- [x] Makefile with: up, down, logs, backup, dev-backend, dev-frontend
-- [x] Initialize FastAPI backend with SQLAlchemy + SQLite (DB path: ./data/tracker.db)
-- [x] Initialize React frontend with Vite + TypeScript
-- [x] Implement the full database schema with migrations (alembic)
-- [x] CRUD API endpoints for: Operations, Hosts, HostIPs, Credentials, CredentialLinks, ConnectionRecords
-- [ ] CRUD API endpoints for: HostUsers (moved to Phase 4 — HostUser & Schema Hardening)
-- [x] Basic API tests (pytest)
-- [x] Simple frontend shell: operation selector screen (list/create ops)
-- [x] Dark theme from the start (all components)
-- [x] README.md with setup instructions (Docker and local dev)
-- [x] CONTRIBUTING.md with architecture overview and how-to-add-a-parser guide
-
-### Phase 2 — Manual Data Entry
-
-- [x] Frontend: after selecting an op, show the main workspace (creating an op auto-navigates into it)
-- [x] Floating action button (bottom-right corner, + icon)
-- [x] Clicking FAB opens a modal with tabs: "Manual Entry" | "File Upload" (upload tab is placeholder for Phase 6)
-- [x] Manual entry form — three sub-forms (Host / Credential / Connection):
-  - **Host**: nickname, one or more IPs, comment
-  - **Credential**: type (password / private_key / public_key), value, optional passphrase (for encrypted private keys), optional comment; optionally linked to a host + username + relationship type. `key_type` and `fingerprint` are inferred by the backend — not user input.
-  - **Connection**: src host/IP/user → dst host/IP/user, connection type, direction context
-- [x] All entries tagged with op_id based on current op context
-- [x] Workspace shows hosts as cards with IP chips
-
-### Phase 3 — Edit & Delete
-
-Full edit and delete capabilities for every entity. The backend already exposes most PATCH/DELETE endpoints; this phase surfaces them in the UI and fills the remaining backend gaps.
-
-#### Backend
-
-- [x] Expand `CredentialUpdate` schema: add `value` and `passphrase` fields (re-infer `fingerprint`/`key_type` via paramiko when `value` changes)
-- [x] Add `CredentialLinkUpdate` schema: `username`, `relationship_type`, `file_source`
-- [x] Add `ConnectionRecordUpdate` schema: all mutable fields optional
-- [x] Expand `PATCH /credentials/{cred_id}` to handle value/passphrase changes with fingerprint re-inference
-- [x] Add `PATCH /credential-links/{link_id}`
-- [x] Add `PATCH /connections/{connection_id}`
-- [x] Tests: `tests/test_api/test_credentials.py`, `tests/test_api/test_connections.py`
-
-#### Frontend — new components
-
-- [x] `ConfirmDeleteModal` — reusable "Are you sure?" dialog with danger-styled button
-- [x] `DeleteOpModal` — delete operation modal; user must type the full op UUID to confirm
-- [x] `EditModal` — thin modal shell (title + X button + Esc close) that wraps entity-specific edit forms
-- [x] `EditHostForm` — pre-filled nickname/comment; IPs managed inline (add/remove with immediate API calls)
-- [x] `EditCredentialForm` — value (textarea), passphrase, comment; cred_type is read-only; hint shown when value changed ("fingerprint will be re-inferred")
-- [x] `EditCredentialLinkForm` — username, relationship_type, file_source editable; credential and host shown read-only
-- [x] `EditConnectionForm` — same src/dst grid layout as ManualEntryForm's ConnectionForm, pre-filled
-
-#### Frontend — Workspace expansion
-
-- [x] Fetch credentials, credential-links, and connections in parallel alongside hosts (`Promise.all`)
-- [x] Add **Credentials** section (flat list): type badge, truncated value, fingerprint chip, comment; credential links as sub-rows; Edit + Delete per item
-- [x] Add **Connections** section (flat list): `src_ip → dst_ip`, users, type badge, timestamp; Edit + Delete per row
-- [x] Add Edit and Delete icon buttons to each existing Host card
-- [x] Wire all edit/delete modals in Workspace
-
-#### Frontend — OpSelector
-
-- [x] Refactor op list items to `display: flex` (sibling buttons, not nested — valid HTML)
-- [x] Add Edit and Delete buttons per op (revealed on hover via CSS opacity transition)
-- [x] `EditOpModal` — pre-filled name/description, calls `updateOperation`
-- [x] `DeleteOpModal` — UUID confirmation, calls `deleteOperation`
-
-#### Frontend — API additions
-
-- [x] `api/operations.ts`: add `updateOperation(opId, data)`
-- [x] `api/credentials.ts`: add `updateCredential(credId, data)`, `updateCredentialLink(linkId, data)`
-- [x] `api/connections.ts`: add `updateConnection(connectionId, data)`
-- [x] `types/index.ts`: add `UpdateOperationRequest`, `UpdateCredentialRequest`, `UpdateCredentialLinkRequest`, `UpdateConnectionRequest`
-
-### Phase 4 — HostUser & Schema Hardening
-
-Implement the `HostUser` entity and the `ConnectionRecord` authentication fields before the graph visualization phase needs them. All changes are additive — no existing endpoints or data break.
-
-#### Backend
-
-- [x] Add `HostUser` ORM model (`backend/models.py`): `id`, `host_id` (FK→hosts, cascade), `username`, `shell` (nullable), `home_dir` (nullable), `source` enum (`manual | passwd_file | authorized_keys | log_evidence`), `created_at`
-- [x] Add `users` relationship to `Host` model (cascade delete)
-- [x] Add `host_user_id` nullable FK (→ host_users, SET NULL on delete) to `CredentialLink` model; keep existing `username` string — it stays the authoritative pivot-query field
-- [x] Add `auth_method` nullable enum (`publickey | password | keyboard-interactive | hostbased | unknown`) to `ConnectionRecord`
-- [x] Add `credential_id` nullable FK (→ credentials, SET NULL on delete) to `ConnectionRecord`
-- [x] New Alembic migration: create `host_users` table; add `host_user_id` to `credential_links`; add `auth_method` + `credential_id` to `connection_records` (all via `batch_alter_table` for SQLite)
-- [x] Add `HostUserCreate` / `HostUserRead` Pydantic schemas (`backend/schemas.py`)
-- [x] Update `HostRead` to include `users: list[HostUserRead] = []`
-- [x] Update `CredentialLinkCreate` / `CredentialLinkRead` to include optional `host_user_id`
-- [x] Update `ConnectionRecordCreate` / `ConnectionRecordRead` to include optional `auth_method` and `credential_id`
-- [x] Add HostUser endpoints to `backend/routers/hosts.py`:
-  - `POST /api/hosts/{host_id}/users`
-  - `GET /api/hosts/{host_id}/users`
-  - `DELETE /api/hosts/{host_id}/users/{user_id}`
-- [x] Update `POST /api/ops/{op_id}/connections` in `backend/routers/connections.py` to accept and persist `auth_method` and `credential_id`; validate `credential_id` belongs to the same op if provided
-- [x] Tests: `tests/test_api/test_host_users.py` (create, list, delete, host-read includes users, optional FK on credential-link); extend `tests/test_api/test_connections.py` (auth_method, credential_id, nil fields still work)
-
-#### Frontend
-
-- [x] Add `HostUser` interface and `CreateHostUserRequest` to `frontend/src/types/index.ts`
-- [x] Update `Host` interface: add `users: HostUser[]`
-- [x] Update `CredentialLink` interface: add `host_user_id: string | null`
-- [x] Update `ConnectionRecord` / `CreateConnectionRequest`: add `auth_method` and `credential_id` fields
-- [x] Add `listHostUsers`, `createHostUser`, `deleteHostUser` to `frontend/src/api/hosts.ts`
-- [x] `ManualEntryForm` — HostForm: add repeatable "Known Users" rows (username, optional shell, source selector); calls `createHostUser` per row after host is created — same add/remove pattern as IP rows
-- [x] `ManualEntryForm` — ConnectionForm: add `auth_method` dropdown and optional credential selector (loaded from current op)
+See git history for details. All infrastructure, CRUD APIs, edit/delete UI, HostUser entity, and schema hardening (auth_method + credential_id on ConnectionRecord; name field on Credential) are implemented and tested.
 
 ### Phase 5 — Host Selection & Graph Visualization
+
+#### Backend — Graph API
+
+New router: `backend/routers/graph.py`. New service: `backend/services/graph_builder.py`.
+
+```
+GET /api/ops/{op_id}/graph?host_ids=id1,id2,...
+```
+
+Returns nodes + edges for the requested host subset (omit `host_ids` for all hosts in op).
+
+Response shape:
+```json
+{
+  "nodes": [
+    {
+      "host_id": "...", "nickname": "...", "ips": ["10.0.0.1"],
+      "user_count": 2, "credential_count": 3
+    }
+  ],
+  "edges": [
+    {
+      "src_host_id": "...", "dst_host_id": "...",
+      "confidence": "confirmed",
+      "evidence": [...],
+      "pivotable_users": [
+        {"src_user": "bob", "dst_user": "root", "method": "key", "credential_id": "..."}
+      ]
+    }
+  ]
+}
+```
+
+`graph_builder.py` aggregates evidence in two passes:
+1. **Key matches** — CredentialLink pairs where a `found_on_disk` link on host A shares a fingerprint with an `authorized_key` link on host B → `key_match` evidence, `confirmed` confidence
+2. **Connection records** — ConnectionRecord rows grouped by (src_host_id, dst_host_id) → `connection_log`, `bash_history`, or `known_hosts` evidence
+
+Edge `confidence` = highest confidence among all evidence items.
+
+```
+GET /api/ops/{op_id}/hosts/{host_id}/expand?evidence_type=all|key_match|connection_log|indicator
+```
+
+Returns all hosts related to the given host (with their edges), filtered by evidence type. Used by double-click / right-click "Expand" on graph nodes.
+
+Tests: `tests/test_api/test_graph.py`, `tests/test_services/test_graph_builder.py`
+
+#### Frontend
 
 - [ ] Host query/filter panel: show all hosts in current op as a searchable/filterable list with checkboxes
 - [ ] Selected hosts render on a cytoscape.js canvas as labeled nodes
@@ -378,7 +252,7 @@ class BaseParser:
     def parse(self, content: bytes, metadata: UploadMetadata) -> ParseResult: ...
 ```
 
-**Note:** Usernames from parsed files are stored as plain strings on `CredentialLink.username` and `ConnectionRecord.src_user/dst_user`. When a file reveals that a user *account exists* on a host (e.g. `/etc/passwd`, LDAP dump), create a `HostUser` record instead. When a file reveals a credential belongs to a user, create a `CredentialLink` with the `username` string (and optionally link `host_user_id` if a matching `HostUser` record exists).
+**Note:** Usernames from parsed files are stored as plain strings on `CredentialLink.username` and `ConnectionRecord.src_user/dst_user`. When a file reveals that a user *account exists* on a host (e.g. `/etc/passwd`, LDAP dump), create a `HostUser` record. When a file reveals a credential belongs to a user, create a `CredentialLink` with the `username` string (and optionally link `host_user_id` if a matching `HostUser` record exists).
 
 #### Upload API
 
@@ -389,48 +263,48 @@ class BaseParser:
 
 #### Parsers to implement (one at a time, with tests):
 
-**4a. `.ssh/authorized_keys`** (per user)
+**6a. `.ssh/authorized_keys`** (per user)
 - Extract public keys, compute SHA256 fingerprints via paramiko
 - Create Credential (cred_type=public_key, fingerprint inferred) + CredentialLink (relationship=authorized_key, username from upload metadata)
 - Create or reuse HostUser (source=authorized_keys) for the username on this host; set `host_user_id` on the resulting CredentialLink
 
-**4b. `.ssh/known_hosts`** (per user)
+**6b. `.ssh/known_hosts`** (per user)
 - Parse hostnames/IPs and key fingerprints (handle hashed known_hosts too)
 - Create ConnectionRecords (outbound indicators from this host)
 - Match IPs to existing hosts; create unresolved placeholder hosts for unknown IPs
 
-**4c. `.ssh/config`** (per user)
+**6c. `.ssh/config`** (per user)
 - Parse Host/Match blocks: Hostname, User, Port, IdentityFile, ProxyJump
 - Create connection hints and host aliases
 - If IdentityFile references a key we have, link them
 
-**4d. SSH private/public key files** (id_rsa, id_ed25519, etc.)
+**6d. SSH private/public key files** (id_rsa, id_ed25519, etc.)
 - Read key with paramiko, compute SHA256 fingerprint
 - Store as Credential with relationship=found_on_disk; set `username` from upload metadata
 - Create or reuse HostUser (source=log_evidence or manual) for the username on this host; set `host_user_id` on the CredentialLink
 - **Immediately cross-reference** fingerprint against ALL authorized_keys in the op
 - Return any newly discovered pivot opportunities in the ParseResult
 
-**4e. `auth.log` / `secure`** (including .gz)
+**6e. `auth.log` / `secure`** (including .gz)
 - Decompress gzip if needed
 - Parse sshd log lines: accepted/failed, user, source IP, auth method (publickey/password), key fingerprint if present, timestamp
 - Store as inbound ConnectionRecords on this host (dst_user = username from log line)
-- Set `auth_method` on ConnectionRecord from the log line (publickey / password / etc.)
-- If log line includes a key fingerprint, match it against `Credential.fingerprint` in the op — if found, set `credential_id` on the ConnectionRecord (raises confidence to "confirmed")
+- Set `auth_method` on ConnectionRecord from the log line
+- If log line includes a key fingerprint, match against `Credential.fingerprint` in the op — if found, set `credential_id` on the ConnectionRecord (raises confidence to "confirmed")
 - Match source IPs to existing hosts
 
-**4f. `wtmp`** (binary format)
+**6f. `wtmp`** (binary format)
 - Parse using struct-based parsing (utmp record format)
 - Extract login records: user, source IP/hostname, login/logout timestamps
 - Store as inbound ConnectionRecords (dst_user = username from record)
 
-**4g. `.bash_history`** (per user)
+**6g. `.bash_history`** (per user)
 - Regex for: `ssh`, `scp`, `rsync`, `sftp`, `ssh-copy-id` commands
 - Extract destination host/IP, user (@user syntax, -l flag), port (-p flag)
 - Store as outbound ConnectionRecords from this host
 - Look for `ssh-keygen`, `ssh-add` as context indicators (note in host comment)
 
-**4h. `/etc/passwd`**
+**6h. `/etc/passwd`**
 - Extract user accounts (username, shell, home_dir)
 - Create `HostUser` records (source=`passwd_file`) for each non-system user — NOT CredentialLinks or ConnectionRecords
 - Skip system users (uid < 1000) by default, but keep root and any with a valid login shell
@@ -441,7 +315,7 @@ class BaseParser:
 - "File Upload" tab in the Add modal
 - Dropdown to select file type (from enum of supported types)
 - Host selector (required — which host did this file come from?)
-- Username field (required for per-user files: authorized_keys, known_hosts, config, bash_history, private keys — stored as plain string on resulting CredentialLinks/ConnectionRecords; also creates a HostUser record if one doesn't exist for that host+username)
+- Username field (required for per-user files: authorized_keys, known_hosts, config, bash_history, private keys)
 - Drag-and-drop upload area
 - After upload, show parsing results summary:
   - "Found: 3 new hosts, 5 connection records, 2 SSH keys"
@@ -522,6 +396,8 @@ A standalone MCP (Model Context Protocol) server that lets an AI agent (e.g. Cla
 
 Local dev alternative: use `uv run` directly with `LOCKPICK_URL=http://localhost:8000`.
 
+---
+
 ## Architecture Rules
 
 1. **Backend and frontend are separate directories**: `backend/` and `frontend/`
@@ -536,51 +412,9 @@ Local dev alternative: use `uv run` directly with `LOCKPICK_URL=http://localhost
 10. **IP resolution is best-effort** — when a parser finds an IP, try to match it to an existing host. If no match, create an "unresolved" host with just that IP. The user can merge hosts later.
 11. **Use `uv` for all Python operations** — `uv sync` to install deps, `uv run` to execute scripts/tests, `uv add` to add new packages. Never use raw `pip`. The `pyproject.toml` is the single source of truth for Python dependencies. Commit `uv.lock` to git.
 
-## Git Workflow
+---
 
-Use **conventional commits** with short, descriptive messages. **Commit as you go** — after every meaningful unit of work, not at the end of a phase or session.
-
-### Commit granularity:
-
-- **Commit immediately** after each meaningful change: new model, new router, new parser, new component, schema migration, test file
-- Do NOT squash an entire phase into a single commit
-- Do NOT commit broken/untested code — run `uv run --directory backend pytest ../tests/ -v` before committing backend changes
-
-### Commit message format:
-
-```
-type(scope): short description
-
-types: feat, fix, refactor, test, docs, chore
-scope: backend, frontend, parsers, docker, schema
-```
-
-### Examples:
-
-```
-feat(schema): add Host, HostIP, HostUser models
-feat(backend): CRUD endpoints for operations
-feat(frontend): operation selector page with dark theme
-feat(parsers): authorized_keys parser with fingerprint extraction
-test(parsers): fixture files and tests for auth_log parser
-fix(backend): handle duplicate IPs during upload resolution
-docs: update AGENT.md status to Phase 2 complete
-chore(docker): add multi-stage build with uv caching
-```
-
-### Branch strategy:
-
-- Work directly on `main` — this is a new project, not a team codebase yet
-- If a phase turns out to be complex, the agent may create a feature branch and merge when stable
-
-### After each phase:
-
-1. Run all tests
-2. Commit any remaining changes
-3. Update the "Current Status" section in AGENT.md
-4. Commit that status update: `docs: mark Phase N complete`
-
-## File Structure
+## Planned File Structure
 
 ```
 lockpick/
@@ -589,25 +423,25 @@ lockpick/
 ├── README.md
 ├── CONTRIBUTING.md
 ├── data/                        # All persistent state (gitignored, Docker volume)
-│   ├── tracker.db               # SQLite database
-│   └── uploads/                 # Raw uploaded files organized by op_id
+│   ├── tracker.db
+│   └── uploads/
 │       └── {op_id}/
 ├── backend/
 │   ├── Dockerfile
-│   ├── pyproject.toml           # Project metadata + dependencies (uv managed)
-│   ├── uv.lock                  # Locked dependency versions
-│   ├── main.py                  # FastAPI app entry, CORS, lifespan
-│   ├── config.py                # Settings (DB path, upload path, etc.)
-│   ├── database.py              # SQLAlchemy engine, session, base
-│   ├── models.py                # All ORM models
-│   ├── schemas.py               # Pydantic request/response models
+│   ├── pyproject.toml
+│   ├── uv.lock
+│   ├── main.py
+│   ├── config.py
+│   ├── database.py
+│   ├── models.py
+│   ├── schemas.py
 │   ├── routers/
 │   │   ├── operations.py
 │   │   ├── hosts.py
 │   │   ├── credentials.py
 │   │   ├── connections.py
-│   │   ├── upload.py            # File upload + parsing trigger (Phase 6)
-│   │   └── graph.py             # Graph queries: expand node, find path, aggregated edges (Phase 5)
+│   │   ├── upload.py            # Phase 6
+│   │   └── graph.py             # Phase 5
 │   ├── parsers/
 │   │   ├── __init__.py          # BaseParser, ParseResult, parser registry
 │   │   ├── authorized_keys.py
@@ -619,72 +453,69 @@ lockpick/
 │   │   ├── bash_history.py
 │   │   └── passwd.py
 │   ├── services/
+│   │   ├── graph_builder.py     # Aggregate evidence into edge objects (Phase 5)
 │   │   ├── ip_resolver.py       # Match IPs to existing hosts
 │   │   ├── key_matcher.py       # Cross-reference key fingerprints across op
-│   │   ├── pivot_analysis.py    # BFS path finding between hosts (Phase 7)
-│   │   └── graph_builder.py     # Aggregate evidence into edge objects for frontend (Phase 5)
+│   │   └── pivot_analysis.py    # BFS path finding (Phase 7)
 │   └── alembic/
-│       └── ...
 ├── frontend/
 │   ├── Dockerfile
-│   ├── nginx.conf               # Serves built app + proxies /api to backend
+│   ├── nginx.conf
 │   ├── package.json
 │   ├── vite.config.ts
 │   └── src/
 │       ├── App.tsx
-│       ├── theme.ts             # Dark theme config
+│       ├── theme.ts
 │       ├── pages/
 │       │   ├── OpSelector.tsx
 │       │   └── Workspace.tsx
 │       ├── components/
-│       │   ├── AddDataModal.tsx         # FAB modal (tabs: manual / upload)
+│       │   ├── AddDataModal.tsx
 │       │   ├── ManualEntryForm.tsx
-│       │   ├── ConfirmDeleteModal.tsx   # Reusable delete confirmation (Phase 3)
-│       │   ├── DeleteOpModal.tsx        # Op delete with UUID confirmation (Phase 3)
-│       │   ├── EditModal.tsx            # Modal shell for edit forms (Phase 3)
-│       │   ├── EditHostForm.tsx         # Edit host nickname/comment/IPs (Phase 3)
-│       │   ├── EditCredentialForm.tsx   # Edit credential value/passphrase/comment (Phase 3)
-│       │   ├── EditCredentialLinkForm.tsx # Edit credential link fields (Phase 3)
-│       │   ├── EditConnectionForm.tsx   # Edit connection record fields (Phase 3)
-│       │   ├── FileUploadTab.tsx        # File upload UI (Phase 6)
-│       │   ├── GraphCanvas.tsx          # cytoscape.js wrapper (Phase 5)
-│       │   ├── NodeContextMenu.tsx      # Right-click menu for nodes (Phase 5)
-│       │   ├── EdgeContextMenu.tsx      # Right-click menu for edges (Phase 5)
-│       │   ├── HostDetailSidebar.tsx    # Host info panel on node click (Phase 5)
-│       │   ├── EdgeDetailPanel.tsx      # All evidence for an edge (Phase 5)
-│       │   ├── HostSelector.tsx         # Checkbox list for selecting hosts to display (Phase 5)
-│       │   ├── PathFinder.tsx           # Two-node path analysis UI (Phase 7)
-│       │   └── PathDetail.tsx           # Path result display (Phase 7)
-│       ├── api/                         # Typed API client functions
+│       │   ├── ConfirmDeleteModal.tsx
+│       │   ├── DeleteOpModal.tsx
+│       │   ├── EditModal.tsx
+│       │   ├── EditHostForm.tsx
+│       │   ├── EditCredentialForm.tsx
+│       │   ├── EditCredentialLinkForm.tsx
+│       │   ├── EditConnectionForm.tsx
+│       │   ├── FileUploadTab.tsx        # Phase 6
+│       │   ├── GraphCanvas.tsx          # Phase 5
+│       │   ├── NodeContextMenu.tsx      # Phase 5
+│       │   ├── EdgeContextMenu.tsx      # Phase 5
+│       │   ├── HostDetailSidebar.tsx    # Phase 5
+│       │   ├── EdgeDetailPanel.tsx      # Phase 5
+│       │   ├── HostSelector.tsx         # Phase 5
+│       │   ├── PathFinder.tsx           # Phase 7
+│       │   └── PathDetail.tsx           # Phase 7
+│       ├── api/
 │       │   ├── client.ts
 │       │   ├── operations.ts
 │       │   ├── hosts.ts
 │       │   ├── credentials.ts
 │       │   ├── connections.ts
-│       │   ├── graph.ts                 # Graph queries (Phase 5)
-│       │   └── upload.ts               # File upload (Phase 6)
-│       └── types/                       # TypeScript interfaces matching backend schemas
+│       │   ├── graph.ts                 # Phase 5
+│       │   └── upload.ts               # Phase 6
+│       └── types/
 │           └── index.ts
-├── mcp/                                 # MCP server — AI agent companion (Phase 9)
+├── mcp/                                 # Phase 9
 │   ├── Dockerfile
 │   ├── pyproject.toml
 │   ├── uv.lock
-│   ├── .python-version
-│   ├── server.py                        # FastMCP entry point
-│   ├── api_client.py                    # HTTP wrapper around Lockpick REST API
+│   ├── server.py
+│   ├── api_client.py
 │   ├── tools/
-│   │   ├── __init__.py
 │   │   ├── operations.py
 │   │   ├── hosts.py
 │   │   ├── credentials.py
 │   │   ├── connections.py
-│   │   ├── pivot.py                     # BFS find_pivot_paths tool
+│   │   ├── pivot.py
 │   │   └── search.py
 │   ├── tests/
 │   │   └── test_tools.py
-│   └── README.md                        # Claude Desktop connection instructions
+│   └── README.md
 ├── tests/
-│   ├── fixtures/                        # Sample files for parser tests
+│   ├── fixtures/
 │   │   ├── sample_authorized_keys
 │   │   ├── sample_known_hosts
 │   │   ├── sample_auth.log
@@ -694,10 +525,6 @@ lockpick/
 │   │   ├── sample_ssh_config
 │   │   ├── sample_passwd
 │   │   └── sample_keys/
-│   │       ├── id_rsa
-│   │       ├── id_rsa.pub
-│   │       ├── id_ed25519
-│   │       └── id_ed25519.pub
 │   ├── test_parsers/
 │   │   ├── test_authorized_keys.py
 │   │   ├── test_known_hosts.py
@@ -720,23 +547,5 @@ lockpick/
 │   │   ├── test_pivot_analysis.py
 │   │   └── test_graph_builder.py
 │   └── conftest.py
-└── .gitignore                   # Includes data/, *.db, node_modules, __pycache__, .env
+└── .gitignore
 ```
-
-## Current Status
-
-**Phase**: Phase 2 complete
-**Last completed**: Phase 2 — Manual Data Entry
-**Next step**: Phase 3 — Edit & Delete
-
-## Notes for the Agent
-
-- Implement one phase at a time. After each phase, run all tests and confirm end-to-end before proceeding.
-- When implementing parsers, handle malformed/incomplete files gracefully — real-world red team data is messy. Never crash on bad input.
-- For SSH key fingerprint matching, use SHA256 fingerprints consistently. Use paramiko for key parsing.
-- Edge aggregation is the core feature. When building graph_builder.py, think of it as: "collect ALL evidence between two hosts into one rich edge object." The frontend just renders what you give it.
-- Dark theme from the start — not bolted on later. Use a CSS variable system or a component library with theme support.
-- The right-click context menu on nodes is critical for usability. "Expand by relationship type" means: when expanding a node, the backend should accept a filter parameter for which evidence types to follow.
-- For IP resolution: maintain an in-memory lookup (ip → host_id) per operation during parsing sessions. When a new file is uploaded, rebuild the lookup from HostIP table, then use it to resolve IPs in the parsed data.
-- Docker builds should be fast for development. Use multi-stage builds, copy `pyproject.toml` + `uv.lock` first and run `uv sync` to cache the dependency layer before copying source code. Use `uv` inside the Dockerfile (install via `COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv`).
-- The `./data/` directory is sacred. It's the only thing that matters for backup/restore. Everything else is reproducible from source.
