@@ -180,6 +180,19 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 **Edge rendering on the graph should reflect ALL evidence**, not just the "best" one. The edge tooltip/detail panel should list every piece of evidence.
 
+## Current Status
+
+**Last completed phase: Phase 3 — Edit & Delete** (commit `20e7140`)
+
+**Post-phase fixes applied** (commit `f95a9af`):
+- Credential form host-selector bug: `linkHostId` initialized as `''` with an explicit placeholder option, preventing phantom validation errors when hosts load asynchronously
+- Client-side IPv4/IPv6 validation in both `HostForm` (ManualEntryForm) and `EditHostForm`
+- Page-refresh persistence: `App.tsx` saves selected op to `sessionStorage`; Workspace handles 404 on load by calling `onBack()` so a stale session entry doesn't leave the user stuck
+
+**Next phase: Phase 4 — HostUser & Schema Hardening**
+
+---
+
 ## Implementation Phases
 
 Implement these phases **sequentially**. Each phase should be a working, testable increment. Write tests as you go. Update this document's "Current Status" section after completing each phase.
