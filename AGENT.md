@@ -184,10 +184,13 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 **Last completed phase: Phase 3 — Edit & Delete** (commit `20e7140`)
 
-**Post-phase fixes applied** (commit `f95a9af`):
-- Credential form host-selector bug: `linkHostId` initialized as `''` with an explicit placeholder option, preventing phantom validation errors when hosts load asynchronously
-- Client-side IPv4/IPv6 validation in both `HostForm` (ManualEntryForm) and `EditHostForm`
-- Page-refresh persistence: `App.tsx` saves selected op to `sessionStorage`; Workspace handles 404 on load by calling `onBack()` so a stale session entry doesn't leave the user stuck
+**Post-phase fixes applied:**
+- Credential form host-selector bug: `linkHostId` initialized as `''` with an explicit placeholder option, preventing phantom validation errors when hosts load asynchronously (commit `f95a9af`)
+- Client-side IPv4/IPv6 validation in both `HostForm` (ManualEntryForm) and `EditHostForm` (commit `f95a9af`)
+- Page-refresh persistence: `App.tsx` saves selected op to `sessionStorage`; Workspace handles 404 on load by calling `onBack()` so a stale session entry doesn't leave the user stuck (commit `f95a9af`)
+- Docker: added `backend/.dockerignore` (excludes `.venv`, `__pycache__`, `.pyc`) and `--no-dev` on `uv run` in CMD — prevents packages being re-downloaded on every container start (commit `7cc6b56`)
+- Migration `a1b2c3d4e5f6`: removed `drop_constraint("fk_credential_links_host_user_id")` — SQLite does not store named FK constraints so batch mode raised `ValueError`; column drop alone is sufficient (commit `bdfa1b5`)
+- Connection form: IP address field becomes a dropdown of the host's known IPs when a host is selected; falls back to free-text when no host is selected or host has no IPs (commit `1f27941`)
 
 **Next phase: Phase 4 — HostUser & Schema Hardening**
 
