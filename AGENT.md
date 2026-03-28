@@ -183,16 +183,16 @@ Implement these phases **sequentially**. Each phase should be a working, testabl
 
 ### Phase 2 — Manual Data Entry
 
-- [ ] Frontend: after selecting an op, show the main workspace
-- [ ] Floating action button (bottom-right corner, + icon)
-- [ ] Clicking FAB opens a modal with tabs: "Manual Entry" | "File Upload" (upload tab is placeholder for Phase 4)
-- [ ] Manual entry form supports adding:
+- [x] Frontend: after selecting an op, show the main workspace
+- [x] Floating action button (bottom-right corner, + icon)
+- [x] Clicking FAB opens a modal with tabs: "Manual Entry" | "File Upload" (upload tab is placeholder for Phase 4)
+- [x] Manual entry form supports adding:
   - Host (nickname, one or more IPs, comment)
   - User on a host (select host, enter username — with evidence source)
   - Credential (type, value) linked to a host+user with relationship type
   - Connection record (src host → dst host/IP, users, type)
-- [ ] Form validates that HostUser entries require an evidence source
-- [ ] All entries tagged with op_id based on current op context
+- [x] Form validates that HostUser entries require an evidence source
+- [x] All entries tagged with op_id based on current op context
 
 ### Phase 3 — Host Selection & Graph Visualization
 
@@ -502,9 +502,9 @@ lockpick/
 
 ## Current Status
 
-**Phase**: Phase 1 complete
-**Last completed**: Phase 1 — Project Skeleton & Infrastructure
-**Next step**: Phase 2 — Manual Data Entry
+**Phase**: Phase 2 complete
+**Last completed**: Phase 2 — Manual Data Entry
+**Next step**: Phase 3 — Host Selection & Graph Visualization
 
 ## Notes for the Agent
 
