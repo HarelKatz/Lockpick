@@ -6,11 +6,8 @@ import type { AuthMethod, ConnectionRecord, Credential, Host } from '../types'
 
 function credLabel(c: Credential): string {
   if (c.name) return c.name
-  if (c.cred_type === 'password') return c.comment ? `[password] (${c.comment})` : '[password]'
-  const parts: string[] = [c.key_type ?? 'key']
-  if (c.fingerprint) parts.push(c.fingerprint.slice(7, 19) + '…')
-  if (c.comment) parts.push(`(${c.comment})`)
-  return parts.join(' ')
+  if (c.comment) return c.comment
+  return c.cred_type === 'password' ? '[unnamed password]' : '[unnamed key]'
 }
 import { updateConnection } from '../api/connections'
 import styles from './EditModal.module.css'

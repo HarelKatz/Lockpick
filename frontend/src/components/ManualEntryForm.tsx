@@ -250,13 +250,10 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
 
 // ─── Shared helper ────────────────────────────────────────────────────────────
 
-function credLabel(c: { name: string | null; cred_type: string; key_type: string | null; fingerprint: string | null; comment: string | null }): string {
+function credLabel(c: { name: string | null; cred_type: string; comment: string | null }): string {
   if (c.name) return c.name
-  if (c.cred_type === 'password') return c.comment ? `[password] (${c.comment})` : '[password]'
-  const parts: string[] = [c.key_type ?? 'key']
-  if (c.fingerprint) parts.push(c.fingerprint.slice(7, 19) + '…')
-  if (c.comment) parts.push(`(${c.comment})`)
-  return parts.join(' ')
+  if (c.comment) return c.comment
+  return c.cred_type === 'password' ? '[unnamed password]' : '[unnamed key]'
 }
 
 // ─── Credential form ──────────────────────────────────────────────────────────
