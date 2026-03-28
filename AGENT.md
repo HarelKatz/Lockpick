@@ -64,6 +64,15 @@ Host
 ├── HostIP (one-to-many) — the IPs that BELONG to this host
 │   └── id, host_id (FK), ip_address, source (enum: manual | parsed), first_seen_at
 │       ** This is how we resolve "traffic from 10.0.0.5" → "that's HostA" **
+│
+├── HostUser (one-to-many) — user ACCOUNTS known to exist on this host
+│   └── id, host_id (FK), username, shell (nullable), home_dir (nullable)
+│       source (enum: manual | passwd_file | authorized_keys | log_evidence)
+│       created_at
+│       ** Represents a user account on a specific host — NOT a global user entity.
+│          "bob" on HostA and "bob" on HostB are two separate HostUser records.
+│          Populated from /etc/passwd parsing, LDAP dumps, or manual entry.
+│          A user can exist on a host without having any credentials linked. **
 
 Credential (standalone entity — a key or password can unlock multiple hosts)
 ├── id (UUID), op_id (FK)
@@ -75,19 +84,24 @@ Credential (standalone entity — a key or password can unlock multiple hosts)
 ├── comment (nullable), created_at
 │
 ├── CredentialLink (junction: where was this credential found and what does it grant?)
-│   └── id, credential_id (FK), host_id (FK), username (nullable string — which user on that host)
+│   └── id, credential_id (FK), host_id (FK)
+│       username (nullable string — which user on that host; AUTHORITATIVE for pivot queries)
+│       host_user_id (nullable FK → HostUser — optional enrichment; set when a formal HostUser record exists)
 │       relationship_type (enum: found_on_disk | authorized_key | accepted_password | used_in_connection)
 │       file_source (nullable — which uploaded file produced this link)
 │       ** Example: private key found in /home/bob/.ssh/id_rsa on HostA →
 │          credential_id=key1, host_id=HostA, username="bob", relationship=found_on_disk
 │          That same key's fingerprint matches authorized_keys on HostB for user root →
 │          credential_id=key1, host_id=HostB, username="root", relationship=authorized_key
-│          This gives us a pivot: HostA(bob) → HostB(root) via key1 **
+│          This gives us a pivot: HostA(bob) → HostB(root) via key1
+│
+│          username is always the pivot query field. host_user_id is optional — link it
+│          when a HostUser record exists for that (host, username) pair. **
 ```
 
-**Usernames are plain strings throughout** — there is no standalone User entity. Usernames appear as:
-- `ConnectionRecord.src_user` / `dst_user` (who made/received the connection)
-- `CredentialLink.username` (which user on a host this credential belongs to)
+**Usernames in CredentialLink:** `username` (plain string) is the authoritative field for all pivot path queries. `host_user_id` is optional enrichment for when a formal HostUser record exists. Pivot logic reads `username`, never `host_user_id`.
+
+**Usernames in ConnectionRecord:** `src_user` / `dst_user` are plain strings from raw log evidence. They are not linked to HostUser records (log lines are raw facts, not structured entities).
 
 ### Edges / Relationships Between Hosts
 
@@ -102,6 +116,14 @@ ConnectionRecord (individual pieces of evidence — raw facts from logs/files)
 ├── direction_context (enum: from_src_logs | from_dst_logs)
 │   ** Was this record extracted from the SOURCE's files (bash_history, known_hosts)
 │      or the DESTINATION's files (auth.log, wtmp)? This matters for confidence. **
+├── auth_method (nullable enum: publickey | password | keyboard-interactive | hostbased | unknown)
+│   ** How the connection was authenticated. Set when the source records it
+│      (e.g. auth.log: "Accepted publickey for root"). Null for sources that don't
+│      record auth method (bash_history, wtmp). **
+├── credential_id (nullable FK → Credential)
+│   ** The specific credential used, if identifiable. Set when auth.log includes a
+│      key fingerprint that matches a Credential in the op. Raises confidence from
+│      "observed" to "confirmed+observed" for that connection. **
 ├── timestamp (nullable), raw_line (nullable)
 ├── source_file (which uploaded file produced this)
 ├── created_at
@@ -126,10 +148,12 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
     },
     {
       "type": "connection_log",
-      "detail": "auth.log on HostB shows successful SSH login from 10.0.0.5 (HostA) as root",
+      "detail": "auth.log on HostB shows successful SSH login from 10.0.0.5 (HostA) as root via publickey (SHA256:abc...)",
+      "auth_method": "publickey",
+      "credential_id": "...",
       "timestamp": "2024-03-15T14:22:00",
       "source_file": "hostB_auth.log",
-      "confidence": "observed"
+      "confidence": "confirmed"
     },
     {
       "type": "known_hosts",
@@ -178,7 +202,7 @@ Implement these phases **sequentially**. Each phase should be a working, testabl
 
 - [x] Frontend: after selecting an op, show the main workspace (creating an op auto-navigates into it)
 - [x] Floating action button (bottom-right corner, + icon)
-- [x] Clicking FAB opens a modal with tabs: "Manual Entry" | "File Upload" (upload tab is placeholder for Phase 4)
+- [x] Clicking FAB opens a modal with tabs: "Manual Entry" | "File Upload" (upload tab is placeholder for Phase 5)
 - [x] Manual entry form — three sub-forms (Host / Credential / Connection):
   - **Host**: nickname, one or more IPs, comment
   - **Credential**: type (password / private_key / public_key), value, optional passphrase (for encrypted private keys), optional comment; optionally linked to a host + username + relationship type. `key_type` and `fingerprint` are inferred by the backend — not user input.
@@ -186,11 +210,57 @@ Implement these phases **sequentially**. Each phase should be a working, testabl
 - [x] All entries tagged with op_id based on current op context
 - [x] Workspace shows hosts as cards with IP chips
 
-### Phase 3 — Host Selection & Graph Visualization
+### Phase 3 — Edit & Delete
+
+Full edit and delete capabilities for every entity. The backend already exposes most PATCH/DELETE endpoints; this phase surfaces them in the UI and fills the remaining backend gaps.
+
+#### Backend
+
+- [ ] Expand `CredentialUpdate` schema: add `value` and `passphrase` fields (re-infer `fingerprint`/`key_type` via paramiko when `value` changes)
+- [ ] Add `CredentialLinkUpdate` schema: `username`, `relationship_type`, `file_source`
+- [ ] Add `ConnectionRecordUpdate` schema: all mutable fields optional
+- [ ] Expand `PATCH /credentials/{cred_id}` to handle value/passphrase changes with fingerprint re-inference
+- [ ] Add `PATCH /credential-links/{link_id}`
+- [ ] Add `PATCH /connections/{connection_id}`
+- [ ] Tests: `tests/test_api/test_credentials.py`, `tests/test_api/test_connections.py`
+
+#### Frontend — new components
+
+- [ ] `ConfirmDeleteModal` — reusable "Are you sure?" dialog with danger-styled button
+- [ ] `DeleteOpModal` — delete operation modal; user must type the full op UUID to confirm
+- [ ] `EditModal` — thin modal shell (title + X button + Esc close) that wraps entity-specific edit forms
+- [ ] `EditHostForm` — pre-filled nickname/comment; IPs managed inline (add/remove with immediate API calls)
+- [ ] `EditCredentialForm` — value (textarea), passphrase, comment; cred_type is read-only; hint shown when value changed ("fingerprint will be re-inferred")
+- [ ] `EditCredentialLinkForm` — username, relationship_type, file_source editable; credential and host shown read-only
+- [ ] `EditConnectionForm` — same src/dst grid layout as ManualEntryForm's ConnectionForm, pre-filled
+
+#### Frontend — Workspace expansion
+
+- [ ] Fetch credentials, credential-links, and connections in parallel alongside hosts (`Promise.all`)
+- [ ] Add **Credentials** section (flat list): type badge, truncated value, fingerprint chip, comment; credential links as sub-rows; Edit + Delete per item
+- [ ] Add **Connections** section (flat list): `src_ip → dst_ip`, users, type badge, timestamp; Edit + Delete per row
+- [ ] Add Edit and Delete icon buttons to each existing Host card
+- [ ] Wire all edit/delete modals in Workspace
+
+#### Frontend — OpSelector
+
+- [ ] Refactor op list items to `display: flex` (sibling buttons, not nested — valid HTML)
+- [ ] Add Edit and Delete buttons per op (revealed on hover via CSS opacity transition)
+- [ ] `EditOpModal` — pre-filled name/description, calls `updateOperation`
+- [ ] `DeleteOpModal` — UUID confirmation, calls `deleteOperation`
+
+#### Frontend — API additions
+
+- [ ] `api/operations.ts`: add `updateOperation(opId, data)`
+- [ ] `api/credentials.ts`: add `updateCredential(credId, data)`, `updateCredentialLink(linkId, data)`
+- [ ] `api/connections.ts`: add `updateConnection(connectionId, data)`
+- [ ] `types/index.ts`: add `UpdateOperationRequest`, `UpdateCredentialRequest`, `UpdateCredentialLinkRequest`, `UpdateConnectionRequest`
+
+### Phase 4 — Host Selection & Graph Visualization
 
 - [ ] Host query/filter panel: show all hosts in current op as a searchable/filterable list with checkboxes
 - [ ] Selected hosts render on a cytoscape.js canvas as labeled nodes
-- [ ] Node label shows nickname; badge/icon shows number of known users and credentials
+- [ ] Node label shows nickname; badge/icon shows number of known users (from HostUser table) and credentials
 - [ ] Nodes are draggable, graph uses force-directed layout (cola or cose-bilkent)
 - [ ] Double-click a node to "expand" — backend returns all related hosts and aggregated edges, new nodes/edges added to canvas
 - [ ] Edges rendered with:
@@ -207,14 +277,14 @@ Implement these phases **sequentially**. Each phase should be a working, testabl
   - "Expand by indicators only" — only show hosts with known_hosts/bash_history links
   - Separator
   - "Hide this node" — remove from canvas (not from DB)
-  - "Edit host" — open edit form
-  - "Delete host" — delete from DB with confirmation
+  - "Edit host" — open edit form (reuses EditHostForm from Phase 3)
+  - "Delete host" — delete from DB with confirmation (reuses ConfirmDeleteModal from Phase 3)
 - [ ] **Right-click context menu on edges:**
   - "Show evidence detail" — open evidence panel
   - "Hide this edge" — remove from canvas
 - [ ] Hidden nodes/edges can be restored via "Show all" button or re-selecting from the host list
 
-### Phase 4 — File Upload & Parsing Engine
+### Phase 5 — File Upload & Parsing Engine
 
 Build a parsing engine on the backend. Each parser is a module in `backend/parsers/`. All parsers implement a common interface.
 
@@ -232,7 +302,7 @@ class BaseParser:
     def parse(self, content: bytes, metadata: UploadMetadata) -> ParseResult: ...
 ```
 
-**Note:** There is no HostUser entity — usernames from parsed files are stored as plain strings directly on `CredentialLink.username` and `ConnectionRecord.src_user/dst_user`.
+**Note:** Usernames from parsed files are stored as plain strings on `CredentialLink.username` and `ConnectionRecord.src_user/dst_user`. When a file reveals that a user *account exists* on a host (e.g. `/etc/passwd`, LDAP dump), create a `HostUser` record instead. When a file reveals a credential belongs to a user, create a `CredentialLink` with the `username` string (and optionally link `host_user_id` if a matching `HostUser` record exists).
 
 #### Upload API
 
@@ -246,6 +316,7 @@ class BaseParser:
 **4a. `.ssh/authorized_keys`** (per user)
 - Extract public keys, compute SHA256 fingerprints via paramiko
 - Create Credential (cred_type=public_key, fingerprint inferred) + CredentialLink (relationship=authorized_key, username from upload metadata)
+- Create or reuse HostUser (source=authorized_keys) for the username on this host; set `host_user_id` on the resulting CredentialLink
 
 **4b. `.ssh/known_hosts`** (per user)
 - Parse hostnames/IPs and key fingerprints (handle hashed known_hosts too)
@@ -259,7 +330,8 @@ class BaseParser:
 
 **4d. SSH private/public key files** (id_rsa, id_ed25519, etc.)
 - Read key with paramiko, compute SHA256 fingerprint
-- Store as Credential with relationship=found_on_disk
+- Store as Credential with relationship=found_on_disk; set `username` from upload metadata
+- Create or reuse HostUser (source=log_evidence or manual) for the username on this host; set `host_user_id` on the CredentialLink
 - **Immediately cross-reference** fingerprint against ALL authorized_keys in the op
 - Return any newly discovered pivot opportunities in the ParseResult
 
@@ -267,6 +339,8 @@ class BaseParser:
 - Decompress gzip if needed
 - Parse sshd log lines: accepted/failed, user, source IP, auth method (publickey/password), key fingerprint if present, timestamp
 - Store as inbound ConnectionRecords on this host (dst_user = username from log line)
+- Set `auth_method` on ConnectionRecord from the log line (publickey / password / etc.)
+- If log line includes a key fingerprint, match it against `Credential.fingerprint` in the op — if found, set `credential_id` on the ConnectionRecord (raises confidence to "confirmed")
 - Match source IPs to existing hosts
 
 **4f. `wtmp`** (binary format)
@@ -282,15 +356,16 @@ class BaseParser:
 
 **4h. `/etc/passwd`**
 - Extract user accounts (username, shell, home_dir)
-- Create ConnectionRecords or CredentialLinks as evidence; store username as a plain string
-- Skip system users (uid < 1000) by default, but keep root and any with valid shells
+- Create `HostUser` records (source=`passwd_file`) for each non-system user — NOT CredentialLinks or ConnectionRecords
+- Skip system users (uid < 1000) by default, but keep root and any with a valid login shell
+- If a matching `HostUser` already exists for that (host, username), update shell/home_dir rather than creating a duplicate
 
 #### File upload frontend:
 
 - "File Upload" tab in the Add modal
 - Dropdown to select file type (from enum of supported types)
 - Host selector (required — which host did this file come from?)
-- Username field (required for per-user files: authorized_keys, known_hosts, config, bash_history, private keys — stored as plain string on resulting CredentialLinks/ConnectionRecords)
+- Username field (required for per-user files: authorized_keys, known_hosts, config, bash_history, private keys — stored as plain string on resulting CredentialLinks/ConnectionRecords; also creates a HostUser record if one doesn't exist for that host+username)
 - Drag-and-drop upload area
 - After upload, show parsing results summary:
   - "Found: 3 new hosts, 5 connection records, 2 SSH keys"
@@ -298,7 +373,7 @@ class BaseParser:
   - "New pivot opportunity: HostA(bob) → HostC(root) via key SHA256:xyz..."
 - Support uploading multiple files in sequence (form resets but keeps host/user selection)
 
-### Phase 5 — Pivot Path Analysis
+### Phase 6 — Pivot Path Analysis
 
 - [ ] Backend endpoint: given two hosts, find all pivot paths (BFS on aggregated edge graph)
 - [ ] Path results include: each hop's evidence, required credentials, confidence per hop
@@ -307,7 +382,7 @@ class BaseParser:
 - [ ] Path detail panel showing each hop with full evidence breakdown
 - [ ] Ability to filter paths by minimum confidence level
 
-### Phase 6 — Polish & UX
+### Phase 7 — Polish & UX
 
 - [ ] Global search across all data (hosts, IPs, users, key fingerprints, comments)
 - [ ] Export op data as JSON (full op state: hosts, creds, connections, everything)
@@ -317,6 +392,59 @@ class BaseParser:
 - [ ] Bulk file upload (multiple files, auto-detect type where possible)
 - [ ] Activity log (who added what, when — basic audit trail, stored in DB)
 - [ ] Notification banner when data has changed since your last query ("15 new records since your last refresh" — click to refresh)
+
+### Phase 8 — MCP Server
+
+A standalone MCP (Model Context Protocol) server that lets an AI agent (e.g. Claude Desktop) help a red teamer navigate the operation data and find pivot paths using natural language. This phase is last — implement only when all other phases are complete and stable.
+
+#### Architecture
+
+- Standalone Python package in `mcp/` — does **not** import from `backend/`, calls the Lockpick REST API over HTTP
+- Uses the `mcp` Python package (FastMCP high-level API)
+- Configurable backend URL via `LOCKPICK_URL` environment variable (default: `http://localhost:8000`)
+- stdio transport — Claude Desktop connects by running the server process directly
+- Docker service with no exposed ports; Claude Desktop connects via `docker exec -i`
+
+#### MCP Tools
+
+| Tool | Backend calls | Purpose |
+|------|--------------|---------|
+| `list_operations()` | `GET /ops` | List all ops |
+| `list_hosts(op_id)` | hosts + credential-links | Hosts with IPs and credential count |
+| `get_host(host_id)` | `GET /hosts/{id}` | Full host detail |
+| `expand_host(host_id, evidence_type?)` | connections + credential-links | Related hosts, optionally filtered by evidence type |
+| `list_credentials(op_id)` | credentials + credential-links | Creds with fingerprints and host count |
+| `list_connections(op_id)` | `GET /ops/{id}/connections` | Raw connection records |
+| `find_pivot_paths(op_id, src_host_id, dst_host_id)` | connections + credential-links | BFS pivot paths with evidence and confidence |
+| `search(op_id, query)` | Phase 7 search endpoint (client-side fallback if unavailable) | Global search |
+
+`find_pivot_paths` performs BFS in the MCP layer: builds an adjacency graph from connection records and credential key matches (same fingerprint: `found_on_disk` on A + `authorized_key` on B), caps at depth 6 and 50 paths, annotates each edge with confidence (`confirmed` = key match, `observed` = connection log).
+
+#### Checklist
+
+- [ ] `mcp/pyproject.toml` — standalone package (`mcp>=1.0.0`, `httpx>=0.27.0`, `anyio>=4.0.0`)
+- [ ] `mcp/api_client.py` — `LockpickClient` using `httpx.AsyncClient`
+- [ ] `mcp/tools/` — one module per tool group (operations, hosts, credentials, connections, pivot, search)
+- [ ] `mcp/server.py` — FastMCP entry point, registers all tools, runs with stdio transport
+- [ ] `mcp/Dockerfile` — uv-based, `ENV LOCKPICK_URL=http://backend:8000`
+- [ ] `docker-compose.yml` — add `mcp` service (no ports, depends on backend)
+- [ ] `mcp/README.md` — Claude Desktop config instructions (Docker and local dev options)
+- [ ] Tests: `mcp/tests/test_tools.py` using `respx` to mock HTTP calls; include BFS correctness tests
+
+#### Claude Desktop config (from `mcp/README.md`)
+
+```json
+{
+  "mcpServers": {
+    "lockpick": {
+      "command": "docker",
+      "args": ["exec", "-i", "lockpick-mcp-1", "uv", "run", "--frozen", "python", "/app/server.py"]
+    }
+  }
+}
+```
+
+Local dev alternative: use `uv run` directly with `LOCKPICK_URL=http://localhost:8000`.
 
 ## Architecture Rules
 
@@ -402,8 +530,8 @@ lockpick/
 │   │   ├── hosts.py
 │   │   ├── credentials.py
 │   │   ├── connections.py
-│   │   ├── upload.py            # File upload + parsing trigger
-│   │   └── graph.py             # Graph queries: expand node, find path, aggregated edges
+│   │   ├── upload.py            # File upload + parsing trigger (Phase 5)
+│   │   └── graph.py             # Graph queries: expand node, find path, aggregated edges (Phase 4)
 │   ├── parsers/
 │   │   ├── __init__.py          # BaseParser, ParseResult, parser registry
 │   │   ├── authorized_keys.py
@@ -417,8 +545,8 @@ lockpick/
 │   ├── services/
 │   │   ├── ip_resolver.py       # Match IPs to existing hosts
 │   │   ├── key_matcher.py       # Cross-reference key fingerprints across op
-│   │   ├── pivot_analysis.py    # BFS path finding between hosts
-│   │   └── graph_builder.py     # Aggregate evidence into edge objects for frontend
+│   │   ├── pivot_analysis.py    # BFS path finding between hosts (Phase 6)
+│   │   └── graph_builder.py     # Aggregate evidence into edge objects for frontend (Phase 4)
 │   └── alembic/
 │       └── ...
 ├── frontend/
@@ -433,25 +561,52 @@ lockpick/
 │       │   ├── OpSelector.tsx
 │       │   └── Workspace.tsx
 │       ├── components/
-│       │   ├── GraphCanvas.tsx          # cytoscape.js wrapper
-│       │   ├── NodeContextMenu.tsx      # Right-click menu for nodes
-│       │   ├── EdgeContextMenu.tsx      # Right-click menu for edges
-│       │   ├── HostDetailSidebar.tsx    # Host info panel on node click
-│       │   ├── EdgeDetailPanel.tsx      # All evidence for an edge
 │       │   ├── AddDataModal.tsx         # FAB modal (tabs: manual / upload)
 │       │   ├── ManualEntryForm.tsx
-│       │   ├── FileUploadTab.tsx
-│       │   ├── HostSelector.tsx         # Checkbox list for selecting hosts to display
-│       │   ├── PathFinder.tsx           # Two-node path analysis UI
-│       │   └── PathDetail.tsx           # Path result display
+│       │   ├── ConfirmDeleteModal.tsx   # Reusable delete confirmation (Phase 3)
+│       │   ├── DeleteOpModal.tsx        # Op delete with UUID confirmation (Phase 3)
+│       │   ├── EditModal.tsx            # Modal shell for edit forms (Phase 3)
+│       │   ├── EditHostForm.tsx         # Edit host nickname/comment/IPs (Phase 3)
+│       │   ├── EditCredentialForm.tsx   # Edit credential value/passphrase/comment (Phase 3)
+│       │   ├── EditCredentialLinkForm.tsx # Edit credential link fields (Phase 3)
+│       │   ├── EditConnectionForm.tsx   # Edit connection record fields (Phase 3)
+│       │   ├── FileUploadTab.tsx        # File upload UI (Phase 5)
+│       │   ├── GraphCanvas.tsx          # cytoscape.js wrapper (Phase 4)
+│       │   ├── NodeContextMenu.tsx      # Right-click menu for nodes (Phase 4)
+│       │   ├── EdgeContextMenu.tsx      # Right-click menu for edges (Phase 4)
+│       │   ├── HostDetailSidebar.tsx    # Host info panel on node click (Phase 4)
+│       │   ├── EdgeDetailPanel.tsx      # All evidence for an edge (Phase 4)
+│       │   ├── HostSelector.tsx         # Checkbox list for selecting hosts to display (Phase 4)
+│       │   ├── PathFinder.tsx           # Two-node path analysis UI (Phase 6)
+│       │   └── PathDetail.tsx           # Path result display (Phase 6)
 │       ├── api/                         # Typed API client functions
 │       │   ├── client.ts
 │       │   ├── operations.ts
 │       │   ├── hosts.ts
-│       │   ├── graph.ts
-│       │   └── upload.ts
+│       │   ├── credentials.ts
+│       │   ├── connections.ts
+│       │   ├── graph.ts                 # Graph queries (Phase 4)
+│       │   └── upload.ts               # File upload (Phase 5)
 │       └── types/                       # TypeScript interfaces matching backend schemas
 │           └── index.ts
+├── mcp/                                 # MCP server — AI agent companion (Phase 8)
+│   ├── Dockerfile
+│   ├── pyproject.toml
+│   ├── uv.lock
+│   ├── .python-version
+│   ├── server.py                        # FastMCP entry point
+│   ├── api_client.py                    # HTTP wrapper around Lockpick REST API
+│   ├── tools/
+│   │   ├── __init__.py
+│   │   ├── operations.py
+│   │   ├── hosts.py
+│   │   ├── credentials.py
+│   │   ├── connections.py
+│   │   ├── pivot.py                     # BFS find_pivot_paths tool
+│   │   └── search.py
+│   ├── tests/
+│   │   └── test_tools.py
+│   └── README.md                        # Claude Desktop connection instructions
 ├── tests/
 │   ├── fixtures/                        # Sample files for parser tests
 │   │   ├── sample_authorized_keys
@@ -479,6 +634,8 @@ lockpick/
 │   ├── test_api/
 │   │   ├── test_operations.py
 │   │   ├── test_hosts.py
+│   │   ├── test_credentials.py
+│   │   ├── test_connections.py
 │   │   ├── test_upload.py
 │   │   └── test_graph.py
 │   ├── test_services/
@@ -494,7 +651,7 @@ lockpick/
 
 **Phase**: Phase 2 complete
 **Last completed**: Phase 2 — Manual Data Entry
-**Next step**: Phase 3 — Host Selection & Graph Visualization
+**Next step**: Schema update (add HostUser table, add auth_method + credential_id to ConnectionRecord, add host_user_id to CredentialLink) → then Phase 3 — Edit & Delete
 
 ## Notes for the Agent
 
@@ -504,7 +661,6 @@ lockpick/
 - Edge aggregation is the core feature. When building graph_builder.py, think of it as: "collect ALL evidence between two hosts into one rich edge object." The frontend just renders what you give it.
 - Dark theme from the start — not bolted on later. Use a CSS variable system or a component library with theme support.
 - The right-click context menu on nodes is critical for usability. "Expand by relationship type" means: when expanding a node, the backend should accept a filter parameter for which evidence types to follow.
-- HostUser entries are evidence-based. If you're writing a parser and it doesn't have clear evidence that a user exists on the host, do NOT create a HostUser. The bar is: could you prove this user has an account on this machine?
 - For IP resolution: maintain an in-memory lookup (ip → host_id) per operation during parsing sessions. When a new file is uploaded, rebuild the lookup from HostIP table, then use it to resolve IPs in the parsed data.
 - Docker builds should be fast for development. Use multi-stage builds, copy `pyproject.toml` + `uv.lock` first and run `uv sync` to cache the dependency layer before copying source code. Use `uv` inside the Dockerfile (install via `COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv`).
 - The `./data/` directory is sacred. It's the only thing that matters for backup/restore. Everything else is reproducible from source.
