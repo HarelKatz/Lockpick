@@ -61,40 +61,33 @@ Operation (op)
 Host
 ├── id (UUID), op_id (FK), nickname, comment, created_at
 │
-├── HostIP (one-to-many) — the IPs that BELONG to this host (from ip addr / ifconfig / manual entry)
-│   └── id, host_id (FK), ip_address, cidr (nullable), interface_name (nullable),
-│       source (enum: manual | parsed), first_seen_at
+├── HostIP (one-to-many) — the IPs that BELONG to this host
+│   └── id, host_id (FK), ip_address, source (enum: manual | parsed), first_seen_at
 │       ** This is how we resolve "traffic from 10.0.0.5" → "that's HostA" **
-│
-├── HostUser (one-to-many) — local user accounts that EXIST on this host
-│   └── id, host_id (FK), username, shell (nullable), home_dir (nullable),
-│       source (enum: manual | passwd_file | authorized_keys | home_dir_found | log_evidence)
-│       ** A HostUser is ONLY created when there is concrete evidence the user exists on the host:
-│          - Parsed from /etc/passwd
-│          - Has an authorized_keys entry
-│          - Has a home directory with files (.bash_history, .ssh/)
-│          - Appears in auth.log as a valid local user (successful auth target)
-│          Do NOT create HostUser entries from connection source data (e.g. "someone SSHed
-│          FROM this user on another box" does not mean the user exists on the destination) **
 
 Credential (standalone entity — a key or password can unlock multiple hosts)
 ├── id (UUID), op_id (FK)
 ├── cred_type (enum: password | private_key | public_key)
-├── value (the actual key content or password hash)
-├── fingerprint (SHA256 for SSH keys — used for cross-referencing / matching)
-├── key_type (nullable, e.g. rsa, ed25519, ecdsa)
+├── value (the actual key content or password)
+├── passphrase (nullable — for encrypted private keys)
+├── fingerprint (SHA256, inferred automatically by backend via paramiko — never user-supplied)
+├── key_type (nullable, e.g. ssh-rsa, ssh-ed25519 — inferred automatically, never user-supplied)
 ├── comment (nullable), created_at
 │
 ├── CredentialLink (junction: where was this credential found and what does it grant?)
-│   └── id, credential_id (FK), host_id (FK), host_user_id (FK, nullable)
-│       relationship (enum: found_on_disk | authorized_key | accepted_password | used_in_connection)
+│   └── id, credential_id (FK), host_id (FK), username (nullable string — which user on that host)
+│       relationship_type (enum: found_on_disk | authorized_key | accepted_password | used_in_connection)
 │       file_source (nullable — which uploaded file produced this link)
 │       ** Example: private key found in /home/bob/.ssh/id_rsa on HostA →
-│          credential_id=key1, host_id=HostA, host_user_id=bob, relationship=found_on_disk
+│          credential_id=key1, host_id=HostA, username="bob", relationship=found_on_disk
 │          That same key's fingerprint matches authorized_keys on HostB for user root →
-│          credential_id=key1, host_id=HostB, host_user_id=root, relationship=authorized_key
+│          credential_id=key1, host_id=HostB, username="root", relationship=authorized_key
 │          This gives us a pivot: HostA(bob) → HostB(root) via key1 **
 ```
+
+**Usernames are plain strings throughout** — there is no standalone User entity. Usernames appear as:
+- `ConnectionRecord.src_user` / `dst_user` (who made/received the connection)
+- `CredentialLink.username` (which user on a host this credential belongs to)
 
 ### Edges / Relationships Between Hosts
 
@@ -183,16 +176,15 @@ Implement these phases **sequentially**. Each phase should be a working, testabl
 
 ### Phase 2 — Manual Data Entry
 
-- [x] Frontend: after selecting an op, show the main workspace
+- [x] Frontend: after selecting an op, show the main workspace (creating an op auto-navigates into it)
 - [x] Floating action button (bottom-right corner, + icon)
 - [x] Clicking FAB opens a modal with tabs: "Manual Entry" | "File Upload" (upload tab is placeholder for Phase 4)
-- [x] Manual entry form supports adding:
-  - Host (nickname, one or more IPs, comment)
-  - User on a host (select host, enter username — with evidence source)
-  - Credential (type, value) linked to a host+user with relationship type
-  - Connection record (src host → dst host/IP, users, type)
-- [x] Form validates that HostUser entries require an evidence source
+- [x] Manual entry form — three sub-forms (Host / Credential / Connection):
+  - **Host**: nickname, one or more IPs, comment
+  - **Credential**: type (password / private_key / public_key), value, optional passphrase (for encrypted private keys), optional comment; optionally linked to a host + username + relationship type. `key_type` and `fingerprint` are inferred by the backend — not user input.
+  - **Connection**: src host/IP/user → dst host/IP/user, connection type, direction context
 - [x] All entries tagged with op_id based on current op context
+- [x] Workspace shows hosts as cards with IP chips
 
 ### Phase 3 — Host Selection & Graph Visualization
 
@@ -230,16 +222,17 @@ Build a parsing engine on the backend. Each parser is a module in `backend/parse
 
 ```python
 class ParseResult:
-    hosts_found: list[HostData]           # New hosts/IPs discovered
-    users_found: list[HostUserData]       # Users with evidence
+    hosts_found: list[HostData]              # New hosts/IPs discovered
     credentials_found: list[CredentialData]  # Keys/passwords found
     connections_found: list[ConnectionData]  # Connection records
-    warnings: list[str]                    # Parse issues (malformed lines, etc.)
-    stats: dict                            # Summary counts for UI
+    warnings: list[str]                      # Parse issues (malformed lines, etc.)
+    stats: dict                              # Summary counts for UI
 
 class BaseParser:
     def parse(self, content: bytes, metadata: UploadMetadata) -> ParseResult: ...
 ```
+
+**Note:** There is no HostUser entity — usernames from parsed files are stored as plain strings directly on `CredentialLink.username` and `ConnectionRecord.src_user/dst_user`.
 
 #### Upload API
 
@@ -251,9 +244,8 @@ class BaseParser:
 #### Parsers to implement (one at a time, with tests):
 
 **4a. `.ssh/authorized_keys`** (per user)
-- Extract public keys, compute SHA256 fingerprints
-- Create Credential + CredentialLink (relationship=authorized_key)
-- Creates/confirms HostUser with source=authorized_keys
+- Extract public keys, compute SHA256 fingerprints via paramiko
+- Create Credential (cred_type=public_key, fingerprint inferred) + CredentialLink (relationship=authorized_key, username from upload metadata)
 
 **4b. `.ssh/known_hosts`** (per user)
 - Parse hostnames/IPs and key fingerprints (handle hashed known_hosts too)
@@ -274,15 +266,13 @@ class BaseParser:
 **4e. `auth.log` / `secure`** (including .gz)
 - Decompress gzip if needed
 - Parse sshd log lines: accepted/failed, user, source IP, auth method (publickey/password), key fingerprint if present, timestamp
-- Store as inbound ConnectionRecords on this host
+- Store as inbound ConnectionRecords on this host (dst_user = username from log line)
 - Match source IPs to existing hosts
-- Accepted logins confirm HostUser exists (source=log_evidence)
 
 **4f. `wtmp`** (binary format)
 - Parse using struct-based parsing (utmp record format)
 - Extract login records: user, source IP/hostname, login/logout timestamps
-- Store as inbound ConnectionRecords
-- Confirms HostUser exists (source=log_evidence)
+- Store as inbound ConnectionRecords (dst_user = username from record)
 
 **4g. `.bash_history`** (per user)
 - Regex for: `ssh`, `scp`, `rsync`, `sftp`, `ssh-copy-id` commands
@@ -292,7 +282,7 @@ class BaseParser:
 
 **4h. `/etc/passwd`**
 - Extract user accounts (username, shell, home_dir)
-- Create HostUser entries with source=passwd_file
+- Create ConnectionRecords or CredentialLinks as evidence; store username as a plain string
 - Skip system users (uid < 1000) by default, but keep root and any with valid shells
 
 #### File upload frontend:
@@ -300,7 +290,7 @@ class BaseParser:
 - "File Upload" tab in the Add modal
 - Dropdown to select file type (from enum of supported types)
 - Host selector (required — which host did this file come from?)
-- Username field (required for per-user files: authorized_keys, known_hosts, config, bash_history, private keys)
+- Username field (required for per-user files: authorized_keys, known_hosts, config, bash_history, private keys — stored as plain string on resulting CredentialLinks/ConnectionRecords)
 - Drag-and-drop upload area
 - After upload, show parsing results summary:
   - "Found: 3 new hosts, 5 connection records, 2 SSH keys"
@@ -344,13 +334,13 @@ class BaseParser:
 
 ## Git Workflow
 
-Use **conventional commits** with short, descriptive messages. Commit after each logical unit of work — not at the end of an entire phase.
+Use **conventional commits** with short, descriptive messages. **Commit as you go** — after every meaningful unit of work, not at the end of a phase or session.
 
 ### Commit granularity:
 
-- One commit per meaningful change (new model, new router, new parser, new component)
+- **Commit immediately** after each meaningful change: new model, new router, new parser, new component, schema migration, test file
 - Do NOT squash an entire phase into a single commit
-- Do NOT commit broken/untested code — run tests before committing
+- Do NOT commit broken/untested code — run `uv run --directory backend pytest ../tests/ -v` before committing backend changes
 
 ### Commit message format:
 
