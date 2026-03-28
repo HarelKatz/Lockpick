@@ -95,6 +95,16 @@ function HostCard({ host, onEdit, onDelete }: HostCardProps) {
         </div>
       )}
 
+      {host.users.length > 0 && (
+        <div className={styles.hostUsers}>
+          {host.users.map(u => (
+            <span key={u.id} className={styles.userChip} title={`${u.source}${u.shell ? ' · ' + u.shell : ''}`}>
+              {u.username}
+            </span>
+          ))}
+        </div>
+      )}
+
       {host.comment && (
         <p className={styles.hostComment}>{host.comment}</p>
       )}
@@ -469,6 +479,7 @@ export default function Workspace({ op, onBack }: Props) {
           <EditConnectionForm
             connection={editConn}
             hosts={hosts}
+            credentials={credentials}
             onSaved={updated => {
               setConnections(prev => prev.map(c => c.id === updated.id ? updated : c))
               setEditConn(null)

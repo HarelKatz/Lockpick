@@ -649,15 +649,15 @@ function ConnectionForm({
             ))}
           </select>
         </div>
-        {credentials.length > 0 && (
+        {credentials.filter(c => c.cred_type === 'private_key').length > 0 && (
           <div className={styles.field}>
-            <label>Credential Used</label>
+            <label>Private Key Used</label>
             <select value={credentialId} onChange={e => setCredentialId(e.target.value)} disabled={loading}>
               <option value="">— none / unknown —</option>
-              {credentials.map(c => (
+              {credentials.filter(c => c.cred_type === 'private_key').map(c => (
                 <option key={c.id} value={c.id}>
-                  {c.cred_type === 'password' ? 'pw' : c.key_type ?? c.cred_type}
-                  {c.fingerprint ? ` ${c.fingerprint.slice(0, 20)}…` : ''}
+                  {c.key_type ?? 'key'}
+                  {c.fingerprint ? ` ${c.fingerprint.slice(7, 27)}…` : ''}
                   {c.comment ? ` (${c.comment})` : ''}
                 </option>
               ))}

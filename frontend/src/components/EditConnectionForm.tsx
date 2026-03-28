@@ -2,13 +2,14 @@
  * EditConnectionForm — same src/dst grid layout as ConnectionForm, pre-filled.
  */
 import { useState } from 'react'
-import type { ConnectionRecord, Host } from '../types'
+import type { AuthMethod, ConnectionRecord, Credential, Host } from '../types'
 import { updateConnection } from '../api/connections'
 import styles from './EditModal.module.css'
 
 interface Props {
   connection: ConnectionRecord
   hosts: Host[]
+  credentials: Credential[]
   onSaved: (updated: ConnectionRecord) => void
   onClose: () => void
 }
@@ -22,7 +23,15 @@ const CONN_TYPES: { value: ConnectionRecord['connection_type']; label: string }[
   { value: 'unknown', label: 'Unknown' },
 ]
 
-export default function EditConnectionForm({ connection, hosts, onSaved, onClose }: Props) {
+const AUTH_METHODS: { value: AuthMethod; label: string }[] = [
+  { value: 'publickey', label: 'Public key' },
+  { value: 'password', label: 'Password' },
+  { value: 'keyboard-interactive', label: 'Keyboard-interactive' },
+  { value: 'hostbased', label: 'Host-based' },
+  { value: 'unknown', label: 'Unknown' },
+]
+
+export default function EditConnectionForm({ connection, hosts, credentials, onSaved, onClose }: Props) {
   const [srcHostId, setSrcHostId] = useState(connection.src_host_id ?? '')
   const [srcIp, setSrcIp] = useState(connection.src_ip)
   const [srcUser, setSrcUser] = useState(connection.src_user ?? '')
@@ -31,8 +40,12 @@ export default function EditConnectionForm({ connection, hosts, onSaved, onClose
   const [dstUser, setDstUser] = useState(connection.dst_user ?? '')
   const [connType, setConnType] = useState(connection.connection_type)
   const [direction, setDirection] = useState(connection.direction_context)
+  const [authMethod, setAuthMethod] = useState<AuthMethod | ''>(connection.auth_method ?? '')
+  const [credentialId, setCredentialId] = useState(connection.credential_id ?? '')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  const privateKeys = credentials.filter(c => c.cred_type === 'private_key')
 
   function handleSrcHostChange(id: string) {
     setSrcHostId(id)
@@ -66,6 +79,8 @@ export default function EditConnectionForm({ connection, hosts, onSaved, onClose
         dst_user: dstUser.trim() || null,
         connection_type: connType,
         direction_context: direction,
+        auth_method: authMethod || null,
+        credential_id: credentialId || null,
       })
       onSaved(updated)
     } catch {
@@ -141,6 +156,31 @@ export default function EditConnectionForm({ connection, hosts, onSaved, onClose
             <option value="from_dst_logs">From destination's logs (auth.log)</option>
           </select>
         </div>
+      </div>
+
+      <div className={styles.row}>
+        <div className={styles.field}>
+          <label>Auth Method</label>
+          <select value={authMethod} onChange={e => setAuthMethod(e.target.value as AuthMethod | '')} disabled={loading}>
+            <option value="">— unknown / not recorded —</option>
+            {AUTH_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+          </select>
+        </div>
+        {privateKeys.length > 0 && (
+          <div className={styles.field}>
+            <label>Private Key Used</label>
+            <select value={credentialId} onChange={e => setCredentialId(e.target.value)} disabled={loading}>
+              <option value="">— none / unknown —</option>
+              {privateKeys.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.key_type ?? 'key'}
+                  {c.fingerprint ? ` ${c.fingerprint.slice(7, 27)}…` : ''}
+                  {c.comment ? ` (${c.comment})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {error && <p className={styles.error}>{error}</p>}
