@@ -65,6 +65,10 @@ export default function EditHostForm({ host, onSaved, onClose }: Props) {
   }
 
   async function handleRemoveIp(ip: HostIP) {
+    if (ips.length <= 1) {
+      setError('A host must have at least one IP address.')
+      return
+    }
     setIpLoading(true)
     setError(null)
     try {
