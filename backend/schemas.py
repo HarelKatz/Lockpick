@@ -30,7 +30,6 @@ class OperationRead(BaseModel):
 
 class HostIPCreate(BaseModel):
     ip_address: str
-    cidr: Optional[str] = None
     interface_name: Optional[str] = None
     source: Literal["manual", "parsed"] = "manual"
 
@@ -41,32 +40,9 @@ class HostIPRead(BaseModel):
     id: str
     host_id: str
     ip_address: str
-    cidr: Optional[str]
     interface_name: Optional[str]
     source: str
     first_seen_at: datetime
-
-
-# ─── HostUser ─────────────────────────────────────────────────────────────────
-
-class HostUserCreate(BaseModel):
-    username: str
-    shell: Optional[str] = None
-    home_dir: Optional[str] = None
-    source: Literal[
-        "manual", "passwd_file", "authorized_keys", "home_dir_found", "log_evidence"
-    ] = "manual"
-
-
-class HostUserRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    host_id: str
-    username: str
-    shell: Optional[str]
-    home_dir: Optional[str]
-    source: str
 
 
 # ─── Host ─────────────────────────────────────────────────────────────────────
@@ -90,7 +66,6 @@ class HostRead(BaseModel):
     comment: Optional[str]
     created_at: datetime
     ips: list[HostIPRead] = []
-    users: list[HostUserRead] = []
 
 
 # ─── Credential ───────────────────────────────────────────────────────────────
@@ -127,7 +102,7 @@ class CredentialRead(BaseModel):
 class CredentialLinkCreate(BaseModel):
     credential_id: str
     host_id: str
-    host_user_id: Optional[str] = None
+    username: Optional[str] = None
     relationship_type: Literal[
         "found_on_disk", "authorized_key", "accepted_password", "used_in_connection"
     ]
@@ -140,7 +115,7 @@ class CredentialLinkRead(BaseModel):
     id: str
     credential_id: str
     host_id: str
-    host_user_id: Optional[str]
+    username: Optional[str]
     relationship_type: str
     file_source: Optional[str]
 

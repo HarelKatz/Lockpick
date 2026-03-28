@@ -47,7 +47,6 @@ class Host(Base):
 
     operation = relationship("Operation", back_populates="hosts")
     ips = relationship("HostIP", back_populates="host", cascade="all, delete-orphan")
-    users = relationship("HostUser", back_populates="host", cascade="all, delete-orphan")
     credential_links = relationship("CredentialLink", back_populates="host", cascade="all, delete-orphan")
     src_connections = relationship(
         "ConnectionRecord",
@@ -67,7 +66,6 @@ class HostIP(Base):
     id = Column(String(36), primary_key=True, default=_uuid)
     host_id = Column(String(36), ForeignKey("hosts.id", ondelete="CASCADE"), nullable=False)
     ip_address = Column(String(45), nullable=False)  # IPv6 max length
-    cidr = Column(String(3), nullable=True)  # e.g. "24", "32"
     interface_name = Column(String(64), nullable=True)  # e.g. "eth0"
     source = Column(
         Enum("manual", "parsed", name="hostip_source"),
@@ -77,31 +75,6 @@ class HostIP(Base):
     first_seen_at = Column(DateTime(timezone=True), nullable=False, default=_now)
 
     host = relationship("Host", back_populates="ips")
-
-
-class HostUser(Base):
-    __tablename__ = "host_users"
-
-    id = Column(String(36), primary_key=True, default=_uuid)
-    host_id = Column(String(36), ForeignKey("hosts.id", ondelete="CASCADE"), nullable=False)
-    username = Column(String(255), nullable=False)
-    shell = Column(String(255), nullable=True)
-    home_dir = Column(String(512), nullable=True)
-    source = Column(
-        Enum(
-            "manual",
-            "passwd_file",
-            "authorized_keys",
-            "home_dir_found",
-            "log_evidence",
-            name="hostuser_source",
-        ),
-        nullable=False,
-        default="manual",
-    )
-
-    host = relationship("Host", back_populates="users")
-    credential_links = relationship("CredentialLink", back_populates="host_user", cascade="all, delete-orphan")
 
 
 class Credential(Base):
@@ -129,7 +102,7 @@ class CredentialLink(Base):
     id = Column(String(36), primary_key=True, default=_uuid)
     credential_id = Column(String(36), ForeignKey("credentials.id", ondelete="CASCADE"), nullable=False)
     host_id = Column(String(36), ForeignKey("hosts.id", ondelete="CASCADE"), nullable=False)
-    host_user_id = Column(String(36), ForeignKey("host_users.id", ondelete="SET NULL"), nullable=True)
+    username = Column(String(255), nullable=True)  # which user this link is for
     relationship_type = Column(
         "relationship",
         Enum(
@@ -145,7 +118,6 @@ class CredentialLink(Base):
 
     credential = relationship("Credential", back_populates="links")
     host = relationship("Host", back_populates="credential_links")
-    host_user = relationship("HostUser", back_populates="credential_links")
 
 
 class ConnectionRecord(Base):
