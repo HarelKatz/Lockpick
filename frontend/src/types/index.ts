@@ -66,6 +66,37 @@ export interface ConnectionRecord {
 
 // ─── Request bodies ───────────────────────────────────────────────────────────
 
+export interface UpdateOperationRequest {
+  name?: string
+  description?: string | null
+}
+
+export interface UpdateCredentialRequest {
+  value?: string
+  passphrase?: string | null
+  comment?: string | null
+}
+
+export interface UpdateCredentialLinkRequest {
+  username?: string | null
+  relationship_type?: CredentialLink['relationship_type']
+  file_source?: string | null
+}
+
+export interface UpdateConnectionRequest {
+  src_host_id?: string | null
+  src_ip?: string
+  src_user?: string | null
+  dst_host_id?: string | null
+  dst_ip?: string
+  dst_user?: string | null
+  connection_type?: ConnectionRecord['connection_type']
+  direction_context?: ConnectionRecord['direction_context']
+  timestamp?: string | null
+  raw_line?: string | null
+  source_file?: string
+}
+
 export interface CreateOperationRequest {
   name: string
   description?: string | null

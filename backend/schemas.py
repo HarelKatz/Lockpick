@@ -76,6 +76,8 @@ class CredentialCreate(BaseModel):
 
 
 class CredentialUpdate(BaseModel):
+    value: Optional[str] = None
+    passphrase: Optional[str] = None
     comment: Optional[str] = None
 
 
@@ -94,6 +96,14 @@ class CredentialRead(BaseModel):
 
 
 # ─── CredentialLink ───────────────────────────────────────────────────────────
+
+class CredentialLinkUpdate(BaseModel):
+    username: Optional[str] = None
+    relationship_type: Optional[Literal[
+        "found_on_disk", "authorized_key", "accepted_password", "used_in_connection"
+    ]] = None
+    file_source: Optional[str] = None
+
 
 class CredentialLinkCreate(BaseModel):
     credential_id: str
@@ -117,6 +127,20 @@ class CredentialLinkRead(BaseModel):
 
 
 # ─── ConnectionRecord ─────────────────────────────────────────────────────────
+
+class ConnectionRecordUpdate(BaseModel):
+    src_host_id: Optional[str] = None
+    src_ip: Optional[str] = None
+    src_user: Optional[str] = None
+    dst_host_id: Optional[str] = None
+    dst_ip: Optional[str] = None
+    dst_user: Optional[str] = None
+    connection_type: Optional[Literal["ssh", "scp", "rsync", "sftp", "ssh_copy_id", "unknown"]] = None
+    direction_context: Optional[Literal["from_src_logs", "from_dst_logs"]] = None
+    timestamp: Optional[datetime] = None
+    raw_line: Optional[str] = None
+    source_file: Optional[str] = None
+
 
 class ConnectionRecordCreate(BaseModel):
     src_host_id: Optional[str] = None

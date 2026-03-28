@@ -175,12 +175,57 @@
   list-style: none;
 }
 
-.opList li + li {
-  border-top: 1px solid var(--border-subtle);
+.opItem {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.opItem:last-child {
+  border-bottom: none;
+}
+
+/* Op action buttons — hidden until row is hovered */
+.opActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 8px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0;
+}
+
+.opItem:hover .opActions {
+  opacity: 1;
+}
+
+.opActionBtn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 4px 7px;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.opActionBtn:hover {
+  background: var(--bg-surface-3);
+  border-color: var(--border);
+  color: var(--accent);
+}
+
+.opActionBtnDanger:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: rgba(248, 81, 73, 0.08);
 }
 
 .opCard {
-  width: 100%;
+  flex: 1;
   padding: 16px 20px;
   background: transparent;
   border: none;
@@ -191,6 +236,7 @@
   gap: 16px;
   text-align: left;
   transition: background-color 0.15s ease;
+  min-width: 0;
 }
 
 .opCard:hover {
@@ -422,4 +468,57 @@
   justify-content: flex-end;
   gap: 8px;
   margin-top: 4px;
+}
+
+/* ─── Delete Operation modal ──────────────────────────────────────────────── */
+
+.dangerTitle {
+  color: var(--danger);
+}
+
+.deleteWarning {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.deleteWarning strong {
+  color: var(--text-primary);
+}
+
+.uuidHint {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+}
+
+.uuidInput {
+  font-family: var(--font-mono) !important;
+  font-size: var(--font-size-xs) !important;
+}
+
+.btnDanger {
+  padding: 8px 16px;
+  background-color: var(--danger);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+  white-space: nowrap;
+}
+
+.btnDanger:hover:not(:disabled) {
+  background-color: var(--danger-hover);
+}
+
+.btnDanger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }

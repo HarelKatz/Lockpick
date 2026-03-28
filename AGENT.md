@@ -184,6 +184,8 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 Implement these phases **sequentially**. Each phase should be a working, testable increment. Write tests as you go. Update this document's "Current Status" section after completing each phase.
 
+**Commit discipline:** commit at natural checkpoints within a phase — typically after each logical unit (e.g. backend done, frontend components done, page wiring done). Use conventional commit prefixes (`feat`, `fix`, `test`, `refactor`, `docs`). Never leave a phase's work uncommitted. At minimum, commit once when the phase is fully complete.
+
 ### Phase 1 — Project Skeleton & Infrastructure
 
 - [x] Docker Compose setup (backend + frontend services, ./data/ volume)
@@ -217,45 +219,45 @@ Full edit and delete capabilities for every entity. The backend already exposes 
 
 #### Backend
 
-- [ ] Expand `CredentialUpdate` schema: add `value` and `passphrase` fields (re-infer `fingerprint`/`key_type` via paramiko when `value` changes)
-- [ ] Add `CredentialLinkUpdate` schema: `username`, `relationship_type`, `file_source`
-- [ ] Add `ConnectionRecordUpdate` schema: all mutable fields optional
-- [ ] Expand `PATCH /credentials/{cred_id}` to handle value/passphrase changes with fingerprint re-inference
-- [ ] Add `PATCH /credential-links/{link_id}`
-- [ ] Add `PATCH /connections/{connection_id}`
-- [ ] Tests: `tests/test_api/test_credentials.py`, `tests/test_api/test_connections.py`
+- [x] Expand `CredentialUpdate` schema: add `value` and `passphrase` fields (re-infer `fingerprint`/`key_type` via paramiko when `value` changes)
+- [x] Add `CredentialLinkUpdate` schema: `username`, `relationship_type`, `file_source`
+- [x] Add `ConnectionRecordUpdate` schema: all mutable fields optional
+- [x] Expand `PATCH /credentials/{cred_id}` to handle value/passphrase changes with fingerprint re-inference
+- [x] Add `PATCH /credential-links/{link_id}`
+- [x] Add `PATCH /connections/{connection_id}`
+- [x] Tests: `tests/test_api/test_credentials.py`, `tests/test_api/test_connections.py`
 
 #### Frontend — new components
 
-- [ ] `ConfirmDeleteModal` — reusable "Are you sure?" dialog with danger-styled button
-- [ ] `DeleteOpModal` — delete operation modal; user must type the full op UUID to confirm
-- [ ] `EditModal` — thin modal shell (title + X button + Esc close) that wraps entity-specific edit forms
-- [ ] `EditHostForm` — pre-filled nickname/comment; IPs managed inline (add/remove with immediate API calls)
-- [ ] `EditCredentialForm` — value (textarea), passphrase, comment; cred_type is read-only; hint shown when value changed ("fingerprint will be re-inferred")
-- [ ] `EditCredentialLinkForm` — username, relationship_type, file_source editable; credential and host shown read-only
-- [ ] `EditConnectionForm` — same src/dst grid layout as ManualEntryForm's ConnectionForm, pre-filled
+- [x] `ConfirmDeleteModal` — reusable "Are you sure?" dialog with danger-styled button
+- [x] `DeleteOpModal` — delete operation modal; user must type the full op UUID to confirm
+- [x] `EditModal` — thin modal shell (title + X button + Esc close) that wraps entity-specific edit forms
+- [x] `EditHostForm` — pre-filled nickname/comment; IPs managed inline (add/remove with immediate API calls)
+- [x] `EditCredentialForm` — value (textarea), passphrase, comment; cred_type is read-only; hint shown when value changed ("fingerprint will be re-inferred")
+- [x] `EditCredentialLinkForm` — username, relationship_type, file_source editable; credential and host shown read-only
+- [x] `EditConnectionForm` — same src/dst grid layout as ManualEntryForm's ConnectionForm, pre-filled
 
 #### Frontend — Workspace expansion
 
-- [ ] Fetch credentials, credential-links, and connections in parallel alongside hosts (`Promise.all`)
-- [ ] Add **Credentials** section (flat list): type badge, truncated value, fingerprint chip, comment; credential links as sub-rows; Edit + Delete per item
-- [ ] Add **Connections** section (flat list): `src_ip → dst_ip`, users, type badge, timestamp; Edit + Delete per row
-- [ ] Add Edit and Delete icon buttons to each existing Host card
-- [ ] Wire all edit/delete modals in Workspace
+- [x] Fetch credentials, credential-links, and connections in parallel alongside hosts (`Promise.all`)
+- [x] Add **Credentials** section (flat list): type badge, truncated value, fingerprint chip, comment; credential links as sub-rows; Edit + Delete per item
+- [x] Add **Connections** section (flat list): `src_ip → dst_ip`, users, type badge, timestamp; Edit + Delete per row
+- [x] Add Edit and Delete icon buttons to each existing Host card
+- [x] Wire all edit/delete modals in Workspace
 
 #### Frontend — OpSelector
 
-- [ ] Refactor op list items to `display: flex` (sibling buttons, not nested — valid HTML)
-- [ ] Add Edit and Delete buttons per op (revealed on hover via CSS opacity transition)
-- [ ] `EditOpModal` — pre-filled name/description, calls `updateOperation`
-- [ ] `DeleteOpModal` — UUID confirmation, calls `deleteOperation`
+- [x] Refactor op list items to `display: flex` (sibling buttons, not nested — valid HTML)
+- [x] Add Edit and Delete buttons per op (revealed on hover via CSS opacity transition)
+- [x] `EditOpModal` — pre-filled name/description, calls `updateOperation`
+- [x] `DeleteOpModal` — UUID confirmation, calls `deleteOperation`
 
 #### Frontend — API additions
 
-- [ ] `api/operations.ts`: add `updateOperation(opId, data)`
-- [ ] `api/credentials.ts`: add `updateCredential(credId, data)`, `updateCredentialLink(linkId, data)`
-- [ ] `api/connections.ts`: add `updateConnection(connectionId, data)`
-- [ ] `types/index.ts`: add `UpdateOperationRequest`, `UpdateCredentialRequest`, `UpdateCredentialLinkRequest`, `UpdateConnectionRequest`
+- [x] `api/operations.ts`: add `updateOperation(opId, data)`
+- [x] `api/credentials.ts`: add `updateCredential(credId, data)`, `updateCredentialLink(linkId, data)`
+- [x] `api/connections.ts`: add `updateConnection(connectionId, data)`
+- [x] `types/index.ts`: add `UpdateOperationRequest`, `UpdateCredentialRequest`, `UpdateCredentialLinkRequest`, `UpdateConnectionRequest`
 
 ### Phase 4 — HostUser & Schema Hardening
 

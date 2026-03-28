@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import ConnectionRecord, Operation
-from schemas import ConnectionRecordCreate, ConnectionRecordRead
+from schemas import ConnectionRecordCreate, ConnectionRecordRead, ConnectionRecordUpdate
 
 router = APIRouter(tags=["connections"])
 
@@ -66,6 +66,25 @@ def get_connection(connection_id: str, db: Session = Depends(get_db)):
     record = db.query(ConnectionRecord).filter(ConnectionRecord.id == connection_id).first()
     if not record:
         raise HTTPException(status_code=404, detail="Connection record not found")
+    return record
+
+
+@router.patch("/connections/{connection_id}", response_model=ConnectionRecordRead)
+def update_connection(connection_id: str, body: ConnectionRecordUpdate, db: Session = Depends(get_db)):
+    record = db.query(ConnectionRecord).filter(ConnectionRecord.id == connection_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Connection record not found")
+    for field in (
+        "src_host_id", "src_ip", "src_user",
+        "dst_host_id", "dst_ip", "dst_user",
+        "connection_type", "direction_context",
+        "timestamp", "raw_line", "source_file",
+    ):
+        val = getattr(body, field)
+        if val is not None:
+            setattr(record, field, val)
+    db.commit()
+    db.refresh(record)
     return record
 
 

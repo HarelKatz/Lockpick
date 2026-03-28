@@ -1,20 +1,17 @@
 /**
- * Operation Selector page — lists existing operations and allows creating new ones.
- * This is the entry point of the app before an operation is selected.
+ * Operation Selector page — lists existing operations and allows creating,
+ * editing, and deleting them.
  */
 import { useState, useEffect, useCallback } from 'react'
-import type { Operation, CreateOperationRequest } from '../types'
-import { listOperations, createOperation } from '../api/operations'
+import type { Operation, CreateOperationRequest, UpdateOperationRequest } from '../types'
+import { listOperations, createOperation, updateOperation, deleteOperation } from '../api/operations'
 import styles from './OpSelector.module.css'
 
 interface Props {
   onSelectOp: (op: Operation) => void
 }
 
-interface CreateModalProps {
-  onClose: () => void
-  onCreated: (op: Operation) => void
-}
+// ─── Logo ──────────────────────────────────────────────────────────────────────
 
 function LockpickLogo({ size = 32 }: { size?: number }) {
   return (
@@ -29,6 +26,13 @@ function LockpickLogo({ size = 32 }: { size?: number }) {
   )
 }
 
+// ─── Create Op Modal ──────────────────────────────────────────────────────────
+
+interface CreateModalProps {
+  onClose: () => void
+  onCreated: (op: Operation) => void
+}
+
 function CreateOpModal({ onClose, onCreated }: CreateModalProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -37,10 +41,7 @@ function CreateOpModal({ onClose, onCreated }: CreateModalProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim()) {
-      setError('Operation name is required')
-      return
-    }
+    if (!name.trim()) { setError('Operation name is required'); return }
     setLoading(true)
     setError(null)
     try {
@@ -50,18 +51,15 @@ function CreateOpModal({ onClose, onCreated }: CreateModalProps) {
       }
       const op = await createOperation(data)
       onCreated(op)
-    } catch (err) {
+    } catch {
       setError('Failed to create operation. Please try again.')
-      console.error(err)
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
-    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
@@ -71,39 +69,22 @@ function CreateOpModal({ onClose, onCreated }: CreateModalProps) {
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
         <div className={styles.modalHeader}>
           <h2>New Operation</h2>
-          <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
-            ✕
-          </button>
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Close">✕</button>
         </div>
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
             <label htmlFor="op-name">Operation Name *</label>
-            <input
-              id="op-name"
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="e.g. Acme Corp Q1 2026"
-              autoFocus
-              disabled={loading}
-            />
+            <input id="op-name" type="text" value={name} onChange={e => setName(e.target.value)}
+              placeholder="e.g. Acme Corp Q1 2026" autoFocus disabled={loading} />
           </div>
           <div className={styles.field}>
             <label htmlFor="op-desc">Description</label>
-            <textarea
-              id="op-desc"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              placeholder="Optional notes about this operation"
-              rows={3}
-              disabled={loading}
-            />
+            <textarea id="op-desc" value={description} onChange={e => setDescription(e.target.value)}
+              placeholder="Optional notes about this operation" rows={3} disabled={loading} />
           </div>
           {error && <p className={styles.error}>{error}</p>}
           <div className={styles.formActions}>
-            <button type="button" className={styles.btnSecondary} onClick={onClose} disabled={loading}>
-              Cancel
-            </button>
+            <button type="button" className={styles.btnSecondary} onClick={onClose} disabled={loading}>Cancel</button>
             <button type="submit" className={styles.btnPrimary} disabled={loading}>
               {loading ? 'Creating…' : 'Create Operation'}
             </button>
@@ -114,11 +95,162 @@ function CreateOpModal({ onClose, onCreated }: CreateModalProps) {
   )
 }
 
+// ─── Edit Op Modal ────────────────────────────────────────────────────────────
+
+interface EditOpModalProps {
+  op: Operation
+  onClose: () => void
+  onSaved: (op: Operation) => void
+}
+
+function EditOpModal({ op, onClose, onSaved }: EditOpModalProps) {
+  const [name, setName] = useState(op.name)
+  const [description, setDescription] = useState(op.description ?? '')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!name.trim()) { setError('Operation name is required'); return }
+    setLoading(true)
+    setError(null)
+    try {
+      const data: UpdateOperationRequest = {
+        name: name.trim(),
+        description: description.trim() || null,
+      }
+      const updated = await updateOperation(op.id, data)
+      onSaved(updated)
+    } catch {
+      setError('Failed to save changes.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modal} onClick={e => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h2>Edit Operation</h2>
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Close">✕</button>
+        </div>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.field}>
+            <label htmlFor="edit-op-name">Operation Name *</label>
+            <input id="edit-op-name" type="text" value={name} onChange={e => setName(e.target.value)}
+              autoFocus disabled={loading} />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="edit-op-desc">Description</label>
+            <textarea id="edit-op-desc" value={description} onChange={e => setDescription(e.target.value)}
+              placeholder="Optional notes about this operation" rows={3} disabled={loading} />
+          </div>
+          {error && <p className={styles.error}>{error}</p>}
+          <div className={styles.formActions}>
+            <button type="button" className={styles.btnSecondary} onClick={onClose} disabled={loading}>Cancel</button>
+            <button type="submit" className={styles.btnPrimary} disabled={loading}>
+              {loading ? 'Saving…' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// ─── Delete Op Modal ──────────────────────────────────────────────────────────
+
+interface DeleteOpModalProps {
+  op: Operation
+  onClose: () => void
+  onDeleted: (opId: string) => void
+}
+
+function DeleteOpModal({ op, onClose, onDeleted }: DeleteOpModalProps) {
+  const [confirmation, setConfirmation] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const confirmed = confirmation === op.id
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!confirmed) { setError('UUID does not match.'); return }
+    setLoading(true)
+    setError(null)
+    try {
+      await deleteOperation(op.id)
+      onDeleted(op.id)
+    } catch {
+      setError('Failed to delete operation.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modal} onClick={e => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h2 className={styles.dangerTitle}>Delete Operation</h2>
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Close" disabled={loading}>✕</button>
+        </div>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <p className={styles.deleteWarning}>
+            This will permanently delete <strong>{op.name}</strong> and all its hosts, credentials,
+            and connections. This cannot be undone.
+          </p>
+          <div className={styles.field}>
+            <label htmlFor="delete-confirm">
+              Type the operation UUID to confirm:
+              <span className={styles.uuidHint}>{op.id}</span>
+            </label>
+            <input
+              id="delete-confirm"
+              type="text"
+              value={confirmation}
+              onChange={e => setConfirmation(e.target.value)}
+              placeholder={op.id}
+              autoFocus
+              disabled={loading}
+              className={styles.uuidInput}
+            />
+          </div>
+          {error && <p className={styles.error}>{error}</p>}
+          <div className={styles.formActions}>
+            <button type="button" className={styles.btnSecondary} onClick={onClose} disabled={loading}>Cancel</button>
+            <button type="submit" className={styles.btnDanger} disabled={!confirmed || loading}>
+              {loading ? 'Deleting…' : 'Delete Operation'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// ─── OpSelector ───────────────────────────────────────────────────────────────
+
 export default function OpSelector({ onSelectOp }: Props) {
   const [operations, setOperations] = useState<Operation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
+  const [editTarget, setEditTarget] = useState<Operation | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Operation | null>(null)
   const [search, setSearch] = useState('')
 
   const fetchOps = useCallback(async () => {
@@ -127,34 +259,37 @@ export default function OpSelector({ onSelectOp }: Props) {
     try {
       const ops = await listOperations()
       setOperations(ops)
-    } catch (err) {
+    } catch {
       setError('Failed to load operations. Is the backend running?')
-      console.error(err)
     } finally {
       setLoading(false)
     }
   }, [])
 
-  useEffect(() => {
-    fetchOps()
-  }, [fetchOps])
+  useEffect(() => { fetchOps() }, [fetchOps])
 
   function handleCreated(op: Operation) {
     onSelectOp(op)
   }
 
+  function handleSaved(updated: Operation) {
+    setOperations(prev => prev.map(o => o.id === updated.id ? updated : o))
+    setEditTarget(null)
+  }
+
+  function handleDeleted(opId: string) {
+    setOperations(prev => prev.filter(o => o.id !== opId))
+    setDeleteTarget(null)
+  }
+
   function formatDate(iso: string): string {
     return new Date(iso).toLocaleString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit',
     })
   }
 
   const apiBase = `http://${window.location.hostname}:8000`
-
   const filteredOps = operations.filter(op =>
     op.name.toLowerCase().includes(search.toLowerCase())
   )
@@ -173,23 +308,16 @@ export default function OpSelector({ onSelectOp }: Props) {
           </div>
           <div className={styles.headerActions}>
             <div className={styles.apiLinks}>
-              <a href={`${apiBase}/docs`} target="_blank" rel="noopener noreferrer" className={styles.apiLink}>
-                Swagger
-              </a>
-              <a href={`${apiBase}/redoc`} target="_blank" rel="noopener noreferrer" className={styles.apiLink}>
-                ReDoc
-              </a>
+              <a href={`${apiBase}/docs`} target="_blank" rel="noopener noreferrer" className={styles.apiLink}>Swagger</a>
+              <a href={`${apiBase}/redoc`} target="_blank" rel="noopener noreferrer" className={styles.apiLink}>ReDoc</a>
             </div>
-            <button
-              className={styles.btnPrimary}
-              onClick={() => setShowCreate(true)}
-            >
+            <button className={styles.btnPrimary} onClick={() => setShowCreate(true)}>
               + New Operation
             </button>
           </div>
         </div>
 
-        {/* Search bar — only shown when there are ops */}
+        {/* Search bar */}
         {!loading && !error && operations.length > 0 && (
           <div className={styles.searchBar}>
             <span className={styles.searchIcon}>⌕</span>
@@ -202,9 +330,7 @@ export default function OpSelector({ onSelectOp }: Props) {
               autoComplete="off"
             />
             {search && (
-              <button className={styles.searchClear} onClick={() => setSearch('')} aria-label="Clear search">
-                ✕
-              </button>
+              <button className={styles.searchClear} onClick={() => setSearch('')} aria-label="Clear search">✕</button>
             )}
           </div>
         )}
@@ -220,9 +346,7 @@ export default function OpSelector({ onSelectOp }: Props) {
           {error && !loading && (
             <div className={styles.stateError}>
               <p>{error}</p>
-              <button className={styles.btnSecondary} onClick={fetchOps}>
-                Retry
-              </button>
+              <button className={styles.btnSecondary} onClick={fetchOps}>Retry</button>
             </div>
           )}
 
@@ -230,12 +354,8 @@ export default function OpSelector({ onSelectOp }: Props) {
             <div className={styles.state}>
               <LockpickLogo size={48} />
               <p className={styles.stateTitle}>No operations yet</p>
-              <p className={styles.stateText}>
-                Create your first operation to start tracking SSH pivot paths.
-              </p>
-              <button className={styles.btnPrimary} onClick={() => setShowCreate(true)}>
-                + Create First Operation
-              </button>
+              <p className={styles.stateText}>Create your first operation to start tracking SSH pivot paths.</p>
+              <button className={styles.btnPrimary} onClick={() => setShowCreate(true)}>+ Create First Operation</button>
             </div>
           )}
 
@@ -249,11 +369,8 @@ export default function OpSelector({ onSelectOp }: Props) {
           {!loading && !error && filteredOps.length > 0 && (
             <ul className={styles.opList}>
               {filteredOps.map(op => (
-                <li key={op.id}>
-                  <button
-                    className={styles.opCard}
-                    onClick={() => onSelectOp(op)}
-                  >
+                <li key={op.id} className={styles.opItem}>
+                  <button className={styles.opCard} onClick={() => onSelectOp(op)}>
                     <div className={styles.opCardMain}>
                       <div className={styles.opNameRow}>
                         <span className={styles.opName}>{op.name}</span>
@@ -268,6 +385,24 @@ export default function OpSelector({ onSelectOp }: Props) {
                       <span className={styles.opArrow}>→</span>
                     </div>
                   </button>
+                  <div className={styles.opActions}>
+                    <button
+                      className={styles.opActionBtn}
+                      onClick={e => { e.stopPropagation(); setEditTarget(op) }}
+                      title="Edit operation"
+                      aria-label="Edit operation"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      className={`${styles.opActionBtn} ${styles.opActionBtnDanger}`}
+                      onClick={e => { e.stopPropagation(); setDeleteTarget(op) }}
+                      title="Delete operation"
+                      aria-label="Delete operation"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -276,10 +411,13 @@ export default function OpSelector({ onSelectOp }: Props) {
       </div>
 
       {showCreate && (
-        <CreateOpModal
-          onClose={() => setShowCreate(false)}
-          onCreated={handleCreated}
-        />
+        <CreateOpModal onClose={() => setShowCreate(false)} onCreated={handleCreated} />
+      )}
+      {editTarget && (
+        <EditOpModal op={editTarget} onClose={() => setEditTarget(null)} onSaved={handleSaved} />
+      )}
+      {deleteTarget && (
+        <DeleteOpModal op={deleteTarget} onClose={() => setDeleteTarget(null)} onDeleted={handleDeleted} />
       )}
     </div>
   )

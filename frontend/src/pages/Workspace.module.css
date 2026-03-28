@@ -246,11 +246,230 @@
   font-style: italic;
 }
 
-/* ─── Graph hint ─────────────────────────────────────────────────────────── */
+/* ─── Host card actions ──────────────────────────────────────────────────── */
 
-.graphHint {
+.hostCardActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ─── Icon buttons ───────────────────────────────────────────────────────── */
+
+.iconBtn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 3px 6px;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.iconBtn:hover {
+  background: var(--bg-surface-2);
+  border-color: var(--border);
+  color: var(--accent);
+}
+
+.iconBtnDanger:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: rgba(248, 81, 73, 0.08);
+}
+
+.iconBtnSm {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s ease;
+}
+
+.iconBtnSm:hover {
+  color: var(--accent);
+}
+
+.iconBtnSm.iconBtnDanger:hover {
+  color: var(--danger);
+}
+
+/* ─── Row actions ────────────────────────────────────────────────────────── */
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ─── List panel (credentials + connections) ─────────────────────────────── */
+
+.listPanel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* ─── Credential rows ────────────────────────────────────────────────────── */
+
+.credRow {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  gap: 6px;
+}
+
+.credRow:last-child {
+  border-bottom: none;
+}
+
+.credHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.credValue {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fingerprintChip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-surface-2);
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+  flex-shrink: 0;
+}
+
+.credComment {
   font-size: var(--font-size-xs);
   color: var(--text-muted);
   font-style: italic;
-  margin: 4px 0 0;
+}
+
+/* ─── Credential link sub-rows ───────────────────────────────────────────── */
+
+.linkList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 8px;
+  border-left: 2px solid var(--border);
+  margin-left: 4px;
+}
+
+.linkRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-xs);
+}
+
+.linkRelBadge {
+  background: var(--bg-surface-3);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 10px;
+  padding: 1px 6px;
+  white-space: nowrap;
+  text-transform: capitalize;
+}
+
+.linkHost {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.linkUser {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+/* ─── Type badges ────────────────────────────────────────────────────────── */
+
+.typeBadge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 100px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.type_private_key { background: rgba(88, 166, 255, 0.12); color: var(--accent); }
+.type_public_key  { background: rgba(63, 185, 80, 0.12);  color: var(--success); }
+.type_password    { background: rgba(210, 153, 34, 0.12); color: var(--warning); }
+.type_ssh         { background: rgba(88, 166, 255, 0.12); color: var(--accent); }
+
+/* ─── Connection rows ────────────────────────────────────────────────────── */
+
+.connRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.connRow:last-child {
+  border-bottom: none;
+}
+
+.connEndpoint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.connHostName {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.connIp {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--accent);
+}
+
+.connUser {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.connArrow {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.connTimestamp {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
 }

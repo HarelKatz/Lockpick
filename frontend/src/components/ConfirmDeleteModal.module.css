@@ -1,0 +1,110 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  padding: 16px;
+}
+
+.modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-lg);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px 0;
+}
+
+.title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--font-size-md);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s ease;
+}
+
+.closeBtn:hover:not(:disabled) {
+  color: var(--text-primary);
+}
+
+.body {
+  padding: 16px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.message {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btnSecondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  padding: 8px 16px;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.btnSecondary:hover:not(:disabled) {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+}
+
+.btnSecondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnDanger {
+  background: var(--danger);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  padding: 8px 16px;
+  transition: background-color 0.15s ease;
+}
+
+.btnDanger:hover:not(:disabled) {
+  background: var(--danger-hover);
+}
+
+.btnDanger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

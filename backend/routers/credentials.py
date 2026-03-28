@@ -14,6 +14,7 @@ from schemas import (
     CredentialCreate,
     CredentialLinkCreate,
     CredentialLinkRead,
+    CredentialLinkUpdate,
     CredentialRead,
     CredentialUpdate,
 )
@@ -113,6 +114,17 @@ def get_credential(cred_id: str, db: Session = Depends(get_db)):
 @router.patch("/credentials/{cred_id}", response_model=CredentialRead)
 def update_credential(cred_id: str, body: CredentialUpdate, db: Session = Depends(get_db)):
     cred = _get_cred_or_404(cred_id, db)
+    if body.value is not None:
+        cred.value = body.value
+        # Re-infer key info when value changes (for private keys)
+        if cred.cred_type == "private_key":
+            passphrase = body.passphrase if body.passphrase is not None else cred.passphrase
+            cred.key_type, cred.fingerprint = _infer_key_info(body.value, passphrase)
+    if body.passphrase is not None:
+        cred.passphrase = body.passphrase
+        # Re-infer fingerprint if passphrase changed (encrypted key needs correct passphrase)
+        if cred.cred_type == "private_key" and body.value is None:
+            cred.key_type, cred.fingerprint = _infer_key_info(cred.value, body.passphrase)
     if body.comment is not None:
         cred.comment = body.comment
     db.commit()
@@ -158,6 +170,22 @@ def list_credential_links(op_id: str, db: Session = Depends(get_db)):
         .filter(Credential.op_id == op_id)
         .all()
     )
+
+
+@router.patch("/credential-links/{link_id}", response_model=CredentialLinkRead)
+def update_credential_link(link_id: str, body: CredentialLinkUpdate, db: Session = Depends(get_db)):
+    link = db.query(CredentialLink).filter(CredentialLink.id == link_id).first()
+    if not link:
+        raise HTTPException(status_code=404, detail="Credential link not found")
+    if body.username is not None:
+        link.username = body.username
+    if body.relationship_type is not None:
+        link.relationship_type = body.relationship_type
+    if body.file_source is not None:
+        link.file_source = body.file_source
+    db.commit()
+    db.refresh(link)
+    return link
 
 
 @router.delete("/credential-links/{link_id}", status_code=204)
