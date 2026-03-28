@@ -166,6 +166,29 @@
   color: var(--accent);
 }
 
+/* ─── User rows ──────────────────────────────────────────────────────────── */
+
+.userRow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.userUsername {
+  flex: 2;
+  min-width: 0;
+}
+
+.userShell {
+  flex: 2;
+  min-width: 0;
+}
+
+.userSource {
+  flex: 2;
+  min-width: 0;
+}
+
 /* ─── Credential link section ────────────────────────────────────────────── */
 
 .linkSection {

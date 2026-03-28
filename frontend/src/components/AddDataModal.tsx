@@ -3,7 +3,7 @@
  * The File Upload tab is a placeholder for Phase 4.
  */
 import { useState, useEffect } from 'react'
-import type { Host } from '../types'
+import type { Host, Credential } from '../types'
 import ManualEntryForm from './ManualEntryForm'
 import styles from './AddDataModal.module.css'
 
@@ -12,6 +12,7 @@ type Tab = 'manual' | 'upload'
 interface Props {
   opId: string
   hosts: Host[]
+  credentials: Credential[]
   onDataAdded: () => void
 }
 
@@ -31,11 +32,13 @@ function UploadPlaceholder() {
 function Modal({
   opId,
   hosts,
+  credentials,
   onClose,
   onDataAdded,
 }: {
   opId: string
   hosts: Host[]
+  credentials: Credential[]
   onClose: () => void
   onDataAdded: () => void
 }) {
@@ -81,7 +84,7 @@ function Modal({
         {/* Modal body */}
         <div className={styles.modalBody}>
           {tab === 'manual' && (
-            <ManualEntryForm opId={opId} hosts={hosts} onSuccess={handleDataAdded} />
+            <ManualEntryForm opId={opId} hosts={hosts} credentials={credentials} onSuccess={handleDataAdded} />
           )}
           {tab === 'upload' && <UploadPlaceholder />}
         </div>
@@ -90,7 +93,7 @@ function Modal({
   )
 }
 
-export default function AddDataModal({ opId, hosts, onDataAdded }: Props) {
+export default function AddDataModal({ opId, hosts, credentials, onDataAdded }: Props) {
   const [open, setOpen] = useState(false)
 
   function handleClose() {
@@ -118,6 +121,7 @@ export default function AddDataModal({ opId, hosts, onDataAdded }: Props) {
         <Modal
           opId={opId}
           hosts={hosts}
+          credentials={credentials}
           onClose={handleClose}
           onDataAdded={handleDataAdded}
         />

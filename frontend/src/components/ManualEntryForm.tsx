@@ -17,11 +17,14 @@ function isValidIP(ip: string): boolean {
 }
 import type {
   Host,
+  Credential,
   CreateCredentialRequest,
   CreateCredentialLinkRequest,
   CreateConnectionRequest,
+  CreateHostUserRequest,
+  AuthMethod,
 } from '../types'
-import { createHost, addHostIP } from '../api/hosts'
+import { createHost, addHostIP, createHostUser } from '../api/hosts'
 import { createCredential, createCredentialLink } from '../api/credentials'
 import { createConnection } from '../api/connections'
 import styles from './ManualEntryForm.module.css'
@@ -31,6 +34,7 @@ type FormType = 'host' | 'credential' | 'connection'
 interface Props {
   opId: string
   hosts: Host[]
+  credentials: Credential[]
   onSuccess: () => void
 }
 
@@ -40,10 +44,24 @@ interface IPEntry {
   ip_address: string
 }
 
+interface UserEntry {
+  username: string
+  shell: string
+  source: CreateHostUserRequest['source']
+}
+
+const USER_SOURCES: { value: CreateHostUserRequest['source']; label: string }[] = [
+  { value: 'manual', label: 'Manual' },
+  { value: 'passwd_file', label: '/etc/passwd' },
+  { value: 'authorized_keys', label: 'authorized_keys' },
+  { value: 'log_evidence', label: 'Log evidence' },
+]
+
 function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) {
   const [nickname, setNickname] = useState('')
   const [comment, setComment] = useState('')
   const [ips, setIps] = useState<IPEntry[]>([{ ip_address: '' }])
+  const [users, setUsers] = useState<UserEntry[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -55,8 +73,20 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
     setIps(prev => prev.filter((_, i) => i !== idx))
   }
 
-  function updateIp(idx: number, field: keyof IPEntry, value: string) {
-    setIps(prev => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row))
+  function updateIp(idx: number, value: string) {
+    setIps(prev => prev.map((row, i) => i === idx ? { ...row, ip_address: value } : row))
+  }
+
+  function addUserRow() {
+    setUsers(prev => [...prev, { username: '', shell: '', source: 'manual' }])
+  }
+
+  function removeUserRow(idx: number) {
+    setUsers(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  function updateUser(idx: number, field: keyof UserEntry, value: string) {
+    setUsers(prev => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row))
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -72,6 +102,7 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
         return
       }
     }
+    const validUsers = users.filter(u => u.username.trim())
     setError(null)
     setLoading(true)
     try {
@@ -81,6 +112,13 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
       })
       for (const ip of validIps) {
         await addHostIP(host.id, { ip_address: ip.ip_address.trim() })
+      }
+      for (const u of validUsers) {
+        await createHostUser(host.id, {
+          username: u.username.trim(),
+          shell: u.shell.trim() || null,
+          source: u.source,
+        })
       }
       onSuccess()
     } catch {
@@ -123,7 +161,7 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
               <input
                 type="text"
                 value={ip.ip_address}
-                onChange={e => updateIp(idx, 'ip_address', e.target.value)}
+                onChange={e => updateIp(idx, e.target.value)}
                 placeholder="IP address"
                 className={styles.ipMain}
                 disabled={loading}
@@ -143,6 +181,54 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
           ))}
           <button type="button" className={styles.addRowBtn} onClick={addIpRow} disabled={loading}>
             + Add IP
+          </button>
+        </div>
+      </div>
+
+      <div className={styles.field}>
+        <label>Known Users</label>
+        <div className={styles.ipList}>
+          {users.map((u, idx) => (
+            <div key={idx} className={styles.userRow}>
+              <input
+                type="text"
+                value={u.username}
+                onChange={e => updateUser(idx, 'username', e.target.value)}
+                placeholder="username"
+                className={styles.userUsername}
+                disabled={loading}
+              />
+              <input
+                type="text"
+                value={u.shell}
+                onChange={e => updateUser(idx, 'shell', e.target.value)}
+                placeholder="shell (opt)"
+                className={styles.userShell}
+                disabled={loading}
+              />
+              <select
+                value={u.source}
+                onChange={e => updateUser(idx, 'source', e.target.value)}
+                className={styles.userSource}
+                disabled={loading}
+              >
+                {USER_SOURCES.map(s => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className={styles.removeBtn}
+                onClick={() => removeUserRow(idx)}
+                disabled={loading}
+                aria-label="Remove user"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          <button type="button" className={styles.addRowBtn} onClick={addUserRow} disabled={loading}>
+            + Add User
           </button>
         </div>
       </div>
@@ -362,13 +448,23 @@ const CONN_TYPES: { value: CreateConnectionRequest['connection_type']; label: st
   { value: 'unknown', label: 'Unknown' },
 ]
 
+const AUTH_METHODS: { value: AuthMethod; label: string }[] = [
+  { value: 'publickey', label: 'Public key' },
+  { value: 'password', label: 'Password' },
+  { value: 'keyboard-interactive', label: 'Keyboard-interactive' },
+  { value: 'hostbased', label: 'Host-based' },
+  { value: 'unknown', label: 'Unknown' },
+]
+
 function ConnectionForm({
   opId,
   hosts,
+  credentials,
   onSuccess,
 }: {
   opId: string
   hosts: Host[]
+  credentials: Credential[]
   onSuccess: () => void
 }) {
   const [srcHostId, setSrcHostId] = useState('')
@@ -379,6 +475,8 @@ function ConnectionForm({
   const [dstUser, setDstUser] = useState('')
   const [connType, setConnType] = useState<CreateConnectionRequest['connection_type']>('ssh')
   const [direction, setDirection] = useState<CreateConnectionRequest['direction_context']>('from_src_logs')
+  const [authMethod, setAuthMethod] = useState<AuthMethod | ''>('')
+  const [credentialId, setCredentialId] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -419,6 +517,8 @@ function ConnectionForm({
         dst_user: dstUser.trim() || null,
         connection_type: connType,
         direction_context: direction,
+        auth_method: authMethod || null,
+        credential_id: credentialId || null,
         source_file: 'manual',
       })
       onSuccess()
@@ -539,6 +639,33 @@ function ConnectionForm({
         </div>
       </div>
 
+      <div className={styles.row}>
+        <div className={styles.field}>
+          <label>Auth Method</label>
+          <select value={authMethod} onChange={e => setAuthMethod(e.target.value as AuthMethod | '')} disabled={loading}>
+            <option value="">— unknown / not recorded —</option>
+            {AUTH_METHODS.map(m => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+        </div>
+        {credentials.length > 0 && (
+          <div className={styles.field}>
+            <label>Credential Used</label>
+            <select value={credentialId} onChange={e => setCredentialId(e.target.value)} disabled={loading}>
+              <option value="">— none / unknown —</option>
+              {credentials.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.cred_type === 'password' ? 'pw' : c.key_type ?? c.cred_type}
+                  {c.fingerprint ? ` ${c.fingerprint.slice(0, 20)}…` : ''}
+                  {c.comment ? ` (${c.comment})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+
       {error && <p className={styles.error}>{error}</p>}
 
       <div className={styles.formActions}>
@@ -558,7 +685,7 @@ const FORM_TYPES: { value: FormType; label: string }[] = [
   { value: 'connection', label: 'Connection' },
 ]
 
-export default function ManualEntryForm({ opId, hosts, onSuccess }: Props) {
+export default function ManualEntryForm({ opId, hosts, credentials, onSuccess }: Props) {
   const [formType, setFormType] = useState<FormType>('host')
   const [resetKey, setResetKey] = useState(0)
 
@@ -590,7 +717,7 @@ export default function ManualEntryForm({ opId, hosts, onSuccess }: Props) {
           <CredentialForm opId={opId} hosts={hosts} onSuccess={handleSuccess} />
         )}
         {formType === 'connection' && (
-          <ConnectionForm opId={opId} hosts={hosts} onSuccess={handleSuccess} />
+          <ConnectionForm opId={opId} hosts={hosts} credentials={credentials} onSuccess={handleSuccess} />
         )}
       </div>
     </div>

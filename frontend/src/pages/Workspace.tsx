@@ -420,7 +420,7 @@ export default function Workspace({ op, onBack }: Props) {
       </main>
 
       {/* FAB + add modal */}
-      <AddDataModal opId={op.id} hosts={hosts} onDataAdded={fetchAll} />
+      <AddDataModal opId={op.id} hosts={hosts} credentials={credentials} onDataAdded={fetchAll} />
 
       {/* ─── Edit modals ─── */}
       {editHost && (
