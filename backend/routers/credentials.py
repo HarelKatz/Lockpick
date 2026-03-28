@@ -83,6 +83,7 @@ def create_credential(op_id: str, body: CredentialCreate, db: Session = Depends(
     cred = Credential(
         op_id=op_id,
         cred_type=body.cred_type,
+        name=body.name,
         value=body.value,
         passphrase=body.passphrase,
         fingerprint=fingerprint,
@@ -114,6 +115,8 @@ def get_credential(cred_id: str, db: Session = Depends(get_db)):
 @router.patch("/credentials/{cred_id}", response_model=CredentialRead)
 def update_credential(cred_id: str, body: CredentialUpdate, db: Session = Depends(get_db)):
     cred = _get_cred_or_404(cred_id, db)
+    if body.name is not None:
+        cred.name = body.name or None
     if body.value is not None:
         cred.value = body.value
         # Re-infer key info when value changes (for private keys)
