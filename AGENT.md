@@ -184,7 +184,7 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 **Last completed phase: Phase 4 — HostUser & Schema Hardening** (commit `a2088f8`)
 
-**Post-phase fixes applied:**
+**Post-phase fixes applied (batch 1):**
 - `CreateHostUserRequest` was missing `home_dir` field (mismatch with backend `HostUserCreate`)
 - `CredentialLinkUpdate` was missing `host_user_id` — added to schema and router handler
 - `PATCH /connections/{id}` could not clear `auth_method`/`credential_id` to null; fixed using `model_fields_set`
@@ -193,6 +193,15 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 - `ManualEntryForm` ConnectionForm credential selector was showing all credential types; corrected to show only `private_key` credentials (authentication is always via private key; public keys are not used directly for auth)
 - `EditHostForm` was missing the Known Users section — added add/remove with immediate API calls, same pattern as IPs
 - `EditConnectionForm` was missing `auth_method` and `credential_id` fields — added auth method dropdown and private key selector, pre-filled from existing record; wired `credentials` prop through Workspace
+
+**Post-phase fixes applied (batch 2):**
+- `ManualEntryForm` HostForm now requires at least one IP address before submitting
+- `EditHostForm` now blocks removing the last IP (error shown inline)
+- `ManualEntryForm` + `EditConnectionForm`: credential dropdown was conditioned on private keys existing in the op; changed to appear whenever auth method is `publickey` (private key creds) or `password` (password creds)
+- `Credential` model: added optional `name` field (migration `e5f6a7b8c9d0`) so credentials can be given a human-readable label in addition to `comment`; `name` surfaces in `CredentialCreate`, `CredentialUpdate`, `CredentialRead`, frontend types, and both credential forms
+- `credentials` router: `name` field was accepted by the schema but never written to the DB — fixed in both `create_credential` and `update_credential`
+- Credential dropdown labels now use `name` > `comment` > `[unnamed key/password]` — no fingerprints in dropdowns
+- Full create-vs-edit constraint audit: all other edit forms (Operation, Credential, CredentialLink, Connection) already enforce their required fields
 
 **Next phase: Phase 5 — Host Selection & Graph Visualization**
 
