@@ -9,6 +9,7 @@ import type {
 import { listHosts, deleteHost } from '../api/hosts'
 import { listCredentials, deleteCredential, listCredentialLinks, deleteCredentialLink } from '../api/credentials'
 import { listConnections, deleteConnection } from '../api/connections'
+import { ApiError } from '../api/client'
 import AddDataModal from '../components/AddDataModal'
 import EditModal from '../components/EditModal'
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal'
@@ -232,12 +233,17 @@ export default function Workspace({ op, onBack }: Props) {
       setCredentials(credsData)
       setLinks(linksData)
       setConnections(connsData)
-    } catch {
+    } catch (err) {
+      // If the op no longer exists (e.g. deleted elsewhere), go back to selector
+      if (err instanceof ApiError && err.status === 404) {
+        onBack()
+        return
+      }
       setError('Failed to load data.')
     } finally {
       setLoading(false)
     }
-  }, [op.id])
+  }, [op.id, onBack])
 
   useEffect(() => { fetchAll() }, [fetchAll])
 

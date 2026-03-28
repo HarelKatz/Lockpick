@@ -3,6 +3,16 @@
  * immediate API calls (add/remove without waiting for form submit).
  */
 import { useState } from 'react'
+
+function isValidIP(ip: string): boolean {
+  if (/^(\d{1,3}\.){3}\d{1,3}$/.test(ip)) {
+    return ip.split('.').every(n => parseInt(n, 10) <= 255)
+  }
+  if (ip.includes(':')) {
+    return /^[0-9a-fA-F:]+$/.test(ip) && ip.split(':').length <= 8
+  }
+  return false
+}
 import type { Host, HostIP } from '../types'
 import { updateHost, addHostIP, deleteHostIP } from '../api/hosts'
 import styles from './EditModal.module.css'
@@ -25,6 +35,10 @@ export default function EditHostForm({ host, onSaved, onClose }: Props) {
   async function handleAddIp() {
     const trimmed = newIp.trim()
     if (!trimmed) return
+    if (!isValidIP(trimmed)) {
+      setError(`"${trimmed}" is not a valid IP address`)
+      return
+    }
     setIpLoading(true)
     setError(null)
     try {

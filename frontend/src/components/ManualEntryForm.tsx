@@ -3,6 +3,18 @@
  * Sub-forms: Host | Credential | Connection
  */
 import { useState, useCallback } from 'react'
+
+function isValidIP(ip: string): boolean {
+  // IPv4
+  if (/^(\d{1,3}\.){3}\d{1,3}$/.test(ip)) {
+    return ip.split('.').every(n => parseInt(n, 10) <= 255)
+  }
+  // IPv6 — accept any colon-hex string up to 8 groups
+  if (ip.includes(':')) {
+    return /^[0-9a-fA-F:]+$/.test(ip) && ip.split(':').length <= 8
+  }
+  return false
+}
 import type {
   Host,
   CreateCredentialRequest,
@@ -53,6 +65,13 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
       setError('Nickname is required')
       return
     }
+    const validIps = ips.filter(ip => ip.ip_address.trim())
+    for (const ip of validIps) {
+      if (!isValidIP(ip.ip_address.trim())) {
+        setError(`"${ip.ip_address.trim()}" is not a valid IP address`)
+        return
+      }
+    }
     setError(null)
     setLoading(true)
     try {
@@ -60,7 +79,6 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
         nickname: nickname.trim(),
         comment: comment.trim() || null,
       })
-      const validIps = ips.filter(ip => ip.ip_address.trim())
       for (const ip of validIps) {
         await addHostIP(host.id, { ip_address: ip.ip_address.trim() })
       }
@@ -169,7 +187,7 @@ function CredentialForm({
   const [passphrase, setPassphrase] = useState('')
   const [comment, setComment] = useState('')
   const [link, setLink] = useState(false)
-  const [linkHostId, setLinkHostId] = useState(hosts[0]?.id ?? '')
+  const [linkHostId, setLinkHostId] = useState('')
   const [linkUsername, setLinkUsername] = useState('')
   const [relationship, setRelationship] = useState<CreateCredentialLinkRequest['relationship_type']>('found_on_disk')
   const [error, setError] = useState<string | null>(null)
@@ -285,6 +303,7 @@ function CredentialForm({
                     onChange={e => setLinkHostId(e.target.value)}
                     disabled={loading}
                   >
+                    <option value="">— select a host —</option>
                     {hosts.map(h => (
                       <option key={h.id} value={h.id}>
                         {h.nickname}{h.ips.length > 0 ? ` (${h.ips[0].ip_address})` : ''}
