@@ -355,7 +355,7 @@ export default function Workspace({ op, onBack }: Props) {
 
       {/* Graph tab */}
       {tab === 'graph' && (
-        <GraphView op={op} allHosts={hosts} />
+        <GraphView op={op} allHosts={hosts} credentials={credentials} />
       )}
 
       {/* Data tab */}

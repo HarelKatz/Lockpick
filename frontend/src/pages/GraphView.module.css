@@ -9,8 +9,56 @@
 .canvasArea {
   display: flex;
   flex: 1;
+  flex-direction: column;
   min-height: 0;
   min-width: 0;
+  position: relative;
+}
+
+.graphToolbar {
+  align-items: center;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+  padding: 6px 10px;
+  z-index: 10;
+}
+
+.credFilterSelect {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: var(--font-size-xs);
+  min-width: 200px;
+  padding: 4px 8px;
+}
+
+.credFilterSelect:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.clearFilterBtn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  padding: 3px 8px;
+  transition: color 0.1s;
+}
+
+.clearFilterBtn:hover {
+  color: var(--text-primary);
+}
+
+.canvasWrapper {
+  flex: 1;
+  min-height: 0;
   position: relative;
 }
 

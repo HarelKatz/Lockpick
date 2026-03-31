@@ -1,0 +1,242 @@
+.collapsed {
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  padding: 6px 10px;
+}
+
+.openBtn {
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  padding: 4px 12px;
+  transition: color 0.1s, border-color 0.1s;
+}
+
+.openBtn:hover {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+}
+
+.panel {
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+}
+
+.panelHeader {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.panelTitle {
+  color: var(--text-primary);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.closeBtn:hover {
+  color: var(--text-primary);
+}
+
+.row {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.fieldLabel {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.select {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  flex: 1;
+  font-size: var(--font-size-xs);
+  min-width: 100px;
+  padding: 4px 6px;
+}
+
+.selectSm {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: var(--font-size-xs);
+  padding: 4px 6px;
+}
+
+.modeGroup {
+  display: flex;
+  gap: 4px;
+}
+
+.modeBtn {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 4px 10px;
+  transition: all 0.1s;
+}
+
+.modeBtn:hover {
+  color: var(--text-primary);
+}
+
+.modeBtnActive {
+  background: rgba(88, 166, 255, 0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.waypointRow {
+  align-items: center;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.removeBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.removeBtn:hover {
+  color: var(--danger);
+}
+
+.addWaypointBtn {
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 3px 8px;
+  text-align: left;
+  transition: color 0.1s, border-color 0.1s;
+}
+
+.addWaypointBtn:hover {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+}
+
+.findBtn {
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-inverse);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: 6px 12px;
+  transition: background 0.1s;
+}
+
+.findBtn:hover {
+  background: var(--accent-hover);
+}
+
+.findBtn:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.error {
+  color: var(--danger);
+  font-size: var(--font-size-xs);
+  margin: 0;
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.noResults {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  margin: 0;
+  text-align: center;
+  padding: 6px 0;
+}
+
+.pathRow {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  transition: border-color 0.1s;
+}
+
+.pathRow:hover {
+  border-color: var(--text-muted);
+}
+
+.pathRowActive {
+  background: rgba(247, 129, 102, 0.08);
+  border-color: #f78166;
+}
+
+.pathHops {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pathMeta {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.truncationWarning {
+  color: var(--warning);
+  font-size: var(--font-size-xs);
+  margin: 0;
+  padding: 2px 0;
+  text-align: center;
+}

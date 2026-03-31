@@ -92,6 +92,18 @@ function EvidenceRow({ ev }: { ev: EvidenceItem }) {
           {ev.timestamp && <span className={styles.metaItem}>{new Date(ev.timestamp).toLocaleString()}</span>}
         </div>
       )}
+      {(ev.credential_name || ev.credential_fingerprint) && (
+        <div className={styles.evidenceMeta}>
+          {ev.credential_name && (
+            <span className={styles.metaItem}>cred: <code>{ev.credential_name}</code></span>
+          )}
+          {ev.credential_fingerprint && (
+            <span className={styles.metaItem}>
+              fp: <code title={ev.credential_fingerprint}>{ev.credential_fingerprint.slice(0, 24)}&hellip;</code>
+            </span>
+          )}
+        </div>
+      )}
     </div>
   )
 }

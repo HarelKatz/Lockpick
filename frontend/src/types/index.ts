@@ -166,6 +166,8 @@ export interface EvidenceItem {
   type: EvidenceType
   detail: string
   credential_id: string | null
+  credential_fingerprint: string | null
+  credential_name: string | null
   src_user: string | null
   dst_user: string | null
   auth_method: string | null
@@ -216,4 +218,31 @@ export interface CreateConnectionRequest {
   timestamp?: string | null
   raw_line?: string | null
   source_file: string
+}
+
+// ── Path Finding ──────────────────────────────────────────────────────────────
+
+export type WaypointPosition = 'anywhere' | 'after' | 'before'
+
+export interface WaypointConstraint {
+  host_id: string
+  position: WaypointPosition
+  relative_to: string | null
+}
+
+export interface PathFinderRequest {
+  src_host_id: string
+  dst_host_id: string
+  mode: 'shortest' | 'all'
+  waypoints: WaypointConstraint[]
+}
+
+export interface PathResult {
+  host_ids: string[]
+  edges: GraphEdge[]
+}
+
+export interface PathFinderResponse {
+  paths: PathResult[]
+  truncated: boolean
 }

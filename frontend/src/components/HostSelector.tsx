@@ -90,7 +90,7 @@ export default function HostSelector({
           <p className={styles.empty}>No hosts{search ? ' matching filter' : ''}.</p>
         )}
         {filtered.map(h => (
-          <label key={h.id} className={styles.row}>
+          <label key={h.id} className={`${styles.row} ${selectedIds.has(h.id) ? '' : styles.rowUnchecked}`}>
             <input
               type="checkbox"
               checked={selectedIds.has(h.id)}

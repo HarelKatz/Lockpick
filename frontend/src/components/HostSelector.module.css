@@ -80,7 +80,11 @@
   display: flex;
   gap: 6px;
   padding: 5px 8px;
-  transition: background-color 0.1s ease;
+  transition: background-color 0.1s ease, opacity 0.2s ease;
+}
+
+.rowUnchecked {
+  opacity: 0.45;
 }
 
 .row:hover {

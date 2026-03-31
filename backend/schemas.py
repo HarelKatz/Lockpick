@@ -215,6 +215,8 @@ class EvidenceItem(BaseModel):
     type: Literal["key_match", "connection_log", "bash_history", "known_hosts"]
     detail: str
     credential_id: Optional[str] = None
+    credential_fingerprint: Optional[str] = None
+    credential_name: Optional[str] = None
     src_user: Optional[str] = None
     dst_user: Optional[str] = None
     auth_method: Optional[str] = None
@@ -249,3 +251,28 @@ class GraphEdge(BaseModel):
 class GraphResponse(BaseModel):
     nodes: list[GraphNode]
     edges: list[GraphEdge]
+
+
+# ─── Path Finding ──────────────────────────────────────────────────────────────
+
+class WaypointConstraint(BaseModel):
+    host_id: str
+    position: Literal["anywhere", "after", "before"]
+    relative_to: Optional[str] = None  # host_id anchor when position is "after"/"before"
+
+
+class PathFinderRequest(BaseModel):
+    src_host_id: str
+    dst_host_id: str
+    mode: Literal["shortest", "all"] = "shortest"
+    waypoints: list[WaypointConstraint] = []
+
+
+class PathResult(BaseModel):
+    host_ids: list[str]
+    edges: list[GraphEdge]
+
+
+class PathFinderResponse(BaseModel):
+    paths: list[PathResult]
+    truncated: bool

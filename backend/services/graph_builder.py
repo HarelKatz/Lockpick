@@ -109,6 +109,12 @@ def build_graph(
         .all()
     )
 
+    # Extend cred_by_id with any credentials referenced by connection records
+    conn_cred_ids = {r.credential_id for r in conn_records if r.credential_id} - cred_ids
+    if conn_cred_ids:
+        extra_creds = db.query(Credential).filter(Credential.id.in_(conn_cred_ids)).all()
+        cred_by_id.update({c.id: c for c in extra_creds})
+
     # ── Accumulate evidence per (src_host_id, dst_host_id) ──────────────────
     edge_evidence: dict[tuple[str, str], list[EvidenceItem]] = defaultdict(list)
 
@@ -137,6 +143,7 @@ def build_graph(
                     continue
                 src_nickname = host_by_id[src_host].nickname if src_host in host_by_id else src_host
                 dst_nickname = host_by_id[dst_host].nickname if dst_host in host_by_id else dst_host
+                cred_obj = cred_by_id.get(cred_id)
                 edge_evidence[(src_host, dst_host)].append(EvidenceItem(
                     type="key_match",
                     detail=(
@@ -146,6 +153,8 @@ def build_graph(
                         f"{f'({dst_user})' if dst_user else ''}"
                     ),
                     credential_id=cred_id,
+                    credential_fingerprint=cred_obj.fingerprint if cred_obj else None,
+                    credential_name=cred_obj.name if cred_obj else None,
                     src_user=src_user,
                     dst_user=dst_user,
                     confidence="confirmed",
@@ -176,6 +185,7 @@ def build_graph(
             ev_type = "connection_log"
             confidence = "observed"
 
+        conn_cred_obj = cred_by_id.get(record.credential_id) if record.credential_id else None
         edge_evidence[(src, dst)].append(EvidenceItem(
             type=ev_type,
             detail=(
@@ -183,6 +193,8 @@ def build_graph(
                 f"{record.src_ip} → {record.dst_ip}"
             ),
             credential_id=record.credential_id,
+            credential_fingerprint=conn_cred_obj.fingerprint if conn_cred_obj else None,
+            credential_name=conn_cred_obj.name if conn_cred_obj else None,
             src_user=record.src_user,
             dst_user=record.dst_user,
             auth_method=record.auth_method,

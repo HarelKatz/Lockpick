@@ -6,14 +6,23 @@
 import { useEffect, useRef } from 'react'
 import cytoscape from 'cytoscape'
 import coseBilkent from 'cytoscape-cose-bilkent'
+import cola from 'cytoscape-cola'
 import type { GraphEdge, GraphNode, GraphResponse } from '../types'
 import styles from './GraphCanvas.module.css'
 
 cytoscape.use(coseBilkent)
+cytoscape.use(cola)
+
+interface HighlightedPath {
+  nodeIds: string[]
+  edgeKeys: string[]
+}
 
 interface Props {
   graphData: GraphResponse
   hiddenIds: Set<string>
+  highlightedPath: HighlightedPath | null
+  credentialFilterId: string | null
   onNodeClick: (node: GraphNode) => void
   onEdgeClick: (edge: GraphEdge) => void
   onNodeDoubleClick: (node: GraphNode) => void
@@ -22,9 +31,37 @@ interface Props {
   onCanvasTap: () => void
 }
 
+function computeEdgeLabel(e: GraphEdge): string {
+  const primary = e.evidence[0]?.type ?? 'unknown'
+  const short: Record<string, string> = {
+    key_match: 'key',
+    connection_log: 'conn',
+    bash_history: 'bash',
+    known_hosts: 'known',
+  }
+  return `${short[primary] ?? primary} \u2022 ${e.evidence.length}`
+}
+
+function buildLayoutOptions(): cytoscape.LayoutOptions {
+  return {
+    name: 'cola',
+    animate: true,
+    infinite: false,
+    fit: true,
+    padding: 90,
+    nodeSpacing: 40,
+    edgeLength: 180,
+    maxSimulationTime: 3000,
+    convergenceThreshold: 0.01,
+    randomize: true,
+  } as cytoscape.LayoutOptions
+}
+
 export default function GraphCanvas({
   graphData,
   hiddenIds,
+  highlightedPath,
+  credentialFilterId,
   onNodeClick,
   onEdgeClick,
   onNodeDoubleClick,
@@ -52,23 +89,36 @@ export default function GraphCanvas({
         {
           selector: 'node',
           style: {
-            'background-color': '#1c2128',
-            'border-color': '#30363d',
-            'border-width': 1,
+            'background-color': '#1a2332',
+            'border-color': '#3d8bcd',
+            'border-width': 2,
             'label': 'data(label)',
-            'color': '#c9d1d9',
+            'color': '#e6edf3',
             'font-size': 11,
             'text-valign': 'bottom',
-            'text-margin-y': 4,
-            'width': 36,
-            'height': 36,
+            'text-margin-y': 5,
+            'width': 40,
+            'height': 40,
+            'text-background-color': '#0d1117',
+            'text-background-opacity': 0.7,
+            'text-background-padding': '2px',
+            'text-background-shape': 'roundrectangle',
+          },
+        },
+        {
+          // Nodes with credentials get an amber ring
+          selector: 'node[?hasCredentials]',
+          style: {
+            'border-color': '#d29922',
+            'border-width': 3,
           },
         },
         {
           selector: 'node:selected',
           style: {
             'border-color': '#58a6ff',
-            'border-width': 2,
+            'border-width': 3,
+            'background-color': '#1f2d3d',
           },
         },
         {
@@ -76,7 +126,7 @@ export default function GraphCanvas({
           style: {
             'curve-style': 'bezier',
             'target-arrow-shape': 'triangle',
-            'width': 2,
+            'width': 3,
             'label': 'data(edgeLabel)',
             'font-size': 9,
             'color': '#8b949e',
@@ -107,7 +157,31 @@ export default function GraphCanvas({
         },
         {
           selector: 'edge:selected',
-          style: { 'width': 3 },
+          style: { 'width': 5 },
+        },
+        // Path highlighting — coral/red
+        {
+          selector: 'node.path-highlight',
+          style: {
+            'border-color': '#f78166',
+            'border-width': 4,
+            'background-color': '#2d1f1f',
+          },
+        },
+        {
+          selector: 'edge.path-highlight',
+          style: {
+            'line-color': '#f78166',
+            'target-arrow-color': '#f78166',
+            'width': 5,
+          },
+        },
+        // Dimmed elements
+        {
+          selector: '.dimmed',
+          style: {
+            'opacity': 0.18,
+          },
         },
       ],
       userZoomingEnabled: true,
@@ -164,6 +238,7 @@ export default function GraphCanvas({
           data: {
             id: n.host_id,
             label: n.nickname,
+            hasCredentials: n.credential_count > 0,
             _node: n,
           },
         })),
@@ -180,26 +255,71 @@ export default function GraphCanvas({
             source: e.src_host_id,
             target: e.dst_host_id,
             confidence: e.confidence,
-            edgeLabel: `${e.evidence.length}`,
+            edgeLabel: computeEdgeLabel(e),
             _edge: e,
           },
         })),
     ]
 
-    cy.elements().remove()
-    cy.add(elements)
+    function rebuildAndLayout() {
+      const c = cyRef.current
+      if (!c) return
+      c.elements().remove()
+      if (elements.length === 0) return
 
-    if (elements.length > 0) {
-      cy.layout({
-        name: 'cose-bilkent',
-        animate: false,
-        randomize: true,
-        nodeDimensionsIncludeLabels: true,
-        idealEdgeLength: 150,
-        nodeRepulsion: 8000,
-      } as cytoscape.LayoutOptions).run()
+      const added = c.add(elements)
+      added.style({ opacity: 0 })
+
+      const layout = c.layout(buildLayoutOptions())
+      layout.one('layoutstop', () => {
+        c.fit(undefined, 90)
+        c.elements().animate(
+          { style: { opacity: 1 } } as cytoscape.AnimationOptions,
+          { duration: 250 },
+        )
+      })
+      layout.run()
+    }
+
+    // Animate out nodes that are going away before rebuilding
+    const goingAway = cy.nodes().filter(n => !visibleNodeIds.has(n.id()))
+    if (goingAway.length > 0) {
+      goingAway.stop(true, false)
+      goingAway.animate(
+        { style: { opacity: 0 } } as cytoscape.AnimationOptions,
+        { duration: 200, complete: rebuildAndLayout },
+      )
+    } else {
+      rebuildAndLayout()
     }
   }, [graphData, hiddenIds])
+
+  // ── Apply path/credential highlighting ──────────────────────────────────────
+  useEffect(() => {
+    const cy = cyRef.current
+    if (!cy) return
+
+    cy.elements().removeClass('path-highlight dimmed')
+
+    if (highlightedPath) {
+      const pathNodeSet = new Set(highlightedPath.nodeIds)
+      const pathEdgeSet = new Set(highlightedPath.edgeKeys)
+      cy.nodes().forEach(n => {
+        if (pathNodeSet.has(n.id())) n.addClass('path-highlight')
+        else n.addClass('dimmed')
+      })
+      cy.edges().forEach(e => {
+        if (pathEdgeSet.has(e.id())) e.addClass('path-highlight')
+        else e.addClass('dimmed')
+      })
+    } else if (credentialFilterId) {
+      cy.edges().forEach(e => {
+        const edge = e.data('_edge') as GraphEdge
+        const used = edge?.evidence?.some(ev => ev.credential_id === credentialFilterId)
+        if (!used) e.addClass('dimmed')
+      })
+    }
+  }, [highlightedPath, credentialFilterId])
 
   return <div ref={containerRef} className={styles.canvas} />
 }

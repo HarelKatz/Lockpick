@@ -3,7 +3,15 @@
  * Layout: HostSelector (left) | GraphCanvas (center) | detail panel (right, conditional).
  */
 import { useCallback, useEffect, useState } from 'react'
-import type { GraphEdge, GraphNode, GraphResponse, Host, Operation } from '../types'
+import type {
+  Credential,
+  GraphEdge,
+  GraphNode,
+  GraphResponse,
+  Host,
+  Operation,
+  PathResult,
+} from '../types'
 import { fetchGraph, expandHost } from '../api/graph'
 import GraphCanvas from '../components/GraphCanvas'
 import HostSelector from '../components/HostSelector'
@@ -11,11 +19,13 @@ import HostDetailSidebar from '../components/HostDetailSidebar'
 import EdgeDetailPanel from '../components/EdgeDetailPanel'
 import NodeContextMenu from '../components/NodeContextMenu'
 import EdgeContextMenu from '../components/EdgeContextMenu'
+import PathFinder from '../components/PathFinder'
 import styles from './GraphView.module.css'
 
 interface Props {
   op: Operation
   allHosts: Host[]
+  credentials: Credential[]
 }
 
 function mergeGraphResponses(existing: GraphResponse, incoming: GraphResponse): GraphResponse {
@@ -31,7 +41,7 @@ function mergeGraphResponses(existing: GraphResponse, incoming: GraphResponse): 
   }
 }
 
-export default function GraphView({ op, allHosts }: Props) {
+export default function GraphView({ op, allHosts, credentials }: Props) {
   const [graphData, setGraphData] = useState<GraphResponse>({ nodes: [], edges: [] })
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set())
@@ -41,6 +51,8 @@ export default function GraphView({ op, allHosts }: Props) {
   const [edgeCtxMenu, setEdgeCtxMenu] = useState<{ edge: GraphEdge; x: number; y: number } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [highlightedPath, setHighlightedPath] = useState<PathResult | null>(null)
+  const [credentialFilterId, setCredentialFilterId] = useState<string | null>(null)
 
   // Load full graph on mount
   const loadFullGraph = useCallback(async () => {
@@ -85,6 +97,15 @@ export default function GraphView({ op, allHosts }: Props) {
     loadFiltered()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIds, op.id])
+
+  // ── Computed highlight shape for GraphCanvas ──────────────────────────────
+
+  const computedHighlight = highlightedPath
+    ? {
+        nodeIds: highlightedPath.host_ids,
+        edgeKeys: highlightedPath.edges.map(e => `${e.src_host_id}__${e.dst_host_id}`),
+      }
+    : null
 
   // ── Event handlers ────────────────────────────────────────────────────────
 
@@ -161,6 +182,16 @@ export default function GraphView({ op, allHosts }: Props) {
     loadFullGraph()
   }
 
+  function handleHighlightPath(path: PathResult | null) {
+    setHighlightedPath(path)
+    if (path) setCredentialFilterId(null)
+  }
+
+  function handleCredentialFilter(credId: string | null) {
+    setCredentialFilterId(credId)
+    if (credId) setHighlightedPath(null)
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   const rightPanel = selectedNode
@@ -198,30 +229,68 @@ export default function GraphView({ op, allHosts }: Props) {
       />
 
       <div className={styles.canvasArea}>
-        {error && (
-          <div className={styles.error}>
-            {error}
-            <button className={styles.retryBtn} onClick={loadFullGraph}>Retry</button>
-          </div>
-        )}
+        {/* Toolbar: credential filter */}
+        <div className={styles.graphToolbar}>
+          <select
+            className={styles.credFilterSelect}
+            value={credentialFilterId ?? ''}
+            onChange={e => handleCredentialFilter(e.target.value || null)}
+          >
+            <option value="">Filter by credential…</option>
+            {credentials.map(c => (
+              <option key={c.id} value={c.id}>
+                {c.name
+                  ? c.name
+                  : c.fingerprint
+                  ? c.fingerprint.slice(0, 24) + '…'
+                  : c.id.slice(0, 8)}
+              </option>
+            ))}
+          </select>
+          {credentialFilterId && (
+            <button
+              className={styles.clearFilterBtn}
+              onClick={() => handleCredentialFilter(null)}
+            >
+              Clear filter
+            </button>
+          )}
+        </div>
 
-        {!error && graphData.nodes.length === 0 && !loading && (
-          <div className={styles.empty}>
-            <div className={styles.emptyIcon}>⬡</div>
-            <p className={styles.emptyText}>No hosts to display.</p>
-            <p className={styles.emptyHint}>Select hosts from the list or add data first.</p>
-          </div>
-        )}
+        <div className={styles.canvasWrapper}>
+          {error && (
+            <div className={styles.error}>
+              {error}
+              <button className={styles.retryBtn} onClick={loadFullGraph}>Retry</button>
+            </div>
+          )}
 
-        <GraphCanvas
-          graphData={graphData}
-          hiddenIds={hiddenIds}
-          onNodeClick={handleNodeClick}
-          onEdgeClick={handleEdgeClick}
-          onNodeDoubleClick={handleNodeDoubleClick}
-          onNodeContextMenu={handleNodeContextMenu}
-          onEdgeContextMenu={handleEdgeContextMenu}
-          onCanvasTap={handleCanvasTap}
+          {!error && graphData.nodes.length === 0 && !loading && (
+            <div className={styles.empty}>
+              <div className={styles.emptyIcon}>⬡</div>
+              <p className={styles.emptyText}>No hosts to display.</p>
+              <p className={styles.emptyHint}>Select hosts from the list or add data first.</p>
+            </div>
+          )}
+
+          <GraphCanvas
+            graphData={graphData}
+            hiddenIds={hiddenIds}
+            highlightedPath={computedHighlight}
+            credentialFilterId={credentialFilterId}
+            onNodeClick={handleNodeClick}
+            onEdgeClick={handleEdgeClick}
+            onNodeDoubleClick={handleNodeDoubleClick}
+            onNodeContextMenu={handleNodeContextMenu}
+            onEdgeContextMenu={handleEdgeContextMenu}
+            onCanvasTap={handleCanvasTap}
+          />
+        </div>
+
+        <PathFinder
+          nodes={graphData.nodes}
+          opId={op.id}
+          onHighlightPath={handleHighlightPath}
         />
       </div>
 
