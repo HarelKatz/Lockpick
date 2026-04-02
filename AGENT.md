@@ -144,11 +144,15 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed phase: Phase 5 — Host Selection & Graph Visualization**
+**Last completed phase: Phase 5 — Host Selection & Graph Visualization (+ post-phase review)**
 
-Phases 1–5 are fully implemented and tested. See git history for details.
+Phases 1–5 are fully implemented and tested. A post-phase review added physics layout, visual improvements, path finding, and credential filtering. See git history for details.
 
-**Next phase: Phase 6 — File Upload & Parsing Engine**
+**Pending before Phase 6: 6 confirmed bugs from the Phase 5 review (see section below)**
+
+All 6 bugs are still unimplemented in `HEAD`. `git stash` contains partial work. Do **not** skip these — several directly break the UX.
+
+**Next phase after fixes: Phase 6 — File Upload & Parsing Engine**
 
 ---
 
@@ -160,79 +164,245 @@ See git history for details. All infrastructure, CRUD APIs, edit/delete UI, Host
 
 ### Phase 5 — Host Selection & Graph Visualization
 
-#### Backend — Graph API
+#### What was built (all implemented)
 
-New router: `backend/routers/graph.py`. New service: `backend/services/graph_builder.py`.
+**Backend:**
+- `backend/routers/graph.py` — `GET /ops/{op_id}/graph?host_ids=...` and `GET /ops/{op_id}/hosts/{host_id}/expand?evidence_type=...`
+- `backend/services/graph_builder.py` — aggregates CredentialLinks + ConnectionRecords into edge objects in two passes (key matches → `confirmed`, connection records → `observed`/`indicator`)
+- `backend/services/pivot_analysis.py` — BFS/DFS path finder, max depth 8, max 30 paths, waypoint constraints (`anywhere` / `after [host]` / `before [host]`)
+- `POST /ops/{op_id}/graph/paths` — path finder endpoint
+- `EvidenceItem` schema includes: `credential_fingerprint`, `credential_name` (populated from credential table)
 
+**Frontend:**
+- `frontend/src/components/GraphCanvas.tsx` — cytoscape-cola physics layout (spring physics on drag), navy nodes with blue ring (amber for credentialed nodes), confidence-colored edges, fade in/out animations on node add/remove, path highlighting (coral) and dimming, credential filter effect
+- `frontend/src/components/HostSelector.tsx` — searchable list, row dims to 45% opacity when unchecked
+- `frontend/src/components/EdgeDetailPanel.tsx` — shows all evidence items including credential fingerprint/name
+- `frontend/src/components/PathFinder.tsx` — src/dst host selectors, shortest/all-paths mode, optional waypoints with position constraints, results list with click-to-highlight
+- `frontend/src/pages/GraphView.tsx` — orchestrates graph, credential filter toolbar, PathFinder panel, path/credential filter state
+- `frontend/src/pages/GraphView.module.css` — toolbar above canvas, canvasWrapper column layout
+
+**Right-click context menus (nodes and edges):**
+- Node: Expand all / by key match / by connection log / by indicator; Hide node
+- Edge: View evidence
+
+**Hidden nodes** can be restored via the Refresh button in HostSelector.
+
+---
+
+### Phase 5 — Pending Fixes
+
+**All 6 bugs are unimplemented in HEAD. Fix all of them before starting Phase 6.**
+
+#### What is in `git stash` (stash@{0})
+
+Two files are stashed. Pop with `git stash pop` when ready:
+
+| File | What it contains |
+|------|-----------------|
+| `backend/schemas.py` | `connection_type: Optional[str] = None` added to `EvidenceItem` |
+| `frontend/src/components/GraphCanvas.tsx` | Smart diff update (Fix 1) + `pathFilter`/`credFilter` props replacing old `highlightedPath`/`credentialFilterId` (Fixes 3 & 5 canvas logic) + new `computeEdgeLabel` that reads `ev.connection_type` (Fix 4 label logic) |
+
+**Critical:** After `git stash pop`, the TypeScript build will immediately break because `GraphView.tsx` still passes the old props (`highlightedPath`, `credentialFilterId`) but the canvas now expects `pathFilter`, `credFilter`. Fix 3 and Fix 5 wiring in `GraphView.tsx` must be done in the same sitting as the stash pop.
+
+---
+
+#### Fix 1 — Double-click expand causes graph flash
+
+**Status:** Fully in stash — no other files needed.
+
+**Problem:** Double-clicking a node to expand triggers a full canvas teardown + rebuild, causing a visible flash even though only new nodes are being added.
+
+**Root cause:** The `graphData` useEffect always clears all elements and rebuilds from scratch (`cy.elements().remove()` then re-add all) regardless of whether it's a full reload or an incremental expand.
+
+**Fix (stash has this in `GraphCanvas.tsx`):** Smart diff update — three cases:
+- `goingAway.length > 0` → animate removed nodes out (200ms opacity), then `fullRebuild()`
+- `incoming.length > 0 && currentNodeIds.size > 0` → **expand path**: `cy.add(incoming)` only, fade new nodes in, re-run layout without clearing existing canvas
+- `currentNodeIds.size === 0` → initial load, `fullRebuild()`
+
+`fullRebuild()` still clears and rebuilds, used only for initial load and for when nodes are removed.
+
+---
+
+#### Fix 2 — PathFinder dropdowns empty when no hosts on graph
+
+**Status:** Not started — no stash content.
+
+**Problem:** `PathFinder` receives `nodes: GraphNode[]` from `graphData.nodes`. When the graph canvas is empty (all hosts unchecked), the dropdowns are empty and the user cannot search for a path.
+
+**Fix — 3 changes:**
+
+1. **`frontend/src/pages/GraphView.tsx`** — compute a merged host list:
+   ```ts
+   const allSelectableHosts = useMemo(() => {
+     const map = new Map<string, { id: string; nickname: string }>()
+     for (const h of allHosts) map.set(h.id, { id: h.id, nickname: h.nickname })
+     for (const n of graphData.nodes) map.set(n.host_id, { id: n.host_id, nickname: n.nickname })
+     return Array.from(map.values())
+   }, [allHosts, graphData.nodes])
+   ```
+   Pass `allSelectableHosts` to `<PathFinder nodes={allSelectableHosts} ...>` instead of `graphData.nodes`.
+
+2. **`frontend/src/components/PathFinder.tsx`** — change the `nodes` prop type:
+   ```ts
+   // was: nodes: GraphNode[]
+   nodes: { id: string; nickname: string }[]
+   ```
+   Update `getNickname` and all `<select>` mappings to use `h.id` / `h.nickname` directly (they already do this, just change the prop type annotation and remove the `host_id` references).
+
+---
+
+#### Fix 3 — Path result should hide unrelated nodes/edges
+
+**Status:** Canvas logic in stash; `GraphView.tsx` wiring not started.
+
+**Problem:** Selecting a path in PathFinder dims non-path nodes to 18% opacity but they remain visible. The user wants only the path nodes and edges shown.
+
+**Fix — canvas side (stash has this):** The stashed `GraphCanvas.tsx` uses `cy.style('display', 'none')` instead of the `.dimmed` class for path filtering:
+- Path nodes → `path-highlight` class
+- Non-path nodes → `n.style('display', 'none')`
+- Path edges → `path-highlight` class
+- Non-path edges → `e.style('display', 'none')`
+- When path is cleared → `cy.nodes().style('display', 'element')` + `cy.edges().style('display', 'element')` reset
+
+**Fix — `GraphView.tsx` wiring (not started):** The stash changes `GraphCanvas` props:
+
+Old (current HEAD):
+```ts
+highlightedPath: { nodeIds: string[]; edgeKeys: string[] } | null
+credentialFilterId: string | null
 ```
-GET /api/ops/{op_id}/graph?host_ids=id1,id2,...
+New (in stash):
+```ts
+pathFilter: PathFilter | null   // exported from GraphCanvas.tsx; = { nodeIds: Set<string>; edgeKeys: Set<string> }
+credFilter: CredFilter | null   // exported from GraphCanvas.tsx; = { credId: string; mode: 'highlight' | 'filter' }
 ```
 
-Returns nodes + edges for the requested host subset (omit `host_ids` for all hosts in op).
+In `GraphView.tsx`:
+- Rename state `highlightedPath` → `pathFilter`, change type to `PathFilter | null`
+- Build `pathFilter` as `{ nodeIds: new Set(path.host_ids), edgeKeys: new Set(path.edges.map(e => \`${e.src_host_id}__${e.dst_host_id}\`)) }` (was built as `computedHighlight` with arrays, now use Sets)
+- Pass `pathFilter={pathFilter}` to `<GraphCanvas>` (was `highlightedPath={computedHighlight}`)
+- Remove `computedHighlight` intermediate variable
 
-Response shape:
-```json
-{
-  "nodes": [
-    {
-      "host_id": "...", "nickname": "...", "ips": ["10.0.0.1"],
-      "user_count": 2, "credential_count": 3
+---
+
+#### Fix 4 — Edge labels show `key • 2` instead of connection type
+
+**Status:** Label logic in stash (`GraphCanvas.tsx`); backend field and TS type not started.
+
+**Problem:** Edge labels show `key • 2` (evidence type abbreviation + count) which is meaningless. The user wants the actual connection type: "SSH", "SCP", "key match", etc.
+
+**Fix — edge label logic (stash has this in `GraphCanvas.tsx`):**
+```ts
+function computeEdgeLabel(e: GraphEdge): string {
+  for (const ev of e.evidence) {
+    if (ev.type === 'connection_log' && ev.connection_type) {
+      return ev.connection_type.toUpperCase()   // "SSH", "SCP", "RSYNC", etc.
     }
-  ],
-  "edges": [
-    {
-      "src_host_id": "...", "dst_host_id": "...",
-      "confidence": "confirmed",
-      "evidence": [...],
-      "pivotable_users": [
-        {"src_user": "bob", "dst_user": "root", "method": "key", "credential_id": "..."}
-      ]
-    }
-  ]
+  }
+  if (e.evidence.some(ev => ev.type === 'key_match')) return 'key match'
+  if (e.evidence.some(ev => ev.type === 'bash_history')) return 'bash history'
+  if (e.evidence.some(ev => ev.type === 'known_hosts')) return 'known hosts'
+  return 'connection'
 }
 ```
 
-`graph_builder.py` aggregates evidence in two passes:
-1. **Key matches** — CredentialLink pairs where a `found_on_disk` link on host A shares a fingerprint with an `authorized_key` link on host B → `key_match` evidence, `confirmed` confidence
-2. **Connection records** — ConnectionRecord rows grouped by (src_host_id, dst_host_id) → `connection_log`, `bash_history`, or `known_hosts` evidence
+**Fix — `connection_type` field on `EvidenceItem` (stash has schema change; 2 files still needed):**
 
-Edge `confidence` = highest confidence among all evidence items.
+The stash adds `connection_type: Optional[str] = None` to `EvidenceItem` in `backend/schemas.py`. Two files still need updating:
 
+1. **`backend/services/graph_builder.py`** — in Pass 2 (connection records, around line 179), add the field to the `EvidenceItem(...)` constructor:
+   ```python
+   EvidenceItem(
+       type=ev_type,
+       detail=...,
+       connection_type=record.connection_type,   # ← ADD THIS
+       credential_id=record.credential_id,
+       ...
+   )
+   ```
+
+2. **`frontend/src/types/index.ts`** — add to `EvidenceItem` interface:
+   ```ts
+   connection_type: string | null   // ← ADD after credential_name
+   ```
+
+---
+
+#### Fix 5 — Credential filter: meaningless names + single broken mode
+
+**Status:** Canvas logic in stash; `GraphView.tsx` toolbar/state not started.
+
+**Problem:**
+- The dropdown shows truncated fingerprints or `null` — not useful.
+- There is only one mode that half-works (dims non-matching edges but doesn't hide them).
+- The user wants two explicit modes: **Highlight** (keep all visible, highlight matching) and **Filter** (hide non-matching entirely).
+
+**Fix — credential display name (not started, goes in `GraphView.tsx`):**
+```ts
+function credLabel(c: Credential): string {
+  const type = c.key_type
+    ? c.key_type.replace('ssh-', '').toUpperCase()   // "ED25519", "RSA"
+    : c.cred_type.replace('_', ' ')                  // "private key", "password"
+  const label = c.name
+    || c.comment
+    || (c.fingerprint ? c.fingerprint.slice(7, 23) + '…' : c.id.slice(0, 8))
+  return `${type}: ${label}`  // "ED25519: root@web01"  or  "RSA: SHA256:abc123…"
+}
 ```
-GET /api/ops/{op_id}/hosts/{host_id}/expand?evidence_type=all|key_match|connection_log|indicator
+
+**Fix — two-mode state (not started, goes in `GraphView.tsx`):**
+
+Replace `credentialFilterId: string | null` state with:
+```ts
+const [credFilter, setCredFilter] = useState<{ credId: string; mode: 'highlight' | 'filter' } | null>(null)
 ```
 
-Returns all hosts related to the given host (with their edges), filtered by evidence type. Used by double-click / right-click "Expand" on graph nodes.
+Default mode when a credential is first selected: `'highlight'`.
 
-Tests: `tests/test_api/test_graph.py`, `tests/test_services/test_graph_builder.py`
+**Fix — toolbar UI update (not started, `GraphView.tsx` + `GraphView.module.css`):**
+- `<select>` with `credLabel(c)` — replaces the current truncated-fingerprint display
+- When a credential is selected, render two mode buttons inline: **Highlight** / **Filter** (toggle active with `.modeBtnActive` class from `PathFinder.module.css` as reference)
+- **Clear** button to reset
+- Pass `credFilter={credFilter}` to `<GraphCanvas>` (was `credentialFilterId={credentialFilterId}`)
 
-#### Frontend
+**Fix — canvas side (stash has this):** The stashed `GraphCanvas.tsx` already handles both modes via the `credFilter` prop:
+- **Highlight mode:** edges matching credential → `path-highlight`; their endpoint nodes → `path-highlight`; everything else → `.dimmed`
+- **Filter mode:** edges not matching → `display: none`; nodes with no visible edges → `display: none`; matching edges → `path-highlight`
 
-- [ ] Host query/filter panel: show all hosts in current op as a searchable/filterable list with checkboxes
-- [ ] Selected hosts render on a cytoscape.js canvas as labeled nodes
-- [ ] Node label shows nickname; badge/icon shows number of known users (from HostUser table) and credentials
-- [ ] Nodes are draggable, graph uses force-directed layout (cola or cose-bilkent)
-- [ ] Double-click a node to "expand" — backend returns all related hosts and aggregated edges, new nodes/edges added to canvas
-- [ ] Edges rendered with:
-  - Color based on highest confidence: green (confirmed/key match), orange (observed/logs), gray (indicator)
-  - Thickness based on number of evidence items
-  - Arrow showing direction
-  - Label summary (e.g. "2 key matches, 3 log entries")
-- [ ] Click an edge → detail panel showing ALL evidence items for that edge
-- [ ] Click a node → sidebar showing host detail (IPs, users, credentials, comment, all connections)
-- [ ] **Right-click context menu on nodes:**
-  - "Expand all" — show all related hosts (default double-click behavior)
-  - "Expand by key matches only" — only show hosts related by credential matching
-  - "Expand by connection logs only" — only show hosts with observed connections
-  - "Expand by indicators only" — only show hosts with known_hosts/bash_history links
-  - Separator
-  - "Hide this node" — remove from canvas (not from DB)
-  - "Edit host" — open edit form (reuses EditHostForm from Phase 3)
-  - "Delete host" — delete from DB with confirmation (reuses ConfirmDeleteModal from Phase 3)
-- [ ] **Right-click context menu on edges:**
-  - "Show evidence detail" — open evidence panel
-  - "Hide this edge" — remove from canvas
-- [ ] Hidden nodes/edges can be restored via "Show all" button or re-selecting from the host list
+---
+
+#### Fix 6 — FAB button overlaps edit/delete buttons at small window sizes
+
+**Status:** Not started — one CSS line.
+
+**Problem:** The floating `+` button in the data tab is `position: fixed; bottom: 32px; right: 32px`. When the window is not fullscreen, it covers the Edit/Delete buttons on the last few rows of the list.
+
+**Fix:**
+```css
+/* frontend/src/pages/Workspace.module.css — .main class (~line 107) */
+.main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  padding-bottom: 80px;  /* stop FAB overlapping last row's buttons */
+}
+```
+
+---
+
+### Implementation order for pending fixes
+
+Do these in a single session — the stash pop breaks the build until GraphView.tsx is updated.
+
+1. **`git stash pop`** — applies `GraphCanvas.tsx` (smart diff, new props) + `schemas.py` (connection_type)
+2. **Immediately fix `GraphView.tsx`** — rename `highlightedPath` → `pathFilter` (Set-based), pass `pathFilter`/`credFilter` to `<GraphCanvas>` instead of old props; replace `credentialFilterId` state with `credFilter`; add `credLabel()` helper; add mode toggle buttons to toolbar (Fixes 3 + 5 wiring)
+3. **`frontend/src/components/PathFinder.tsx`** — change `nodes` prop type to `{ id: string; nickname: string }[]` (Fix 2 part 1)
+4. **`frontend/src/pages/GraphView.tsx`** — add `allSelectableHosts` memo, pass it to `<PathFinder>` (Fix 2 part 2; same file as step 2, can be done together)
+5. **`backend/services/graph_builder.py`** — add `connection_type=record.connection_type` to EvidenceItem in Pass 2 (Fix 4 backend)
+6. **`frontend/src/types/index.ts`** — add `connection_type: string | null` to `EvidenceItem` (Fix 4 types)
+7. **`frontend/src/pages/Workspace.module.css`** — add `padding-bottom: 80px` to `.main` (Fix 6)
+8. **`make test && cd frontend && npm run build`** — must be clean before committing
+9. **Commit:** `fix(frontend+backend): resolve Phase 5 review bugs`
 
 ### Phase 6 — File Upload & Parsing Engine
 
