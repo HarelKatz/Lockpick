@@ -13,16 +13,21 @@ import styles from './GraphCanvas.module.css'
 cytoscape.use(coseBilkent)
 cytoscape.use(cola)
 
-interface HighlightedPath {
-  nodeIds: string[]
-  edgeKeys: string[]
+export interface CredFilter {
+  credId: string
+  mode: 'highlight' | 'filter'
+}
+
+export interface PathFilter {
+  nodeIds: Set<string>
+  edgeKeys: Set<string>
 }
 
 interface Props {
   graphData: GraphResponse
   hiddenIds: Set<string>
-  highlightedPath: HighlightedPath | null
-  credentialFilterId: string | null
+  pathFilter: PathFilter | null
+  credFilter: CredFilter | null
   onNodeClick: (node: GraphNode) => void
   onEdgeClick: (edge: GraphEdge) => void
   onNodeDoubleClick: (node: GraphNode) => void
@@ -32,14 +37,16 @@ interface Props {
 }
 
 function computeEdgeLabel(e: GraphEdge): string {
-  const primary = e.evidence[0]?.type ?? 'unknown'
-  const short: Record<string, string> = {
-    key_match: 'key',
-    connection_log: 'conn',
-    bash_history: 'bash',
-    known_hosts: 'known',
+  // Prefer actual connection_type from connection_log evidence
+  for (const ev of e.evidence) {
+    if (ev.type === 'connection_log' && ev.connection_type) {
+      return ev.connection_type.toUpperCase()
+    }
   }
-  return `${short[primary] ?? primary} \u2022 ${e.evidence.length}`
+  if (e.evidence.some(ev => ev.type === 'key_match')) return 'key match'
+  if (e.evidence.some(ev => ev.type === 'bash_history')) return 'bash history'
+  if (e.evidence.some(ev => ev.type === 'known_hosts')) return 'known hosts'
+  return 'connection'
 }
 
 function buildLayoutOptions(): cytoscape.LayoutOptions {
@@ -60,8 +67,8 @@ function buildLayoutOptions(): cytoscape.LayoutOptions {
 export default function GraphCanvas({
   graphData,
   hiddenIds,
-  highlightedPath,
-  credentialFilterId,
+  pathFilter,
+  credFilter,
   onNodeClick,
   onEdgeClick,
   onNodeDoubleClick,
@@ -176,7 +183,7 @@ export default function GraphCanvas({
             'width': 5,
           },
         },
-        // Dimmed elements
+        // Dimmed elements (for highlight mode)
         {
           selector: '.dimmed',
           style: {
@@ -219,7 +226,7 @@ export default function GraphCanvas({
     }
   }, [])  // mount-only — events use cbRef for freshness
 
-  // ── Rebuild elements when graphData or hiddenIds change ─────────────────────
+  // ── Rebuild/update elements when graphData or hiddenIds change ───────────────
   useEffect(() => {
     const cy = cyRef.current
     if (!cy) return
@@ -230,44 +237,53 @@ export default function GraphCanvas({
         .map(n => n.host_id),
     )
 
-    const elements: cytoscape.ElementDefinition[] = [
-      ...graphData.nodes
-        .filter(n => visibleNodeIds.has(n.host_id))
-        .map(n => ({
-          group: 'nodes' as const,
-          data: {
-            id: n.host_id,
-            label: n.nickname,
-            hasCredentials: n.credential_count > 0,
-            _node: n,
-          },
-        })),
-      ...graphData.edges
-        .filter(
-          e =>
-            visibleNodeIds.has(e.src_host_id) &&
-            visibleNodeIds.has(e.dst_host_id),
-        )
-        .map(e => ({
-          group: 'edges' as const,
-          data: {
-            id: `${e.src_host_id}__${e.dst_host_id}`,
-            source: e.src_host_id,
-            target: e.dst_host_id,
-            confidence: e.confidence,
-            edgeLabel: computeEdgeLabel(e),
-            _edge: e,
-          },
-        })),
-    ]
+    // All elements that should be on canvas
+    const allNodes: cytoscape.ElementDefinition[] = graphData.nodes
+      .filter(n => visibleNodeIds.has(n.host_id))
+      .map(n => ({
+        group: 'nodes' as const,
+        data: {
+          id: n.host_id,
+          label: n.nickname,
+          hasCredentials: n.credential_count > 0,
+          _node: n,
+        },
+      }))
 
-    function rebuildAndLayout() {
+    const allEdges: cytoscape.ElementDefinition[] = graphData.edges
+      .filter(e => visibleNodeIds.has(e.src_host_id) && visibleNodeIds.has(e.dst_host_id))
+      .map(e => ({
+        group: 'edges' as const,
+        data: {
+          id: `${e.src_host_id}__${e.dst_host_id}`,
+          source: e.src_host_id,
+          target: e.dst_host_id,
+          confidence: e.confidence,
+          edgeLabel: computeEdgeLabel(e),
+          _edge: e,
+        },
+      }))
+
+    const allElements = [...allNodes, ...allEdges]
+
+    const currentNodeIds = new Set(cy.nodes().map(n => n.id()))
+    const currentEdgeIds = new Set(cy.edges().map(e => e.id()))
+
+    // Nodes currently on canvas that are no longer visible
+    const goingAway = cy.nodes().filter(n => !visibleNodeIds.has(n.id()))
+
+    // New elements not yet on canvas
+    const incomingNodes = allNodes.filter(el => !currentNodeIds.has(el.data.id as string))
+    const incomingEdges = allEdges.filter(el => !currentEdgeIds.has(el.data.id as string))
+    const incoming = [...incomingNodes, ...incomingEdges]
+
+    function fullRebuild() {
       const c = cyRef.current
       if (!c) return
       c.elements().remove()
-      if (elements.length === 0) return
+      if (allElements.length === 0) return
 
-      const added = c.add(elements)
+      const added = c.add(allElements)
       added.style({ opacity: 0 })
 
       const layout = c.layout(buildLayoutOptions())
@@ -281,45 +297,98 @@ export default function GraphCanvas({
       layout.run()
     }
 
-    // Animate out nodes that are going away before rebuilding
-    const goingAway = cy.nodes().filter(n => !visibleNodeIds.has(n.id()))
     if (goingAway.length > 0) {
+      // Nodes being hidden — animate them out then rebuild
       goingAway.stop(true, false)
       goingAway.animate(
         { style: { opacity: 0 } } as cytoscape.AnimationOptions,
-        { duration: 200, complete: rebuildAndLayout },
+        { duration: 200, complete: fullRebuild },
       )
-    } else {
-      rebuildAndLayout()
+    } else if (incoming.length > 0 && currentNodeIds.size > 0) {
+      // Expand: only new elements — add them without disturbing existing nodes
+      const added = cy.add(incoming)
+      added.style({ opacity: 0 })
+      const layout = cy.layout(buildLayoutOptions())
+      layout.one('layoutstop', () => {
+        cy.fit(undefined, 90)
+        added.animate(
+          { style: { opacity: 1 } } as cytoscape.AnimationOptions,
+          { duration: 250 },
+        )
+      })
+      layout.run()
+    } else if (currentNodeIds.size === 0) {
+      // Initial load or cleared graph
+      fullRebuild()
     }
+    // else: no structural change (shouldn't happen in normal flow)
   }, [graphData, hiddenIds])
 
-  // ── Apply path/credential highlighting ──────────────────────────────────────
+  // ── Apply path / credential filter ──────────────────────────────────────────
   useEffect(() => {
     const cy = cyRef.current
     if (!cy) return
 
+    // Reset everything
     cy.elements().removeClass('path-highlight dimmed')
+    cy.nodes().style('display', 'element')
+    cy.edges().style('display', 'element')
 
-    if (highlightedPath) {
-      const pathNodeSet = new Set(highlightedPath.nodeIds)
-      const pathEdgeSet = new Set(highlightedPath.edgeKeys)
+    if (pathFilter) {
+      // Show only path nodes and edges; hide everything else
       cy.nodes().forEach(n => {
-        if (pathNodeSet.has(n.id())) n.addClass('path-highlight')
-        else n.addClass('dimmed')
+        if (pathFilter.nodeIds.has(n.id())) {
+          n.addClass('path-highlight')
+        } else {
+          n.style('display', 'none')
+        }
       })
       cy.edges().forEach(e => {
-        if (pathEdgeSet.has(e.id())) e.addClass('path-highlight')
-        else e.addClass('dimmed')
+        if (pathFilter.edgeKeys.has(e.id())) {
+          e.addClass('path-highlight')
+        } else {
+          e.style('display', 'none')
+        }
       })
-    } else if (credentialFilterId) {
-      cy.edges().forEach(e => {
-        const edge = e.data('_edge') as GraphEdge
-        const used = edge?.evidence?.some(ev => ev.credential_id === credentialFilterId)
-        if (!used) e.addClass('dimmed')
-      })
+    } else if (credFilter) {
+      if (credFilter.mode === 'filter') {
+        // Hide edges not using this credential, hide nodes with no visible edges
+        cy.edges().forEach(e => {
+          const edge = e.data('_edge') as GraphEdge
+          const matches = edge?.evidence?.some(ev => ev.credential_id === credFilter.credId)
+          if (matches) {
+            e.addClass('path-highlight')
+          } else {
+            e.style('display', 'none')
+          }
+        })
+        cy.nodes().forEach(n => {
+          const hasVisible = n.connectedEdges().some(
+            e => e.style('display') !== 'none',
+          )
+          if (!hasVisible) n.style('display', 'none')
+        })
+      } else {
+        // Highlight mode: keep all visible, highlight matching edges + their nodes; dim rest
+        const highlightedNodeIds = new Set<string>()
+        cy.edges().forEach(e => {
+          const edge = e.data('_edge') as GraphEdge
+          const matches = edge?.evidence?.some(ev => ev.credential_id === credFilter.credId)
+          if (matches) {
+            e.addClass('path-highlight')
+            highlightedNodeIds.add(edge.src_host_id)
+            highlightedNodeIds.add(edge.dst_host_id)
+          } else {
+            e.addClass('dimmed')
+          }
+        })
+        cy.nodes().forEach(n => {
+          if (highlightedNodeIds.has(n.id())) n.addClass('path-highlight')
+          else n.addClass('dimmed')
+        })
+      }
     }
-  }, [highlightedPath, credentialFilterId])
+  }, [pathFilter, credFilter])
 
   return <div ref={containerRef} className={styles.canvas} />
 }

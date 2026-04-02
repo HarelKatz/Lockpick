@@ -217,6 +217,7 @@ class EvidenceItem(BaseModel):
     credential_id: Optional[str] = None
     credential_fingerprint: Optional[str] = None
     credential_name: Optional[str] = None
+    connection_type: Optional[str] = None
     src_user: Optional[str] = None
     dst_user: Optional[str] = None
     auth_method: Optional[str] = None

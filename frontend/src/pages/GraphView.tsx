@@ -2,7 +2,7 @@
  * GraphView — interactive pivot graph for a single operation.
  * Layout: HostSelector (left) | GraphCanvas (center) | detail panel (right, conditional).
  */
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type {
   Credential,
   GraphEdge,
@@ -13,7 +13,7 @@ import type {
   PathResult,
 } from '../types'
 import { fetchGraph, expandHost } from '../api/graph'
-import GraphCanvas from '../components/GraphCanvas'
+import GraphCanvas, { type CredFilter, type PathFilter } from '../components/GraphCanvas'
 import HostSelector from '../components/HostSelector'
 import HostDetailSidebar from '../components/HostDetailSidebar'
 import EdgeDetailPanel from '../components/EdgeDetailPanel'
@@ -51,8 +51,8 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
   const [edgeCtxMenu, setEdgeCtxMenu] = useState<{ edge: GraphEdge; x: number; y: number } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [highlightedPath, setHighlightedPath] = useState<PathResult | null>(null)
-  const [credentialFilterId, setCredentialFilterId] = useState<string | null>(null)
+  const [pathFilter, setPathFilter] = useState<PathFilter | null>(null)
+  const [credFilter, setCredFilter] = useState<CredFilter | null>(null)
 
   // Load full graph on mount
   const loadFullGraph = useCallback(async () => {
@@ -98,14 +98,26 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIds, op.id])
 
-  // ── Computed highlight shape for GraphCanvas ──────────────────────────────
+  // ── Selectable hosts for PathFinder (all known hosts, not just visible) ──────
 
-  const computedHighlight = highlightedPath
-    ? {
-        nodeIds: highlightedPath.host_ids,
-        edgeKeys: highlightedPath.edges.map(e => `${e.src_host_id}__${e.dst_host_id}`),
-      }
-    : null
+  const allSelectableHosts = useMemo(() => {
+    const map = new Map<string, { id: string; nickname: string }>()
+    for (const h of allHosts) map.set(h.id, { id: h.id, nickname: h.nickname })
+    for (const n of graphData.nodes) map.set(n.host_id, { id: n.host_id, nickname: n.nickname })
+    return Array.from(map.values())
+  }, [allHosts, graphData.nodes])
+
+  // ── Credential display label ──────────────────────────────────────────────
+
+  function credLabel(c: Credential): string {
+    const type = c.key_type
+      ? c.key_type.replace('ssh-', '').toUpperCase()
+      : c.cred_type.replace('_', ' ')
+    const label = c.name
+      || c.comment
+      || (c.fingerprint ? c.fingerprint.slice(7, 23) + '…' : c.id.slice(0, 8))
+    return `${type}: ${label}`
+  }
 
   // ── Event handlers ────────────────────────────────────────────────────────
 
@@ -183,13 +195,28 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
   }
 
   function handleHighlightPath(path: PathResult | null) {
-    setHighlightedPath(path)
-    if (path) setCredentialFilterId(null)
+    if (path) {
+      setPathFilter({
+        nodeIds: new Set(path.host_ids),
+        edgeKeys: new Set(path.edges.map(e => `${e.src_host_id}__${e.dst_host_id}`)),
+      })
+      setCredFilter(null)
+    } else {
+      setPathFilter(null)
+    }
   }
 
   function handleCredentialFilter(credId: string | null) {
-    setCredentialFilterId(credId)
-    if (credId) setHighlightedPath(null)
+    if (credId) {
+      setCredFilter(prev => ({ credId, mode: prev?.credId === credId ? (prev.mode) : 'highlight' }))
+      setPathFilter(null)
+    } else {
+      setCredFilter(null)
+    }
+  }
+
+  function handleCredMode(mode: 'highlight' | 'filter') {
+    setCredFilter(prev => prev ? { ...prev, mode } : null)
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -233,27 +260,35 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
         <div className={styles.graphToolbar}>
           <select
             className={styles.credFilterSelect}
-            value={credentialFilterId ?? ''}
+            value={credFilter?.credId ?? ''}
             onChange={e => handleCredentialFilter(e.target.value || null)}
           >
             <option value="">Filter by credential…</option>
             {credentials.map(c => (
-              <option key={c.id} value={c.id}>
-                {c.name
-                  ? c.name
-                  : c.fingerprint
-                  ? c.fingerprint.slice(0, 24) + '…'
-                  : c.id.slice(0, 8)}
-              </option>
+              <option key={c.id} value={c.id}>{credLabel(c)}</option>
             ))}
           </select>
-          {credentialFilterId && (
-            <button
-              className={styles.clearFilterBtn}
-              onClick={() => handleCredentialFilter(null)}
-            >
-              Clear filter
-            </button>
+          {credFilter && (
+            <>
+              <button
+                className={`${styles.modeBtn} ${credFilter.mode === 'highlight' ? styles.modeBtnActive : ''}`}
+                onClick={() => handleCredMode('highlight')}
+              >
+                Highlight
+              </button>
+              <button
+                className={`${styles.modeBtn} ${credFilter.mode === 'filter' ? styles.modeBtnActive : ''}`}
+                onClick={() => handleCredMode('filter')}
+              >
+                Filter
+              </button>
+              <button
+                className={styles.clearFilterBtn}
+                onClick={() => handleCredentialFilter(null)}
+              >
+                Clear
+              </button>
+            </>
           )}
         </div>
 
@@ -276,8 +311,8 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
           <GraphCanvas
             graphData={graphData}
             hiddenIds={hiddenIds}
-            highlightedPath={computedHighlight}
-            credentialFilterId={credentialFilterId}
+            pathFilter={pathFilter}
+            credFilter={credFilter}
             onNodeClick={handleNodeClick}
             onEdgeClick={handleEdgeClick}
             onNodeDoubleClick={handleNodeDoubleClick}

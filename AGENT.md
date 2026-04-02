@@ -146,11 +146,11 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 **Last completed phase: Phase 5 — Host Selection & Graph Visualization (+ post-phase review)**
 
-Phases 1–5 are fully implemented and tested. A post-phase review added physics layout, visual improvements, path finding, and credential filtering. See git history for details.
+Phases 1–5 are fully implemented and tested. A post-phase review added physics layout, visual improvements, path finding, and credential filtering.
 
-**Pending before Phase 6: 6 confirmed bugs from the Phase 5 review (see section below)**
+**Pending before Phase 6: 6 bugs from the Phase 5 review — partially implemented, uncommitted**
 
-All 6 bugs are still unimplemented in `HEAD`. `git stash` contains partial work. Do **not** skip these — several directly break the UX.
+Work is in progress in the working tree (not committed). Several files have been modified but the build is not yet clean. Do **not** skip the remaining items — they directly break UX.
 
 **Next phase after fixes: Phase 6 — File Upload & Parsing Engine**
 
@@ -191,195 +191,126 @@ See git history for details. All infrastructure, CRUD APIs, edit/delete UI, Host
 
 ### Phase 5 — Pending Fixes
 
-**All 6 bugs are unimplemented in HEAD. Fix all of them before starting Phase 6.**
+**Work is partially in progress in the working tree (not committed). The build is not yet clean.**
 
-#### What is in `git stash` (stash@{0})
+#### Current working tree state
 
-Two files are stashed. Pop with `git stash pop` when ready:
+The following files have been modified but not committed (`git diff --stat HEAD`):
 
-| File | What it contains |
-|------|-----------------|
-| `backend/schemas.py` | `connection_type: Optional[str] = None` added to `EvidenceItem` |
-| `frontend/src/components/GraphCanvas.tsx` | Smart diff update (Fix 1) + `pathFilter`/`credFilter` props replacing old `highlightedPath`/`credentialFilterId` (Fixes 3 & 5 canvas logic) + new `computeEdgeLabel` that reads `ev.connection_type` (Fix 4 label logic) |
+| File | What changed |
+|------|-------------|
+| `backend/schemas.py` | `connection_type: Optional[str] = None` added to `EvidenceItem` ✅ |
+| `frontend/src/components/GraphCanvas.tsx` | Smart diff update (Fix 1) ✅ · `pathFilter`/`credFilter` props with hide/highlight/filter logic (Fixes 3 & 5 canvas) ✅ · new `computeEdgeLabel` reading `ev.connection_type` (Fix 4 label) ✅ · exports `CredFilter`/`PathFilter` interfaces ✅ |
+| `frontend/src/pages/GraphView.tsx` | `pathFilter`/`credFilter` state ✅ · `allSelectableHosts` memo ✅ · `credLabel()` helper ✅ · toolbar with Highlight/Filter mode buttons ✅ · updated `<GraphCanvas>` props ✅ · **BUT**: still passes `graphData.nodes` to `<PathFinder>` instead of `allSelectableHosts` ❌ · uses `.modeBtn`/`.modeBtnActive` CSS classes that don't exist yet ❌ |
 
-**Critical:** After `git stash pop`, the TypeScript build will immediately break because `GraphView.tsx` still passes the old props (`highlightedPath`, `credentialFilterId`) but the canvas now expects `pathFilter`, `credFilter`. Fix 3 and Fix 5 wiring in `GraphView.tsx` must be done in the same sitting as the stash pop.
+**The build currently fails** because:
+1. `GraphView.tsx` references `styles.modeBtn` and `styles.modeBtnActive` which are not in `GraphView.module.css`
+2. `PathFinder.tsx` still expects `nodes: GraphNode[]` but will receive `{ id; nickname }[]` once GraphView is fixed
 
 ---
 
 #### Fix 1 — Double-click expand causes graph flash
 
-**Status:** Fully in stash — no other files needed.
+**Status: ✅ Done** — `GraphCanvas.tsx` in working tree has the smart diff update.
 
-**Problem:** Double-clicking a node to expand triggers a full canvas teardown + rebuild, causing a visible flash even though only new nodes are being added.
-
-**Root cause:** The `graphData` useEffect always clears all elements and rebuilds from scratch (`cy.elements().remove()` then re-add all) regardless of whether it's a full reload or an incremental expand.
-
-**Fix (stash has this in `GraphCanvas.tsx`):** Smart diff update — three cases:
-- `goingAway.length > 0` → animate removed nodes out (200ms opacity), then `fullRebuild()`
-- `incoming.length > 0 && currentNodeIds.size > 0` → **expand path**: `cy.add(incoming)` only, fade new nodes in, re-run layout without clearing existing canvas
+Three-case logic in the `graphData`/`hiddenIds` useEffect:
+- `goingAway.length > 0` → animate removed nodes out (200ms), then `fullRebuild()`
+- `incoming.length > 0 && currentNodeIds.size > 0` → expand path: `cy.add(incoming)` only, fade new in, re-run layout
 - `currentNodeIds.size === 0` → initial load, `fullRebuild()`
-
-`fullRebuild()` still clears and rebuilds, used only for initial load and for when nodes are removed.
 
 ---
 
 #### Fix 2 — PathFinder dropdowns empty when no hosts on graph
 
-**Status:** Not started — no stash content.
+**Status: Partially done — 2 files still needed.**
 
-**Problem:** `PathFinder` receives `nodes: GraphNode[]` from `graphData.nodes`. When the graph canvas is empty (all hosts unchecked), the dropdowns are empty and the user cannot search for a path.
+`GraphView.tsx` already defines `allSelectableHosts` useMemo but still passes `graphData.nodes` to `<PathFinder>`. Two files need changes:
 
-**Fix — 3 changes:**
-
-1. **`frontend/src/pages/GraphView.tsx`** — compute a merged host list:
-   ```ts
-   const allSelectableHosts = useMemo(() => {
-     const map = new Map<string, { id: string; nickname: string }>()
-     for (const h of allHosts) map.set(h.id, { id: h.id, nickname: h.nickname })
-     for (const n of graphData.nodes) map.set(n.host_id, { id: n.host_id, nickname: n.nickname })
-     return Array.from(map.values())
-   }, [allHosts, graphData.nodes])
+1. **`frontend/src/pages/GraphView.tsx`** (line ~325) — change the PathFinder prop:
+   ```tsx
+   // was:
+   <PathFinder nodes={graphData.nodes} ...>
+   // change to:
+   <PathFinder nodes={allSelectableHosts} ...>
    ```
-   Pass `allSelectableHosts` to `<PathFinder nodes={allSelectableHosts} ...>` instead of `graphData.nodes`.
 
-2. **`frontend/src/components/PathFinder.tsx`** — change the `nodes` prop type:
+2. **`frontend/src/components/PathFinder.tsx`** — change the `nodes` prop type and update all `host_id` references to `id`:
    ```ts
-   // was: nodes: GraphNode[]
-   nodes: { id: string; nickname: string }[]
+   // was:
+   interface Props { nodes: GraphNode[]; ... }
+   // change to:
+   interface Props { nodes: { id: string; nickname: string }[]; ... }
    ```
-   Update `getNickname` and all `<select>` mappings to use `h.id` / `h.nickname` directly (they already do this, just change the prop type annotation and remove the `host_id` references).
+   Also update these three places in PathFinder.tsx that use `n.host_id`:
+   - `getNickname`: `nodes.find(n => n.host_id === hostId)` → `nodes.find(n => n.id === hostId)`
+   - From/To selects: `<option key={n.host_id} value={n.host_id}>` → `<option key={n.id} value={n.id}>`
+   - Waypoint host select: same change
+   - Relative-to select: `n.host_id !== wp.host_id` → `n.id !== wp.host_id` (note: `wp.host_id` is the waypoint field name, leave that unchanged)
+   - Remove `GraphNode` from the PathFinder.tsx imports if it's no longer referenced
 
 ---
 
 #### Fix 3 — Path result should hide unrelated nodes/edges
 
-**Status:** Canvas logic in stash; `GraphView.tsx` wiring not started.
+**Status: ✅ Done** — `GraphCanvas.tsx` in working tree uses `display: none` for non-path elements.
 
-**Problem:** Selecting a path in PathFinder dims non-path nodes to 18% opacity but they remain visible. The user wants only the path nodes and edges shown.
-
-**Fix — canvas side (stash has this):** The stashed `GraphCanvas.tsx` uses `cy.style('display', 'none')` instead of the `.dimmed` class for path filtering:
-- Path nodes → `path-highlight` class
-- Non-path nodes → `n.style('display', 'none')`
-- Path edges → `path-highlight` class
-- Non-path edges → `e.style('display', 'none')`
-- When path is cleared → `cy.nodes().style('display', 'element')` + `cy.edges().style('display', 'element')` reset
-
-**Fix — `GraphView.tsx` wiring (not started):** The stash changes `GraphCanvas` props:
-
-Old (current HEAD):
-```ts
-highlightedPath: { nodeIds: string[]; edgeKeys: string[] } | null
-credentialFilterId: string | null
-```
-New (in stash):
-```ts
-pathFilter: PathFilter | null   // exported from GraphCanvas.tsx; = { nodeIds: Set<string>; edgeKeys: Set<string> }
-credFilter: CredFilter | null   // exported from GraphCanvas.tsx; = { credId: string; mode: 'highlight' | 'filter' }
-```
-
-In `GraphView.tsx`:
-- Rename state `highlightedPath` → `pathFilter`, change type to `PathFilter | null`
-- Build `pathFilter` as `{ nodeIds: new Set(path.host_ids), edgeKeys: new Set(path.edges.map(e => \`${e.src_host_id}__${e.dst_host_id}\`)) }` (was built as `computedHighlight` with arrays, now use Sets)
-- Pass `pathFilter={pathFilter}` to `<GraphCanvas>` (was `highlightedPath={computedHighlight}`)
-- Remove `computedHighlight` intermediate variable
+When `pathFilter` is set: path nodes/edges get `path-highlight` class; all others get `style('display', 'none')`. Cleared by `style('display', 'element')` reset when `pathFilter` becomes null.
 
 ---
 
 #### Fix 4 — Edge labels show `key • 2` instead of connection type
 
-**Status:** Label logic in stash (`GraphCanvas.tsx`); backend field and TS type not started.
+**Status: Partially done — 2 files still needed.**
 
-**Problem:** Edge labels show `key • 2` (evidence type abbreviation + count) which is meaningless. The user wants the actual connection type: "SSH", "SCP", "key match", etc.
+`GraphCanvas.tsx` already has the new `computeEdgeLabel` that reads `ev.connection_type`. `backend/schemas.py` already has `connection_type: Optional[str] = None` on `EvidenceItem`. Still needed:
 
-**Fix — edge label logic (stash has this in `GraphCanvas.tsx`):**
-```ts
-function computeEdgeLabel(e: GraphEdge): string {
-  for (const ev of e.evidence) {
-    if (ev.type === 'connection_log' && ev.connection_type) {
-      return ev.connection_type.toUpperCase()   // "SSH", "SCP", "RSYNC", etc.
-    }
-  }
-  if (e.evidence.some(ev => ev.type === 'key_match')) return 'key match'
-  if (e.evidence.some(ev => ev.type === 'bash_history')) return 'bash history'
-  if (e.evidence.some(ev => ev.type === 'known_hosts')) return 'known hosts'
-  return 'connection'
-}
-```
-
-**Fix — `connection_type` field on `EvidenceItem` (stash has schema change; 2 files still needed):**
-
-The stash adds `connection_type: Optional[str] = None` to `EvidenceItem` in `backend/schemas.py`. Two files still need updating:
-
-1. **`backend/services/graph_builder.py`** — in Pass 2 (connection records, around line 179), add the field to the `EvidenceItem(...)` constructor:
+1. **`backend/services/graph_builder.py`** — Pass 2, inside the `EvidenceItem(...)` constructor (around line 189), add:
    ```python
-   EvidenceItem(
-       type=ev_type,
-       detail=...,
-       connection_type=record.connection_type,   # ← ADD THIS
-       credential_id=record.credential_id,
-       ...
-   )
+   connection_type=record.connection_type,
    ```
+   Place it after `credential_name=conn_cred_obj.name if conn_cred_obj else None,`.
 
-2. **`frontend/src/types/index.ts`** — add to `EvidenceItem` interface:
+2. **`frontend/src/types/index.ts`** — add to `EvidenceItem` interface (after `credential_name`):
    ```ts
-   connection_type: string | null   // ← ADD after credential_name
+   connection_type: string | null
    ```
 
 ---
 
 #### Fix 5 — Credential filter: meaningless names + single broken mode
 
-**Status:** Canvas logic in stash; `GraphView.tsx` toolbar/state not started.
+**Status: Partially done — 1 CSS file still needed.**
 
-**Problem:**
-- The dropdown shows truncated fingerprints or `null` — not useful.
-- There is only one mode that half-works (dims non-matching edges but doesn't hide them).
-- The user wants two explicit modes: **Highlight** (keep all visible, highlight matching) and **Filter** (hide non-matching entirely).
+`GraphCanvas.tsx` handles both modes. `GraphView.tsx` has the `credFilter` state, `credLabel()` helper, updated toolbar UI with Highlight/Filter toggle buttons, and passes `credFilter` to `<GraphCanvas>`. Still needed:
 
-**Fix — credential display name (not started, goes in `GraphView.tsx`):**
-```ts
-function credLabel(c: Credential): string {
-  const type = c.key_type
-    ? c.key_type.replace('ssh-', '').toUpperCase()   // "ED25519", "RSA"
-    : c.cred_type.replace('_', ' ')                  // "private key", "password"
-  const label = c.name
-    || c.comment
-    || (c.fingerprint ? c.fingerprint.slice(7, 23) + '…' : c.id.slice(0, 8))
-  return `${type}: ${label}`  // "ED25519: root@web01"  or  "RSA: SHA256:abc123…"
+**`frontend/src/pages/GraphView.module.css`** — add mode button styles (toolbar uses `styles.modeBtn` and `styles.modeBtnActive`):
+```css
+.modeBtn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  padding: 3px 10px;
+  transition: color 0.1s, background 0.1s;
+}
+
+.modeBtnActive {
+  background: var(--bg-surface-2);
+  border-color: var(--accent);
+  color: var(--text-primary);
 }
 ```
-
-**Fix — two-mode state (not started, goes in `GraphView.tsx`):**
-
-Replace `credentialFilterId: string | null` state with:
-```ts
-const [credFilter, setCredFilter] = useState<{ credId: string; mode: 'highlight' | 'filter' } | null>(null)
-```
-
-Default mode when a credential is first selected: `'highlight'`.
-
-**Fix — toolbar UI update (not started, `GraphView.tsx` + `GraphView.module.css`):**
-- `<select>` with `credLabel(c)` — replaces the current truncated-fingerprint display
-- When a credential is selected, render two mode buttons inline: **Highlight** / **Filter** (toggle active with `.modeBtnActive` class from `PathFinder.module.css` as reference)
-- **Clear** button to reset
-- Pass `credFilter={credFilter}` to `<GraphCanvas>` (was `credentialFilterId={credentialFilterId}`)
-
-**Fix — canvas side (stash has this):** The stashed `GraphCanvas.tsx` already handles both modes via the `credFilter` prop:
-- **Highlight mode:** edges matching credential → `path-highlight`; their endpoint nodes → `path-highlight`; everything else → `.dimmed`
-- **Filter mode:** edges not matching → `display: none`; nodes with no visible edges → `display: none`; matching edges → `path-highlight`
 
 ---
 
 #### Fix 6 — FAB button overlaps edit/delete buttons at small window sizes
 
-**Status:** Not started — one CSS line.
+**Status: Not started — one CSS change.**
 
-**Problem:** The floating `+` button in the data tab is `position: fixed; bottom: 32px; right: 32px`. When the window is not fullscreen, it covers the Edit/Delete buttons on the last few rows of the list.
-
-**Fix:**
+**`frontend/src/pages/Workspace.module.css`** — `.main` class (line 107):
 ```css
-/* frontend/src/pages/Workspace.module.css — .main class (~line 107) */
 .main {
   flex: 1;
   overflow-y: auto;
@@ -390,19 +321,18 @@ Default mode when a credential is first selected: `'highlight'`.
 
 ---
 
-### Implementation order for pending fixes
+### Remaining steps to finish all fixes
 
-Do these in a single session — the stash pop breaks the build until GraphView.tsx is updated.
+Execute in order — everything builds on the previous step:
 
-1. **`git stash pop`** — applies `GraphCanvas.tsx` (smart diff, new props) + `schemas.py` (connection_type)
-2. **Immediately fix `GraphView.tsx`** — rename `highlightedPath` → `pathFilter` (Set-based), pass `pathFilter`/`credFilter` to `<GraphCanvas>` instead of old props; replace `credentialFilterId` state with `credFilter`; add `credLabel()` helper; add mode toggle buttons to toolbar (Fixes 3 + 5 wiring)
-3. **`frontend/src/components/PathFinder.tsx`** — change `nodes` prop type to `{ id: string; nickname: string }[]` (Fix 2 part 1)
-4. **`frontend/src/pages/GraphView.tsx`** — add `allSelectableHosts` memo, pass it to `<PathFinder>` (Fix 2 part 2; same file as step 2, can be done together)
-5. **`backend/services/graph_builder.py`** — add `connection_type=record.connection_type` to EvidenceItem in Pass 2 (Fix 4 backend)
-6. **`frontend/src/types/index.ts`** — add `connection_type: string | null` to `EvidenceItem` (Fix 4 types)
-7. **`frontend/src/pages/Workspace.module.css`** — add `padding-bottom: 80px` to `.main` (Fix 6)
-8. **`make test && cd frontend && npm run build`** — must be clean before committing
-9. **Commit:** `fix(frontend+backend): resolve Phase 5 review bugs`
+1. **`frontend/src/pages/GraphView.tsx`** — change `<PathFinder nodes={graphData.nodes}` to `<PathFinder nodes={allSelectableHosts}` (Fix 2 part 1)
+2. **`frontend/src/components/PathFinder.tsx`** — change `nodes: GraphNode[]` to `{ id: string; nickname: string }[]`; update `n.host_id` → `n.id` in all `<option>` and `getNickname` (Fix 2 part 2)
+3. **`frontend/src/pages/GraphView.module.css`** — add `.modeBtn` and `.modeBtnActive` (Fix 5 CSS)
+4. **`backend/services/graph_builder.py`** — add `connection_type=record.connection_type` in Pass 2 EvidenceItem (Fix 4 backend)
+5. **`frontend/src/types/index.ts`** — add `connection_type: string | null` to `EvidenceItem` (Fix 4 types)
+6. **`frontend/src/pages/Workspace.module.css`** — add `padding-bottom: 80px` to `.main` (Fix 6)
+7. **`make test && cd frontend && npm run build`** — must be clean
+8. **Commit:** `fix(frontend+backend): resolve Phase 5 review bugs`
 
 ### Phase 6 — File Upload & Parsing Engine
 
