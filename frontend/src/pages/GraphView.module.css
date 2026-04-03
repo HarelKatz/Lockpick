@@ -41,6 +41,19 @@
   outline: none;
 }
 
+.credActiveLabel {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  white-space: nowrap;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .modeBtn {
   background: none;
   border: 1px solid var(--border);

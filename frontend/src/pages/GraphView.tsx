@@ -135,22 +135,8 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
     setEdgeCtxMenu(null)
   }
 
-  async function handleNodeDoubleClick(node: GraphNode) {
-    setLoading(true)
-    try {
-      const expansion = await expandHost(op.id, node.host_id)
-      setGraphData(prev => mergeGraphResponses(prev, expansion))
-      // Add new neighbors to selected set
-      setSelectedIds(prev => {
-        const next = new Set(prev)
-        for (const n of expansion.nodes) next.add(n.host_id)
-        return next
-      })
-    } catch {
-      // ignore — expansion is best-effort
-    } finally {
-      setLoading(false)
-    }
+  function handleNodeDoubleClick(_node: GraphNode) {
+    // no-op — expand is available via right-click context menu
   }
 
   function handleNodeContextMenu(node: GraphNode, x: number, y: number) {
@@ -196,6 +182,12 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
 
   function handleHighlightPath(path: PathResult | null) {
     if (path) {
+      // Ensure all path nodes are loaded onto the graph
+      setSelectedIds(prev => {
+        const next = new Set(prev)
+        for (const id of path.host_ids) next.add(id)
+        return next
+      })
       setPathFilter({
         nodeIds: new Set(path.host_ids),
         edgeKeys: new Set(path.edges.map(e => `${e.src_host_id}__${e.dst_host_id}`)),
@@ -288,6 +280,14 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
               >
                 Clear
               </button>
+              {(() => {
+                const c = credentials.find(cr => cr.id === credFilter.credId)
+                return c ? (
+                  <span className={styles.credActiveLabel} title={credLabel(c)}>
+                    {credLabel(c)}
+                  </span>
+                ) : null
+              })()}
             </>
           )}
         </div>

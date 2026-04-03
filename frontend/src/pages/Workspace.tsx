@@ -353,10 +353,10 @@ export default function Workspace({ op, onBack }: Props) {
         </div>
       </header>
 
-      {/* Graph tab */}
-      {tab === 'graph' && (
+      {/* Graph tab — always mounted to preserve state; hidden when on data tab */}
+      <div style={tab !== 'graph' ? { display: 'none' } : { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <GraphView op={op} allHosts={hosts} credentials={credentials} />
-      )}
+      </div>
 
       {/* Data tab */}
       <main className={styles.main} style={tab !== 'data' ? { display: 'none' } : undefined}>

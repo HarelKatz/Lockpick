@@ -220,7 +220,18 @@ export default function GraphCanvas({
 
     cyRef.current = cy
 
+    // Resize cytoscape when container becomes visible (e.g. tab switch from display:none)
+    const ro = new ResizeObserver(entries => {
+      const { width, height } = entries[0].contentRect
+      if (width > 0 && height > 0) {
+        cy.resize()
+        if (cy.elements().length > 0) cy.fit(undefined, 90)
+      }
+    })
+    ro.observe(containerRef.current)
+
     return () => {
+      ro.disconnect()
       cy.destroy()
       cyRef.current = null
     }
@@ -388,7 +399,10 @@ export default function GraphCanvas({
         })
       }
     }
-  }, [pathFilter, credFilter])
+  // graphData is included so the filter re-applies after a graph rebuild
+  // (fullRebuild removes all elements, so classes/display set by this effect
+  // would be lost without re-running when graphData changes)
+  }, [pathFilter, credFilter, graphData])
 
   return <div ref={containerRef} className={styles.canvas} />
 }
