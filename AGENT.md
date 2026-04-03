@@ -183,17 +183,9 @@ Those things belong in commit messages and GitHub issues.
 
 ## Implementation Phases
 
-### Phases 1–5 — Complete
+### Phases 1–6 — Complete
 
-See git history for details. All infrastructure, CRUD APIs, edit/delete UI, HostUser entity, schema hardening, and the graph visualization layer (backend aggregation service + cytoscape.js frontend) are implemented and tested.
-
-### Phase 5 — Host Selection & Graph Visualization — Complete
-
-Added `routers/graph.py`, `services/graph_builder.py`, `services/pivot_analysis.py`. Frontend: `GraphCanvas.tsx`, `HostSelector.tsx`, `EdgeDetailPanel.tsx`, `PathFinder.tsx`, `GraphView.tsx`. See git history for details.
-
-### Phase 6 — File Upload & Parsing Engine — Complete
-
-Added `backend/parsers/` (BaseParser + 8 parsers: authorized_keys, known_hosts, ssh_config, private_key, auth_log, wtmp, bash_history, passwd), `services/ip_resolver.py`, `routers/upload.py` (`POST /api/ops/{op_id}/upload`). Frontend: `FileUploadForm.tsx` (drag-and-drop, parse results summary, pivot alerts). Raw uploads stored in `./data/uploads/{op_id}/`. Pivot detection: uploading a private key + matching authorized_keys surfaces pivot opportunities in the response. Added `python-multipart` dependency.
+See git history for details. All infrastructure, CRUD APIs, edit/delete UI, HostUser entity, schema hardening, graph visualization (cytoscape.js + BFS pivot analysis), and the file upload + parsing engine (8 parsers, IP resolver, pivot detection) are implemented and tested.
 
 ### Phase 7 — Pivot Path Analysis (extended)
 
