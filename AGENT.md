@@ -146,13 +146,29 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 **Last completed phase: Phase 5 — Host Selection & Graph Visualization (+ post-phase review)**
 
-Phases 1–5 are fully implemented and tested. A post-phase review added physics layout, visual improvements, path finding, and credential filtering.
+Phases 1–5 are fully implemented and tested.
 
-**Pending before Phase 6: 6 bugs from the Phase 5 review — partially implemented, uncommitted**
+**Next phase: Phase 6 — File Upload & Parsing Engine**
 
-Work is in progress in the working tree (not committed). Several files have been modified but the build is not yet clean. Do **not** skip the remaining items — they directly break UX.
+---
 
-**Next phase after fixes: Phase 6 — File Upload & Parsing Engine**
+## Document Maintenance Rules
+
+AGENT.md is architecture documentation, not a task tracker.
+
+**Current Status** — 3–5 lines maximum: last completed phase, next phase, any hard blockers. Nothing else.
+
+**After completing a phase:**
+1. Update Current Status to the new phase
+2. Delete any "Pending Fixes" subsection for the completed phase
+3. If the phase built something a future phase also describes, update the future phase to note what already exists
+
+**What does NOT belong here:**
+- Line numbers, CSS snippets, diff hunks, or "what's in the working tree"
+- Per-fix `Status: ✅/❌` prose or implementation retrospectives
+- Anything that will be wrong the moment the next commit lands
+
+Those things belong in commit messages and GitHub issues.
 
 ---
 
@@ -188,151 +204,6 @@ See git history for details. All infrastructure, CRUD APIs, edit/delete UI, Host
 **Hidden nodes** can be restored via the Refresh button in HostSelector.
 
 ---
-
-### Phase 5 — Pending Fixes
-
-**Work is partially in progress in the working tree (not committed). The build is not yet clean.**
-
-#### Current working tree state
-
-The following files have been modified but not committed (`git diff --stat HEAD`):
-
-| File | What changed |
-|------|-------------|
-| `backend/schemas.py` | `connection_type: Optional[str] = None` added to `EvidenceItem` ✅ |
-| `frontend/src/components/GraphCanvas.tsx` | Smart diff update (Fix 1) ✅ · `pathFilter`/`credFilter` props with hide/highlight/filter logic (Fixes 3 & 5 canvas) ✅ · new `computeEdgeLabel` reading `ev.connection_type` (Fix 4 label) ✅ · exports `CredFilter`/`PathFilter` interfaces ✅ |
-| `frontend/src/pages/GraphView.tsx` | `pathFilter`/`credFilter` state ✅ · `allSelectableHosts` memo ✅ · `credLabel()` helper ✅ · toolbar with Highlight/Filter mode buttons ✅ · updated `<GraphCanvas>` props ✅ · **BUT**: still passes `graphData.nodes` to `<PathFinder>` instead of `allSelectableHosts` ❌ · uses `.modeBtn`/`.modeBtnActive` CSS classes that don't exist yet ❌ |
-
-**The build currently fails** because:
-1. `GraphView.tsx` references `styles.modeBtn` and `styles.modeBtnActive` which are not in `GraphView.module.css`
-2. `PathFinder.tsx` still expects `nodes: GraphNode[]` but will receive `{ id; nickname }[]` once GraphView is fixed
-
----
-
-#### Fix 1 — Double-click expand causes graph flash
-
-**Status: ✅ Done** — `GraphCanvas.tsx` in working tree has the smart diff update.
-
-Three-case logic in the `graphData`/`hiddenIds` useEffect:
-- `goingAway.length > 0` → animate removed nodes out (200ms), then `fullRebuild()`
-- `incoming.length > 0 && currentNodeIds.size > 0` → expand path: `cy.add(incoming)` only, fade new in, re-run layout
-- `currentNodeIds.size === 0` → initial load, `fullRebuild()`
-
----
-
-#### Fix 2 — PathFinder dropdowns empty when no hosts on graph
-
-**Status: Partially done — 2 files still needed.**
-
-`GraphView.tsx` already defines `allSelectableHosts` useMemo but still passes `graphData.nodes` to `<PathFinder>`. Two files need changes:
-
-1. **`frontend/src/pages/GraphView.tsx`** (line ~325) — change the PathFinder prop:
-   ```tsx
-   // was:
-   <PathFinder nodes={graphData.nodes} ...>
-   // change to:
-   <PathFinder nodes={allSelectableHosts} ...>
-   ```
-
-2. **`frontend/src/components/PathFinder.tsx`** — change the `nodes` prop type and update all `host_id` references to `id`:
-   ```ts
-   // was:
-   interface Props { nodes: GraphNode[]; ... }
-   // change to:
-   interface Props { nodes: { id: string; nickname: string }[]; ... }
-   ```
-   Also update these three places in PathFinder.tsx that use `n.host_id`:
-   - `getNickname`: `nodes.find(n => n.host_id === hostId)` → `nodes.find(n => n.id === hostId)`
-   - From/To selects: `<option key={n.host_id} value={n.host_id}>` → `<option key={n.id} value={n.id}>`
-   - Waypoint host select: same change
-   - Relative-to select: `n.host_id !== wp.host_id` → `n.id !== wp.host_id` (note: `wp.host_id` is the waypoint field name, leave that unchanged)
-   - Remove `GraphNode` from the PathFinder.tsx imports if it's no longer referenced
-
----
-
-#### Fix 3 — Path result should hide unrelated nodes/edges
-
-**Status: ✅ Done** — `GraphCanvas.tsx` in working tree uses `display: none` for non-path elements.
-
-When `pathFilter` is set: path nodes/edges get `path-highlight` class; all others get `style('display', 'none')`. Cleared by `style('display', 'element')` reset when `pathFilter` becomes null.
-
----
-
-#### Fix 4 — Edge labels show `key • 2` instead of connection type
-
-**Status: Partially done — 2 files still needed.**
-
-`GraphCanvas.tsx` already has the new `computeEdgeLabel` that reads `ev.connection_type`. `backend/schemas.py` already has `connection_type: Optional[str] = None` on `EvidenceItem`. Still needed:
-
-1. **`backend/services/graph_builder.py`** — Pass 2, inside the `EvidenceItem(...)` constructor (around line 189), add:
-   ```python
-   connection_type=record.connection_type,
-   ```
-   Place it after `credential_name=conn_cred_obj.name if conn_cred_obj else None,`.
-
-2. **`frontend/src/types/index.ts`** — add to `EvidenceItem` interface (after `credential_name`):
-   ```ts
-   connection_type: string | null
-   ```
-
----
-
-#### Fix 5 — Credential filter: meaningless names + single broken mode
-
-**Status: Partially done — 1 CSS file still needed.**
-
-`GraphCanvas.tsx` handles both modes. `GraphView.tsx` has the `credFilter` state, `credLabel()` helper, updated toolbar UI with Highlight/Filter toggle buttons, and passes `credFilter` to `<GraphCanvas>`. Still needed:
-
-**`frontend/src/pages/GraphView.module.css`** — add mode button styles (toolbar uses `styles.modeBtn` and `styles.modeBtnActive`):
-```css
-.modeBtn {
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: var(--font-size-xs);
-  padding: 3px 10px;
-  transition: color 0.1s, background 0.1s;
-}
-
-.modeBtnActive {
-  background: var(--bg-surface-2);
-  border-color: var(--accent);
-  color: var(--text-primary);
-}
-```
-
----
-
-#### Fix 6 — FAB button overlaps edit/delete buttons at small window sizes
-
-**Status: Not started — one CSS change.**
-
-**`frontend/src/pages/Workspace.module.css`** — `.main` class (line 107):
-```css
-.main {
-  flex: 1;
-  overflow-y: auto;
-  padding: 24px;
-  padding-bottom: 80px;  /* stop FAB overlapping last row's buttons */
-}
-```
-
----
-
-### Remaining steps to finish all fixes
-
-Execute in order — everything builds on the previous step:
-
-1. **`frontend/src/pages/GraphView.tsx`** — change `<PathFinder nodes={graphData.nodes}` to `<PathFinder nodes={allSelectableHosts}` (Fix 2 part 1)
-2. **`frontend/src/components/PathFinder.tsx`** — change `nodes: GraphNode[]` to `{ id: string; nickname: string }[]`; update `n.host_id` → `n.id` in all `<option>` and `getNickname` (Fix 2 part 2)
-3. **`frontend/src/pages/GraphView.module.css`** — add `.modeBtn` and `.modeBtnActive` (Fix 5 CSS)
-4. **`backend/services/graph_builder.py`** — add `connection_type=record.connection_type` in Pass 2 EvidenceItem (Fix 4 backend)
-5. **`frontend/src/types/index.ts`** — add `connection_type: string | null` to `EvidenceItem` (Fix 4 types)
-6. **`frontend/src/pages/Workspace.module.css`** — add `padding-bottom: 80px` to `.main` (Fix 6)
-7. **`make test && cd frontend && npm run build`** — must be clean
-8. **Commit:** `fix(frontend+backend): resolve Phase 5 review bugs`
 
 ### Phase 6 — File Upload & Parsing Engine
 
@@ -423,14 +294,14 @@ class BaseParser:
   - "New pivot opportunity: HostA(bob) → HostC(root) via key SHA256:xyz..."
 - Support uploading multiple files in sequence (form resets but keeps host/user selection)
 
-### Phase 7 — Pivot Path Analysis
+### Phase 7 — Pivot Path Analysis (extended)
 
-- [ ] Backend endpoint: given two hosts, find all pivot paths (BFS on aggregated edge graph)
-- [ ] Path results include: each hop's evidence, required credentials, confidence per hop
-- [ ] Distinguish: confirmed path (all hops have key matches) vs observed path (log evidence) vs theoretical (indicators only)
-- [ ] Frontend: "Find Path" mode — select two nodes, show all paths highlighted on graph
-- [ ] Path detail panel showing each hop with full evidence breakdown
-- [ ] Ability to filter paths by minimum confidence level
+> **Note:** The BFS backend (`services/pivot_analysis.py`) and the PathFinder UI component were built as part of Phase 5. Phase 7 extends them with:
+
+- [ ] Confidence-level filtering on path results (confirmed / observed / indicator)
+- [ ] "Confirmed path" vs "observed path" vs "theoretical path" distinction in results UI
+- [ ] Path detail panel showing each hop's full evidence breakdown
+- [ ] Path export (copy as markdown / JSON)
 
 ### Phase 8 — Polish & UX
 
@@ -556,7 +427,7 @@ lockpick/
 │   │   ├── graph_builder.py     # Aggregate evidence into edge objects (Phase 5)
 │   │   ├── ip_resolver.py       # Match IPs to existing hosts
 │   │   ├── key_matcher.py       # Cross-reference key fingerprints across op
-│   │   └── pivot_analysis.py    # BFS path finding (Phase 7)
+│   │   └── pivot_analysis.py    # BFS path finding (Phase 5, extended in Phase 7)
 │   └── alembic/
 ├── frontend/
 │   ├── Dockerfile
@@ -586,7 +457,7 @@ lockpick/
 │       │   ├── HostDetailSidebar.tsx    # Phase 5
 │       │   ├── EdgeDetailPanel.tsx      # Phase 5
 │       │   ├── HostSelector.tsx         # Phase 5
-│       │   ├── PathFinder.tsx           # Phase 7
+│       │   ├── PathFinder.tsx           # Phase 5 (extended in Phase 7)
 │       │   └── PathDetail.tsx           # Phase 7
 │       ├── api/
 │       │   ├── client.ts

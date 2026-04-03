@@ -168,6 +168,7 @@ export interface EvidenceItem {
   credential_id: string | null
   credential_fingerprint: string | null
   credential_name: string | null
+  connection_type: string | null
   src_user: string | null
   dst_user: string | null
   auth_method: string | null

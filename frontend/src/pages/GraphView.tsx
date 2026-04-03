@@ -323,7 +323,7 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
         </div>
 
         <PathFinder
-          nodes={graphData.nodes}
+          nodes={allSelectableHosts}
           opId={op.id}
           onHighlightPath={handleHighlightPath}
         />

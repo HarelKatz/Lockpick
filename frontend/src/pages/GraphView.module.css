@@ -41,6 +41,27 @@
   outline: none;
 }
 
+.modeBtn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  padding: 3px 10px;
+  transition: color 0.1s, background 0.1s;
+}
+
+.modeBtn:hover {
+  color: var(--text-primary);
+}
+
+.modeBtnActive {
+  background: var(--bg-surface-2);
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
 .clearFilterBtn {
   background: none;
   border: 1px solid var(--border);

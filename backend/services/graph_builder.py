@@ -195,6 +195,7 @@ def build_graph(
             credential_id=record.credential_id,
             credential_fingerprint=conn_cred_obj.fingerprint if conn_cred_obj else None,
             credential_name=conn_cred_obj.name if conn_cred_obj else None,
+            connection_type=record.connection_type,
             src_user=record.src_user,
             dst_user=record.dst_user,
             auth_method=record.auth_method,

@@ -4,7 +4,6 @@
  */
 import { useState } from 'react'
 import type {
-  GraphNode,
   PathFinderResponse,
   PathResult,
   WaypointConstraint,
@@ -14,7 +13,7 @@ import { findPaths } from '../api/graph'
 import styles from './PathFinder.module.css'
 
 interface Props {
-  nodes: GraphNode[]
+  nodes: { id: string; nickname: string }[]
   opId: string
   onHighlightPath: (path: PathResult | null) => void
 }
@@ -98,7 +97,7 @@ export default function PathFinder({ nodes, opId, onHighlightPath }: Props) {
   }
 
   function getNickname(hostId: string) {
-    return nodes.find(n => n.host_id === hostId)?.nickname ?? hostId.slice(0, 8)
+    return nodes.find(n => n.id === hostId)?.nickname ?? hostId.slice(0, 8)
   }
 
   if (!open) {
@@ -124,14 +123,14 @@ export default function PathFinder({ nodes, opId, onHighlightPath }: Props) {
         <select className={styles.select} value={src} onChange={e => setSrc(e.target.value)}>
           <option value="">Select source…</option>
           {nodes.map(n => (
-            <option key={n.host_id} value={n.host_id}>{n.nickname}</option>
+            <option key={n.id} value={n.id}>{n.nickname}</option>
           ))}
         </select>
         <label className={styles.fieldLabel}>To</label>
         <select className={styles.select} value={dst} onChange={e => setDst(e.target.value)}>
           <option value="">Select destination…</option>
           {nodes.map(n => (
-            <option key={n.host_id} value={n.host_id}>{n.nickname}</option>
+            <option key={n.id} value={n.id}>{n.nickname}</option>
           ))}
         </select>
       </div>
@@ -165,7 +164,7 @@ export default function PathFinder({ nodes, opId, onHighlightPath }: Props) {
           >
             <option value="">Select host…</option>
             {nodes.map(n => (
-              <option key={n.host_id} value={n.host_id}>{n.nickname}</option>
+              <option key={n.id} value={n.id}>{n.nickname}</option>
             ))}
           </select>
           <select
@@ -187,8 +186,8 @@ export default function PathFinder({ nodes, opId, onHighlightPath }: Props) {
               onChange={e => updateWaypoint(i, { relative_to: e.target.value || null })}
             >
               <option value="">src/dst</option>
-              {nodes.filter(n => n.host_id !== wp.host_id).map(n => (
-                <option key={n.host_id} value={n.host_id}>{n.nickname}</option>
+              {nodes.filter(n => n.id !== wp.host_id).map(n => (
+                <option key={n.id} value={n.id}>{n.nickname}</option>
               ))}
             </select>
           )}
