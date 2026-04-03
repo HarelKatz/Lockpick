@@ -1,0 +1,390 @@
+"""File upload and parsing endpoint.
+
+POST /api/ops/{op_id}/upload
+- Accepts multipart/form-data: file + metadata fields
+- Parses the file, resolves IPs, inserts records, returns a summary
+"""
+from __future__ import annotations
+
+import base64
+import hashlib
+import io
+import json
+import logging
+import os
+import uuid
+from datetime import datetime, timezone
+from typing import Optional
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from sqlalchemy.orm import Session
+
+from config import settings
+from database import get_db
+from models import (
+    Credential,
+    CredentialLink,
+    ConnectionRecord,
+    Host,
+    HostIP,
+    HostUser,
+    Operation,
+)
+from parsers import UploadMetadata
+from parsers.authorized_keys import AuthorizedKeysParser
+from parsers.bash_history import BashHistoryParser
+from parsers.auth_log import AuthLogParser
+from parsers.known_hosts import KnownHostsParser
+from parsers.passwd import PasswdParser
+from parsers.private_key import PrivateKeyParser
+from parsers.ssh_config import SshConfigParser
+from parsers.wtmp import WtmpParser
+from services.ip_resolver import resolve_ip
+
+log = logging.getLogger(__name__)
+
+router = APIRouter(tags=["upload"])
+
+_PARSERS = {
+    "authorized_keys": AuthorizedKeysParser,
+    "known_hosts": KnownHostsParser,
+    "ssh_config": SshConfigParser,
+    "private_key": PrivateKeyParser,
+    "public_key": AuthorizedKeysParser,  # treat lone pub key as authorized_key
+    "auth_log": AuthLogParser,
+    "wtmp": WtmpParser,
+    "bash_history": BashHistoryParser,
+    "passwd": PasswdParser,
+}
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _uuid() -> str:
+    return str(uuid.uuid4())
+
+
+def _infer_fingerprint(value: str) -> tuple[Optional[str], Optional[str]]:
+    """Return (key_type, sha256_fingerprint) for an SSH public or private key, or (None, None)."""
+    try:
+        import paramiko
+
+        # Try as private key first
+        f = io.StringIO(value)
+        for cls in (paramiko.RSAKey, paramiko.ECDSAKey):
+            try:
+                key = cls.from_private_key(f)
+                raw = key.asbytes()
+                fp = "SHA256:" + base64.b64encode(hashlib.sha256(raw).digest()).rstrip(b"=").decode()
+                return key.get_name(), fp
+            except Exception:
+                f.seek(0)
+        if hasattr(paramiko, "Ed25519Key"):
+            try:
+                key = paramiko.Ed25519Key.from_private_key(f)
+                raw = key.asbytes()
+                fp = "SHA256:" + base64.b64encode(hashlib.sha256(raw).digest()).rstrip(b"=").decode()
+                return key.get_name(), fp
+            except Exception:
+                pass
+
+        # Try as public key (space-separated: keytype base64 [comment])
+        parts = value.strip().split()
+        if len(parts) >= 2:
+            raw = base64.b64decode(parts[1])
+            fp = "SHA256:" + base64.b64encode(hashlib.sha256(raw).digest()).rstrip(b"=").decode()
+            return parts[0], fp
+    except Exception:
+        pass
+    return None, None
+
+
+def _get_or_create_host_user(
+    db: Session, host_id: str, username: str,
+    shell: Optional[str], home_dir: Optional[str], source: str
+) -> HostUser:
+    """Return existing HostUser or create a new one. Updates shell/home_dir if provided."""
+    hu = (
+        db.query(HostUser)
+        .filter(HostUser.host_id == host_id, HostUser.username == username)
+        .first()
+    )
+    if hu:
+        if shell and not hu.shell:
+            hu.shell = shell
+        if home_dir and not hu.home_dir:
+            hu.home_dir = home_dir
+        return hu
+    hu = HostUser(
+        id=_uuid(),
+        host_id=host_id,
+        username=username,
+        shell=shell,
+        home_dir=home_dir,
+        source=source,
+        created_at=_now(),
+    )
+    db.add(hu)
+    db.flush()
+    return hu
+
+
+def _find_pivot_opportunities(
+    db: Session, op_id: str, new_fingerprints: list[str]
+) -> list[str]:
+    """Return human-readable pivot messages for newly added keys that match authorized_keys elsewhere."""
+    messages = []
+    for fp in new_fingerprints:
+        cred = (
+            db.query(Credential)
+            .filter(Credential.op_id == op_id, Credential.fingerprint == fp)
+            .first()
+        )
+        if not cred:
+            continue
+        # Collect all links across ALL creds with this fingerprint
+        # (normally just one Credential due to dedup, but may be multiple)
+        all_creds = (
+            db.query(Credential)
+            .filter(Credential.op_id == op_id, Credential.fingerprint == fp)
+            .all()
+        )
+        found_on = []
+        auth_keys = []
+        for c in all_creds:
+            for link in c.links:
+                if link.relationship_type == "found_on_disk":
+                    found_on.append(link)
+                elif link.relationship_type == "authorized_key":
+                    auth_keys.append(link)
+
+        for src in found_on:
+            for dst in auth_keys:
+                src_host = db.query(Host).filter(Host.id == src.host_id).first()
+                dst_host = db.query(Host).filter(Host.id == dst.host_id).first()
+                if src_host and dst_host and src_host.id != dst_host.id:
+                    src_label = f"{src_host.nickname}({src.username or '?'})"
+                    dst_label = f"{dst_host.nickname}({dst.username or '?'})"
+                    messages.append(
+                        f"New pivot opportunity: {src_label} → {dst_label} via key {fp}"
+                    )
+    return messages
+
+
+@router.post("/ops/{op_id}/upload")
+async def upload_file(
+    op_id: str,
+    file: UploadFile = File(...),
+    file_type: str = Form(...),
+    host_id: str = Form(...),
+    username: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+):
+    """Parse an uploaded file and insert the resulting records into the operation."""
+    # Validate op and host exist
+    op = db.query(Operation).filter(Operation.id == op_id).first()
+    if not op:
+        raise HTTPException(status_code=404, detail="Operation not found")
+
+    host = db.query(Host).filter(Host.id == host_id, Host.op_id == op_id).first()
+    if not host:
+        raise HTTPException(status_code=404, detail="Host not found in this operation")
+
+    if file_type not in _PARSERS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Unsupported file_type '{file_type}'. Supported: {sorted(_PARSERS)}",
+        )
+
+    content = await file.read()
+    filename = file.filename or file_type
+
+    # Save raw file to uploads directory
+    op_upload_dir = os.path.join(settings.upload_path, op_id)
+    os.makedirs(op_upload_dir, exist_ok=True)
+    safe_name = f"{_uuid()}_{filename}"
+    raw_path = os.path.join(op_upload_dir, safe_name)
+    try:
+        with open(raw_path, "wb") as fh:
+            fh.write(content)
+    except OSError as e:
+        log.warning("Failed to save raw upload %s: %s", raw_path, e)
+        safe_name = filename  # still proceed with parsing
+
+    metadata = UploadMetadata(
+        op_id=op_id,
+        host_id=host_id,
+        file_type=file_type,
+        username=username,
+        filename=filename,
+    )
+
+    parser_cls = _PARSERS[file_type]
+    try:
+        result = parser_cls().parse(content, metadata)
+    except Exception as e:
+        log.exception("Parser %s crashed", parser_cls.__name__)
+        raise HTTPException(status_code=500, detail=f"Parser error: {e}")
+
+    # Resolve the upload host IP (we know its host_id, get any IP for it)
+    upload_host_ip: Optional[str] = None
+    host_ip_row = db.query(HostIP).filter(HostIP.host_id == host_id).first()
+    if host_ip_row:
+        upload_host_ip = host_ip_row.ip_address
+    else:
+        upload_host_ip = host.nickname  # fallback to nickname
+
+    # ── 1. Create HostUser records ────────────────────────────────────────────
+    user_source = "authorized_keys" if file_type == "authorized_keys" else "passwd_file" if file_type == "passwd" else "log_evidence"
+    for (uname, shell, home_dir) in result.host_users_found:
+        _get_or_create_host_user(db, host_id, uname, shell, home_dir, user_source)
+
+    # ── 2. Insert Credentials + CredentialLinks ───────────────────────────────
+    all_upload_fingerprints: list[str] = []  # all fps seen (new or existing)
+    new_creds = 0
+    new_links = 0
+
+    for cred_data in result.credentials_found:
+        key_type, fingerprint = _infer_fingerprint(cred_data.value)
+
+        # Dedup: find existing Credential with same fingerprint in this op
+        existing_cred: Optional[Credential] = None
+        if fingerprint:
+            existing_cred = (
+                db.query(Credential)
+                .filter(Credential.op_id == op_id, Credential.fingerprint == fingerprint)
+                .first()
+            )
+
+        if fingerprint:
+            all_upload_fingerprints.append(fingerprint)
+
+        if existing_cred:
+            cred_obj = existing_cred
+        else:
+            cred_obj = Credential(
+                id=_uuid(),
+                op_id=op_id,
+                cred_type=cred_data.cred_type,
+                name=cred_data.name,
+                value=cred_data.value,
+                fingerprint=fingerprint,
+                key_type=key_type,
+                created_at=_now(),
+            )
+            db.add(cred_obj)
+            db.flush()
+            new_creds += 1
+
+        # CredentialLink for this host
+        link_username = cred_data.username or username
+        hu = None
+        if link_username:
+            hu = _get_or_create_host_user(db, host_id, link_username, None, None, user_source)
+
+        link = CredentialLink(
+            id=_uuid(),
+            credential_id=cred_obj.id,
+            host_id=host_id,
+            username=link_username,
+            host_user_id=hu.id if hu else None,
+            relationship_type=cred_data.relationship_type,
+            file_source=safe_name,
+        )
+        db.add(link)
+        new_links += 1
+
+    # ── 3. Insert ConnectionRecords ───────────────────────────────────────────
+    new_connections = 0
+    new_hosts = 0
+
+    for conn_data in result.connections_found:
+        # Resolve src/dst IPs — replace __upload_host__ sentinel
+        src_ip = conn_data.src_ip
+        dst_ip = conn_data.dst_ip
+
+        if src_ip == "__upload_host__":
+            src_ip = upload_host_ip
+            src_host_id = host_id
+        else:
+            src_host_id = resolve_ip(db, op_id, src_ip, create_if_missing=True)
+            if src_host_id and src_host_id not in {host_id}:
+                # Check if it was newly created
+                h = db.query(Host).filter(Host.id == src_host_id).first()
+                if h and h.comment and "Auto-created" in (h.comment or ""):
+                    new_hosts += 1
+
+        if dst_ip == "__upload_host__":
+            dst_ip = upload_host_ip
+            dst_host_id = host_id
+        else:
+            dst_host_id = resolve_ip(db, op_id, dst_ip, create_if_missing=True)
+            if dst_host_id and dst_host_id not in {host_id}:
+                h = db.query(Host).filter(Host.id == dst_host_id).first()
+                if h and h.comment and "Auto-created" in (h.comment or ""):
+                    new_hosts += 1
+
+        # Match fingerprint to existing Credential for confirmed confidence
+        cred_id = None
+        if conn_data.credential_fingerprint:
+            cred_match = (
+                db.query(Credential)
+                .filter(
+                    Credential.op_id == op_id,
+                    Credential.fingerprint == conn_data.credential_fingerprint,
+                )
+                .first()
+            )
+            if cred_match:
+                cred_id = cred_match.id
+
+        # Parse timestamp
+        ts = None
+        if conn_data.timestamp:
+            try:
+                ts = datetime.fromisoformat(conn_data.timestamp)
+            except ValueError:
+                pass
+
+        conn_rec = ConnectionRecord(
+            id=_uuid(),
+            op_id=op_id,
+            src_host_id=src_host_id,
+            src_ip=src_ip,
+            src_user=conn_data.src_user,
+            dst_host_id=dst_host_id,
+            dst_ip=dst_ip,
+            dst_user=conn_data.dst_user,
+            connection_type=conn_data.connection_type,
+            direction_context=conn_data.direction_context,
+            auth_method=conn_data.auth_method,
+            credential_id=cred_id,
+            timestamp=ts,
+            raw_line=conn_data.raw_line,
+            source_file=safe_name,
+            created_at=_now(),
+        )
+        db.add(conn_rec)
+        new_connections += 1
+
+    db.commit()
+
+    # ── 4. Check for new pivot opportunities ─────────────────────────────────
+    pivot_messages = _find_pivot_opportunities(db, op_id, all_upload_fingerprints)
+
+    return {
+        "ok": True,
+        "filename": filename,
+        "file_type": file_type,
+        "stats": result.stats,
+        "summary": {
+            "new_credentials": new_creds,
+            "new_credential_links": new_links,
+            "new_connections": new_connections,
+            "new_hosts": new_hosts,
+            "warnings": result.warnings,
+        },
+        "pivot_opportunities": pivot_messages,
+    }

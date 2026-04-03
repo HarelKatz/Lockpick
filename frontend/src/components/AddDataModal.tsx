@@ -1,10 +1,10 @@
 /**
  * AddDataModal — floating action button (FAB) + modal with Manual Entry / File Upload tabs.
- * The File Upload tab is a placeholder for Phase 6.
  */
 import { useState, useEffect } from 'react'
 import type { Host, Credential } from '../types'
 import ManualEntryForm from './ManualEntryForm'
+import FileUploadForm from './FileUploadForm'
 import styles from './AddDataModal.module.css'
 
 type Tab = 'manual' | 'upload'
@@ -14,19 +14,6 @@ interface Props {
   hosts: Host[]
   credentials: Credential[]
   onDataAdded: () => void
-}
-
-function UploadPlaceholder() {
-  return (
-    <div className={styles.uploadPlaceholder}>
-      <div className={styles.uploadIcon}>⬆</div>
-      <p className={styles.uploadTitle}>File Upload</p>
-      <p className={styles.uploadDesc}>
-        File parsing (authorized_keys, known_hosts, auth.log, bash_history, etc.)
-        will be implemented in Phase 6.
-      </p>
-    </div>
-  )
 }
 
 function Modal({
@@ -86,7 +73,9 @@ function Modal({
           {tab === 'manual' && (
             <ManualEntryForm opId={opId} hosts={hosts} credentials={credentials} onSuccess={handleDataAdded} />
           )}
-          {tab === 'upload' && <UploadPlaceholder />}
+          {tab === 'upload' && (
+            <FileUploadForm opId={opId} hosts={hosts} onSuccess={handleDataAdded} />
+          )}
         </div>
       </div>
     </div>

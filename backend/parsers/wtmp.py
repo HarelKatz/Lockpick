@@ -1,0 +1,113 @@
+"""Parser for wtmp binary login records."""
+from __future__ import annotations
+
+import struct
+from datetime import datetime, timezone
+
+from parsers import BaseParser, ConnectionData, ParseResult, UploadMetadata
+
+# utmp record size is 384 bytes on Linux x86_64
+# struct utmp {
+#   short   ut_type;
+#   pid_t   ut_pid;
+#   char    ut_line[32];
+#   char    ut_id[4];
+#   char    ut_user[32];
+#   char    ut_host[256];
+#   struct exit_status ut_exit;    (2 shorts = 4 bytes)
+#   long    ut_session;
+#   struct timeval ut_tv;          (2 longs = 16 bytes)
+#   int32_t ut_addr_v6[4];         (16 bytes)
+#   char    __unused[20];
+# }
+_UTMP_FMT = "=hi32s4s32s256s4sl2l4i20s"
+_UTMP_SIZE = struct.calcsize(_UTMP_FMT)
+
+UT_USER_PROCESS = 7   # login process
+UT_LOGIN_PROCESS = 6
+
+
+def _decode_str(b: bytes) -> str:
+    return b.rstrip(b"\x00").decode("utf-8", errors="replace").strip()
+
+
+def _addr_to_ip(addr_v6: list[int]) -> str | None:
+    """Convert ut_addr_v6 to a dotted-decimal IP string, or None if zero."""
+    if all(a == 0 for a in addr_v6):
+        return None
+    # IPv4 in addr_v6[0] (little-endian 32-bit)
+    a = addr_v6[0]
+    b0 = a & 0xFF
+    b1 = (a >> 8) & 0xFF
+    b2 = (a >> 16) & 0xFF
+    b3 = (a >> 24) & 0xFF
+    return f"{b0}.{b1}.{b2}.{b3}"
+
+
+class WtmpParser(BaseParser):
+    """Parses binary wtmp / btmp files (Linux utmp format)."""
+
+    def parse(self, content: bytes, metadata: UploadMetadata) -> ParseResult:
+        result = ParseResult()
+        filename = metadata.filename or "wtmp"
+
+        if len(content) % _UTMP_SIZE != 0:
+            result.warnings.append(
+                f"File size {len(content)} is not a multiple of utmp record size {_UTMP_SIZE} — "
+                "may be truncated or wrong format"
+            )
+
+        records = 0
+        for offset in range(0, len(content) - _UTMP_SIZE + 1, _UTMP_SIZE):
+            chunk = content[offset : offset + _UTMP_SIZE]
+            if len(chunk) < _UTMP_SIZE:
+                break
+            try:
+                fields = struct.unpack(_UTMP_FMT, chunk)
+            except struct.error as e:
+                result.warnings.append(f"Failed to unpack record at offset {offset}: {e}")
+                continue
+
+            (
+                ut_type, ut_pid, ut_line, ut_id,
+                ut_user, ut_host,
+                ut_exit,
+                ut_session,
+                tv_sec, tv_usec,
+                *addr_v6_and_pad,
+            ) = fields
+            addr_v6 = list(addr_v6_and_pad[:4])
+
+            if ut_type not in (UT_USER_PROCESS, UT_LOGIN_PROCESS):
+                continue
+
+            user = _decode_str(ut_user)
+            host = _decode_str(ut_host)
+            if not user:
+                continue
+
+            ts = None
+            if tv_sec > 0:
+                try:
+                    ts = datetime.fromtimestamp(tv_sec, tz=timezone.utc).isoformat()
+                except (OSError, OverflowError):
+                    pass
+
+            src_ip = host if host else _addr_to_ip(addr_v6)
+            if not src_ip:
+                src_ip = "unknown"
+
+            conn = ConnectionData(
+                src_ip=src_ip,
+                dst_ip="__upload_host__",
+                connection_type="ssh",
+                direction_context="from_dst_logs",
+                dst_user=user,
+                timestamp=ts,
+                raw_line=f"wtmp: {user} from {src_ip}",
+            )
+            result.connections_found.append(conn)
+            records += 1
+
+        result.stats = {"records_parsed": records}
+        return result

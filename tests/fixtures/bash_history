@@ -1,0 +1,11 @@
+ls -la
+ssh root@10.10.1.1
+scp /etc/passwd alice@10.10.1.2:/tmp/
+ssh -l bob 10.10.1.3
+rsync -av /data root@10.10.1.4:/backup
+sftp alice@10.10.1.5
+ssh-keygen -t ed25519 -f ~/.ssh/new_key
+ssh-add ~/.ssh/new_key
+ssh-copy-id -i ~/.ssh/id_rsa.pub root@10.10.1.6
+cat /etc/shadow
+ssh 10.10.1.7

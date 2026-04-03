@@ -221,6 +221,36 @@ export interface CreateConnectionRequest {
   source_file: string
 }
 
+// ─── Upload ───────────────────────────────────────────────────────────────────
+
+export type UploadFileType =
+  | 'authorized_keys'
+  | 'known_hosts'
+  | 'ssh_config'
+  | 'private_key'
+  | 'public_key'
+  | 'auth_log'
+  | 'wtmp'
+  | 'bash_history'
+  | 'passwd'
+
+export interface UploadSummary {
+  new_credentials: number
+  new_credential_links: number
+  new_connections: number
+  new_hosts: number
+  warnings: string[]
+}
+
+export interface UploadResult {
+  ok: boolean
+  filename: string
+  file_type: string
+  stats: Record<string, unknown>
+  summary: UploadSummary
+  pivot_opportunities: string[]
+}
+
 // ── Path Finding ──────────────────────────────────────────────────────────────
 
 export type WaypointPosition = 'anywhere' | 'after' | 'before'

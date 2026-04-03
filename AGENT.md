@@ -144,11 +144,11 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed phase: Phase 5 — Host Selection & Graph Visualization (+ post-phase review)**
+**Last completed phase: Phase 6 — File Upload & Parsing Engine**
 
-Phases 1–5 are fully implemented and tested.
+Phases 1–6 are fully implemented and tested.
 
-**Next phase: Phase 6 — File Upload & Parsing Engine**
+**Next phase: Phase 7 — Pivot Path Analysis (extended)**
 
 ---
 
@@ -170,6 +170,15 @@ AGENT.md is architecture documentation, not a task tracker.
 
 Those things belong in commit messages and GitHub issues.
 
+**Completed phases:**
+- Once a phase is done, collapse its detail to 3–5 lines maximum. Keep only: what the phase added to the architecture and any invariants future phases must respect.
+- Do NOT preserve a "What was built" component list — git history has that.
+- The "Phases 1–5 — Complete" entry above is the model: one line, no detail.
+
+**Planned File Structure:**
+- Do NOT maintain a file tree in this document. The codebase is the source of truth.
+- File trees drift with every phase and add pure noise. Omit entirely.
+
 ---
 
 ## Implementation Phases
@@ -178,121 +187,13 @@ Those things belong in commit messages and GitHub issues.
 
 See git history for details. All infrastructure, CRUD APIs, edit/delete UI, HostUser entity, schema hardening, and the graph visualization layer (backend aggregation service + cytoscape.js frontend) are implemented and tested.
 
-### Phase 5 — Host Selection & Graph Visualization
+### Phase 5 — Host Selection & Graph Visualization — Complete
 
-#### What was built (all implemented)
+Added `routers/graph.py`, `services/graph_builder.py`, `services/pivot_analysis.py`. Frontend: `GraphCanvas.tsx`, `HostSelector.tsx`, `EdgeDetailPanel.tsx`, `PathFinder.tsx`, `GraphView.tsx`. See git history for details.
 
-**Backend:**
-- `backend/routers/graph.py` — `GET /ops/{op_id}/graph?host_ids=...` and `GET /ops/{op_id}/hosts/{host_id}/expand?evidence_type=...`
-- `backend/services/graph_builder.py` — aggregates CredentialLinks + ConnectionRecords into edge objects in two passes (key matches → `confirmed`, connection records → `observed`/`indicator`)
-- `backend/services/pivot_analysis.py` — BFS/DFS path finder, max depth 8, max 30 paths, waypoint constraints (`anywhere` / `after [host]` / `before [host]`)
-- `POST /ops/{op_id}/graph/paths` — path finder endpoint
-- `EvidenceItem` schema includes: `credential_fingerprint`, `credential_name` (populated from credential table)
+### Phase 6 — File Upload & Parsing Engine — Complete
 
-**Frontend:**
-- `frontend/src/components/GraphCanvas.tsx` — cytoscape-cola physics layout (spring physics on drag), navy nodes with blue ring (amber for credentialed nodes), confidence-colored edges, fade in/out animations on node add/remove, path highlighting (coral) and dimming, credential filter effect
-- `frontend/src/components/HostSelector.tsx` — searchable list, row dims to 45% opacity when unchecked
-- `frontend/src/components/EdgeDetailPanel.tsx` — shows all evidence items including credential fingerprint/name
-- `frontend/src/components/PathFinder.tsx` — src/dst host selectors, shortest/all-paths mode, optional waypoints with position constraints, results list with click-to-highlight
-- `frontend/src/pages/GraphView.tsx` — orchestrates graph, credential filter toolbar, PathFinder panel, path/credential filter state
-- `frontend/src/pages/GraphView.module.css` — toolbar above canvas, canvasWrapper column layout
-
-**Right-click context menus (nodes and edges):**
-- Node: Expand all / by key match / by connection log / by indicator; Hide node
-- Edge: View evidence
-
-**Hidden nodes** can be restored via the Refresh button in HostSelector.
-
----
-
-### Phase 6 — File Upload & Parsing Engine
-
-Build a parsing engine on the backend. Each parser is a module in `backend/parsers/`. All parsers implement a common interface.
-
-#### Parser Interface
-
-```python
-class ParseResult:
-    hosts_found: list[HostData]              # New hosts/IPs discovered
-    credentials_found: list[CredentialData]  # Keys/passwords found
-    connections_found: list[ConnectionData]  # Connection records
-    warnings: list[str]                      # Parse issues (malformed lines, etc.)
-    stats: dict                              # Summary counts for UI
-
-class BaseParser:
-    def parse(self, content: bytes, metadata: UploadMetadata) -> ParseResult: ...
-```
-
-**Note:** Usernames from parsed files are stored as plain strings on `CredentialLink.username` and `ConnectionRecord.src_user/dst_user`. When a file reveals that a user *account exists* on a host (e.g. `/etc/passwd`, LDAP dump), create a `HostUser` record. When a file reveals a credential belongs to a user, create a `CredentialLink` with the `username` string (and optionally link `host_user_id` if a matching `HostUser` record exists).
-
-#### Upload API
-
-- Endpoint: `POST /api/ops/{op_id}/upload`
-- Accepts: multipart file + JSON metadata (file_type, host_id, username)
-- Steps: parse → resolve IPs to existing hosts where possible → insert records → return ParseResult summary
-- Raw uploaded files stored in `./data/uploads/{op_id}/` for audit
-
-#### Parsers to implement (one at a time, with tests):
-
-**6a. `.ssh/authorized_keys`** (per user)
-- Extract public keys, compute SHA256 fingerprints via paramiko
-- Create Credential (cred_type=public_key, fingerprint inferred) + CredentialLink (relationship=authorized_key, username from upload metadata)
-- Create or reuse HostUser (source=authorized_keys) for the username on this host; set `host_user_id` on the resulting CredentialLink
-
-**6b. `.ssh/known_hosts`** (per user)
-- Parse hostnames/IPs and key fingerprints (handle hashed known_hosts too)
-- Create ConnectionRecords (outbound indicators from this host)
-- Match IPs to existing hosts; create unresolved placeholder hosts for unknown IPs
-
-**6c. `.ssh/config`** (per user)
-- Parse Host/Match blocks: Hostname, User, Port, IdentityFile, ProxyJump
-- Create connection hints and host aliases
-- If IdentityFile references a key we have, link them
-
-**6d. SSH private/public key files** (id_rsa, id_ed25519, etc.)
-- Read key with paramiko, compute SHA256 fingerprint
-- Store as Credential with relationship=found_on_disk; set `username` from upload metadata
-- Create or reuse HostUser (source=log_evidence or manual) for the username on this host; set `host_user_id` on the CredentialLink
-- **Immediately cross-reference** fingerprint against ALL authorized_keys in the op
-- Return any newly discovered pivot opportunities in the ParseResult
-
-**6e. `auth.log` / `secure`** (including .gz)
-- Decompress gzip if needed
-- Parse sshd log lines: accepted/failed, user, source IP, auth method (publickey/password), key fingerprint if present, timestamp
-- Store as inbound ConnectionRecords on this host (dst_user = username from log line)
-- Set `auth_method` on ConnectionRecord from the log line
-- If log line includes a key fingerprint, match against `Credential.fingerprint` in the op — if found, set `credential_id` on the ConnectionRecord (raises confidence to "confirmed")
-- Match source IPs to existing hosts
-
-**6f. `wtmp`** (binary format)
-- Parse using struct-based parsing (utmp record format)
-- Extract login records: user, source IP/hostname, login/logout timestamps
-- Store as inbound ConnectionRecords (dst_user = username from record)
-
-**6g. `.bash_history`** (per user)
-- Regex for: `ssh`, `scp`, `rsync`, `sftp`, `ssh-copy-id` commands
-- Extract destination host/IP, user (@user syntax, -l flag), port (-p flag)
-- Store as outbound ConnectionRecords from this host
-- Look for `ssh-keygen`, `ssh-add` as context indicators (note in host comment)
-
-**6h. `/etc/passwd`**
-- Extract user accounts (username, shell, home_dir)
-- Create `HostUser` records (source=`passwd_file`) for each non-system user — NOT CredentialLinks or ConnectionRecords
-- Skip system users (uid < 1000) by default, but keep root and any with a valid login shell
-- If a matching `HostUser` already exists for that (host, username), update shell/home_dir rather than creating a duplicate
-
-#### File upload frontend:
-
-- "File Upload" tab in the Add modal
-- Dropdown to select file type (from enum of supported types)
-- Host selector (required — which host did this file come from?)
-- Username field (required for per-user files: authorized_keys, known_hosts, config, bash_history, private keys)
-- Drag-and-drop upload area
-- After upload, show parsing results summary:
-  - "Found: 3 new hosts, 5 connection records, 2 SSH keys"
-  - "Warnings: 12 malformed lines skipped"
-  - "New pivot opportunity: HostA(bob) → HostC(root) via key SHA256:xyz..."
-- Support uploading multiple files in sequence (form resets but keeps host/user selection)
+Added `backend/parsers/` (BaseParser + 8 parsers: authorized_keys, known_hosts, ssh_config, private_key, auth_log, wtmp, bash_history, passwd), `services/ip_resolver.py`, `routers/upload.py` (`POST /api/ops/{op_id}/upload`). Frontend: `FileUploadForm.tsx` (drag-and-drop, parse results summary, pivot alerts). Raw uploads stored in `./data/uploads/{op_id}/`. Pivot detection: uploading a private key + matching authorized_keys surfaces pivot opportunities in the response. Added `python-multipart` dependency.
 
 ### Phase 7 — Pivot Path Analysis (extended)
 
@@ -384,139 +285,3 @@ Local dev alternative: use `uv run` directly with `LOCKPICK_URL=http://localhost
 11. **Use `uv` for all Python operations** — `uv sync` to install deps, `uv run` to execute scripts/tests, `uv add` to add new packages. Never use raw `pip`. The `pyproject.toml` is the single source of truth for Python dependencies. Commit `uv.lock` to git.
 
 ---
-
-## Planned File Structure
-
-```
-lockpick/
-├── docker-compose.yml
-├── Makefile
-├── README.md
-├── CONTRIBUTING.md
-├── data/                        # All persistent state (gitignored, Docker volume)
-│   ├── tracker.db
-│   └── uploads/
-│       └── {op_id}/
-├── backend/
-│   ├── Dockerfile
-│   ├── pyproject.toml
-│   ├── uv.lock
-│   ├── main.py
-│   ├── config.py
-│   ├── database.py
-│   ├── models.py
-│   ├── schemas.py
-│   ├── routers/
-│   │   ├── operations.py
-│   │   ├── hosts.py
-│   │   ├── credentials.py
-│   │   ├── connections.py
-│   │   ├── upload.py            # Phase 6
-│   │   └── graph.py             # Phase 5
-│   ├── parsers/
-│   │   ├── __init__.py          # BaseParser, ParseResult, parser registry
-│   │   ├── authorized_keys.py
-│   │   ├── known_hosts.py
-│   │   ├── ssh_config.py
-│   │   ├── ssh_keys.py
-│   │   ├── auth_log.py
-│   │   ├── wtmp.py
-│   │   ├── bash_history.py
-│   │   └── passwd.py
-│   ├── services/
-│   │   ├── graph_builder.py     # Aggregate evidence into edge objects (Phase 5)
-│   │   ├── ip_resolver.py       # Match IPs to existing hosts
-│   │   ├── key_matcher.py       # Cross-reference key fingerprints across op
-│   │   └── pivot_analysis.py    # BFS path finding (Phase 5, extended in Phase 7)
-│   └── alembic/
-├── frontend/
-│   ├── Dockerfile
-│   ├── nginx.conf
-│   ├── package.json
-│   ├── vite.config.ts
-│   └── src/
-│       ├── App.tsx
-│       ├── theme.ts
-│       ├── pages/
-│       │   ├── OpSelector.tsx
-│       │   └── Workspace.tsx
-│       ├── components/
-│       │   ├── AddDataModal.tsx
-│       │   ├── ManualEntryForm.tsx
-│       │   ├── ConfirmDeleteModal.tsx
-│       │   ├── DeleteOpModal.tsx
-│       │   ├── EditModal.tsx
-│       │   ├── EditHostForm.tsx
-│       │   ├── EditCredentialForm.tsx
-│       │   ├── EditCredentialLinkForm.tsx
-│       │   ├── EditConnectionForm.tsx
-│       │   ├── FileUploadTab.tsx        # Phase 6
-│       │   ├── GraphCanvas.tsx          # Phase 5
-│       │   ├── NodeContextMenu.tsx      # Phase 5
-│       │   ├── EdgeContextMenu.tsx      # Phase 5
-│       │   ├── HostDetailSidebar.tsx    # Phase 5
-│       │   ├── EdgeDetailPanel.tsx      # Phase 5
-│       │   ├── HostSelector.tsx         # Phase 5
-│       │   ├── PathFinder.tsx           # Phase 5 (extended in Phase 7)
-│       │   └── PathDetail.tsx           # Phase 7
-│       ├── api/
-│       │   ├── client.ts
-│       │   ├── operations.ts
-│       │   ├── hosts.ts
-│       │   ├── credentials.ts
-│       │   ├── connections.ts
-│       │   ├── graph.ts                 # Phase 5
-│       │   └── upload.ts               # Phase 6
-│       └── types/
-│           └── index.ts
-├── mcp/                                 # Phase 9
-│   ├── Dockerfile
-│   ├── pyproject.toml
-│   ├── uv.lock
-│   ├── server.py
-│   ├── api_client.py
-│   ├── tools/
-│   │   ├── operations.py
-│   │   ├── hosts.py
-│   │   ├── credentials.py
-│   │   ├── connections.py
-│   │   ├── pivot.py
-│   │   └── search.py
-│   ├── tests/
-│   │   └── test_tools.py
-│   └── README.md
-├── tests/
-│   ├── fixtures/
-│   │   ├── sample_authorized_keys
-│   │   ├── sample_known_hosts
-│   │   ├── sample_auth.log
-│   │   ├── sample_auth.log.gz
-│   │   ├── sample_wtmp
-│   │   ├── sample_bash_history
-│   │   ├── sample_ssh_config
-│   │   ├── sample_passwd
-│   │   └── sample_keys/
-│   ├── test_parsers/
-│   │   ├── test_authorized_keys.py
-│   │   ├── test_known_hosts.py
-│   │   ├── test_auth_log.py
-│   │   ├── test_wtmp.py
-│   │   ├── test_bash_history.py
-│   │   ├── test_ssh_config.py
-│   │   ├── test_passwd.py
-│   │   └── test_ssh_keys.py
-│   ├── test_api/
-│   │   ├── test_operations.py
-│   │   ├── test_hosts.py
-│   │   ├── test_credentials.py
-│   │   ├── test_connections.py
-│   │   ├── test_upload.py
-│   │   └── test_graph.py
-│   ├── test_services/
-│   │   ├── test_ip_resolver.py
-│   │   ├── test_key_matcher.py
-│   │   ├── test_pivot_analysis.py
-│   │   └── test_graph_builder.py
-│   └── conftest.py
-└── .gitignore
-```

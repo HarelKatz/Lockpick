@@ -4,6 +4,11 @@
 
 SSH pivot tracker for red teams. Ingests raw evidence (private keys, `authorized_keys`, `auth.log`, `known_hosts`, bash history) and builds a relationship graph showing lateral movement paths across an engagement. Runs as a shared web server — single `docker compose up -d`, no external dependencies.
 
+## Working Style
+
+- **Do not survey the codebase before starting.** Read AGENT.md for architecture context, then begin implementing. Do not open files to "understand the project" — AGENT.md describes everything you need to know upfront.
+- **Read files on-demand only.** Open a source file only when you are about to edit it or need to understand a specific function/interface it provides. Never read a file "just in case."
+
 ## Tech Stack
 
 - **Backend**: Python 3.12, FastAPI, SQLAlchemy ORM, Alembic, uv

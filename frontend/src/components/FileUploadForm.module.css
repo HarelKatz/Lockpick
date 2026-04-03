@@ -1,0 +1,264 @@
+/* ─── Form layout ────────────────────────────────────────────────────────── */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ─── Field ──────────────────────────────────────────────────────────────── */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.required {
+  color: var(--warning);
+}
+
+.select,
+.input {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  padding: 8px 10px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.select:focus,
+.input:focus {
+  border-color: var(--accent);
+}
+
+.select option {
+  background: var(--bg-surface);
+}
+
+/* ─── Drop zone ──────────────────────────────────────────────────────────── */
+
+.dropZone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 90px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  padding: 16px;
+}
+
+.dropZone:hover,
+.dropZone:focus {
+  border-color: var(--accent);
+  background: rgba(88, 166, 255, 0.04);
+  outline: none;
+}
+
+.dragging {
+  border-color: var(--accent);
+  background: rgba(88, 166, 255, 0.08);
+}
+
+.hasFile {
+  border-style: solid;
+  border-color: var(--success);
+  background: rgba(63, 185, 80, 0.05);
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.dropPrompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.dropIcon {
+  font-size: 22px;
+  color: var(--text-muted);
+}
+
+.fileInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.fileIcon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.fileName {
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.fileSize {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ─── Error ──────────────────────────────────────────────────────────────── */
+
+.error {
+  color: #f85149;
+  font-size: var(--font-size-sm);
+  margin: 0;
+  padding: 8px 12px;
+  background: rgba(248, 81, 73, 0.08);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid #f85149;
+}
+
+/* ─── Submit ─────────────────────────────────────────────────────────────── */
+
+.submitBtn {
+  padding: 10px 20px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+  align-self: flex-end;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.submitBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ─── Results panel ──────────────────────────────────────────────────────── */
+
+.results {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  background: var(--bg-surface-2);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.resultsTitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.resultsTitle strong {
+  color: var(--text-primary);
+}
+
+.resultsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.resultsItem {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.countBadge {
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+  min-width: 22px;
+  text-align: center;
+  display: inline-block;
+}
+
+.noNewData {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ─── Pivot section ──────────────────────────────────────────────────────── */
+
+.pivotSection {
+  background: rgba(63, 185, 80, 0.08);
+  border: 1px solid var(--success);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pivotTitle {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--success);
+  margin: 0;
+}
+
+.pivotMsg {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  margin: 0;
+  font-family: monospace;
+}
+
+/* ─── Warnings ───────────────────────────────────────────────────────────── */
+
+.warnings {
+  font-size: var(--font-size-sm);
+}
+
+.warningSummary {
+  cursor: pointer;
+  color: var(--warning);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.warningList {
+  margin: 8px 0 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+}

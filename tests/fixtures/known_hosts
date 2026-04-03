@@ -1,0 +1,6 @@
+# Test known_hosts
+10.10.10.1 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQCtest
+10.10.10.2,hostname2.corp ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQCtest2
+[10.10.10.3]:2222 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5test
+|1|abc123==|xyz456== ssh-rsa AAAA (hashed entry)
+# blank and comment lines above

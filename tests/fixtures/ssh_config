@@ -1,0 +1,11 @@
+Host jumpbox
+    Hostname 10.10.0.1
+    User admin
+    Port 22
+
+Host web*
+    Hostname 10.10.1.10
+    User www-data
+
+Host *
+    ServerAliveInterval 60

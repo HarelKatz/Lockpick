@@ -1,0 +1,7 @@
+# Test authorized_keys file
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7DFvEQSxpUBzFHMhsUSxL3xJy5KcAAAAAB alice@hostA
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDOP9gj3MATPcJBLT/iM7/Y64eZ8NfaSr8uiymnL+SkZ2MXlcH+7+8mGTCZis4OJMQA21IUIZMpTPlnlBV0T3jNpHPz2DzlPZdWEwx5LoYLrNCPUO7d3OpyLAA9kjs/rBHz22RP20NOFtxb5P7njbQv/mRC+5rHk9PPw4ZB5DbOFQ== test@fixture
+# another valid key with options
+no-port-forwarding,no-pty ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC7Ej restricted-key
+# malformed
+not-a-key
