@@ -164,6 +164,11 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
         for (const n of expansion.nodes) next.add(n.host_id)
         return next
       })
+      setHiddenIds(prev => {
+        const next = new Set(prev)
+        for (const n of expansion.nodes) next.delete(n.host_id)
+        return next
+      })
     } catch {
       // ignore
     } finally {
@@ -173,6 +178,11 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
 
   function handleHide(node: GraphNode) {
     setHiddenIds(prev => new Set([...prev, node.host_id]))
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.delete(node.host_id)
+      return next
+    })
     if (selectedNode?.host_id === node.host_id) setSelectedNode(null)
   }
 
