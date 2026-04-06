@@ -146,11 +146,11 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed phase: Phase 7 — Pivot Path Analysis (extended)**
+**Last completed phase: Phase 8 — Polish & UX (complete)**
 
-Phases 1–7 are fully implemented and tested. Phase 8 (partial): evidence file listing and viewing is live.
+Phases 1–8 are fully implemented and tested. Phase 9 (MCP server) is next.
 
-**Next phase: Phase 8 Polish — global search, op export/import, graph layout options, keyboard shortcuts, bulk upload, activity log, notification banner**
+**Next phase: Phase 9 — MCP Server**
 
 ---
 
@@ -197,17 +197,11 @@ All infrastructure, CRUD APIs, edit/delete UI, HostUser entity, schema hardening
 
 **Phase 7 invariants:** `classifyPath()` helper classifies paths as confirmed/observed/theoretical; active tab persists across refresh.
 
-### Phase 8 — Polish & UX
+### Phase 8 — Complete
 
-- [x] Evidence file listing (`GET /api/ops/{op_id}/uploads`) and download/view — already live
-- [ ] Global search across all data (hosts, IPs, users, key fingerprints, comments)
-- [ ] Export op data as JSON (full op state: hosts, creds, connections, everything)
-- [ ] Import op from JSON (restore or merge)
-- [ ] Graph layout options (force-directed, hierarchical, circular, grid)
-- [ ] Keyboard shortcuts (Esc close modals, Del hide selected node, Ctrl+F search)
-- [ ] Bulk file upload (multiple files, auto-detect type where possible)
-- [ ] Activity log (who added what, when — basic audit trail, stored in DB)
-- [ ] Notification banner when data has changed since your last query ("15 new records since your last refresh" — click to refresh)
+All polish features implemented: global search (`GET /ops/{op_id}/search?q=`), op export (`GET /ops/{op_id}/export`) and import (`POST /ops/import`, `create_new` mode with ID remapping), graph layout switcher (cola/cose-bilkent/breadthfirst/grid/circle), keyboard shortcuts (Ctrl+F search, Del hide node, Esc close modals), bulk file upload (multi-file queue, auto-detect, sequential processing), activity log (DB-backed, hooked into all write endpoints, `GET /ops/{op_id}/activity`), and notification banner (30s polling via `GET /ops/{op_id}/stats`).
+
+**Phase 8 invariants:** `ActivityLog` table exists with composite index on `(op_id, created_at)`. `log_activity()` in `services/activity.py` must be called before `db.commit()` in write endpoints — it adds to the session, not commits independently. Export format is `lockpick_export_version: 1`.
 
 ### Phase 9 — MCP Server
 
