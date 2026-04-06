@@ -17,6 +17,22 @@ export interface OpStats {
   latest_activity_at: string | null
 }
 
+export interface SearchResult {
+  type: 'host' | 'host_ip' | 'host_user' | 'credential' | 'connection'
+  host_id: string | null
+  credential_id: string | null
+  connection_id: string | null
+  nickname: string | null
+  matched_field: string
+  snippet: string
+}
+
+export interface SearchResponse {
+  query: string
+  results: SearchResult[]
+  total: number
+}
+
 export interface ActivityLog {
   id: string
   op_id: string

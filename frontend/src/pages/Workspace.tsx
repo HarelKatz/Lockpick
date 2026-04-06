@@ -15,6 +15,7 @@ import { getOpStats } from '../api/stats'
 import { getActivityLog } from '../api/activity'
 import { ApiError } from '../api/client'
 import NotificationBanner from '../components/NotificationBanner'
+import SearchModal from '../components/SearchModal'
 import AddDataModal from '../components/AddDataModal'
 import EditModal from '../components/EditModal'
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal'
@@ -550,6 +551,16 @@ export default function Workspace({ op, onBack }: Props) {
             <span className={styles.opDescription}>{op.description}</span>
           )}
         </div>
+        <div className={styles.headerActions}>
+          <button
+            className={styles.headerBtn}
+            onClick={() => setSearchOpen(true)}
+            title="Search (Ctrl+F)"
+            aria-label="Open search"
+          >
+            ⌕
+          </button>
+        </div>
         <div className={styles.tabBar}>
           <button
             className={`${styles.tabBtn} ${tab === 'data' ? styles.tabActive : ''}`}
@@ -715,8 +726,10 @@ export default function Workspace({ op, onBack }: Props) {
         />
       )}
 
-      {/* Search modal — rendered in step 5; state managed here */}
-      {searchOpen && null /* SearchModal placeholder */}
+      {/* Search modal */}
+      {searchOpen && (
+        <SearchModal opId={op.id} onClose={() => setSearchOpen(false)} />
+      )}
 
       {/* FAB + add modal */}
       <AddDataModal opId={op.id} hosts={hosts} credentials={credentials} onDataAdded={fetchAll} />

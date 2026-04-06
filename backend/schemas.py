@@ -1,6 +1,6 @@
 """Pydantic request/response models."""
 from datetime import datetime
-from typing import Literal, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -32,6 +32,22 @@ class OpStats(BaseModel):
     connection_count: int
     total_records: int
     latest_activity_at: Optional[datetime]
+
+
+class SearchResult(BaseModel):
+    type: Literal["host", "host_ip", "host_user", "credential", "connection"]
+    host_id: Optional[str] = None
+    credential_id: Optional[str] = None
+    connection_id: Optional[str] = None
+    nickname: Optional[str] = None
+    matched_field: str
+    snippet: str
+
+
+class SearchResponse(BaseModel):
+    query: str
+    results: List[SearchResult]
+    total: int
 
 
 class ActivityLogRead(BaseModel):
