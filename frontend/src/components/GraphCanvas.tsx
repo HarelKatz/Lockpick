@@ -153,12 +153,12 @@ export default function GraphCanvas({
             'border-width': 2,
             'label': 'data(label)',
             'color': '#e6edf3',
-            'font-size': 13,
-            'min-zoomed-font-size': 6,
+            'font-size': 18,
+            'min-zoomed-font-size': 8,
             'text-valign': 'bottom',
-            'text-margin-y': 5,
-            'width': 44,
-            'height': 44,
+            'text-margin-y': 6,
+            'width': 48,
+            'height': 48,
             'text-background-color': '#0d1117',
             'text-background-opacity': 0.7,
             'text-background-padding': '2px',
@@ -279,7 +279,10 @@ export default function GraphCanvas({
       if (evt.target === cy) cbRef.current.onCanvasTap()
     })
 
-    // Drag connected neighbors with the grabbed node
+    // Drag connected neighbors with the grabbed node.
+    // Spring coefficient < 1 so edges visually deform (neighbors lag slightly),
+    // giving a fluid feel instead of moving as a rigid cluster.
+    const SPRING = 0.55
     let _prevPos: { x: number; y: number } | null = null
     cy.on('grab', 'node', evt => { _prevPos = { ...evt.target.position() } })
     cy.on('drag', 'node', evt => {
@@ -291,7 +294,7 @@ export default function GraphCanvas({
       _prevPos = { ...cur }
       node.neighborhood('node').forEach((nb: cytoscape.NodeSingular) => {
         if (!nb.grabbed() && !nb.locked()) {
-          nb.position({ x: nb.position().x + dx, y: nb.position().y + dy })
+          nb.position({ x: nb.position().x + dx * SPRING, y: nb.position().y + dy * SPRING })
         }
       })
     })
