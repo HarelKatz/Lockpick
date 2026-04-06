@@ -31,6 +31,8 @@ interface Props {
   pathFilter: PathFilter | null
   credFilter: CredFilter | null
   layout: LayoutName
+  lockedIds?: Set<string>
+  focusHostId?: string | null
   onNodeClick: (node: GraphNode) => void
   onEdgeClick: (edge: GraphEdge) => void
   onNodeDoubleClick: (node: GraphNode) => void
@@ -62,6 +64,8 @@ function buildLayoutOptions(layout: LayoutName): cytoscape.LayoutOptions {
         padding: 90,
         nodeDimensionsIncludeLabels: true,
         randomize: true,
+        idealEdgeLength: 180,
+        edgeElasticity: 0.45,
       } as cytoscape.LayoutOptions
     case 'breadthfirst':
       return {
@@ -94,11 +98,12 @@ function buildLayoutOptions(layout: LayoutName): cytoscape.LayoutOptions {
         infinite: false,
         fit: true,
         padding: 90,
-        nodeSpacing: 40,
-        edgeLength: 180,
+        nodeSpacing: 60,
+        edgeLength: 240,
         maxSimulationTime: 3000,
         convergenceThreshold: 0.01,
-        randomize: true,
+        randomize: false,
+        avoidOverlap: true,
       } as cytoscape.LayoutOptions
   }
 }
@@ -109,6 +114,8 @@ export default function GraphCanvas({
   pathFilter,
   credFilter,
   layout,
+  lockedIds,
+  focusHostId,
   onNodeClick,
   onEdgeClick,
   onNodeDoubleClick,
@@ -136,6 +143,7 @@ export default function GraphCanvas({
     const cy = cytoscape({
       container: containerRef.current,
       elements: [],
+      pixelRatio: 'auto',
       style: [
         {
           selector: 'node',
@@ -145,11 +153,12 @@ export default function GraphCanvas({
             'border-width': 2,
             'label': 'data(label)',
             'color': '#e6edf3',
-            'font-size': 11,
+            'font-size': 13,
+            'min-zoomed-font-size': 6,
             'text-valign': 'bottom',
             'text-margin-y': 5,
-            'width': 40,
-            'height': 40,
+            'width': 44,
+            'height': 44,
             'text-background-color': '#0d1117',
             'text-background-opacity': 0.7,
             'text-background-padding': '2px',
@@ -234,6 +243,14 @@ export default function GraphCanvas({
             'opacity': 0.18,
           },
         },
+        // Locked nodes — orange border, cannot be dragged
+        {
+          selector: 'node.node-locked',
+          style: {
+            'border-color': '#f78166',
+            'border-width': 3,
+          },
+        },
       ],
       userZoomingEnabled: true,
       userPanningEnabled: true,
@@ -261,6 +278,24 @@ export default function GraphCanvas({
     cy.on('tap', evt => {
       if (evt.target === cy) cbRef.current.onCanvasTap()
     })
+
+    // Drag connected neighbors with the grabbed node
+    let _prevPos: { x: number; y: number } | null = null
+    cy.on('grab', 'node', evt => { _prevPos = { ...evt.target.position() } })
+    cy.on('drag', 'node', evt => {
+      const node = evt.target
+      const cur = node.position()
+      if (!_prevPos) { _prevPos = { ...cur }; return }
+      const dx = cur.x - _prevPos.x
+      const dy = cur.y - _prevPos.y
+      _prevPos = { ...cur }
+      node.neighborhood('node').forEach((nb: cytoscape.NodeSingular) => {
+        if (!nb.grabbed() && !nb.locked()) {
+          nb.position({ x: nb.position().x + dx, y: nb.position().y + dy })
+        }
+      })
+    })
+    cy.on('free', 'node', () => { _prevPos = null })
 
     cyRef.current = cy
 
@@ -454,6 +489,31 @@ export default function GraphCanvas({
   // (fullRebuild removes all elements, so classes/display set by this effect
   // would be lost without re-running when graphData changes)
   }, [pathFilter, credFilter, graphData])
+
+  // ── Apply/clear node locks ────────────────────────────────────────────────
+  useEffect(() => {
+    const cy = cyRef.current
+    if (!cy) return
+    cy.nodes().forEach(n => {
+      if (lockedIds?.has(n.id())) {
+        n.lock()
+        n.addClass('node-locked')
+      } else {
+        n.unlock()
+        n.removeClass('node-locked')
+      }
+    })
+  }, [lockedIds, graphData])  // re-apply after rebuild
+
+  // ── Animate to a focused host ─────────────────────────────────────────────
+  useEffect(() => {
+    if (!focusHostId) return
+    const cy = cyRef.current
+    if (!cy) return
+    const ele = cy.getElementById(focusHostId)
+    if (ele.length === 0) return
+    cy.animate({ fit: { eles: ele, padding: 160 }, duration: 400 })
+  }, [focusHostId])
 
   return <div ref={containerRef} className={styles.canvas} />
 }

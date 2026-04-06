@@ -10,12 +10,14 @@ interface Props {
   node: GraphNode
   x: number
   y: number
+  isLocked: boolean
   onExpand: (node: GraphNode, evidenceType: 'all' | 'key_match' | 'connection_log' | 'indicator') => void
   onHide: (node: GraphNode) => void
+  onToggleLock: () => void
   onClose: () => void
 }
 
-export default function NodeContextMenu({ node, x, y, onExpand, onHide, onClose }: Props) {
+export default function NodeContextMenu({ node, x, y, isLocked, onExpand, onHide, onToggleLock, onClose }: Props) {
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -59,6 +61,8 @@ export default function NodeContextMenu({ node, x, y, onExpand, onHide, onClose 
       {item('Expand by key matches', () => onExpand(node, 'key_match'))}
       {item('Expand by connection logs', () => onExpand(node, 'connection_log'))}
       {item('Expand by indicators', () => onExpand(node, 'indicator'))}
+      <div className={styles.separator} />
+      {item(isLocked ? 'Unlock node' : 'Lock node', () => onToggleLock())}
       <div className={styles.separator} />
       {item('Hide this node', () => onHide(node))}
     </div>

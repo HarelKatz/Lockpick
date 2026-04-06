@@ -244,6 +244,16 @@
   gap: 12px;
 }
 
+.highlighted {
+  animation: highlightPulse 1.5s ease-out forwards;
+}
+
+@keyframes highlightPulse {
+  0%   { box-shadow: 0 0 0 3px var(--accent); }
+  70%  { box-shadow: 0 0 0 3px var(--accent); }
+  100% { box-shadow: none; }
+}
+
 .hostCard {
   background: var(--bg-surface);
   border: 1px solid var(--border);

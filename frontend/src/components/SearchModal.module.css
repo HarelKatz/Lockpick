@@ -104,7 +104,7 @@
 
 .result {
   align-items: center;
-  cursor: default;
+  cursor: pointer;
   display: flex;
   gap: 8px;
   justify-content: space-between;
@@ -114,6 +114,12 @@
 
 .result:hover {
   background: var(--bg-surface-2);
+}
+
+.resultSelected {
+  background: var(--bg-surface-2);
+  border-left: 3px solid var(--accent);
+  padding-left: 13px;
 }
 
 .resultMain {

@@ -374,6 +374,27 @@
 
 .removeBtn:hover { color: #f85149; }
 
+.queueUsernameInput {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: var(--font-size-xs);
+  margin-top: 6px;
+  outline: none;
+  padding: 3px 7px;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+.queueUsernameInput:focus {
+  border-color: var(--accent);
+}
+
+.queueUsernameInput::placeholder {
+  color: var(--text-muted);
+}
+
 .queueError {
   color: #f85149;
   font-size: var(--font-size-xs);

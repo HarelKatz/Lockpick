@@ -79,7 +79,7 @@ def export_op(op_id: str, db: Session = Depends(get_db)):
     )
 
     safe_name = re.sub(r"[^a-z0-9_\-]", "_", op.name.lower())[:40]
-    date_str = _now().strftime("%Y%m%d")
+    date_str = _now().strftime("%Y%m%d_%H%M")
     filename = f"lockpick-{safe_name}-{date_str}.json"
 
     response = JSONResponse(

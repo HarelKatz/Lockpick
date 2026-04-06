@@ -26,6 +26,7 @@ interface QueuedFile {
   id: string
   file: File
   fileType: UploadFileType | null  // null = not yet selected
+  username: string
   status: FileStatus
   result: UploadResult | null
   error: string | null
@@ -47,7 +48,6 @@ function needsUser(ft: UploadFileType | null): boolean {
 
 export default function FileUploadForm({ opId, hosts, onSuccess }: Props) {
   const [hostId, setHostId] = useState<string>(hosts[0]?.id ?? '')
-  const [username, setUsername] = useState<string>('')
   const [queue, setQueue] = useState<QueuedFile[]>([])
   const [dragging, setDragging] = useState(false)
   const [processing, setProcessing] = useState(false)
@@ -63,6 +63,7 @@ export default function FileUploadForm({ opId, hosts, onSuccess }: Props) {
           id: newId(),
           file: f,
           fileType: detected,
+          username: '',
           status: 'pending' as FileStatus,
           result: null,
           error: null,
@@ -78,6 +79,10 @@ export default function FileUploadForm({ opId, hosts, onSuccess }: Props) {
 
   function setQueuedType(id: string, ft: UploadFileType) {
     setQueue(prev => prev.map(q => q.id === id ? { ...q, fileType: ft } : q))
+  }
+
+  function setQueuedUsername(id: string, username: string) {
+    setQueue(prev => prev.map(q => q.id === id ? { ...q, username } : q))
   }
 
   function handleDragOver(e: React.DragEvent) { e.preventDefault(); setDragging(true) }
@@ -100,7 +105,7 @@ export default function FileUploadForm({ opId, hosts, onSuccess }: Props) {
     setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'uploading', error: null } : q))
 
     try {
-      const usernameArg = needsUser(item.fileType) && username.trim() ? username.trim() : undefined
+      const usernameArg = needsUser(item.fileType) && item.username.trim() ? item.username.trim() : undefined
       const result = await uploadFile(opId, item.file, item.fileType, hostId, usernameArg)
       setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'done', result } : q))
     } catch (err: unknown) {
@@ -143,7 +148,6 @@ export default function FileUploadForm({ opId, hosts, onSuccess }: Props) {
 
   const pendingCount = queue.filter(q => q.status === 'pending' && q.fileType !== null).length
   const allNeedType = queue.some(q => q.status === 'pending' && q.fileType === null)
-  const someNeedUsername = queue.some(q => q.status === 'pending' && needsUser(q.fileType))
 
   return (
     <form className={styles.form} onSubmit={handleUploadAll}>
@@ -163,23 +167,6 @@ export default function FileUploadForm({ opId, hosts, onSuccess }: Props) {
           ))}
         </select>
       </div>
-
-      {/* Username — shown when any queued file needs it */}
-      {someNeedUsername && (
-        <div className={styles.field}>
-          <label className={styles.label}>
-            Username <span className={styles.required}>*</span>
-            <span className={styles.fieldHint}>(applied to files that need it)</span>
-          </label>
-          <input
-            className={styles.input}
-            type="text"
-            placeholder="e.g. root, alice"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-          />
-        </div>
-      )}
 
       {/* Drop zone */}
       <div
@@ -216,6 +203,7 @@ export default function FileUploadForm({ opId, hosts, onSuccess }: Props) {
               item={item}
               onRemove={() => removeQueued(item.id)}
               onTypeChange={ft => setQueuedType(item.id, ft)}
+              onUsernameChange={u => setQueuedUsername(item.id, u)}
               onRetry={() => handleRetry(item)}
             />
           ))}
@@ -247,10 +235,11 @@ interface QueueItemProps {
   item: QueuedFile
   onRemove: () => void
   onTypeChange: (ft: UploadFileType) => void
+  onUsernameChange: (username: string) => void
   onRetry: () => void
 }
 
-function QueueItem({ item, onRemove, onTypeChange, onRetry }: QueueItemProps) {
+function QueueItem({ item, onRemove, onTypeChange, onUsernameChange, onRetry }: QueueItemProps) {
   const s = item.result?.summary
   return (
     <div className={`${styles.queueItem} ${styles[`status_${item.status}`]}`}>
@@ -276,6 +265,7 @@ function QueueItem({ item, onRemove, onTypeChange, onRetry }: QueueItemProps) {
           <span className={styles.autoTag}>auto</span>
         )}
 
+
         <span className={styles.queueStatus}>
           {item.status === 'uploading' && '⟳'}
           {item.status === 'done' && '✓'}
@@ -289,6 +279,17 @@ function QueueItem({ item, onRemove, onTypeChange, onRetry }: QueueItemProps) {
           <button className={styles.removeBtn} onClick={onRemove} type="button" aria-label="Remove">✕</button>
         )}
       </div>
+
+      {item.status === 'pending' && needsUser(item.fileType) && (
+        <input
+          className={styles.queueUsernameInput}
+          type="text"
+          placeholder="Username (e.g. root, alice)"
+          value={item.username}
+          onChange={e => onUsernameChange(e.target.value)}
+          onClick={e => e.stopPropagation()}
+        />
+      )}
 
       {item.status === 'error' && item.error && (
         <p className={styles.queueError}>{item.error}</p>

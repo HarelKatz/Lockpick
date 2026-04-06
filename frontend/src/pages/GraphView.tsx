@@ -27,6 +27,7 @@ interface Props {
   op: Operation
   allHosts: Host[]
   credentials: Credential[]
+  focusHostId?: string | null
 }
 
 function mergeGraphResponses(existing: GraphResponse, incoming: GraphResponse): GraphResponse {
@@ -42,7 +43,7 @@ function mergeGraphResponses(existing: GraphResponse, incoming: GraphResponse): 
   }
 }
 
-export default function GraphView({ op, allHosts, credentials }: Props) {
+export default function GraphView({ op, allHosts, credentials, focusHostId }: Props) {
   const [graphData, setGraphData] = useState<GraphResponse>({ nodes: [], edges: [] })
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set())
@@ -56,6 +57,7 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
   const [credFilter, setCredFilter] = useState<CredFilter | null>(null)
   const [selectedPath, setSelectedPath] = useState<PathResult | null>(null)
   const [layout, setLayout] = useState<LayoutName>('cola')
+  const [lockedIds, setLockedIds] = useState<Set<string>>(new Set())
 
   // Load full graph on mount
   const loadFullGraph = useCallback(async () => {
@@ -138,8 +140,17 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
     setEdgeCtxMenu(null)
   }
 
-  function handleNodeDoubleClick(_node: GraphNode) {
-    // no-op — expand is available via right-click context menu
+  function handleNodeDoubleClick(node: GraphNode) {
+    setLockedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(node.host_id)) next.delete(node.host_id)
+      else next.add(node.host_id)
+      return next
+    })
+  }
+
+  function handleToggleLock(node: GraphNode) {
+    handleNodeDoubleClick(node)
   }
 
   function handleNodeContextMenu(node: GraphNode, x: number, y: number) {
@@ -371,6 +382,8 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
             pathFilter={pathFilter}
             credFilter={credFilter}
             layout={layout}
+            lockedIds={lockedIds}
+            focusHostId={focusHostId}
             onNodeClick={handleNodeClick}
             onEdgeClick={handleEdgeClick}
             onNodeDoubleClick={handleNodeDoubleClick}
@@ -394,8 +407,10 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
           node={nodeCtxMenu.node}
           x={nodeCtxMenu.x}
           y={nodeCtxMenu.y}
+          isLocked={lockedIds.has(nodeCtxMenu.node.host_id)}
           onExpand={handleExpand}
           onHide={handleHide}
+          onToggleLock={() => handleToggleLock(nodeCtxMenu.node)}
           onClose={() => setNodeCtxMenu(null)}
         />
       )}

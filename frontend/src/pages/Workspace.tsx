@@ -78,14 +78,16 @@ const CONN_TYPE_LABELS: Record<ConnectionRecord['connection_type'], string> = {
 // ─── Host card ────────────────────────────────────────────────────────────────
 
 interface HostCardProps {
+  id?: string
   host: Host
+  highlighted?: boolean
   onEdit: (h: Host) => void
   onDelete: (h: Host) => void
 }
 
-function HostCard({ host, onEdit, onDelete }: HostCardProps) {
+function HostCard({ id, host, highlighted, onEdit, onDelete }: HostCardProps) {
   return (
-    <div className={styles.hostCard}>
+    <div id={id} className={`${styles.hostCard} ${highlighted ? styles.highlighted : ''}`}>
       <div className={styles.hostCardHeader}>
         <span className={styles.hostNickname}>{host.nickname}</span>
         <div className={styles.hostCardActions}>
@@ -141,18 +143,20 @@ function HostCard({ host, onEdit, onDelete }: HostCardProps) {
 // ─── Credential row ───────────────────────────────────────────────────────────
 
 interface CredentialRowProps {
+  id?: string
   cred: Credential
   links: CredentialLink[]
   hosts: Host[]
+  highlighted?: boolean
   onEdit: (c: Credential) => void
   onDelete: (c: Credential) => void
   onEditLink: (l: CredentialLink) => void
   onDeleteLink: (l: CredentialLink) => void
 }
 
-function CredentialRow({ cred, links, hosts, onEdit, onDelete, onEditLink, onDeleteLink }: CredentialRowProps) {
+function CredentialRow({ id, cred, links, hosts, highlighted, onEdit, onDelete, onEditLink, onDeleteLink }: CredentialRowProps) {
   return (
-    <div className={styles.credRow}>
+    <div id={id} className={`${styles.credRow} ${highlighted ? styles.highlighted : ''}`}>
       <div className={styles.credHeader}>
         <span className={`${styles.typeBadge} ${styles[`type_${cred.cred_type}`]}`}>
           {CRED_TYPE_LABELS[cred.cred_type]}
@@ -208,18 +212,20 @@ function CredentialRow({ cred, links, hosts, onEdit, onDelete, onEditLink, onDel
 // ─── Connection row ───────────────────────────────────────────────────────────
 
 interface ConnectionRowProps {
+  id?: string
   conn: ConnectionRecord
   hosts: Host[]
+  highlighted?: boolean
   onEdit: (c: ConnectionRecord) => void
   onDelete: (c: ConnectionRecord) => void
 }
 
-function ConnectionRow({ conn, hosts, onEdit, onDelete }: ConnectionRowProps) {
+function ConnectionRow({ id, conn, hosts, highlighted, onEdit, onDelete }: ConnectionRowProps) {
   const srcHost = hosts.find(h => h.id === conn.src_host_id)
   const dstHost = hosts.find(h => h.id === conn.dst_host_id)
 
   return (
-    <div className={styles.connRow}>
+    <div id={id} className={`${styles.connRow} ${highlighted ? styles.highlighted : ''}`}>
       <div className={styles.connEndpoint}>
         {srcHost && <span className={styles.connHostName}>{srcHost.nickname}</span>}
         <span className={styles.connIp}>{conn.src_ip}</span>
@@ -385,6 +391,8 @@ export default function Workspace({ op, onBack }: Props) {
   const [viewingFile, setViewingFile] = useState<UploadFile | null>(null)
   const [activityLog, setActivityLog] = useState<ActivityLog[]>([])
   const [searchOpen, setSearchOpen] = useState(false)
+  const [focusEntityId, setFocusEntityId] = useState<string | null>(null)
+  const [highlightId, setHighlightId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [baselineTotal, setBaselineTotal] = useState<number | null>(null)
@@ -438,6 +446,10 @@ export default function Workspace({ op, onBack }: Props) {
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
+  const refreshActivity = useCallback(async () => {
+    try { setActivityLog(await getActivityLog(op.id)) } catch {}
+  }, [op.id])
+
   // Poll for new records every 30s — notify if total changed since last refresh
   useEffect(() => {
     const id = setInterval(async () => {
@@ -465,6 +477,31 @@ export default function Workspace({ op, onBack }: Props) {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
 
+  // ─── Search select handler ────────────────────────────────────────────────
+
+  function handleSearchSelect(result: import('../types').SearchResult) {
+    setSearchOpen(false)
+    if (tab === 'graph') {
+      if (result.host_id) setFocusEntityId(result.host_id)
+    } else {
+      let elementId: string | null = null
+      if (result.type === 'host' || result.type === 'host_ip' || result.type === 'host_user') {
+        elementId = result.host_id ? `host-${result.host_id}` : null
+      } else if (result.type === 'credential') {
+        elementId = result.credential_id ? `cred-${result.credential_id}` : null
+      } else if (result.type === 'connection') {
+        elementId = result.connection_id ? `conn-${result.connection_id}` : null
+      }
+      if (elementId) {
+        setHighlightId(elementId)
+        setTimeout(() => setHighlightId(null), 1500)
+        requestAnimationFrame(() => {
+          document.getElementById(elementId!)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        })
+      }
+    }
+  }
+
   // ─── Delete handlers ─────────────────────────────────────────────────────
 
   async function confirmDeleteHost() {
@@ -474,6 +511,7 @@ export default function Workspace({ op, onBack }: Props) {
       await deleteHost(deleteHostTarget.id)
       setHosts(prev => prev.filter(h => h.id !== deleteHostTarget.id))
       setDeleteHostTarget(null)
+      refreshActivity()
     } catch {
       /* ignore — leave modal open so user can retry */
     } finally {
@@ -489,6 +527,7 @@ export default function Workspace({ op, onBack }: Props) {
       setCredentials(prev => prev.filter(c => c.id !== deleteCredTarget.id))
       setLinks(prev => prev.filter(l => l.credential_id !== deleteCredTarget.id))
       setDeleteCredTarget(null)
+      refreshActivity()
     } catch {
       /* ignore */
     } finally {
@@ -503,6 +542,7 @@ export default function Workspace({ op, onBack }: Props) {
       await deleteCredentialLink(deleteLinkTarget.id)
       setLinks(prev => prev.filter(l => l.id !== deleteLinkTarget.id))
       setDeleteLinkTarget(null)
+      refreshActivity()
     } catch {
       /* ignore */
     } finally {
@@ -517,6 +557,7 @@ export default function Workspace({ op, onBack }: Props) {
       await deleteConnection(deleteConnTarget.id)
       setConnections(prev => prev.filter(c => c.id !== deleteConnTarget.id))
       setDeleteConnTarget(null)
+      refreshActivity()
     } catch {
       /* ignore */
     } finally {
@@ -588,7 +629,7 @@ export default function Workspace({ op, onBack }: Props) {
 
       {/* Graph tab — always mounted to preserve state; hidden when on data tab */}
       <div style={tab !== 'graph' ? { display: 'none' } : { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-        <GraphView op={op} allHosts={hosts} credentials={credentials} />
+        <GraphView op={op} allHosts={hosts} credentials={credentials} focusHostId={focusEntityId} />
       </div>
 
       {/* Data tab */}
@@ -629,7 +670,9 @@ export default function Workspace({ op, onBack }: Props) {
                   {hosts.map(h => (
                     <HostCard
                       key={h.id}
+                      id={`host-${h.id}`}
                       host={h}
+                      highlighted={highlightId === `host-${h.id}`}
                       onEdit={setEditHost}
                       onDelete={setDeleteHostTarget}
                     />
@@ -649,9 +692,11 @@ export default function Workspace({ op, onBack }: Props) {
                   {credentials.map(cred => (
                     <CredentialRow
                       key={cred.id}
+                      id={`cred-${cred.id}`}
                       cred={cred}
                       links={links.filter(l => l.credential_id === cred.id)}
                       hosts={hosts}
+                      highlighted={highlightId === `cred-${cred.id}`}
                       onEdit={setEditCred}
                       onDelete={setDeleteCredTarget}
                       onEditLink={setEditLink}
@@ -673,8 +718,10 @@ export default function Workspace({ op, onBack }: Props) {
                   {connections.map(conn => (
                     <ConnectionRow
                       key={conn.id}
+                      id={`conn-${conn.id}`}
                       conn={conn}
                       hosts={hosts}
+                      highlighted={highlightId === `conn-${conn.id}`}
                       onEdit={setEditConn}
                       onDelete={setDeleteConnTarget}
                     />
@@ -737,7 +784,7 @@ export default function Workspace({ op, onBack }: Props) {
 
       {/* Search modal */}
       {searchOpen && (
-        <SearchModal opId={op.id} onClose={() => setSearchOpen(false)} />
+        <SearchModal opId={op.id} onClose={() => setSearchOpen(false)} onSelectResult={handleSearchSelect} />
       )}
 
       {/* FAB + add modal */}

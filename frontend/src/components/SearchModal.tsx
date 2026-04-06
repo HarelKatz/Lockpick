@@ -6,6 +6,7 @@ import styles from './SearchModal.module.css'
 interface Props {
   opId: string
   onClose: () => void
+  onSelectResult?: (result: SearchResult) => void
 }
 
 const TYPE_LABELS: Record<SearchResult['type'], string> = {
@@ -30,11 +31,12 @@ const FIELD_LABELS: Record<string, string> = {
   raw_line: 'raw line',
 }
 
-export default function SearchModal({ opId, onClose }: Props) {
+export default function SearchModal({ opId, onClose, onSelectResult }: Props) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -73,7 +75,15 @@ export default function SearchModal({ opId, onClose }: Props) {
     }, 300)
   }, [query, opId])
 
-  // Group results by type
+  // Reset selected index when results change
+  useEffect(() => { setSelectedIndex(-1) }, [results])
+
+  // Flat ordered list for keyboard navigation
+  const flatResults: SearchResult[] = results
+    ? (Object.keys(TYPE_LABELS) as SearchResult['type'][]).flatMap(t => results.filter(r => r.type === t))
+    : []
+
+  // Group results by type for display
   const grouped = results
     ? (Object.keys(TYPE_LABELS) as SearchResult['type'][]).reduce<Record<string, SearchResult[]>>((acc, t) => {
         const items = results.filter(r => r.type === t)
@@ -81,6 +91,43 @@ export default function SearchModal({ opId, onClose }: Props) {
         return acc
       }, {})
     : {}
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelectedIndex(prev => {
+        const next = prev < flatResults.length - 1 ? prev + 1 : 0
+        scrollResultIntoView(next)
+        return next
+      })
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelectedIndex(prev => {
+        const next = prev > 0 ? prev - 1 : flatResults.length - 1
+        scrollResultIntoView(next)
+        return next
+      })
+    } else if (e.key === 'Enter') {
+      if (selectedIndex >= 0 && flatResults[selectedIndex]) {
+        handleSelect(flatResults[selectedIndex])
+      }
+    }
+  }
+
+  function scrollResultIntoView(index: number) {
+    requestAnimationFrame(() => {
+      document.getElementById(`search-result-${index}`)?.scrollIntoView({ block: 'nearest' })
+    })
+  }
+
+  function handleSelect(result: SearchResult) {
+    onSelectResult?.(result)
+    onClose()
+  }
+
+  // Build a flat index map for rendering with correct global indices
+  const flatIndexMap = new Map<SearchResult, number>()
+  flatResults.forEach((r, i) => flatIndexMap.set(r, i))
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -94,6 +141,7 @@ export default function SearchModal({ opId, onClose }: Props) {
             placeholder="Search hosts, IPs, users, credentials, connections…"
             value={query}
             onChange={e => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
             autoComplete="off"
             spellCheck={false}
           />
@@ -110,15 +158,26 @@ export default function SearchModal({ opId, onClose }: Props) {
         {Object.entries(grouped).map(([type, items]) => (
           <div key={type} className={styles.group}>
             <div className={styles.groupHeader}>{TYPE_LABELS[type as SearchResult['type']]}</div>
-            {items.map((r, i) => (
-              <div key={i} className={styles.result}>
-                <div className={styles.resultMain}>
-                  {r.nickname && <span className={styles.resultNickname}>{r.nickname}</span>}
-                  <span className={styles.resultSnippet}>{r.snippet}</span>
+            {items.map((r) => {
+              const globalIdx = flatIndexMap.get(r) ?? -1
+              const isSelected = globalIdx === selectedIndex
+              return (
+                <div
+                  key={globalIdx}
+                  id={`search-result-${globalIdx}`}
+                  className={`${styles.result} ${isSelected ? styles.resultSelected : ''}`}
+                  onClick={() => handleSelect(r)}
+                  role="option"
+                  aria-selected={isSelected}
+                >
+                  <div className={styles.resultMain}>
+                    {r.nickname && <span className={styles.resultNickname}>{r.nickname}</span>}
+                    <span className={styles.resultSnippet}>{r.snippet}</span>
+                  </div>
+                  <span className={styles.resultField}>{FIELD_LABELS[r.matched_field] ?? r.matched_field}</span>
                 </div>
-                <span className={styles.resultField}>{FIELD_LABELS[r.matched_field] ?? r.matched_field}</span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ))}
 
