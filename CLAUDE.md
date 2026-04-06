@@ -4,9 +4,11 @@
 
 SSH pivot tracker for red teams. Ingests raw evidence (private keys, `authorized_keys`, `auth.log`, `known_hosts`, bash history) and builds a relationship graph showing lateral movement paths across an engagement. Runs as a shared web server — single `docker compose up -d`, no external dependencies.
 
+@AGENT.md
+
 ## Working Style
 
-- **Do not survey the codebase before starting.** Read AGENT.md for architecture context, then begin implementing. Do not open files to "understand the project" — AGENT.md describes everything you need to know upfront.
+- **Do not survey the codebase before starting.** Do not open files to "understand the project" — AGENT.md describes everything you need to know upfront.
 - **Read files on-demand only.** Open a source file only when you are about to edit it or need to understand a specific function/interface it provides. Never read a file "just in case."
 
 ## Tech Stack
@@ -65,15 +67,6 @@ tests/
 └── test_api/        # API integration tests
 ```
 
-## Data Model Rules
-
-- **All IDs** are UUIDs stored as strings in SQLite
-- **All timestamps** are timezone-aware UTC (ISO 8601)
-- **No authentication** — trusted network tool, no login screen
-- **All persistent state** lives in `./data/` — only thing to backup
-- **`CredentialLink.username`** (plain string) is the authoritative field for pivot path queries — `host_user_id` is optional enrichment only
-- **Edges between hosts are not stored** — the backend computes them by aggregating evidence (key matches, connection logs, known_hosts, bash_history) and returns `{"confidence": "confirmed|observed|indicator", "evidence": [...]}`
-
 ## Adding a New Endpoint
 
 1. ORM model in `backend/models.py` (if new table)
@@ -108,13 +101,6 @@ class BaseParser:
 
 Parsers **must never crash** on bad input — catch exceptions, append to `warnings`, and continue. Fixture files for parser tests live in `tests/fixtures/`.
 
-## Key Architecture Rules
-
-- **Edges are not stored** — computed on demand by `services/graph_builder.py` from CredentialLinks + ConnectionRecords
-- **IP resolution is best-effort** — create an unresolved host if no existing host matches; user merges later
-- **Frontend never touches the DB** — all data flows through the REST API
-- **No authentication** — trusted network tool; see AGENT.md for full architecture rules
-
 ## Frontend Conventions
 
 ### Dark Theme
@@ -143,6 +129,8 @@ type(scope): short description
 types: feat, fix, refactor, test, docs, chore
 scopes: backend, frontend, parsers, docker, schema
 ```
+
+**When to commit:** After each significant unit of work — a named task, a new feature, a bug fix, a schema change, a new parser, or a completed refactor. Commit before moving on to the next task; do not batch unrelated changes. Skip a commit for minor edits: typos, single-line CSS tweaks, comment-only changes.
 
 **Before committing:** `make test` + `cd frontend && npm run build`. Stage specific files — avoid `git add .`.
 
