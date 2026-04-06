@@ -4,7 +4,8 @@
  */
 import { useState, useEffect, useCallback } from 'react'
 import type { Operation, CreateOperationRequest, UpdateOperationRequest } from '../types'
-import { listOperations, createOperation, updateOperation, deleteOperation } from '../api/operations'
+import { listOperations, createOperation, updateOperation, deleteOperation, getOperation } from '../api/operations'
+import ImportOpModal from '../components/ImportOpModal'
 import styles from './OpSelector.module.css'
 
 interface Props {
@@ -249,6 +250,7 @@ export default function OpSelector({ onSelectOp }: Props) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [editTarget, setEditTarget] = useState<Operation | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Operation | null>(null)
   const [search, setSearch] = useState('')
@@ -270,6 +272,17 @@ export default function OpSelector({ onSelectOp }: Props) {
 
   function handleCreated(op: Operation) {
     onSelectOp(op)
+  }
+
+  async function handleImported(opId: string) {
+    setShowImport(false)
+    try {
+      const op = await getOperation(opId)
+      onSelectOp(op)
+    } catch {
+      // Fall back to refreshing the list
+      fetchOps()
+    }
   }
 
   function handleSaved(updated: Operation) {
@@ -311,6 +324,9 @@ export default function OpSelector({ onSelectOp }: Props) {
               <a href={`${apiBase}/docs`} target="_blank" rel="noopener noreferrer" className={styles.apiLink}>Swagger</a>
               <a href={`${apiBase}/redoc`} target="_blank" rel="noopener noreferrer" className={styles.apiLink}>ReDoc</a>
             </div>
+            <button className={styles.btnSecondary} onClick={() => setShowImport(true)}>
+              ⬆ Import
+            </button>
             <button className={styles.btnPrimary} onClick={() => setShowCreate(true)}>
               + New Operation
             </button>
@@ -412,6 +428,9 @@ export default function OpSelector({ onSelectOp }: Props) {
 
       {showCreate && (
         <CreateOpModal onClose={() => setShowCreate(false)} onCreated={handleCreated} />
+      )}
+      {showImport && (
+        <ImportOpModal onClose={() => setShowImport(false)} onImported={handleImported} />
       )}
       {editTarget && (
         <EditOpModal op={editTarget} onClose={() => setEditTarget(null)} onSaved={handleSaved} />

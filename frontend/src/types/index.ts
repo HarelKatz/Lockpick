@@ -17,6 +17,11 @@ export interface OpStats {
   latest_activity_at: string | null
 }
 
+export interface ImportResponse {
+  op_id: string
+  op_name: string
+}
+
 export interface SearchResult {
   type: 'host' | 'host_ip' | 'host_user' | 'credential' | 'connection'
   host_id: string | null

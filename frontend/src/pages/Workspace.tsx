@@ -13,6 +13,7 @@ import { listConnections, deleteConnection } from '../api/connections'
 import { listUploads, uploadFileUrl } from '../api/upload'
 import { getOpStats } from '../api/stats'
 import { getActivityLog } from '../api/activity'
+import { exportOp } from '../api/export_import'
 import { ApiError } from '../api/client'
 import NotificationBanner from '../components/NotificationBanner'
 import SearchModal from '../components/SearchModal'
@@ -552,6 +553,14 @@ export default function Workspace({ op, onBack }: Props) {
           )}
         </div>
         <div className={styles.headerActions}>
+          <button
+            className={styles.headerBtn}
+            onClick={() => exportOp(op.id)}
+            title="Export op as JSON"
+            aria-label="Export op"
+          >
+            ⬇ Export
+          </button>
           <button
             className={styles.headerBtn}
             onClick={() => setSearchOpen(true)}

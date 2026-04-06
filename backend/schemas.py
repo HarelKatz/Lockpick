@@ -323,3 +323,108 @@ class PathResult(BaseModel):
 class PathFinderResponse(BaseModel):
     paths: list[PathResult]
     truncated: bool
+
+
+# ─── Export / Import ──────────────────────────────────────────────────────────
+
+class ExportHostIP(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    ip_address: str
+    source: str
+    first_seen_at: datetime
+
+
+class ExportHostUser(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    username: str
+    shell: Optional[str]
+    home_dir: Optional[str]
+    source: str
+    created_at: datetime
+
+
+class ExportHost(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    nickname: str
+    comment: Optional[str]
+    created_at: datetime
+    ips: List[ExportHostIP]
+    users: List[ExportHostUser]
+
+
+class ExportCredential(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    cred_type: str
+    name: Optional[str]
+    value: str
+    fingerprint: Optional[str]
+    key_type: Optional[str]
+    passphrase: Optional[str]
+    comment: Optional[str]
+    created_at: datetime
+
+
+class ExportCredentialLink(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    credential_id: str
+    host_id: str
+    username: Optional[str]
+    host_user_id: Optional[str]
+    relationship_type: str
+    file_source: Optional[str]
+
+
+class ExportConnection(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    src_host_id: Optional[str]
+    src_ip: str
+    src_user: Optional[str]
+    dst_host_id: Optional[str]
+    dst_ip: str
+    dst_user: Optional[str]
+    connection_type: str
+    direction_context: str
+    auth_method: Optional[str]
+    credential_id: Optional[str]
+    timestamp: Optional[datetime]
+    raw_line: Optional[str]
+    source_file: str
+    created_at: datetime
+
+
+class ExportActivityEntry(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    action: str
+    entity_type: str
+    entity_id: Optional[str]
+    detail: Optional[str]
+    created_at: datetime
+
+
+class OpExport(BaseModel):
+    lockpick_export_version: int = 1
+    exported_at: datetime
+    operation: OperationRead
+    hosts: List[ExportHost]
+    credentials: List[ExportCredential]
+    credential_links: List[ExportCredentialLink]
+    connections: List[ExportConnection]
+    activity_log: List[ExportActivityEntry]
+
+
+class ImportRequest(BaseModel):
+    mode: Literal["create_new"] = "create_new"
+    name_override: Optional[str] = None
+    data: OpExport
+
+
+class ImportResponse(BaseModel):
+    op_id: str
+    op_name: str
