@@ -185,22 +185,21 @@ Those things belong in commit messages and GitHub issues.
 
 ## Implementation Phases
 
-### Phases 1–6 — Complete
-
-See git history for details. All infrastructure, CRUD APIs, edit/delete UI, HostUser entity, schema hardening, graph visualization (cytoscape.js + BFS pivot analysis), and the file upload + parsing engine (8 parsers, IP resolver, pivot detection) are implemented and tested.
-
-Raw uploaded files are stored at `data/uploads/{op_id}/{uuid}_{filename}`. Two endpoints serve them:
-- `GET /api/ops/{op_id}/uploads` — lists files (disk scan + DB enrichment for host associations and mtime)
-- `GET /api/ops/{op_id}/uploads/{safe_name}?download=true` — serves the raw file (inline by default, attachment when `download=true`)
-
-Update/delete of uploaded files is intentionally not supported: parsed DB records (credential_links, connections) have no per-file provenance marker, so replacing a file would create duplicate records.
-
 ### Phases 1–7 — Complete
 
-Phase 7 added: `classifyPath()` client-side helper (confirmed/observed/theoretical), confidence filter checkboxes in PathFinder panel, path-type badges on result rows, `PathDetailPanel` component (per-hop evidence + Copy JSON / Copy Markdown), and active-tab persistence on page refresh.
+All infrastructure, CRUD APIs, edit/delete UI, HostUser entity, schema hardening, graph visualization (cytoscape.js + BFS pivot analysis), file upload + parsing engine (8 parsers, IP resolver, pivot detection), and pivot path analysis are implemented and tested.
+
+**Upload file invariants** (future phases must not break these):
+- Files stored at `data/uploads/{op_id}/{uuid}_{filename}`
+- `GET /api/ops/{op_id}/uploads` — lists files (disk scan + DB enrichment)
+- `GET /api/ops/{op_id}/uploads/{safe_name}?download=true` — serves raw file
+- Update/delete intentionally unsupported: parsed records have no per-file provenance marker; replacing a file creates duplicates
+
+**Phase 7 invariants:** `classifyPath()` helper classifies paths as confirmed/observed/theoretical; active tab persists across refresh.
 
 ### Phase 8 — Polish & UX
 
+- [x] Evidence file listing (`GET /api/ops/{op_id}/uploads`) and download/view — already live
 - [ ] Global search across all data (hosts, IPs, users, key fingerprints, comments)
 - [ ] Export op data as JSON (full op state: hosts, creds, connections, everything)
 - [ ] Import op from JSON (restore or merge)

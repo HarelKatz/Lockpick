@@ -132,7 +132,24 @@ scopes: backend, frontend, parsers, docker, schema
 
 **When to commit:** After each significant unit of work — a named task, a new feature, a bug fix, a schema change, a new parser, or a completed refactor. Commit before moving on to the next task; do not batch unrelated changes. Skip a commit for minor edits: typos, single-line CSS tweaks, comment-only changes.
 
+**Commit autonomously — do not wait for the user to ask.** After completing a significant task, run `make test` + `cd frontend && npm run build`, then commit immediately. The user should never need to prompt you to commit.
+
 **Before committing:** `make test` + `cd frontend && npm run build`. Stage specific files — avoid `git add .`.
+
+## AGENT.md Maintenance
+
+AGENT.md is the single source of truth for architecture and project status. Update it as part of the work, not after being asked.
+
+**When to update:**
+- **Current Status**: every time a phase or significant sub-feature is completed
+- **Phase checklist**: check off `[ ]` items as you complete them
+- **Completed phase sections**: once a phase is 100% done, collapse its detail to the invariants future phases need (not a feature list — git history has that)
+
+**How to update well:**
+- Current Status must stay ≤5 lines: last completed thing, next thing, any blocker
+- Completed phase notes must state *invariants* (contracts other code depends on), not retrospectives
+- Never leave stale unchecked items for work that's already done
+- Never add file trees, line numbers, CSS snippets, or diff hunks to AGENT.md
 
 ## Environment Variables (backend)
 
