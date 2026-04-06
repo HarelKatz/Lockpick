@@ -1,0 +1,24 @@
+Host jumpbox
+    HostName 10.10.0.1
+    User alice
+    IdentityFile ~/.ssh/id_rsa
+    Port 22
+
+Host dbserver db
+    HostName 10.10.1.20
+    User root
+    IdentityFile ~/.ssh/root_key
+    Port 2222
+
+Host bastion-*
+    HostName bastion.example.com
+    User ops
+    ProxyJump jumpbox
+
+Host 10.10.2.*
+    User deploy
+    IdentityFile ~/.ssh/deploy_key
+
+Host *
+    ServerAliveInterval 60
+    StrictHostKeyChecking ask

@@ -1,0 +1,6 @@
+Host web
+    HostName 10.20.0.5
+
+Host db
+    HostName 10.20.0.6
+    User root

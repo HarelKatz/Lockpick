@@ -1,0 +1,2 @@
+ssh deploy@10.10.2.5
+rsync -avz /var/backups/ deploy@10.10.2.5:/backups/

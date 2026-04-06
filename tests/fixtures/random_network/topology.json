@@ -1,0 +1,115 @@
+{
+  "key_fingerprints": {
+    "key0": "SHA256:gH31GTzhKCZ28o0z89zHiGNB1m6WmgcKlepGRI0FYrM",
+    "key1": "SHA256:fcJiyhHGiiTXaQMdm31nNP1/XWYtvUn8uYTKEdXkxI4"
+  },
+  "hosts": [
+    {
+      "nickname": "host00",
+      "ip": "10.20.5.71",
+      "files": [
+        {
+          "path": "host00/svc_id_rsa",
+          "file_type": "private_key",
+          "username": "svc"
+        },
+        {
+          "path": "host00/svc_bash_history",
+          "file_type": "bash_history",
+          "username": "svc"
+        },
+        {
+          "path": "host00/svc_known_hosts",
+          "file_type": "known_hosts",
+          "username": "svc"
+        }
+      ]
+    },
+    {
+      "nickname": "host01",
+      "ip": "10.20.1.58",
+      "files": [
+        {
+          "path": "host01/alice_id_rsa",
+          "file_type": "private_key",
+          "username": "alice"
+        },
+        {
+          "path": "host01/alice_bash_history",
+          "file_type": "bash_history",
+          "username": "alice"
+        },
+        {
+          "path": "host01/alice_known_hosts",
+          "file_type": "known_hosts",
+          "username": "alice"
+        }
+      ]
+    },
+    {
+      "nickname": "host02",
+      "ip": "10.20.1.189",
+      "files": [
+        {
+          "path": "host02/svc_id_rsa",
+          "file_type": "private_key",
+          "username": "svc"
+        },
+        {
+          "path": "host02/svc_authorized_keys",
+          "file_type": "authorized_keys",
+          "username": "svc"
+        },
+        {
+          "path": "host02/auth.log",
+          "file_type": "auth_log",
+          "username": null
+        }
+      ]
+    },
+    {
+      "nickname": "host03",
+      "ip": "10.20.0.174",
+      "files": [
+        {
+          "path": "host03/ops_id_rsa",
+          "file_type": "private_key",
+          "username": "ops"
+        },
+        {
+          "path": "host03/ops_authorized_keys",
+          "file_type": "authorized_keys",
+          "username": "ops"
+        },
+        {
+          "path": "host03/auth.log",
+          "file_type": "auth_log",
+          "username": null
+        }
+      ]
+    },
+    {
+      "nickname": "host04",
+      "ip": "10.20.5.229",
+      "files": []
+    }
+  ],
+  "expected_key_pivots": [
+    {
+      "src": "host00",
+      "dst": "host02",
+      "src_user": "svc",
+      "dst_user": "svc",
+      "key": "key0"
+    },
+    {
+      "src": "host01",
+      "dst": "host03",
+      "src_user": "alice",
+      "dst_user": "ops",
+      "key": "key0"
+    }
+  ],
+  "expected_password_connections": [],
+  "seed": 42
+}

@@ -1,0 +1,272 @@
+{
+  "key_fingerprints": {
+    "alice_key": "SHA256:phekbRLj/lCIM4eVRHeKC08Zi3nlxpRC/bSlVpyXiLc",
+    "root_key": "SHA256:uuU30l6wN/HPjXxNfNgzDMz2RCX5XIDAWwAYQQWfMF4",
+    "deploy_key": "SHA256:1HeqsuB+2pmIUm4lEbJCV2GqToI6Ie4Z4zDmgqdJNHs",
+    "backup_key": "SHA256:i94wzKsNIamQfEEB6oo3PoPasASDxvWaY7QBiR0X1pY"
+  },
+  "hosts": [
+    {
+      "nickname": "attackbox",
+      "ip": "10.10.0.10",
+      "files": [
+        {
+          "path": "attackbox/alice_id_rsa",
+          "file_type": "private_key",
+          "username": "alice"
+        },
+        {
+          "path": "attackbox/alice_authorized_keys",
+          "file_type": "authorized_keys",
+          "username": "alice"
+        },
+        {
+          "path": "attackbox/alice_bash_history",
+          "file_type": "bash_history",
+          "username": "alice"
+        },
+        {
+          "path": "attackbox/alice_known_hosts",
+          "file_type": "known_hosts",
+          "username": "alice"
+        }
+      ]
+    },
+    {
+      "nickname": "jumpbox",
+      "ip": "10.10.0.1",
+      "files": [
+        {
+          "path": "jumpbox/root_id_rsa",
+          "file_type": "private_key",
+          "username": "root"
+        },
+        {
+          "path": "jumpbox/root_backup_id_rsa",
+          "file_type": "private_key",
+          "username": "root"
+        },
+        {
+          "path": "jumpbox/alice_authorized_keys",
+          "file_type": "authorized_keys",
+          "username": "alice"
+        },
+        {
+          "path": "jumpbox/root_authorized_keys",
+          "file_type": "authorized_keys",
+          "username": "root"
+        },
+        {
+          "path": "jumpbox/root_bash_history",
+          "file_type": "bash_history",
+          "username": "root"
+        },
+        {
+          "path": "jumpbox/root_known_hosts",
+          "file_type": "known_hosts",
+          "username": "root"
+        },
+        {
+          "path": "jumpbox/auth.log",
+          "file_type": "auth_log",
+          "username": null
+        }
+      ]
+    },
+    {
+      "nickname": "dbserver",
+      "ip": "10.10.1.20",
+      "files": [
+        {
+          "path": "dbserver/deploy_id_rsa",
+          "file_type": "private_key",
+          "username": "deploy"
+        },
+        {
+          "path": "dbserver/root_authorized_keys",
+          "file_type": "authorized_keys",
+          "username": "root"
+        },
+        {
+          "path": "dbserver/deploy_authorized_keys",
+          "file_type": "authorized_keys",
+          "username": "deploy"
+        },
+        {
+          "path": "dbserver/deploy_bash_history",
+          "file_type": "bash_history",
+          "username": "deploy"
+        },
+        {
+          "path": "dbserver/deploy_known_hosts",
+          "file_type": "known_hosts",
+          "username": "deploy"
+        },
+        {
+          "path": "dbserver/auth.log",
+          "file_type": "auth_log",
+          "username": null
+        }
+      ]
+    },
+    {
+      "nickname": "webserver",
+      "ip": "10.10.1.10",
+      "files": [
+        {
+          "path": "webserver/alice_authorized_keys",
+          "file_type": "authorized_keys",
+          "username": "alice"
+        },
+        {
+          "path": "webserver/auth.log",
+          "file_type": "auth_log",
+          "username": null
+        }
+      ]
+    },
+    {
+      "nickname": "backup",
+      "ip": "10.10.1.30",
+      "files": [
+        {
+          "path": "backup/backup_authorized_keys",
+          "file_type": "authorized_keys",
+          "username": "backup"
+        },
+        {
+          "path": "backup/auth.log",
+          "file_type": "auth_log",
+          "username": null
+        }
+      ]
+    },
+    {
+      "nickname": "internal",
+      "ip": "10.10.2.5",
+      "files": [
+        {
+          "path": "internal/deploy_authorized_keys",
+          "file_type": "authorized_keys",
+          "username": "deploy"
+        },
+        {
+          "path": "internal/auth.log",
+          "file_type": "auth_log",
+          "username": null
+        }
+      ]
+    },
+    {
+      "nickname": "pentest_vm",
+      "ip": "10.10.0.20",
+      "files": [
+        {
+          "path": "pentest_vm/ops_bash_history",
+          "file_type": "bash_history",
+          "username": "ops"
+        },
+        {
+          "path": "pentest_vm/ops_known_hosts",
+          "file_type": "known_hosts",
+          "username": "ops"
+        }
+      ]
+    },
+    {
+      "nickname": "citrix",
+      "ip": "10.10.0.50",
+      "files": [
+        {
+          "path": "citrix/auth.log",
+          "file_type": "auth_log",
+          "username": null
+        },
+        {
+          "path": "citrix/ops_bash_history",
+          "file_type": "bash_history",
+          "username": "ops"
+        },
+        {
+          "path": "citrix/ops_known_hosts",
+          "file_type": "known_hosts",
+          "username": "ops"
+        }
+      ]
+    },
+    {
+      "nickname": "fileserver",
+      "ip": "10.10.3.10",
+      "files": [
+        {
+          "path": "fileserver/auth.log",
+          "file_type": "auth_log",
+          "username": null
+        }
+      ]
+    },
+    {
+      "nickname": "monitoring",
+      "ip": "10.10.99.1",
+      "files": []
+    }
+  ],
+  "expected_key_pivots": [
+    {
+      "src": "attackbox",
+      "dst": "jumpbox",
+      "src_user": "alice",
+      "dst_user": "alice",
+      "key": "alice_key"
+    },
+    {
+      "src": "attackbox",
+      "dst": "webserver",
+      "src_user": "alice",
+      "dst_user": "alice",
+      "key": "alice_key"
+    },
+    {
+      "src": "attackbox",
+      "dst": "backup",
+      "src_user": "alice",
+      "dst_user": "backup",
+      "key": "alice_key"
+    },
+    {
+      "src": "jumpbox",
+      "dst": "dbserver",
+      "src_user": "root",
+      "dst_user": "root",
+      "key": "root_key"
+    },
+    {
+      "src": "jumpbox",
+      "dst": "backup",
+      "src_user": "root",
+      "dst_user": "backup",
+      "key": "backup_key"
+    },
+    {
+      "src": "dbserver",
+      "dst": "internal",
+      "src_user": "deploy",
+      "dst_user": "deploy",
+      "key": "deploy_key"
+    }
+  ],
+  "expected_password_connections": [
+    {
+      "src": "pentest_vm",
+      "dst": "citrix",
+      "src_user": "ops",
+      "dst_user": "ops"
+    },
+    {
+      "src": "citrix",
+      "dst": "fileserver",
+      "src_user": "ops",
+      "dst_user": "ops"
+    }
+  ]
+}

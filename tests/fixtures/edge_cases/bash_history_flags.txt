@@ -1,0 +1,13 @@
+# bash_history: SSH commands with unusual flag combinations
+ssh -p 2222 root@10.0.0.5
+ssh -l root 10.0.0.6
+ssh -i /tmp/id_rsa -l deploy 10.0.0.7
+ssh -o StrictHostKeyChecking=no alice@10.0.0.8
+scp -P 2222 file.txt root@10.0.0.9:/tmp/
+rsync -avz -e "ssh -p 2222" /data/ backup@10.0.0.10:/backup/
+sftp -P 2222 ops@10.0.0.11
+ssh-copy-id -i /root/.ssh/id_rsa.pub admin@10.0.0.12
+# Non-SSH commands that should not produce connections:
+curl http://10.0.0.99/data
+wget http://10.0.0.99/file
+ping 10.0.0.50

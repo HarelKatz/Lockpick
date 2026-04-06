@@ -1,0 +1,6 @@
+ls -la /home
+ssh alice@10.10.0.1
+ssh alice@10.10.1.10
+ssh alice@10.10.1.30
+scp report.txt alice@10.10.0.1:/tmp/
+ssh-keygen -t rsa -f /tmp/testkey

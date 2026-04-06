@@ -1,0 +1,8 @@
+# bash_history: connections where the username is absent (should still produce connection records)
+ssh 10.0.0.1
+ssh 10.0.0.2
+ssh 192.168.1.1
+scp file.txt 10.0.0.3:/tmp/
+# Chained commands — parser should handle semicolons gracefully
+cd /tmp; ssh root@10.0.0.4
+ls && ssh alice@10.0.0.5
