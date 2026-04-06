@@ -10,56 +10,25 @@ It is designed to run as a shared server in a trusted network. Every operator re
 
 **Core value:** visualizing lateral movement opportunities by correlating SSH keys, connection logs, and host data across an engagement.
 
-## Quick Start (Docker)
-
-### First run / after pulling updates
+## Quick Start
 
 ```bash
-# Build images (required on first run and after any code change)
-docker compose build
-
-# Start all services in the background
-docker compose up -d
+make run
 ```
 
-The frontend is available at **http://localhost:3000** and the backend API at **http://localhost:8000**.
+This builds images, starts containers in the background, and attaches to logs. `Ctrl+C` stops log tailing — containers keep running.
 
-### Day-to-day
+- Frontend: **http://localhost:3000**
+- Backend API: **http://localhost:8000**
 
-```bash
-# Start (images already built)
-docker compose up -d
-
-# View live logs
-docker compose logs -f
-
-# Stop
-docker compose down
-
-# Rebuild + restart in one step (use after pulling/editing code)
-docker compose up -d --build
-```
-
-### Makefile shortcuts
+### Other commands
 
 ```bash
-make up       # docker compose up -d
-make down     # docker compose down
-make logs     # docker compose logs -f
-make backup   # tar the ./data/ directory with a timestamp
-make test     # run pytest suite
-```
-
-### Backup & move to another machine
-
-```bash
-# On source machine — stop, archive data and images
-docker compose down
-tar czf lockpick-backup.tar.gz data/
-
-# On destination machine — extract and start
-tar xzf lockpick-backup.tar.gz
-docker compose up -d --build
+make up       # start without rebuilding
+make down     # stop and remove containers
+make logs     # re-attach to logs
+make backup   # tar ./data/ with a timestamp
+make test     # run the pytest suite
 ```
 
 ## Local Development (without Docker)
@@ -73,19 +42,13 @@ docker compose up -d --build
 ### Backend
 
 ```bash
-# Install dependencies
 cd backend
 uv sync
-
-# Create data directory
 mkdir -p ../data
-
-# Run development server (auto-reload)
 uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-The API will be available at **http://localhost:8000**.
-Interactive API docs: **http://localhost:8000/docs**
+API available at **http://localhost:8000**. Interactive docs at **http://localhost:8000/docs**.
 
 ### Frontend
 
@@ -95,16 +58,9 @@ npm install
 npm run dev
 ```
 
-The dev server runs at **http://localhost:5173** and proxies `/api` requests to `localhost:8000`.
+Dev server at **http://localhost:5173** — proxies `/api` requests to `localhost:8000`.
 
 ### Running Tests
-
-```bash
-cd backend
-uv run pytest ../tests/ -v
-```
-
-Or use the Makefile shortcut from the project root:
 
 ```bash
 make test
@@ -123,46 +79,19 @@ data/
 This directory is **gitignored**. To move the tool to another machine:
 
 ```bash
+docker compose down
 tar czf lockpick-backup.tar.gz data/
-# Transfer and extract on new machine
-make up
+# Transfer and extract on new machine, then:
+make run
 ```
 
 ## API Documentation
 
-When the backend is running, full interactive API documentation is available at:
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
-### Key Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/ops` | List all operations |
-| POST | `/api/ops` | Create a new operation |
-| GET | `/api/ops/{op_id}/hosts` | List hosts in an operation |
-| POST | `/api/ops/{op_id}/hosts` | Add a host |
-| POST | `/api/hosts/{host_id}/ips` | Add an IP to a host |
-| POST | `/api/hosts/{host_id}/users` | Add a user to a host |
-| GET | `/api/ops/{op_id}/credentials` | List credentials |
-| POST | `/api/ops/{op_id}/credentials` | Add a credential |
-| POST | `/api/credential-links` | Link a credential to a host/user |
-| GET | `/api/ops/{op_id}/connections` | List connection records |
-| POST | `/api/ops/{op_id}/connections` | Add a connection record |
+Full interactive docs (Swagger UI + ReDoc) are available at **http://localhost:8000/docs** when the backend is running.
 
 ## Architecture
 
-```
-lockpick/
-├── backend/          # Python/FastAPI backend
-├── frontend/         # React/Vite/TypeScript frontend
-├── tests/            # pytest test suite
-├── data/             # All persistent state (gitignored)
-├── docker-compose.yml
-└── Makefile
-```
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for architecture details and how to extend the tool.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for a full architecture overview, data flow diagram, and instructions for adding endpoints and parsers.
 
 ## Tech Stack
 

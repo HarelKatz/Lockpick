@@ -1,4 +1,7 @@
-.PHONY: up down logs backup dev-backend dev-frontend test
+.PHONY: run up down logs backup dev-backend dev-frontend test
+
+run:
+	docker compose up -d --build && docker compose logs -f
 
 up:
 	docker compose up -d
