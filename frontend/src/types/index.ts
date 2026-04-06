@@ -9,6 +9,14 @@ export interface Operation {
   created_at: string
 }
 
+export interface OpStats {
+  host_count: number
+  credential_count: number
+  connection_count: number
+  total_records: number
+  latest_activity_at: string | null
+}
+
 export interface HostIP {
   id: string
   host_id: string

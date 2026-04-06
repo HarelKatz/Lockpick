@@ -11,7 +11,9 @@ import { listHosts, deleteHost } from '../api/hosts'
 import { listCredentials, deleteCredential, listCredentialLinks, deleteCredentialLink } from '../api/credentials'
 import { listConnections, deleteConnection } from '../api/connections'
 import { listUploads, uploadFileUrl } from '../api/upload'
+import { getOpStats } from '../api/stats'
 import { ApiError } from '../api/client'
+import NotificationBanner from '../components/NotificationBanner'
 import AddDataModal from '../components/AddDataModal'
 import EditModal from '../components/EditModal'
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal'
@@ -381,6 +383,8 @@ export default function Workspace({ op, onBack }: Props) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [baselineTotal, setBaselineTotal] = useState<number | null>(null)
+  const [currentTotal, setCurrentTotal] = useState<number | null>(null)
 
   // Edit state
   const [editHost, setEditHost] = useState<Host | null>(null)
@@ -399,18 +403,21 @@ export default function Workspace({ op, onBack }: Props) {
     setLoading(true)
     setError(null)
     try {
-      const [hostsData, credsData, linksData, connsData, uploadsData] = await Promise.all([
+      const [hostsData, credsData, linksData, connsData, uploadsData, statsData] = await Promise.all([
         listHosts(op.id),
         listCredentials(op.id),
         listCredentialLinks(op.id),
         listConnections(op.id),
         listUploads(op.id),
+        getOpStats(op.id),
       ])
       setHosts(hostsData)
       setCredentials(credsData)
       setLinks(linksData)
       setConnections(connsData)
       setUploads(uploadsData)
+      setBaselineTotal(statsData.total_records)
+      setCurrentTotal(statsData.total_records)
     } catch (err) {
       // If the op no longer exists (e.g. deleted elsewhere), go back to selector
       if (err instanceof ApiError && err.status === 404) {
@@ -424,6 +431,19 @@ export default function Workspace({ op, onBack }: Props) {
   }, [op.id, onBack])
 
   useEffect(() => { fetchAll() }, [fetchAll])
+
+  // Poll for new records every 30s — notify if total changed since last refresh
+  useEffect(() => {
+    const id = setInterval(async () => {
+      try {
+        const s = await getOpStats(op.id)
+        setCurrentTotal(s.total_records)
+      } catch {
+        // ignore poll errors — banner will just not update
+      }
+    }, 30_000)
+    return () => clearInterval(id)
+  }, [op.id])
 
   // Ctrl+F → open search modal (wired to SearchModal in step 5)
   useEffect(() => {
@@ -500,8 +520,20 @@ export default function Workspace({ op, onBack }: Props) {
 
   const hasData = hosts.length > 0 || credentials.length > 0 || connections.length > 0
 
+  const notificationDelta =
+    baselineTotal !== null && currentTotal !== null && currentTotal > baselineTotal
+      ? currentTotal - baselineTotal
+      : 0
+
+  function handleBannerRefresh() {
+    fetchAll()
+  }
+
   return (
     <div className={styles.workspace}>
+      {/* Notification banner — shown when new records detected via polling */}
+      <NotificationBanner delta={notificationDelta} onRefresh={handleBannerRefresh} />
+
       {/* Header */}
       <header className={styles.header}>
         <button className={styles.backBtn} onClick={onBack}>← Operations</button>

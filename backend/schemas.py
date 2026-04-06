@@ -26,6 +26,14 @@ class OperationRead(BaseModel):
     created_at: datetime
 
 
+class OpStats(BaseModel):
+    host_count: int
+    credential_count: int
+    connection_count: int
+    total_records: int
+    latest_activity_at: Optional[datetime]
+
+
 # ─── HostUser ────────────────────────────────────────────────────────────────
 
 class HostUserCreate(BaseModel):
