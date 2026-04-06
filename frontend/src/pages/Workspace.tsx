@@ -297,6 +297,14 @@ function FileViewer({ opId, file, onClose }: FileViewerProps) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [onClose])
+
+  useEffect(() => {
     let cancelled = false
     setLoading(true)
     fetch(uploadFileUrl(opId, file.safe_name, false))
@@ -370,6 +378,7 @@ export default function Workspace({ op, onBack }: Props) {
   const [connections, setConnections] = useState<ConnectionRecord[]>([])
   const [uploads, setUploads] = useState<UploadFile[]>([])
   const [viewingFile, setViewingFile] = useState<UploadFile | null>(null)
+  const [searchOpen, setSearchOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -415,6 +424,20 @@ export default function Workspace({ op, onBack }: Props) {
   }, [op.id, onBack])
 
   useEffect(() => { fetchAll() }, [fetchAll])
+
+  // Ctrl+F → open search modal (wired to SearchModal in step 5)
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'f' && (e.ctrlKey || e.metaKey)) {
+        const tag = (e.target as HTMLElement).tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+        e.preventDefault()
+        setSearchOpen(true)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
 
   // ─── Delete handlers ─────────────────────────────────────────────────────
 
@@ -636,6 +659,9 @@ export default function Workspace({ op, onBack }: Props) {
           onClose={() => setViewingFile(null)}
         />
       )}
+
+      {/* Search modal — rendered in step 5; state managed here */}
+      {searchOpen && null /* SearchModal placeholder */}
 
       {/* FAB + add modal */}
       <AddDataModal opId={op.id} hosts={hosts} credentials={credentials} onDataAdded={fetchAll} />

@@ -2,7 +2,7 @@
  * GraphView — interactive pivot graph for a single operation.
  * Layout: HostSelector (left) | GraphCanvas (center) | detail panel (right, conditional).
  */
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type {
   Credential,
   GraphEdge,
@@ -13,7 +13,7 @@ import type {
   PathResult,
 } from '../types'
 import { fetchGraph, expandHost } from '../api/graph'
-import GraphCanvas, { type CredFilter, type PathFilter } from '../components/GraphCanvas'
+import GraphCanvas, { type CredFilter, type PathFilter, type LayoutName } from '../components/GraphCanvas'
 import HostSelector from '../components/HostSelector'
 import HostDetailSidebar from '../components/HostDetailSidebar'
 import EdgeDetailPanel from '../components/EdgeDetailPanel'
@@ -55,6 +55,7 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
   const [pathFilter, setPathFilter] = useState<PathFilter | null>(null)
   const [credFilter, setCredFilter] = useState<CredFilter | null>(null)
   const [selectedPath, setSelectedPath] = useState<PathResult | null>(null)
+  const [layout, setLayout] = useState<LayoutName>('cola')
 
   // Load full graph on mount
   const loadFullGraph = useCallback(async () => {
@@ -192,6 +193,25 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
     loadFullGraph()
   }
 
+  // Del key hides the currently selected node
+  const selectedNodeRef = useRef(selectedNode)
+  useEffect(() => { selectedNodeRef.current = selectedNode }, [selectedNode])
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Delete' && e.key !== 'Backspace') return
+      const tag = (e.target as HTMLElement).tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      const node = selectedNodeRef.current
+      if (node) {
+        e.preventDefault()
+        handleHide(node)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   function handleHighlightPath(path: PathResult | null) {
     if (path) {
       // Ensure all path nodes are loaded onto the graph
@@ -272,8 +292,21 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
       />
 
       <div className={styles.canvasArea}>
-        {/* Toolbar: credential filter */}
+        {/* Toolbar: layout + credential filter */}
         <div className={styles.graphToolbar}>
+          <label className={styles.toolbarLabel}>Layout:</label>
+          <select
+            className={styles.credFilterSelect}
+            value={layout}
+            onChange={e => setLayout(e.target.value as LayoutName)}
+          >
+            <option value="cola">Force-directed</option>
+            <option value="cose-bilkent">Organic</option>
+            <option value="breadthfirst">Hierarchical</option>
+            <option value="grid">Grid</option>
+            <option value="circle">Circle</option>
+          </select>
+          <span className={styles.toolbarDivider} />
           <select
             className={styles.credFilterSelect}
             value={credFilter?.credId ?? ''}
@@ -337,6 +370,7 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
             hiddenIds={hiddenIds}
             pathFilter={pathFilter}
             credFilter={credFilter}
+            layout={layout}
             onNodeClick={handleNodeClick}
             onEdgeClick={handleEdgeClick}
             onNodeDoubleClick={handleNodeDoubleClick}

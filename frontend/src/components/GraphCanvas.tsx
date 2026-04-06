@@ -13,6 +13,8 @@ import styles from './GraphCanvas.module.css'
 cytoscape.use(coseBilkent)
 cytoscape.use(cola)
 
+export type LayoutName = 'cola' | 'cose-bilkent' | 'breadthfirst' | 'grid' | 'circle'
+
 export interface CredFilter {
   credId: string
   mode: 'highlight' | 'filter'
@@ -28,6 +30,7 @@ interface Props {
   hiddenIds: Set<string>
   pathFilter: PathFilter | null
   credFilter: CredFilter | null
+  layout: LayoutName
   onNodeClick: (node: GraphNode) => void
   onEdgeClick: (edge: GraphEdge) => void
   onNodeDoubleClick: (node: GraphNode) => void
@@ -49,19 +52,55 @@ function computeEdgeLabel(e: GraphEdge): string {
   return 'connection'
 }
 
-function buildLayoutOptions(): cytoscape.LayoutOptions {
-  return {
-    name: 'cola',
-    animate: true,
-    infinite: false,
-    fit: true,
-    padding: 90,
-    nodeSpacing: 40,
-    edgeLength: 180,
-    maxSimulationTime: 3000,
-    convergenceThreshold: 0.01,
-    randomize: true,
-  } as cytoscape.LayoutOptions
+function buildLayoutOptions(layout: LayoutName): cytoscape.LayoutOptions {
+  switch (layout) {
+    case 'cose-bilkent':
+      return {
+        name: 'cose-bilkent',
+        animate: true,
+        fit: true,
+        padding: 90,
+        nodeDimensionsIncludeLabels: true,
+        randomize: true,
+      } as cytoscape.LayoutOptions
+    case 'breadthfirst':
+      return {
+        name: 'breadthfirst',
+        animate: true,
+        fit: true,
+        padding: 90,
+        directed: true,
+        spacingFactor: 1.5,
+      } as cytoscape.LayoutOptions
+    case 'grid':
+      return {
+        name: 'grid',
+        animate: true,
+        fit: true,
+        padding: 90,
+      } as cytoscape.LayoutOptions
+    case 'circle':
+      return {
+        name: 'circle',
+        animate: true,
+        fit: true,
+        padding: 90,
+      } as cytoscape.LayoutOptions
+    case 'cola':
+    default:
+      return {
+        name: 'cola',
+        animate: true,
+        infinite: false,
+        fit: true,
+        padding: 90,
+        nodeSpacing: 40,
+        edgeLength: 180,
+        maxSimulationTime: 3000,
+        convergenceThreshold: 0.01,
+        randomize: true,
+      } as cytoscape.LayoutOptions
+  }
 }
 
 export default function GraphCanvas({
@@ -69,6 +108,7 @@ export default function GraphCanvas({
   hiddenIds,
   pathFilter,
   credFilter,
+  layout,
   onNodeClick,
   onEdgeClick,
   onNodeDoubleClick,
@@ -84,6 +124,10 @@ export default function GraphCanvas({
   useEffect(() => {
     cbRef.current = { onNodeClick, onEdgeClick, onNodeDoubleClick, onNodeContextMenu, onEdgeContextMenu, onCanvasTap }
   })
+
+  // Track current layout for use inside element-rebuild effect
+  const layoutRef = useRef<LayoutName>(layout)
+  useEffect(() => { layoutRef.current = layout }, [layout])
 
   // ── Initialize cytoscape once on mount ──────────────────────────────────────
   useEffect(() => {
@@ -297,15 +341,15 @@ export default function GraphCanvas({
       const added = c.add(allElements)
       added.style({ opacity: 0 })
 
-      const layout = c.layout(buildLayoutOptions())
-      layout.one('layoutstop', () => {
+      const cyLayout = c.layout(buildLayoutOptions(layoutRef.current))
+      cyLayout.one('layoutstop', () => {
         c.fit(undefined, 90)
         c.elements().animate(
           { style: { opacity: 1 } } as cytoscape.AnimationOptions,
           { duration: 250 },
         )
       })
-      layout.run()
+      cyLayout.run()
     }
 
     if (goingAway.length > 0) {
@@ -319,21 +363,28 @@ export default function GraphCanvas({
       // Expand: only new elements — add them without disturbing existing nodes
       const added = cy.add(incoming)
       added.style({ opacity: 0 })
-      const layout = cy.layout(buildLayoutOptions())
-      layout.one('layoutstop', () => {
+      const cyLayout = cy.layout(buildLayoutOptions(layoutRef.current))
+      cyLayout.one('layoutstop', () => {
         cy.fit(undefined, 90)
         added.animate(
           { style: { opacity: 1 } } as cytoscape.AnimationOptions,
           { duration: 250 },
         )
       })
-      layout.run()
+      cyLayout.run()
     } else if (currentNodeIds.size === 0) {
       // Initial load or cleared graph
       fullRebuild()
     }
     // else: no structural change (shouldn't happen in normal flow)
   }, [graphData, hiddenIds])
+
+  // ── Re-run layout when layout prop changes ───────────────────────────────────
+  useEffect(() => {
+    const cy = cyRef.current
+    if (!cy || cy.elements().length === 0) return
+    cy.layout(buildLayoutOptions(layout)).run()
+  }, [layout])
 
   // ── Apply path / credential filter ──────────────────────────────────────────
   useEffect(() => {

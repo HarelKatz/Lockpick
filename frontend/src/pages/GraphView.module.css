@@ -26,6 +26,18 @@
   z-index: 10;
 }
 
+.toolbarLabel {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}
+
+.toolbarDivider {
+  border-left: 1px solid var(--border);
+  height: 16px;
+  margin: 0 2px;
+}
+
 .credFilterSelect {
   background: var(--bg-surface-2);
   border: 1px solid var(--border);
