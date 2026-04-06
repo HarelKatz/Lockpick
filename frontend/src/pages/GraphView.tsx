@@ -17,6 +17,7 @@ import GraphCanvas, { type CredFilter, type PathFilter } from '../components/Gra
 import HostSelector from '../components/HostSelector'
 import HostDetailSidebar from '../components/HostDetailSidebar'
 import EdgeDetailPanel from '../components/EdgeDetailPanel'
+import PathDetailPanel from '../components/PathDetailPanel'
 import NodeContextMenu from '../components/NodeContextMenu'
 import EdgeContextMenu from '../components/EdgeContextMenu'
 import PathFinder from '../components/PathFinder'
@@ -53,6 +54,7 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [pathFilter, setPathFilter] = useState<PathFilter | null>(null)
   const [credFilter, setCredFilter] = useState<CredFilter | null>(null)
+  const [selectedPath, setSelectedPath] = useState<PathResult | null>(null)
 
   // Load full graph on mount
   const loadFullGraph = useCallback(async () => {
@@ -203,8 +205,12 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
         edgeKeys: new Set(path.edges.map(e => `${e.src_host_id}__${e.dst_host_id}`)),
       })
       setCredFilter(null)
+      setSelectedPath(path)
+      setSelectedNode(null)
+      setSelectedEdge(null)
     } else {
       setPathFilter(null)
+      setSelectedPath(null)
     }
   }
 
@@ -223,7 +229,15 @@ export default function GraphView({ op, allHosts, credentials }: Props) {
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
-  const rightPanel = selectedNode
+  const rightPanel = selectedPath
+    ? (
+      <PathDetailPanel
+        path={selectedPath}
+        nodes={graphData.nodes}
+        onClose={() => setSelectedPath(null)}
+      />
+    )
+    : selectedNode
     ? (
       <HostDetailSidebar
         node={selectedNode}

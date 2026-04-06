@@ -18,19 +18,29 @@ interface Props {
   onHighlightPath: (path: PathResult | null) => void
 }
 
+export type PathType = 'confirmed' | 'observed' | 'theoretical'
+
 const POSITION_LABELS: Record<WaypointPosition, string> = {
   anywhere: 'anywhere in path',
   after: 'immediately after',
   before: 'immediately before',
 }
 
-function overallConfidence(path: PathResult): string {
+const PATH_TYPE_LABELS: Record<PathType, string> = {
+  confirmed: 'Confirmed',
+  observed: 'Observed',
+  theoretical: 'Theoretical',
+}
+
+export function classifyPath(path: PathResult): PathType {
+  if (path.edges.length === 0) return 'theoretical'
   const rank: Record<string, number> = { confirmed: 2, observed: 1, indicator: 0 }
-  if (path.edges.length === 0) return 'unknown'
   const min = path.edges.reduce((worst, e) => {
     return rank[e.confidence] < rank[worst] ? e.confidence : worst
   }, path.edges[0].confidence)
-  return min
+  if (min === 'confirmed') return 'confirmed'
+  if (min === 'observed') return 'observed'
+  return 'theoretical'
 }
 
 export default function PathFinder({ nodes, opId, onHighlightPath }: Props) {
@@ -43,6 +53,9 @@ export default function PathFinder({ nodes, opId, onHighlightPath }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activePathIdx, setActivePathIdx] = useState<number | null>(null)
+  const [filterConfirmed, setFilterConfirmed] = useState(true)
+  const [filterObserved, setFilterObserved] = useState(true)
+  const [filterTheoretical, setFilterTheoretical] = useState(true)
 
   function addWaypoint() {
     setWaypoints(prev => [...prev, { host_id: '', position: 'anywhere', relative_to: null }])
@@ -78,14 +91,13 @@ export default function PathFinder({ nodes, opId, onHighlightPath }: Props) {
     }
   }
 
-  function handleSelectPath(i: number) {
-    if (!result) return
-    if (activePathIdx === i) {
+  function handleSelectPath(originalIdx: number, path: PathResult) {
+    if (activePathIdx === originalIdx) {
       setActivePathIdx(null)
       onHighlightPath(null)
     } else {
-      setActivePathIdx(i)
-      onHighlightPath(result.paths[i])
+      setActivePathIdx(originalIdx)
+      onHighlightPath(path)
     }
   }
 
@@ -99,6 +111,14 @@ export default function PathFinder({ nodes, opId, onHighlightPath }: Props) {
   function getNickname(hostId: string) {
     return nodes.find(n => n.id === hostId)?.nickname ?? hostId.slice(0, 8)
   }
+
+  const filteredPaths = result?.paths
+    .map((path, i) => ({ path, originalIdx: i, type: classifyPath(path) }))
+    .filter(({ type }) => {
+      if (type === 'confirmed') return filterConfirmed
+      if (type === 'observed') return filterObserved
+      return filterTheoretical
+    }) ?? []
 
   if (!open) {
     return (
@@ -211,29 +231,56 @@ export default function PathFinder({ nodes, opId, onHighlightPath }: Props) {
 
       {result && (
         <div className={styles.results}>
-          {result.paths.length === 0 && (
-            <p className={styles.noResults}>No paths found.</p>
+          {/* Confidence filter */}
+          <div className={styles.filterRow}>
+            <span className={styles.filterLabel}>Show:</span>
+            {(['confirmed', 'observed', 'theoretical'] as PathType[]).map(type => (
+              <label key={type} className={styles.filterCheck}>
+                <input
+                  type="checkbox"
+                  checked={type === 'confirmed' ? filterConfirmed : type === 'observed' ? filterObserved : filterTheoretical}
+                  onChange={e => {
+                    if (type === 'confirmed') setFilterConfirmed(e.target.checked)
+                    else if (type === 'observed') setFilterObserved(e.target.checked)
+                    else setFilterTheoretical(e.target.checked)
+                  }}
+                />
+                <span className={`${styles.typeBadge} ${styles[`type_${type}`]}`}>
+                  {PATH_TYPE_LABELS[type]}
+                </span>
+              </label>
+            ))}
+          </div>
+
+          {filteredPaths.length === 0 && (
+            <p className={styles.noResults}>
+              {result.paths.length === 0 ? 'No paths found.' : 'No paths match the selected filters.'}
+            </p>
           )}
-          {result.paths.map((path, i) => {
-            const conf = overallConfidence(path)
-            return (
+
+          <div className={styles.pathList}>
+            {filteredPaths.map(({ path, originalIdx, type }) => (
               <div
-                key={i}
-                className={`${styles.pathRow} ${activePathIdx === i ? styles.pathRowActive : ''}`}
-                onClick={() => handleSelectPath(i)}
+                key={originalIdx}
+                className={`${styles.pathRow} ${activePathIdx === originalIdx ? styles.pathRowActive : ''}`}
+                onClick={() => handleSelectPath(originalIdx, path)}
                 role="button"
                 tabIndex={0}
-                onKeyDown={e => e.key === 'Enter' && handleSelectPath(i)}
+                onKeyDown={e => e.key === 'Enter' && handleSelectPath(originalIdx, path)}
               >
                 <div className={styles.pathHops}>
                   {path.host_ids.map(id => getNickname(id)).join(' → ')}
                 </div>
                 <div className={styles.pathMeta}>
-                  {path.host_ids.length - 1} hop{path.host_ids.length !== 2 ? 's' : ''} &bull; {conf}
+                  {path.host_ids.length - 1} hop{path.host_ids.length !== 2 ? 's' : ''}
+                  <span className={`${styles.typeBadge} ${styles[`type_${type}`]}`}>
+                    {PATH_TYPE_LABELS[type]}
+                  </span>
                 </div>
               </div>
-            )
-          })}
+            ))}
+          </div>
+
           {result.truncated && (
             <p className={styles.truncationWarning}>Results capped at 30 paths.</p>
           )}
