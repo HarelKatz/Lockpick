@@ -146,11 +146,11 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed phase: Phase 8 (partial) — Evidence Files view/download**
+**Last completed phase: Phase 7 — Pivot Path Analysis (extended)**
 
-Phases 1–6 are fully implemented and tested. Phase 8 has begun: evidence file listing and viewing is live.
+Phases 1–7 are fully implemented and tested. Phase 8 (partial): evidence file listing and viewing is live.
 
-**Next phase: Phase 7 — Pivot Path Analysis (extended) / remainder of Phase 8 Polish**
+**Next phase: Phase 8 Polish — global search, op export/import, graph layout options, keyboard shortcuts, bulk upload, activity log, notification banner**
 
 ---
 
@@ -195,14 +195,9 @@ Raw uploaded files are stored at `data/uploads/{op_id}/{uuid}_{filename}`. Two e
 
 Update/delete of uploaded files is intentionally not supported: parsed DB records (credential_links, connections) have no per-file provenance marker, so replacing a file would create duplicate records.
 
-### Phase 7 — Pivot Path Analysis (extended)
+### Phases 1–7 — Complete
 
-> **Note:** The BFS backend (`services/pivot_analysis.py`) and the PathFinder UI component were built as part of Phase 5. Phase 7 extends them with:
-
-- [ ] Confidence-level filtering on path results (confirmed / observed / indicator)
-- [ ] "Confirmed path" vs "observed path" vs "theoretical path" distinction in results UI
-- [ ] Path detail panel showing each hop's full evidence breakdown
-- [ ] Path export (copy as markdown / JSON)
+Phase 7 added: `classifyPath()` client-side helper (confirmed/observed/theoretical), confidence filter checkboxes in PathFinder panel, path-type badges on result rows, `PathDetailPanel` component (per-hop evidence + Copy JSON / Copy Markdown), and active-tab persistence on page refresh.
 
 ### Phase 8 — Polish & UX
 

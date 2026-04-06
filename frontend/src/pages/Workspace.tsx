@@ -356,7 +356,14 @@ function FileViewer({ opId, file, onClose }: FileViewerProps) {
 // ─── Workspace ────────────────────────────────────────────────────────────────
 
 export default function Workspace({ op, onBack }: Props) {
-  const [tab, setTab] = useState<WorkspaceTab>('data')
+  const [tab, setTab] = useState<WorkspaceTab>(() => {
+    try {
+      const stored = sessionStorage.getItem(`lockpick_tab_${op.id}`)
+      return (stored === 'graph' ? 'graph' : 'data') as WorkspaceTab
+    } catch {
+      return 'data'
+    }
+  })
   const [hosts, setHosts] = useState<Host[]>([])
   const [credentials, setCredentials] = useState<Credential[]>([])
   const [links, setLinks] = useState<CredentialLink[]>([])
@@ -487,13 +494,13 @@ export default function Workspace({ op, onBack }: Props) {
         <div className={styles.tabBar}>
           <button
             className={`${styles.tabBtn} ${tab === 'data' ? styles.tabActive : ''}`}
-            onClick={() => setTab('data')}
+            onClick={() => { setTab('data'); sessionStorage.setItem(`lockpick_tab_${op.id}`, 'data') }}
           >
             Data
           </button>
           <button
             className={`${styles.tabBtn} ${tab === 'graph' ? styles.tabActive : ''}`}
-            onClick={() => setTab('graph')}
+            onClick={() => { setTab('graph'); sessionStorage.setItem(`lockpick_tab_${op.id}`, 'graph') }}
           >
             Graph
           </button>
