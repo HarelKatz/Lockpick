@@ -1,10 +1,11 @@
 /**
- * FileUploadForm — drag-and-drop file upload with metadata selection.
+ * FileUploadForm — multi-file upload queue with auto-detect and sequential processing.
  * Renders inside the AddDataModal "File Upload" tab.
  */
-import { useState, useRef } from 'react'
+import { useRef, useState } from 'react'
 import type { Host, UploadFileType, UploadResult } from '../types'
 import { uploadFile } from '../api/upload'
+import { detectFileType } from '../utils/detectFileType'
 import styles from './FileUploadForm.module.css'
 
 const FILE_TYPES: { value: UploadFileType; label: string; needsUser: boolean }[] = [
@@ -19,110 +20,136 @@ const FILE_TYPES: { value: UploadFileType; label: string; needsUser: boolean }[]
   { value: 'passwd',          label: '/etc/passwd',          needsUser: false },
 ]
 
+type FileStatus = 'pending' | 'uploading' | 'done' | 'error'
+
+interface QueuedFile {
+  id: string
+  file: File
+  fileType: UploadFileType | null  // null = not yet selected
+  status: FileStatus
+  result: UploadResult | null
+  error: string | null
+  autoDetected: boolean
+}
+
 interface Props {
   opId: string
   hosts: Host[]
   onSuccess: () => void
 }
 
-interface ParseResults {
-  result: UploadResult
-  filename: string
+let _nextId = 0
+function newId() { return String(++_nextId) }
+
+function needsUser(ft: UploadFileType | null): boolean {
+  return FILE_TYPES.find(f => f.value === ft)?.needsUser ?? false
 }
 
 export default function FileUploadForm({ opId, hosts, onSuccess }: Props) {
-  const [fileType, setFileType] = useState<UploadFileType>('authorized_keys')
   const [hostId, setHostId] = useState<string>(hosts[0]?.id ?? '')
   const [username, setUsername] = useState<string>('')
-  const [file, setFile] = useState<File | null>(null)
+  const [queue, setQueue] = useState<QueuedFile[]>([])
   const [dragging, setDragging] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [results, setResults] = useState<ParseResults | null>(null)
-
+  const [processing, setProcessing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const needsUser = FILE_TYPES.find(f => f.value === fileType)?.needsUser ?? false
-
-  function handleFileDrop(f: File) {
-    setFile(f)
-    setError(null)
-    setResults(null)
+  function addFiles(files: FileList | File[]) {
+    const arr = Array.from(files)
+    setQueue(prev => [
+      ...prev,
+      ...arr.map(f => {
+        const detected = detectFileType(f.name)
+        return {
+          id: newId(),
+          file: f,
+          fileType: detected,
+          status: 'pending' as FileStatus,
+          result: null,
+          error: null,
+          autoDetected: detected !== null,
+        }
+      }),
+    ])
   }
 
-  function handleDragOver(e: React.DragEvent) {
-    e.preventDefault()
-    setDragging(true)
+  function removeQueued(id: string) {
+    setQueue(prev => prev.filter(q => q.id !== id))
   }
 
-  function handleDragLeave() {
-    setDragging(false)
+  function setQueuedType(id: string, ft: UploadFileType) {
+    setQueue(prev => prev.map(q => q.id === id ? { ...q, fileType: ft } : q))
   }
 
+  function handleDragOver(e: React.DragEvent) { e.preventDefault(); setDragging(true) }
+  function handleDragLeave() { setDragging(false) }
   function handleDrop(e: React.DragEvent) {
     e.preventDefault()
     setDragging(false)
-    const dropped = e.dataTransfer.files[0]
-    if (dropped) handleFileDrop(dropped)
+    if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files)
   }
-
   function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
-    const picked = e.target.files?.[0]
-    if (picked) handleFileDrop(picked)
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!file) { setError('Select a file to upload.'); return }
-    if (!hostId) { setError('Select a host.'); return }
-    if (needsUser && !username.trim()) { setError('Username is required for this file type.'); return }
-
-    setLoading(true)
-    setError(null)
-    setResults(null)
-
-    try {
-      const result = await uploadFile(opId, file, fileType, hostId, needsUser ? username.trim() : undefined)
-      setResults({ result, filename: file.name })
-      onSuccess()
-      // Reset file selection so user can upload another
-      setFile(null)
-      if (fileInputRef.current) fileInputRef.current.value = ''
-    } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'body' in err) {
-        const body = (err as { body: unknown }).body
-        if (body && typeof body === 'object' && 'detail' in body) {
-          setError(String((body as { detail: unknown }).detail))
-        } else {
-          setError(String(body))
-        }
-      } else {
-        setError(String(err))
-      }
-    } finally {
-      setLoading(false)
+    if (e.target.files?.length) {
+      addFiles(e.target.files)
+      e.target.value = ''
     }
   }
 
-  return (
-    <form className={styles.form} onSubmit={handleSubmit}>
-      {/* File type */}
-      <div className={styles.field}>
-        <label className={styles.label}>File type</label>
-        <select
-          className={styles.select}
-          value={fileType}
-          onChange={e => { setFileType(e.target.value as UploadFileType); setResults(null) }}
-        >
-          {FILE_TYPES.map(ft => (
-            <option key={ft.value} value={ft.value}>{ft.label}</option>
-          ))}
-        </select>
-      </div>
+  async function processOne(item: QueuedFile): Promise<void> {
+    if (!item.fileType) return  // shouldn't happen — button disabled
 
+    setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'uploading', error: null } : q))
+
+    try {
+      const usernameArg = needsUser(item.fileType) && username.trim() ? username.trim() : undefined
+      const result = await uploadFile(opId, item.file, item.fileType, hostId, usernameArg)
+      setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'done', result } : q))
+    } catch (err: unknown) {
+      let msg = 'Upload failed.'
+      if (err && typeof err === 'object') {
+        const body = ('body' in err) ? (err as { body: unknown }).body : null
+        if (body && typeof body === 'object' && 'detail' in body) {
+          msg = String((body as { detail: unknown }).detail)
+        } else if (body) {
+          msg = String(body)
+        } else if ('message' in err) {
+          msg = String((err as { message: unknown }).message)
+        }
+      }
+      setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'error', error: msg } : q))
+    }
+  }
+
+  async function handleUploadAll(e: React.FormEvent) {
+    e.preventDefault()
+    if (!hostId || processing) return
+    const pending = queue.filter(q => q.status === 'pending' && q.fileType !== null)
+    if (!pending.length) return
+
+    setProcessing(true)
+    for (const item of pending) {
+      await processOne(item)
+    }
+    setProcessing(false)
+    onSuccess()
+  }
+
+  async function handleRetry(item: QueuedFile) {
+    setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'pending', error: null } : q))
+    setProcessing(true)
+    await processOne({ ...item, status: 'pending', error: null })
+    setProcessing(false)
+    onSuccess()
+  }
+
+  const pendingCount = queue.filter(q => q.status === 'pending' && q.fileType !== null).length
+  const allNeedType = queue.some(q => q.status === 'pending' && q.fileType === null)
+  const someNeedUsername = queue.some(q => q.status === 'pending' && needsUser(q.fileType))
+
+  return (
+    <form className={styles.form} onSubmit={handleUploadAll}>
       {/* Host */}
       <div className={styles.field}>
-        <label className={styles.label}>Host (file came from)</label>
+        <label className={styles.label}>Host (files came from)</label>
         <select
           className={styles.select}
           value={hostId}
@@ -137,11 +164,12 @@ export default function FileUploadForm({ opId, hosts, onSuccess }: Props) {
         </select>
       </div>
 
-      {/* Username (conditional) */}
-      {needsUser && (
+      {/* Username — shown when any queued file needs it */}
+      {someNeedUsername && (
         <div className={styles.field}>
           <label className={styles.label}>
             Username <span className={styles.required}>*</span>
+            <span className={styles.fieldHint}>(applied to files that need it)</span>
           </label>
           <input
             className={styles.input}
@@ -155,7 +183,7 @@ export default function FileUploadForm({ opId, hosts, onSuccess }: Props) {
 
       {/* Drop zone */}
       <div
-        className={`${styles.dropZone} ${dragging ? styles.dragging : ''} ${file ? styles.hasFile : ''}`}
+        className={`${styles.dropZone} ${dragging ? styles.dragging : ''} ${queue.length > 0 ? styles.hasFile : ''}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -163,97 +191,117 @@ export default function FileUploadForm({ opId, hosts, onSuccess }: Props) {
         role="button"
         tabIndex={0}
         onKeyDown={e => e.key === 'Enter' && fileInputRef.current?.click()}
-        aria-label="Drop file here or click to browse"
+        aria-label="Drop files here or click to browse"
       >
         <input
           ref={fileInputRef}
           type="file"
+          multiple
           className={styles.hiddenInput}
           onChange={handleFileInput}
           tabIndex={-1}
         />
-        {file ? (
-          <div className={styles.fileInfo}>
-            <span className={styles.fileIcon}>📄</span>
-            <span className={styles.fileName}>{file.name}</span>
-            <span className={styles.fileSize}>{(file.size / 1024).toFixed(1)} KB</span>
-          </div>
-        ) : (
-          <div className={styles.dropPrompt}>
-            <span className={styles.dropIcon}>⬆</span>
-            <span>Drop file here or click to browse</span>
-          </div>
-        )}
+        <div className={styles.dropPrompt}>
+          <span className={styles.dropIcon}>⬆</span>
+          <span>{queue.length > 0 ? 'Drop more files or click to add' : 'Drop files here or click to browse'}</span>
+        </div>
       </div>
 
-      {error && <p className={styles.error}>{error}</p>}
-
-      <button
-        type="submit"
-        className={styles.submitBtn}
-        disabled={loading || !file || !hostId || hosts.length === 0}
-      >
-        {loading ? 'Parsing…' : 'Upload & Parse'}
-      </button>
-
-      {/* Results */}
-      {results && <ParseResultsPanel results={results} />}
-    </form>
-  )
-}
-
-function ParseResultsPanel({ results: { result, filename } }: { results: ParseResults }) {
-  const s = result.summary
-  const hasNewData = s.new_credentials > 0 || s.new_connections > 0 || s.new_hosts > 0
-  const hasPivots = result.pivot_opportunities.length > 0
-
-  return (
-    <div className={styles.results}>
-      <p className={styles.resultsTitle}>
-        Results for <strong>{filename}</strong>
-      </p>
-
-      {hasNewData ? (
-        <ul className={styles.resultsList}>
-          {s.new_credentials > 0 && (
-            <li className={styles.resultsItem}>
-              <span className={styles.countBadge}>{s.new_credentials}</span> new credential{s.new_credentials !== 1 ? 's' : ''}
-              {s.new_credential_links > s.new_credentials && ` / ${s.new_credential_links} links`}
-            </li>
-          )}
-          {s.new_connections > 0 && (
-            <li className={styles.resultsItem}>
-              <span className={styles.countBadge}>{s.new_connections}</span> connection record{s.new_connections !== 1 ? 's' : ''}
-            </li>
-          )}
-          {s.new_hosts > 0 && (
-            <li className={styles.resultsItem}>
-              <span className={styles.countBadge}>{s.new_hosts}</span> new host{s.new_hosts !== 1 ? 's' : ''} (auto-created)
-            </li>
-          )}
-        </ul>
-      ) : (
-        <p className={styles.noNewData}>No new data added (all records already present or file was empty).</p>
-      )}
-
-      {hasPivots && (
-        <div className={styles.pivotSection}>
-          <p className={styles.pivotTitle}>🔑 New pivot opportunities</p>
-          {result.pivot_opportunities.map((msg, i) => (
-            <p key={i} className={styles.pivotMsg}>{msg}</p>
+      {/* File queue */}
+      {queue.length > 0 && (
+        <div className={styles.queue}>
+          {queue.map(item => (
+            <QueueItem
+              key={item.id}
+              item={item}
+              onRemove={() => removeQueued(item.id)}
+              onTypeChange={ft => setQueuedType(item.id, ft)}
+              onRetry={() => handleRetry(item)}
+            />
           ))}
         </div>
       )}
 
-      {s.warnings.length > 0 && (
-        <details className={styles.warnings}>
-          <summary className={styles.warningSummary}>
-            {s.warnings.length} warning{s.warnings.length !== 1 ? 's' : ''}
-          </summary>
-          <ul className={styles.warningList}>
-            {s.warnings.map((w, i) => <li key={i}>{w}</li>)}
-          </ul>
-        </details>
+      {/* Validation hints */}
+      {allNeedType && queue.some(q => q.status === 'pending') && (
+        <p className={styles.hint}>Select a file type for all files before uploading.</p>
+      )}
+
+      {/* Submit */}
+      {queue.some(q => q.status === 'pending') && (
+        <button
+          type="submit"
+          className={styles.submitBtn}
+          disabled={processing || !hostId || hosts.length === 0 || pendingCount === 0}
+        >
+          {processing ? 'Processing…' : `Upload ${pendingCount} file${pendingCount !== 1 ? 's' : ''}`}
+        </button>
+      )}
+    </form>
+  )
+}
+
+// ─── Queue item row ───────────────────────────────────────────────────────────
+
+interface QueueItemProps {
+  item: QueuedFile
+  onRemove: () => void
+  onTypeChange: (ft: UploadFileType) => void
+  onRetry: () => void
+}
+
+function QueueItem({ item, onRemove, onTypeChange, onRetry }: QueueItemProps) {
+  const s = item.result?.summary
+  return (
+    <div className={`${styles.queueItem} ${styles[`status_${item.status}`]}`}>
+      <div className={styles.queueItemHeader}>
+        <span className={styles.queueFileName}>{item.file.name}</span>
+        <span className={styles.queueFileSize}>{(item.file.size / 1024).toFixed(1)} KB</span>
+
+        {item.status === 'pending' && (
+          <select
+            className={styles.queueTypeSelect}
+            value={item.fileType ?? ''}
+            onChange={e => onTypeChange(e.target.value as UploadFileType)}
+            onClick={e => e.stopPropagation()}
+          >
+            {!item.fileType && <option value="">— select type —</option>}
+            {FILE_TYPES.map(ft => (
+              <option key={ft.value} value={ft.value}>{ft.label}</option>
+            ))}
+          </select>
+        )}
+
+        {item.autoDetected && item.status === 'pending' && (
+          <span className={styles.autoTag}>auto</span>
+        )}
+
+        <span className={styles.queueStatus}>
+          {item.status === 'uploading' && '⟳'}
+          {item.status === 'done' && '✓'}
+          {item.status === 'error' && '✕'}
+        </span>
+
+        {item.status === 'error' && (
+          <button className={styles.retryBtn} onClick={onRetry} type="button">Retry</button>
+        )}
+        {item.status === 'pending' && (
+          <button className={styles.removeBtn} onClick={onRemove} type="button" aria-label="Remove">✕</button>
+        )}
+      </div>
+
+      {item.status === 'error' && item.error && (
+        <p className={styles.queueError}>{item.error}</p>
+      )}
+
+      {item.status === 'done' && s && (
+        <p className={styles.queueSummary}>
+          {[
+            s.new_credentials > 0 && `${s.new_credentials} cred${s.new_credentials !== 1 ? 's' : ''}`,
+            s.new_connections > 0 && `${s.new_connections} conn${s.new_connections !== 1 ? 's' : ''}`,
+            s.new_hosts > 0 && `${s.new_hosts} host${s.new_hosts !== 1 ? 's' : ''}`,
+          ].filter(Boolean).join(' · ') || 'No new data'}
+        </p>
       )}
     </div>
   )
