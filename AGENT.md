@@ -14,6 +14,8 @@ A web-based tool for red teams to collaboratively organize SSH credentials, host
 
 ### Core Entities
 
+> Storage convention: all IDs are UUIDs stored as strings; all timestamps are timezone-aware UTC (ISO 8601).
+
 ```
 Operation (op)
 ├── id (UUID), name, created_at, description
@@ -144,17 +146,17 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed phase: Phase 6 — File Upload & Parsing Engine**
+**Last completed phase: Phase 8 (partial) — Evidence Files view/download**
 
-Phases 1–6 are fully implemented and tested.
+Phases 1–6 are fully implemented and tested. Phase 8 has begun: evidence file listing and viewing is live.
 
-**Next phase: Phase 7 — Pivot Path Analysis (extended)**
+**Next phase: Phase 7 — Pivot Path Analysis (extended) / remainder of Phase 8 Polish**
 
 ---
 
 ## Document Maintenance Rules
 
-AGENT.md is architecture documentation, not a task tracker.
+AGENT.md is both architecture documentation and the project roadmap.
 
 **Current Status** — 3–5 lines maximum: last completed phase, next phase, any hard blockers. Nothing else.
 
@@ -186,6 +188,12 @@ Those things belong in commit messages and GitHub issues.
 ### Phases 1–6 — Complete
 
 See git history for details. All infrastructure, CRUD APIs, edit/delete UI, HostUser entity, schema hardening, graph visualization (cytoscape.js + BFS pivot analysis), and the file upload + parsing engine (8 parsers, IP resolver, pivot detection) are implemented and tested.
+
+Raw uploaded files are stored at `data/uploads/{op_id}/{uuid}_{filename}`. Two endpoints serve them:
+- `GET /api/ops/{op_id}/uploads` — lists files (disk scan + DB enrichment for host associations and mtime)
+- `GET /api/ops/{op_id}/uploads/{safe_name}?download=true` — serves the raw file (inline by default, attachment when `download=true`)
+
+Update/delete of uploaded files is intentionally not supported: parsed DB records (credential_links, connections) have no per-file provenance marker, so replacing a file would create duplicate records.
 
 ### Phase 7 — Pivot Path Analysis (extended)
 
@@ -234,46 +242,15 @@ A standalone MCP (Model Context Protocol) server that lets an AI agent (e.g. Cla
 
 `find_pivot_paths` performs BFS in the MCP layer: builds an adjacency graph from connection records and credential key matches (same fingerprint: `found_on_disk` on A + `authorized_key` on B), caps at depth 6 and 50 paths, annotates each edge with confidence (`confirmed` = key match, `observed` = connection log).
 
-#### Checklist
-
-- [ ] `mcp/pyproject.toml` — standalone package (`mcp>=1.0.0`, `httpx>=0.27.0`, `anyio>=4.0.0`)
-- [ ] `mcp/api_client.py` — `LockpickClient` using `httpx.AsyncClient`
-- [ ] `mcp/tools/` — one module per tool group (operations, hosts, credentials, connections, pivot, search)
-- [ ] `mcp/server.py` — FastMCP entry point, registers all tools, runs with stdio transport
-- [ ] `mcp/Dockerfile` — uv-based, `ENV LOCKPICK_URL=http://backend:8000`
-- [ ] `docker-compose.yml` — add `mcp` service (no ports, depends on backend)
-- [ ] `mcp/README.md` — Claude Desktop config instructions (Docker and local dev options)
-- [ ] Tests: `mcp/tests/test_tools.py` using `respx` to mock HTTP calls; include BFS correctness tests
-
-#### Claude Desktop config (from `mcp/README.md`)
-
-```json
-{
-  "mcpServers": {
-    "lockpick": {
-      "command": "docker",
-      "args": ["exec", "-i", "lockpick-mcp-1", "uv", "run", "--frozen", "python", "/app/server.py"]
-    }
-  }
-}
-```
-
-Local dev alternative: use `uv run` directly with `LOCKPICK_URL=http://localhost:8000`.
-
 ---
 
 ## Architecture Rules
 
 1. **Backend and frontend are separate directories**: `backend/` and `frontend/`
-2. **All file parsing logic lives in `backend/parsers/`**, one module per file type, all implementing `BaseParser`
-3. **The graph edge aggregation happens in the backend** (`services/graph_builder.py`), not the frontend. The frontend renders what the API gives it.
-4. **Every API endpoint has input validation** (Pydantic models in `schemas.py`)
-5. **Every parser has unit tests** with real-format fixture files in `tests/fixtures/`
-6. **The frontend never touches the DB** — all data flows through the REST API
-7. **No authentication on the tool** — it runs on a trusted network / VPN. The red team trusts each other.
-8. **All state in `./data/`** — DB file, uploaded raw files, nothing else. This directory is the only thing that needs to be backed up or moved.
-9. **Handle messy data gracefully** — real red team files are incomplete, corrupted, have weird encodings. Parsers must never crash on bad input; log warnings and continue.
-10. **IP resolution is best-effort** — when a parser finds an IP, try to match it to an existing host. If no match, create an "unresolved" host with just that IP. The user can merge hosts later.
-11. **Use `uv` for all Python operations** — `uv sync` to install deps, `uv run` to execute scripts/tests, `uv add` to add new packages. Never use raw `pip`. The `pyproject.toml` is the single source of truth for Python dependencies. Commit `uv.lock` to git.
+2. **The graph edge aggregation happens in the backend** (`services/graph_builder.py`), not the frontend. The frontend renders what the API gives it.
+3. **The frontend never touches the DB** — all data flows through the REST API
+4. **No authentication on the tool** — it runs on a trusted network / VPN. The red team trusts each other.
+5. **All state in `./data/`** — DB file, uploaded raw files, nothing else. This directory is the only thing that needs to be backed up or moved.
+6. **IP resolution is best-effort** — when a parser finds an IP, try to match it to an existing host. If no match, create an "unresolved" host with just that IP. The user can merge hosts later.
 
 ---

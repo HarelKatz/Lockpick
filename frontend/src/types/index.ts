@@ -221,6 +221,16 @@ export interface CreateConnectionRequest {
   source_file: string
 }
 
+// ─── Evidence Files ───────────────────────────────────────────────────────────
+
+export interface UploadFile {
+  safe_name: string       // UUID-prefixed filename (used in download URL)
+  original_name: string   // filename without UUID prefix (for display)
+  size_bytes: number
+  host_ids: string[]      // host IDs that reference this file
+  uploaded_at: string     // ISO 8601 UTC, from file mtime
+}
+
 // ─── Upload ───────────────────────────────────────────────────────────────────
 
 export type UploadFileType =

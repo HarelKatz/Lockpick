@@ -1,8 +1,8 @@
-"""File upload and parsing endpoint.
+"""File upload, listing, and serving endpoints.
 
-POST /api/ops/{op_id}/upload
-- Accepts multipart/form-data: file + metadata fields
-- Parses the file, resolves IPs, inserts records, returns a summary
+POST /api/ops/{op_id}/upload      — parse and store an uploaded file
+GET  /api/ops/{op_id}/uploads     — list all uploaded files for an op
+GET  /api/ops/{op_id}/uploads/{safe_name} — serve a raw uploaded file
 """
 from __future__ import annotations
 
@@ -14,9 +14,11 @@ import logging
 import os
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
+from pathlib import Path
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from config import settings
@@ -39,6 +41,7 @@ from parsers.passwd import PasswdParser
 from parsers.private_key import PrivateKeyParser
 from parsers.ssh_config import SshConfigParser
 from parsers.wtmp import WtmpParser
+from schemas import UploadFileInfo
 from services.ip_resolver import resolve_ip
 
 log = logging.getLogger(__name__)
@@ -388,3 +391,104 @@ async def upload_file(
         },
         "pivot_opportunities": pivot_messages,
     }
+
+
+# ─── List uploaded files ──────────────────────────────────────────────────────
+
+@router.get("/ops/{op_id}/uploads", response_model=List[UploadFileInfo])
+def list_uploads(op_id: str, db: Session = Depends(get_db)):
+    """List all raw files uploaded for an op, enriched with host associations."""
+    op = db.query(Operation).filter(Operation.id == op_id).first()
+    if not op:
+        raise HTTPException(status_code=404, detail="Operation not found")
+
+    op_upload_dir = Path(settings.upload_path) / op_id
+    if not op_upload_dir.is_dir():
+        return []
+
+    # Build reverse maps: safe_name → set of host_ids
+    link_hosts: dict[str, set[str]] = {}
+    conn_hosts: dict[str, set[str]] = {}
+
+    for link in (
+        db.query(CredentialLink)
+        .join(Credential, CredentialLink.credential_id == Credential.id)
+        .filter(Credential.op_id == op_id)
+        .all()
+    ):
+        if link.file_source:
+            link_hosts.setdefault(link.file_source, set()).add(link.host_id)
+
+    for conn in (
+        db.query(ConnectionRecord)
+        .filter(ConnectionRecord.op_id == op_id)
+        .all()
+    ):
+        if conn.source_file:
+            conn_hosts.setdefault(conn.source_file, set()).add(
+                conn.src_host_id or conn.dst_host_id or ""
+            )
+
+    results: list[UploadFileInfo] = []
+    for entry in sorted(op_upload_dir.iterdir()):
+        if not entry.is_file():
+            continue
+        safe_name = entry.name
+        # Strip the UUID prefix (36 chars + underscore) to recover original filename
+        original_name = safe_name[37:] if len(safe_name) > 37 and safe_name[36] == "_" else safe_name
+        stat = entry.stat()
+        host_ids = list(
+            (link_hosts.get(safe_name, set()) | conn_hosts.get(safe_name, set()))
+            - {""}
+        )
+        results.append(UploadFileInfo(
+            safe_name=safe_name,
+            original_name=original_name,
+            size_bytes=stat.st_size,
+            host_ids=host_ids,
+            uploaded_at=datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc),
+        ))
+
+    # Sort by uploaded_at ascending
+    results.sort(key=lambda f: f.uploaded_at)
+    return results
+
+
+# ─── Serve a raw uploaded file ────────────────────────────────────────────────
+
+@router.get("/ops/{op_id}/uploads/{safe_name}")
+def get_upload(
+    op_id: str,
+    safe_name: str,
+    download: bool = Query(False, description="Set true to force Content-Disposition: attachment"),
+    db: Session = Depends(get_db),
+):
+    """Serve a raw uploaded file for viewing or download."""
+    op = db.query(Operation).filter(Operation.id == op_id).first()
+    if not op:
+        raise HTTPException(status_code=404, detail="Operation not found")
+
+    # Path traversal guard
+    if "/" in safe_name or "\\" in safe_name or ".." in safe_name:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    file_path = Path(settings.upload_path) / op_id / safe_name
+    # Ensure resolved path stays within the expected directory
+    try:
+        file_path.resolve().relative_to(Path(settings.upload_path).resolve())
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    if not file_path.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    original_name = safe_name[37:] if len(safe_name) > 37 and safe_name[36] == "_" else safe_name
+
+    disposition = "attachment" if download else "inline"
+    return FileResponse(
+        path=str(file_path),
+        media_type="application/octet-stream",
+        headers={
+            "Content-Disposition": f'{disposition}; filename="{original_name}"',
+        },
+    )

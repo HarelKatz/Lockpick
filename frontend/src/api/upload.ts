@@ -1,10 +1,27 @@
 /**
- * File upload API — uses multipart/form-data (not JSON).
+ * File upload, listing, and serving API.
  */
-import type { UploadFileType, UploadResult } from '../types'
+import type { UploadFile, UploadFileType, UploadResult } from '../types'
 import { ApiError } from './client'
 
 const BASE_URL = '/api'
+
+/** List all uploaded files for an operation. */
+export async function listUploads(opId: string): Promise<UploadFile[]> {
+  const res = await fetch(`${BASE_URL}/ops/${opId}/uploads`)
+  if (!res.ok) throw new ApiError(res.status, await res.json().catch(() => res.statusText))
+  return res.json()
+}
+
+/**
+ * Returns the URL to view or download a specific uploaded file.
+ * Pass download=true for Content-Disposition: attachment (browser save dialog).
+ * Default (false) streams inline — useful for fetching text into a viewer modal.
+ */
+export function uploadFileUrl(opId: string, safeName: string, download = false): string {
+  const params = download ? '?download=true' : ''
+  return `${BASE_URL}/ops/${opId}/uploads/${encodeURIComponent(safeName)}${params}`
+}
 
 export async function uploadFile(
   opId: string,

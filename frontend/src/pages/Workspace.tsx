@@ -5,11 +5,12 @@
  */
 import { useState, useEffect, useCallback } from 'react'
 import type {
-  Operation, Host, Credential, CredentialLink, ConnectionRecord,
+  Operation, Host, Credential, CredentialLink, ConnectionRecord, UploadFile,
 } from '../types'
 import { listHosts, deleteHost } from '../api/hosts'
 import { listCredentials, deleteCredential, listCredentialLinks, deleteCredentialLink } from '../api/credentials'
 import { listConnections, deleteConnection } from '../api/connections'
+import { listUploads, uploadFileUrl } from '../api/upload'
 import { ApiError } from '../api/client'
 import AddDataModal from '../components/AddDataModal'
 import EditModal from '../components/EditModal'
@@ -40,6 +41,22 @@ function formatTimestamp(iso: string | null): string {
 
 function truncate(s: string, n: number): string {
   return s.length > n ? s.slice(0, n) + '…' : s
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function downloadBlob(content: string, filename: string) {
+  const blob = new Blob([content], { type: 'text/plain' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 const CRED_TYPE_LABELS: Record<Credential['cred_type'], string> = {
@@ -145,6 +162,17 @@ function CredentialRow({ cred, links, hosts, onEdit, onDelete, onEditLink, onDel
           <span className={styles.credComment}>{cred.comment}</span>
         )}
         <div className={styles.rowActions}>
+          <button
+            className={styles.iconBtn}
+            title="Download credential value"
+            aria-label="Download credential value"
+            onClick={() => {
+              const ext = cred.cred_type === 'private_key' ? 'pem'
+                : cred.cred_type === 'public_key' ? 'pub' : 'txt'
+              const name = cred.name ? cred.name.replace(/[^a-z0-9_\-\.]/gi, '_') : cred.id
+              downloadBlob(cred.value, `${name}.${ext}`)
+            }}
+          >⬇</button>
           <button className={styles.iconBtn} onClick={() => onEdit(cred)} title="Edit credential" aria-label="Edit credential">✎</button>
           <button className={`${styles.iconBtn} ${styles.iconBtnDanger}`} onClick={() => onDelete(cred)} title="Delete credential" aria-label="Delete credential">✕</button>
         </div>
@@ -210,6 +238,121 @@ function ConnectionRow({ conn, hosts, onEdit, onDelete }: ConnectionRowProps) {
   )
 }
 
+// ─── Evidence file row ────────────────────────────────────────────────────────
+
+interface EvidenceFileRowProps {
+  opId: string
+  file: UploadFile
+  hosts: Host[]
+  onView: (file: UploadFile) => void
+}
+
+function EvidenceFileRow({ opId, file, hosts, onView }: EvidenceFileRowProps) {
+  const hostNames = file.host_ids
+    .map(id => hosts.find(h => h.id === id)?.nickname ?? id.slice(0, 8))
+    .filter((v, i, a) => a.indexOf(v) === i)  // deduplicate
+
+  return (
+    <div className={styles.fileRow}>
+      <span className={styles.fileIcon}>📄</span>
+      <span className={styles.fileName}>{file.original_name}</span>
+      <div className={styles.fileHosts}>
+        {hostNames.map(n => (
+          <span key={n} className={styles.fileHostChip}>{n}</span>
+        ))}
+      </div>
+      <span className={styles.fileMeta}>{formatFileSize(file.size_bytes)}</span>
+      <span className={styles.fileMeta}>{formatTimestamp(file.uploaded_at)}</span>
+      <div className={styles.rowActions}>
+        <button
+          className={styles.iconBtn}
+          onClick={() => onView(file)}
+          title="View file"
+          aria-label="View file"
+        >👁</button>
+        <a
+          className={styles.iconBtn}
+          href={uploadFileUrl(opId, file.safe_name, true)}
+          title="Download file"
+          aria-label="Download file"
+          style={{ textDecoration: 'none' }}
+        >⬇</a>
+      </div>
+    </div>
+  )
+}
+
+// ─── File viewer modal ────────────────────────────────────────────────────────
+
+interface FileViewerProps {
+  opId: string
+  file: UploadFile
+  onClose: () => void
+}
+
+function FileViewer({ opId, file, onClose }: FileViewerProps) {
+  const [content, setContent] = useState<string | null>(null)
+  const [binary, setBinary] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    fetch(uploadFileUrl(opId, file.safe_name, false))
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.arrayBuffer()
+      })
+      .then(buf => {
+        if (cancelled) return
+        const bytes = new Uint8Array(buf)
+        // Detect binary: look for null bytes in first 8 KB
+        const sample = bytes.slice(0, 8192)
+        if (sample.includes(0)) {
+          setBinary(true)
+          setContent(null)
+        } else {
+          setBinary(false)
+          setContent(new TextDecoder('utf-8', { fatal: false }).decode(buf))
+        }
+      })
+      .catch(e => { if (!cancelled) setError(String(e)) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [opId, file.safe_name])
+
+  return (
+    <div className={styles.viewerOverlay} onClick={onClose}>
+      <div className={styles.viewerModal} onClick={e => e.stopPropagation()}>
+        <div className={styles.viewerHeader}>
+          <span className={styles.viewerTitle}>{file.original_name}</span>
+          <span className={styles.viewerMeta}>{formatFileSize(file.size_bytes)} · {formatTimestamp(file.uploaded_at)}</span>
+          <div className={styles.viewerActions}>
+            <a
+              className={styles.iconBtn}
+              href={uploadFileUrl(opId, file.safe_name, true)}
+              title="Download"
+              style={{ textDecoration: 'none' }}
+            >⬇ Download</a>
+            <button className={styles.iconBtn} onClick={onClose} title="Close" aria-label="Close viewer">✕</button>
+          </div>
+        </div>
+        <div className={styles.viewerBody}>
+          {loading && <p className={styles.viewerHint}>Loading…</p>}
+          {error && <p className={styles.viewerHint} style={{ color: 'var(--danger)' }}>Failed to load: {error}</p>}
+          {!loading && !error && binary && (
+            <p className={styles.viewerHint}>Binary file — <a href={uploadFileUrl(opId, file.safe_name, true)} className={styles.viewerLink}>download</a> to view.</p>
+          )}
+          {!loading && !error && !binary && content !== null && (
+            <pre className={styles.viewerPre}>{content}</pre>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Workspace ────────────────────────────────────────────────────────────────
 
 export default function Workspace({ op, onBack }: Props) {
@@ -218,6 +361,8 @@ export default function Workspace({ op, onBack }: Props) {
   const [credentials, setCredentials] = useState<Credential[]>([])
   const [links, setLinks] = useState<CredentialLink[]>([])
   const [connections, setConnections] = useState<ConnectionRecord[]>([])
+  const [uploads, setUploads] = useState<UploadFile[]>([])
+  const [viewingFile, setViewingFile] = useState<UploadFile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -238,16 +383,18 @@ export default function Workspace({ op, onBack }: Props) {
     setLoading(true)
     setError(null)
     try {
-      const [hostsData, credsData, linksData, connsData] = await Promise.all([
+      const [hostsData, credsData, linksData, connsData, uploadsData] = await Promise.all([
         listHosts(op.id),
         listCredentials(op.id),
         listCredentialLinks(op.id),
         listConnections(op.id),
+        listUploads(op.id),
       ])
       setHosts(hostsData)
       setCredentials(credsData)
       setLinks(linksData)
       setConnections(connsData)
+      setUploads(uploadsData)
     } catch (err) {
       // If the op no longer exists (e.g. deleted elsewhere), go back to selector
       if (err instanceof ApiError && err.status === 404) {
@@ -449,9 +596,39 @@ export default function Workspace({ op, onBack }: Props) {
                 </div>
               </section>
             )}
+
+            {/* Evidence Files */}
+            {uploads.length > 0 && (
+              <section>
+                <div className={styles.sectionHeader}>
+                  <h2 className={styles.sectionTitle}>Evidence Files</h2>
+                  <span className={styles.sectionCount}>{uploads.length}</span>
+                </div>
+                <div className={styles.listPanel}>
+                  {uploads.map(f => (
+                    <EvidenceFileRow
+                      key={f.safe_name}
+                      opId={op.id}
+                      file={f}
+                      hosts={hosts}
+                      onView={setViewingFile}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         )}
       </main>
+
+      {/* File viewer modal */}
+      {viewingFile && (
+        <FileViewer
+          opId={op.id}
+          file={viewingFile}
+          onClose={() => setViewingFile(null)}
+        />
+      )}
 
       {/* FAB + add modal */}
       <AddDataModal opId={op.id} hosts={hosts} credentials={credentials} onDataAdded={fetchAll} />

@@ -209,6 +209,16 @@ class ConnectionRecordRead(BaseModel):
     created_at: datetime
 
 
+# ─── Evidence Files ───────────────────────────────────────────────────────────
+
+class UploadFileInfo(BaseModel):
+    safe_name: str           # UUID-prefixed filename (used in download URL)
+    original_name: str       # filename without UUID prefix (for display)
+    size_bytes: int
+    host_ids: list[str]      # host IDs that reference this file (from credential_links + connection_records)
+    uploaded_at: datetime    # file mtime on disk — written before DB records
+
+
 # ─── Graph ────────────────────────────────────────────────────────────────────
 
 class EvidenceItem(BaseModel):
