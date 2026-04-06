@@ -279,26 +279,24 @@ export default function GraphCanvas({
       if (evt.target === cy) cbRef.current.onCanvasTap()
     })
 
-    // Drag connected neighbors with the grabbed node.
-    // Spring coefficient < 1 so edges visually deform (neighbors lag slightly),
-    // giving a fluid feel instead of moving as a rigid cluster.
-    const SPRING = 0.55
-    let _prevPos: { x: number; y: number } | null = null
-    cy.on('grab', 'node', evt => { _prevPos = { ...evt.target.position() } })
-    cy.on('drag', 'node', evt => {
-      const node = evt.target
-      const cur = node.position()
-      if (!_prevPos) { _prevPos = { ...cur }; return }
-      const dx = cur.x - _prevPos.x
-      const dy = cur.y - _prevPos.y
-      _prevPos = { ...cur }
-      node.neighborhood('node').forEach((nb: cytoscape.NodeSingular) => {
-        if (!nb.grabbed() && !nb.locked()) {
-          nb.position({ x: nb.position().x + dx * SPRING, y: nb.position().y + dy * SPRING })
-        }
-      })
+    // After releasing a drag, run a short cola settle so connected nodes
+    // spring toward the new configuration and overlaps are resolved.
+    cy.on('free', 'node', () => {
+      if (layoutRef.current !== 'cola') return
+      cy.layout({
+        name: 'cola',
+        animate: true,
+        infinite: false,
+        fit: false,
+        padding: 90,
+        nodeSpacing: 60,
+        edgeLength: 240,
+        maxSimulationTime: 1500,
+        convergenceThreshold: 0.005,
+        randomize: false,
+        avoidOverlap: true,
+      } as cytoscape.LayoutOptions).run()
     })
-    cy.on('free', 'node', () => { _prevPos = null })
 
     cyRef.current = cy
 
