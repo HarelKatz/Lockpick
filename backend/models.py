@@ -184,3 +184,15 @@ class ConnectionRecord(Base):
         back_populates="dst_connections",
     )
     credential = relationship("Credential")
+
+
+class ActivityLog(Base):
+    __tablename__ = "activity_log"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    op_id = Column(String(36), ForeignKey("operations.id", ondelete="CASCADE"), nullable=False)
+    action = Column(String(64), nullable=False)       # e.g. "host.create"
+    entity_type = Column(String(64), nullable=False)  # "host" | "credential" | "connection" | "upload"
+    entity_id = Column(String(36), nullable=True)
+    detail = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_now)

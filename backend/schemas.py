@@ -34,6 +34,18 @@ class OpStats(BaseModel):
     latest_activity_at: Optional[datetime]
 
 
+class ActivityLogRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    op_id: str
+    action: str
+    entity_type: str
+    entity_id: Optional[str]
+    detail: Optional[str]
+    created_at: datetime
+
+
 # ─── HostUser ────────────────────────────────────────────────────────────────
 
 class HostUserCreate(BaseModel):

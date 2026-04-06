@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Host, HostIP, HostUser, Operation
+from services.activity import log_activity
 from schemas import (
     HostCreate,
     HostIPCreate,
@@ -40,6 +41,7 @@ def create_host(op_id: str, body: HostCreate, db: Session = Depends(get_db)):
     _get_op_or_404(op_id, db)
     host = Host(op_id=op_id, nickname=body.nickname, comment=body.comment)
     db.add(host)
+    log_activity(db, op_id, "host.create", "host", detail=f"Added host '{body.nickname}'")
     db.commit()
     db.refresh(host)
     return host
@@ -68,6 +70,7 @@ def update_host(host_id: str, body: HostUpdate, db: Session = Depends(get_db)):
         host.nickname = body.nickname
     if body.comment is not None:
         host.comment = body.comment
+    log_activity(db, host.op_id, "host.update", "host", entity_id=host_id, detail=f"Updated host '{host.nickname}'")
     db.commit()
     db.refresh(host)
     return host
@@ -76,6 +79,7 @@ def update_host(host_id: str, body: HostUpdate, db: Session = Depends(get_db)):
 @router.delete("/hosts/{host_id}", status_code=204)
 def delete_host(host_id: str, db: Session = Depends(get_db)):
     host = _get_host_or_404(host_id, db)
+    log_activity(db, host.op_id, "host.delete", "host", entity_id=host_id, detail=f"Deleted host '{host.nickname}'")
     db.delete(host)
     db.commit()
 
@@ -84,13 +88,14 @@ def delete_host(host_id: str, db: Session = Depends(get_db)):
 
 @router.post("/hosts/{host_id}/ips", response_model=HostIPRead, status_code=201)
 def add_host_ip(host_id: str, body: HostIPCreate, db: Session = Depends(get_db)):
-    _get_host_or_404(host_id, db)
+    host = _get_host_or_404(host_id, db)
     ip = HostIP(
         host_id=host_id,
         ip_address=body.ip_address,
         source=body.source,
     )
     db.add(ip)
+    log_activity(db, host.op_id, "host_ip.add", "host", entity_id=host_id, detail=f"Added IP {body.ip_address} to '{host.nickname}'")
     db.commit()
     db.refresh(ip)
     return ip

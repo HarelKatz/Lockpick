@@ -42,6 +42,7 @@ from parsers.private_key import PrivateKeyParser
 from parsers.ssh_config import SshConfigParser
 from parsers.wtmp import WtmpParser
 from schemas import UploadFileInfo
+from services.activity import log_activity
 from services.ip_resolver import resolve_ip
 
 log = logging.getLogger(__name__)
@@ -372,6 +373,9 @@ async def upload_file(
         db.add(conn_rec)
         new_connections += 1
 
+    log_activity(db, op_id, "upload.parse", "upload",
+                 detail=f"Parsed {file_type} file '{filename}': "
+                        f"{new_creds} creds, {new_links} links, {new_connections} connections, {new_hosts} hosts")
     db.commit()
 
     # ── 4. Check for new pivot opportunities ─────────────────────────────────

@@ -9,7 +9,7 @@ from config import settings
 from database import engine
 import models  # noqa: F401 — ensures models are registered before migrations
 
-from routers import connections, credentials, graph, hosts, operations, stats, upload
+from routers import activity, connections, credentials, graph, hosts, operations, stats, upload
 
 
 @asynccontextmanager
@@ -57,6 +57,7 @@ app.include_router(hosts.router, prefix="/api")
 app.include_router(credentials.router, prefix="/api")
 app.include_router(connections.router, prefix="/api")
 app.include_router(graph.router, prefix="/api")
+app.include_router(activity.router, prefix="/api")
 app.include_router(stats.router, prefix="/api")
 app.include_router(upload.router, prefix="/api")
 

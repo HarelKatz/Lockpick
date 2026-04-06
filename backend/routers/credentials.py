@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Credential, CredentialLink, Host, Operation
+from services.activity import log_activity
 from schemas import (
     CredentialCreate,
     CredentialLinkCreate,
@@ -91,6 +92,8 @@ def create_credential(op_id: str, body: CredentialCreate, db: Session = Depends(
         comment=body.comment,
     )
     db.add(cred)
+    label = cred.name or (cred.fingerprint[:22] if cred.fingerprint else cred.cred_type)
+    log_activity(db, op_id, "credential.create", "credential", detail=f"Added {cred.cred_type}: {label}")
     db.commit()
     db.refresh(cred)
     return cred
@@ -138,6 +141,8 @@ def update_credential(cred_id: str, body: CredentialUpdate, db: Session = Depend
 @router.delete("/credentials/{cred_id}", status_code=204)
 def delete_credential(cred_id: str, db: Session = Depends(get_db)):
     cred = _get_cred_or_404(cred_id, db)
+    label = cred.name or (cred.fingerprint[:22] if cred.fingerprint else cred.cred_type)
+    log_activity(db, cred.op_id, "credential.delete", "credential", entity_id=cred_id, detail=f"Deleted {cred.cred_type}: {label}")
     db.delete(cred)
     db.commit()
 
@@ -160,6 +165,9 @@ def create_credential_link(body: CredentialLinkCreate, db: Session = Depends(get
         file_source=body.file_source,
     )
     db.add(link)
+    log_activity(db, host.op_id, "credential_link.create", "credential",
+                 entity_id=body.credential_id,
+                 detail=f"Linked credential to '{host.nickname}'" + (f" @{body.username}" if body.username else ""))
     db.commit()
     db.refresh(link)
     return link
@@ -199,5 +207,10 @@ def delete_credential_link(link_id: str, db: Session = Depends(get_db)):
     link = db.query(CredentialLink).filter(CredentialLink.id == link_id).first()
     if not link:
         raise HTTPException(status_code=404, detail="Credential link not found")
+    cred = db.get(Credential, link.credential_id)
+    op_id = cred.op_id if cred else None
+    if op_id:
+        log_activity(db, op_id, "credential_link.delete", "credential",
+                     entity_id=link.credential_id, detail="Removed credential link")
     db.delete(link)
     db.commit()

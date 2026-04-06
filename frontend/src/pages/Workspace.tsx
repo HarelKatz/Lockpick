@@ -5,13 +5,14 @@
  */
 import { useState, useEffect, useCallback } from 'react'
 import type {
-  Operation, Host, Credential, CredentialLink, ConnectionRecord, UploadFile,
+  Operation, Host, Credential, CredentialLink, ConnectionRecord, UploadFile, ActivityLog,
 } from '../types'
 import { listHosts, deleteHost } from '../api/hosts'
 import { listCredentials, deleteCredential, listCredentialLinks, deleteCredentialLink } from '../api/credentials'
 import { listConnections, deleteConnection } from '../api/connections'
 import { listUploads, uploadFileUrl } from '../api/upload'
 import { getOpStats } from '../api/stats'
+import { getActivityLog } from '../api/activity'
 import { ApiError } from '../api/client'
 import NotificationBanner from '../components/NotificationBanner'
 import AddDataModal from '../components/AddDataModal'
@@ -380,6 +381,7 @@ export default function Workspace({ op, onBack }: Props) {
   const [connections, setConnections] = useState<ConnectionRecord[]>([])
   const [uploads, setUploads] = useState<UploadFile[]>([])
   const [viewingFile, setViewingFile] = useState<UploadFile | null>(null)
+  const [activityLog, setActivityLog] = useState<ActivityLog[]>([])
   const [searchOpen, setSearchOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -403,19 +405,21 @@ export default function Workspace({ op, onBack }: Props) {
     setLoading(true)
     setError(null)
     try {
-      const [hostsData, credsData, linksData, connsData, uploadsData, statsData] = await Promise.all([
+      const [hostsData, credsData, linksData, connsData, uploadsData, statsData, activityData] = await Promise.all([
         listHosts(op.id),
         listCredentials(op.id),
         listCredentialLinks(op.id),
         listConnections(op.id),
         listUploads(op.id),
         getOpStats(op.id),
+        getActivityLog(op.id),
       ])
       setHosts(hostsData)
       setCredentials(credsData)
       setLinks(linksData)
       setConnections(connsData)
       setUploads(uploadsData)
+      setActivityLog(activityData)
       setBaselineTotal(statsData.total_records)
       setCurrentTotal(statsData.total_records)
     } catch (err) {
@@ -675,6 +679,25 @@ export default function Workspace({ op, onBack }: Props) {
                       hosts={hosts}
                       onView={setViewingFile}
                     />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Activity Log */}
+            {activityLog.length > 0 && (
+              <section>
+                <div className={styles.sectionHeader}>
+                  <h2 className={styles.sectionTitle}>Activity</h2>
+                  <span className={styles.sectionCount}>{activityLog.length}</span>
+                </div>
+                <div className={styles.listPanel}>
+                  {activityLog.map(entry => (
+                    <div key={entry.id} className={styles.activityRow}>
+                      <span className={styles.activityAction}>{entry.action}</span>
+                      {entry.detail && <span className={styles.activityDetail}>{entry.detail}</span>}
+                      <span className={styles.activityTime}>{formatTimestamp(entry.created_at)}</span>
+                    </div>
                   ))}
                 </div>
               </section>

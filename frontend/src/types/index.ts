@@ -17,6 +17,16 @@ export interface OpStats {
   latest_activity_at: string | null
 }
 
+export interface ActivityLog {
+  id: string
+  op_id: string
+  action: string
+  entity_type: string
+  entity_id: string | null
+  detail: string | null
+  created_at: string
+}
+
 export interface HostIP {
   id: string
   host_id: string

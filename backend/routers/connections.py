@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import ConnectionRecord, Credential, Operation
+from services.activity import log_activity
 from schemas import ConnectionRecordCreate, ConnectionRecordRead, ConnectionRecordUpdate
 
 router = APIRouter(tags=["connections"])
@@ -49,6 +50,10 @@ def create_connection(
         source_file=body.source_file,
     )
     db.add(record)
+    src = body.src_ip or "?"
+    dst = body.dst_ip or "?"
+    log_activity(db, op_id, "connection.create", "connection",
+                 detail=f"Added {body.connection_type} connection: {src} → {dst}")
     db.commit()
     db.refresh(record)
     return record
@@ -106,5 +111,8 @@ def delete_connection(connection_id: str, db: Session = Depends(get_db)):
     record = db.query(ConnectionRecord).filter(ConnectionRecord.id == connection_id).first()
     if not record:
         raise HTTPException(status_code=404, detail="Connection record not found")
+    log_activity(db, record.op_id, "connection.delete", "connection",
+                 entity_id=connection_id,
+                 detail=f"Deleted {record.connection_type} connection: {record.src_ip} → {record.dst_ip}")
     db.delete(record)
     db.commit()
