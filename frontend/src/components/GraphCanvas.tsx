@@ -18,6 +18,7 @@ import {
   useNodesState,
   useEdgesState,
   useReactFlow,
+  useStore,
   useInternalNode,
   ReactFlowProvider,
   MarkerType,
@@ -303,6 +304,8 @@ function GraphCanvasInner({
   const rafPending   = useRef(false)
   // Set to true when fitView is needed but the container was hidden (display:none)
   const pendingFit   = useRef(false)
+  // Reactive: updates when React Flow's ResizeObserver fires (display:none → visible)
+  const rfWidth = useStore((s) => s.width)
 
   // Last known RF positions (top-left); source of truth between re-renders
   const savedPos = useRef<Map<string, { x: number; y: number }>>(new Map())
@@ -520,21 +523,18 @@ function GraphCanvasInner({
     }))
   }, [pathFilter, credFilter, lockedIds, setNodes, setEdges])
 
-  // ── Deferred fit: apply when tab becomes visible ───────────────────────────
-  // When the graph tab is hidden (display:none), React Flow stores 0×0 for the
-  // container, so fitView() is a no-op. pendingFit is set in Effect 1 whenever
-  // fitView was needed but the container was hidden. When isVisible flips to
-  // true the container is shown; a double-rAF lets React Flow's ResizeObserver
-  // update the viewport dimensions before fitView() reads them.
+  // ── Deferred fit: fire as soon as the RF container gains real dimensions ────
+  // When the graph tab is hidden (display:none), React Flow stores width=0 for
+  // the container, so fitView() is a no-op. pendingFit is set in Effect 1 when
+  // fitView was needed but the container was hidden.
+  // rfWidth is sourced directly from React Flow's Zustand store — it updates
+  // exactly when the internal ResizeObserver fires after display:none is removed,
+  // eliminating the timing race of a fixed double-rAF.
   useEffect(() => {
-    if (!isVisible || !pendingFit.current) return
+    if (!pendingFit.current || rfWidth === 0) return
     pendingFit.current = false
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        fitView({ padding: 0.15, maxZoom: 1.5 })
-      })
-    })
-  }, [isVisible, fitView])
+    fitView({ padding: 0.15, maxZoom: 1.5 })
+  }, [rfWidth, fitView])
 
   // ── Focus a specific host ──────────────────────────────────────────────────
   useEffect(() => {
