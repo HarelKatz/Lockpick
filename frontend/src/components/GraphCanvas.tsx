@@ -264,6 +264,7 @@ interface Props {
   layout: LayoutName
   lockedIds?: Set<string>
   focusHostId?: string | null
+  isVisible?: boolean
   onNodeClick: (node: GraphNode) => void
   onEdgeClick: (edge: GraphEdge) => void
   onNodeDoubleClick: (node: GraphNode) => void
@@ -282,6 +283,7 @@ function GraphCanvasInner({
   layout,
   lockedIds,
   focusHostId,
+  isVisible,
   onNodeClick,
   onEdgeClick,
   onNodeDoubleClick,
@@ -299,6 +301,8 @@ function GraphCanvasInner({
   const simNodeMap   = useRef<Map<string, SimNode>>(new Map())
   const draggingId   = useRef<string | null>(null)
   const rafPending   = useRef(false)
+  // Set to true when fitView is needed but the container was hidden (display:none)
+  const pendingFit   = useRef(false)
 
   // Last known RF positions (top-left); source of truth between re-renders
   const savedPos = useRef<Map<string, { x: number; y: number }>>(new Map())
@@ -437,12 +441,20 @@ function GraphCanvasInner({
     // so it works immediately without waiting for React Flow to measure nodes.
     // We skip re-fitting on incremental changes (expand, credential updates) so
     // the user's zoom/pan isn't reset while they're exploring.
+    //
+    // If the container is currently hidden (display:none, isVisible===false),
+    // React Flow's ResizeObserver reports 0×0 and fitView() is a no-op.
+    // In that case we set pendingFit so the isVisible effect can fit later.
     const wasEmpty = prevCount === 0
     let fitRaf: number | null = null
     if ((wasEmpty || layoutChanged) && visibleIds.length > 0) {
-      fitRaf = requestAnimationFrame(() => {
-        fitView({ padding: 0.15, maxZoom: 1.5 })
-      })
+      if (isVisible === false) {
+        pendingFit.current = true
+      } else {
+        fitRaf = requestAnimationFrame(() => {
+          fitView({ padding: 0.15, maxZoom: 1.5 })
+        })
+      }
     }
 
     return () => {
@@ -451,7 +463,7 @@ function GraphCanvasInner({
     }
   // lockedIds excluded — handled by Effect 2; fitView is stable (RF guarantee)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graphData, hiddenIds, layout])
+  }, [graphData, hiddenIds, layout, isVisible])
 
   // ── Effect 2: styling updates (filters / locks) — no position recompute ──────
   useEffect(() => {
@@ -507,6 +519,22 @@ function GraphCanvasInner({
       }
     }))
   }, [pathFilter, credFilter, lockedIds, setNodes, setEdges])
+
+  // ── Deferred fit: apply when tab becomes visible ───────────────────────────
+  // When the graph tab is hidden (display:none), React Flow stores 0×0 for the
+  // container, so fitView() is a no-op. pendingFit is set in Effect 1 whenever
+  // fitView was needed but the container was hidden. When isVisible flips to
+  // true the container is shown; a double-rAF lets React Flow's ResizeObserver
+  // update the viewport dimensions before fitView() reads them.
+  useEffect(() => {
+    if (!isVisible || !pendingFit.current) return
+    pendingFit.current = false
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        fitView({ padding: 0.15, maxZoom: 1.5 })
+      })
+    })
+  }, [isVisible, fitView])
 
   // ── Focus a specific host ──────────────────────────────────────────────────
   useEffect(() => {

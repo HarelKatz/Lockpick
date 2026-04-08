@@ -629,7 +629,7 @@ export default function Workspace({ op, onBack }: Props) {
 
       {/* Graph tab — always mounted to preserve state; hidden when on data tab */}
       <div style={tab !== 'graph' ? { display: 'none' } : { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-        <GraphView op={op} allHosts={hosts} credentials={credentials} focusHostId={focusEntityId} />
+        <GraphView op={op} allHosts={hosts} credentials={credentials} focusHostId={focusEntityId} isVisible={tab === 'graph'} />
       </div>
 
       {/* Data tab */}
