@@ -472,15 +472,28 @@ function GraphCanvasInner({
 
     // Compute viewport directly from known positions — no need to wait for
     // React Flow to measure nodes since we already know every node's bounds.
+    // Double-rAF: first frame lets React process the setNodes state update and
+    // React Flow re-render; second frame lets React Flow's own init effects
+    // settle before we override the viewport.
+    let viewportRaf: number | null = null
     if (visibleIds.length > 0) {
-      const cw = containerRef.current?.clientWidth  ?? 800
-      const ch = containerRef.current?.clientHeight ?? 600
-      const vp = viewportForPositions(savedPos.current, cw, ch)
-      if (vp) setViewport(vp)
+      const posSnapshot = new Map(savedPos.current)
+      viewportRaf = requestAnimationFrame(() => {
+        viewportRaf = requestAnimationFrame(() => {
+          // Use || not ?? — clientWidth can be 0 (falsy) before layout completes
+          const cw = containerRef.current?.clientWidth  || window.innerWidth
+          const ch = containerRef.current?.clientHeight || window.innerHeight
+          const vp = viewportForPositions(posSnapshot, cw, ch)
+          if (vp) setViewport(vp)
+        })
+      })
     }
 
-    return () => { simRef.current?.stop() }
-  // lockedIds excluded — handled by Effect 2
+    return () => {
+      simRef.current?.stop()
+      if (viewportRaf !== null) cancelAnimationFrame(viewportRaf)
+    }
+  // lockedIds excluded — handled by Effect 2; setViewport is stable (RF guarantee)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graphData, hiddenIds, layout])
 
