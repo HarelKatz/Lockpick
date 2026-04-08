@@ -289,7 +289,7 @@ function GraphCanvasInner({
   onEdgeContextMenu,
   onCanvasTap,
 }: Props) {
-  const { fitView, setCenter, getNode } = useReactFlow()
+  const { fitView, setCenter, getNode, getNodes } = useReactFlow()
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges] = useEdgesState<Edge>([])
 
@@ -309,8 +309,28 @@ function GraphCanvasInner({
 
   const prevLayoutRef = useRef<LayoutName>(layout)
 
-  // ── fitView: cancel previous timer and refire after each structural rebuild ──
-  const fitViewTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // ── fitView: poll via rAF until all visible nodes are measured, then fit ─────
+  // fitView silently does nothing when node.measured is still undefined.
+  // Timer-based approaches are unreliable across machines; polling is exact.
+  const fitViewRaf = useRef<number | null>(null)
+
+  const scheduleFitView = useCallback(() => {
+    if (fitViewRaf.current !== null) cancelAnimationFrame(fitViewRaf.current)
+
+    let attempts = 0
+    function attempt() {
+      attempts++
+      const visible = getNodes().filter(n => !n.hidden)
+      const allMeasured = visible.length > 0 && visible.every(n => n.measured?.width)
+      if (allMeasured) {
+        fitViewRaf.current = null
+        fitView({ padding: 0.15, duration: 300 })
+      } else if (attempts < 40) {
+        fitViewRaf.current = requestAnimationFrame(attempt)
+      }
+    }
+    fitViewRaf.current = requestAnimationFrame(attempt)
+  }, [fitView, getNodes])
 
   // ── Simulation tick → push positions into React Flow ───────────────────────
   const flushSimPositions = useCallback(() => {
@@ -428,17 +448,11 @@ function GraphCanvasInner({
     )
     buildSim(posMap, edgePairs)
 
-    if (fitViewTimer.current) clearTimeout(fitViewTimer.current)
-    if (visibleIds.length > 0) {
-      fitViewTimer.current = setTimeout(() => {
-        fitViewTimer.current = null
-        fitView({ padding: 0.15, duration: 300 })
-      }, 200)
-    }
+    if (visibleIds.length > 0) scheduleFitView()
 
     return () => {
       simRef.current?.stop()
-      if (fitViewTimer.current) { clearTimeout(fitViewTimer.current); fitViewTimer.current = null }
+      if (fitViewRaf.current !== null) { cancelAnimationFrame(fitViewRaf.current); fitViewRaf.current = null }
     }
   // lockedIds excluded — handled by Effect 2
   // eslint-disable-next-line react-hooks/exhaustive-deps
