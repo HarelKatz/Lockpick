@@ -236,48 +236,6 @@ function circleLayout(nodeIds: string[]): PosMap {
   return result
 }
 
-// ── Viewport computation ────────────────────────────────────────────────────────
-// Calculates the viewport directly from known node positions (top-left corner
-// of each 48×80 node bounding box including label). Because we already know all
-// positions after initialLayout, we don't need to wait for React Flow to measure
-// nodes — which is the source of every fitView timing bug.
-
-const NODE_W = 48
-const NODE_H = 80  // circle (48) + label below (~32)
-const FIT_PADDING = 0.12  // fraction of container to leave as margin
-
-function viewportForPositions(
-  positions: PosMap,
-  containerW: number,
-  containerH: number,
-): { x: number; y: number; zoom: number } | null {
-  if (positions.size === 0 || containerW === 0 || containerH === 0) return null
-
-  let minX = Infinity, maxX = -Infinity
-  let minY = Infinity, maxY = -Infinity
-  for (const p of positions.values()) {
-    minX = Math.min(minX, p.x);          maxX = Math.max(maxX, p.x + NODE_W)
-    minY = Math.min(minY, p.y);          maxY = Math.max(maxY, p.y + NODE_H)
-  }
-
-  const nodesW = maxX - minX || 1
-  const nodesH = maxY - minY || 1
-  const padW = containerW * FIT_PADDING
-  const padH = containerH * FIT_PADDING
-
-  const zoom = Math.min(
-    (containerW - padW * 2) / nodesW,
-    (containerH - padH * 2) / nodesH,
-    1.5,    // don't zoom in past 150 % on load
-  )
-
-  return {
-    zoom: Math.max(zoom, 0.05),
-    x: containerW / 2 - (minX + nodesW / 2) * zoom,
-    y: containerH / 2 - (minY + nodesH / 2) * zoom,
-  }
-}
-
 // ── Edge helpers ────────────────────────────────────────────────────────────────
 
 function computeEdgeLabel(e: GraphEdge): string {
@@ -331,7 +289,7 @@ function GraphCanvasInner({
   onEdgeContextMenu,
   onCanvasTap,
 }: Props) {
-  const { setCenter, getNode, setViewport } = useReactFlow()
+  const { setCenter, getNode, fitView } = useReactFlow()
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges] = useEdgesState<Edge>([])
 
@@ -350,9 +308,8 @@ function GraphCanvasInner({
   useEffect(() => { graphDataRef.current = graphData }, [graphData])
 
   const prevLayoutRef = useRef<LayoutName>(layout)
-
-  // Container ref — needed to read pixel dimensions for viewport calculation
-  const containerRef = useRef<HTMLDivElement>(null)
+  // Tracks previous visible node count to detect initial load (0 → N)
+  const prevVisibleCountRef = useRef(0)
 
   // ── Simulation tick → push positions into React Flow ───────────────────────
   const flushSimPositions = useCallback(() => {
@@ -405,12 +362,14 @@ function GraphCanvasInner({
   useEffect(() => {
     const layoutChanged = prevLayoutRef.current !== layout
     prevLayoutRef.current = layout
+    const prevCount = prevVisibleCountRef.current
 
     if (layoutChanged) savedPos.current.clear()
 
     const visibleIds = graphData.nodes
       .filter(n => !hiddenIds.has(n.host_id))
       .map(n => n.host_id)
+    prevVisibleCountRef.current = visibleIds.length
     const visibleSet = new Set(visibleIds)
 
     const edgePairs: EdgePair[] = graphData.edges
@@ -433,6 +392,8 @@ function GraphCanvasInner({
         id: n.host_id,
         type: 'host',
         position: savedPos.current.get(n.host_id) ?? { x: 0, y: 0 },
+        width: 48,   // pre-set so fitView computes bounds without ResizeObserver
+        height: 48,
         draggable: !lockedIds?.has(n.host_id),
         data: {
           label: n.nickname,
@@ -470,30 +431,25 @@ function GraphCanvasInner({
     )
     buildSim(posMap, edgePairs)
 
-    // Compute viewport directly from known positions — no need to wait for
-    // React Flow to measure nodes since we already know every node's bounds.
-    // Double-rAF: first frame lets React process the setNodes state update and
-    // React Flow re-render; second frame lets React Flow's own init effects
-    // settle before we override the viewport.
-    let viewportRaf: number | null = null
-    if (visibleIds.length > 0) {
-      const posSnapshot = new Map(savedPos.current)
-      viewportRaf = requestAnimationFrame(() => {
-        viewportRaf = requestAnimationFrame(() => {
-          // Use || not ?? — clientWidth can be 0 (falsy) before layout completes
-          const cw = containerRef.current?.clientWidth  || window.innerWidth
-          const ch = containerRef.current?.clientHeight || window.innerHeight
-          const vp = viewportForPositions(posSnapshot, cw, ch)
-          if (vp) setViewport(vp)
-        })
+    // Fit the viewport when: initial graph load (0 → N nodes) or layout switch.
+    // fitView() reads container dimensions from React Flow's own ResizeObserver
+    // store — always accurate — and uses node.width/height we pre-set above,
+    // so it works immediately without waiting for React Flow to measure nodes.
+    // We skip re-fitting on incremental changes (expand, credential updates) so
+    // the user's zoom/pan isn't reset while they're exploring.
+    const wasEmpty = prevCount === 0
+    let fitRaf: number | null = null
+    if ((wasEmpty || layoutChanged) && visibleIds.length > 0) {
+      fitRaf = requestAnimationFrame(() => {
+        fitView({ padding: 0.15, maxZoom: 1.5 })
       })
     }
 
     return () => {
       simRef.current?.stop()
-      if (viewportRaf !== null) cancelAnimationFrame(viewportRaf)
+      if (fitRaf !== null) cancelAnimationFrame(fitRaf)
     }
-  // lockedIds excluded — handled by Effect 2; setViewport is stable (RF guarantee)
+  // lockedIds excluded — handled by Effect 2; fitView is stable (RF guarantee)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graphData, hiddenIds, layout])
 
@@ -625,7 +581,7 @@ function GraphCanvasInner({
   }, [onEdgeContextMenu])
 
   return (
-    <div ref={containerRef} className={styles.canvas}>
+    <div className={styles.canvas}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
