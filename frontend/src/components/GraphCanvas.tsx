@@ -136,6 +136,10 @@ export default function GraphCanvas({
   const layoutRef = useRef<LayoutName>(layout)
   useEffect(() => { layoutRef.current = layout }, [layout])
 
+  // Keep lockedIds fresh so the drag-settle handler can re-apply user locks
+  const lockedIdsRef = useRef<Set<string> | undefined>(lockedIds)
+  useEffect(() => { lockedIdsRef.current = lockedIds }, [lockedIds])
+
   // ── Initialize cytoscape once on mount ──────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current) return
@@ -279,11 +283,26 @@ export default function GraphCanvas({
       if (evt.target === cy) cbRef.current.onCanvasTap()
     })
 
-    // After releasing a drag, run a short cola settle so connected nodes
-    // spring toward the new configuration and overlaps are resolved.
+    // Track which node is being dragged so the free handler knows its neighbors.
+    let grabbedId: string | null = null
+    cy.on('grab', 'node', evt => {
+      grabbedId = evt.target.id()
+    })
+
+    // After releasing a drag, settle only the dragged node and its direct
+    // neighbors — all other nodes stay put.
     cy.on('free', 'node', () => {
       if (layoutRef.current !== 'cola') return
-      cy.layout({
+      const id = grabbedId
+      grabbedId = null
+      if (!id) return
+
+      // Lock everything outside the immediate neighborhood so the cola settle
+      // only moves the dragged node and its direct neighbors.
+      const neighborhood = cy.$id(id).closedNeighborhood('node')
+      cy.nodes().not(neighborhood).lock()
+
+      const settleLayout = cy.layout({
         name: 'cola',
         animate: true,
         infinite: false,
@@ -295,7 +314,22 @@ export default function GraphCanvas({
         convergenceThreshold: 0.005,
         randomize: false,
         avoidOverlap: true,
-      } as cytoscape.LayoutOptions).run()
+      } as cytoscape.LayoutOptions)
+
+      settleLayout.on('layoutstop', () => {
+        // Unlock all, then re-apply user-set locks so double-click locks survive.
+        cy.nodes().forEach(n => {
+          if (lockedIdsRef.current?.has(n.id())) {
+            n.lock()
+            n.addClass('node-locked')
+          } else {
+            n.unlock()
+            n.removeClass('node-locked')
+          }
+        })
+      })
+
+      settleLayout.run()
     })
 
     cyRef.current = cy
