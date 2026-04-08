@@ -1,29 +1,211 @@
 /**
- * Cytoscape.js graph canvas.
+ * React Flow graph canvas.
  * Purely driven by props — parent owns graphData and hiddenIds.
  * Events bubble up via callbacks.
  */
-import { useEffect, useRef } from 'react'
-import cytoscape from 'cytoscape'
-import coseBilkent from 'cytoscape-cose-bilkent'
-import cola from 'cytoscape-cola'
+import { useCallback, useEffect, useRef } from 'react'
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  useNodesState,
+  useEdgesState,
+  useReactFlow,
+  ReactFlowProvider,
+  MarkerType,
+  Position,
+  Handle,
+  type Node,
+  type Edge,
+  type NodeProps,
+  type OnNodesChange,
+} from '@xyflow/react'
+import '@xyflow/react/dist/style.css'
+import * as d3Force from 'd3-force'
+import dagre from '@dagrejs/dagre'
 import type { GraphEdge, GraphNode, GraphResponse } from '../types'
 import styles from './GraphCanvas.module.css'
 
-cytoscape.use(coseBilkent)
-cytoscape.use(cola)
-
+// ── Exported types (consumed by GraphView) ─────────────────────────────────────
 export type LayoutName = 'cola' | 'cose-bilkent' | 'breadthfirst' | 'grid' | 'circle'
+export interface CredFilter { credId: string; mode: 'highlight' | 'filter' }
+export interface PathFilter { nodeIds: Set<string>; edgeKeys: Set<string> }
 
-export interface CredFilter {
-  credId: string
-  mode: 'highlight' | 'filter'
+// ── Internal data shapes ────────────────────────────────────────────────────────
+
+interface HostNodeData {
+  label: string
+  hasCredentials: boolean
+  isLocked: boolean
+  pathHighlight: boolean
+  dimmed: boolean
+  _node: GraphNode
 }
 
-export interface PathFilter {
-  nodeIds: Set<string>
-  edgeKeys: Set<string>
+interface ConfEdgeData {
+  _edge: GraphEdge
 }
+
+// ── Custom node component ───────────────────────────────────────────────────────
+
+function HostNode({ data: raw, selected }: NodeProps) {
+  const data = raw as unknown as HostNodeData
+  const { label, hasCredentials, isLocked, pathHighlight, dimmed } = data
+
+  const borderColor = pathHighlight
+    ? '#f78166'
+    : isLocked
+    ? '#d97706'
+    : selected
+    ? '#58a6ff'
+    : hasCredentials
+    ? '#d29922'
+    : '#3d8bcd'
+
+  const borderWidth = pathHighlight || selected || isLocked ? 3 : 2
+
+  return (
+    <div style={{
+      width: 48,
+      height: 48,
+      borderRadius: '50%',
+      background: pathHighlight ? '#2d1f1f' : selected ? '#1f2d3d' : '#1a2332',
+      border: `${borderWidth}px solid ${borderColor}`,
+      opacity: dimmed ? 0.18 : 1,
+      cursor: 'pointer',
+      position: 'relative',
+    }}>
+      <Handle type="target" position={Position.Left}
+        style={{ opacity: 0, pointerEvents: 'none', width: 1, height: 1 }} />
+      <Handle type="source" position={Position.Right}
+        style={{ opacity: 0, pointerEvents: 'none', width: 1, height: 1 }} />
+      <div style={{
+        position: 'absolute',
+        top: '100%',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        marginTop: 6,
+        color: '#e6edf3',
+        fontSize: 13,
+        whiteSpace: 'nowrap',
+        background: 'rgba(13,17,23,0.75)',
+        padding: '1px 5px',
+        borderRadius: 3,
+        pointerEvents: 'none',
+        userSelect: 'none',
+      }}>
+        {label}
+      </div>
+    </div>
+  )
+}
+
+const nodeTypes = { host: HostNode }
+
+// ── Layout computation ──────────────────────────────────────────────────────────
+
+type EdgePair = { source: string; target: string }
+type PosMap = Map<string, { x: number; y: number }>
+
+function computeForceLayout(nodeIds: string[], edgePairs: EdgePair[], spacing = 200): PosMap {
+  if (nodeIds.length === 0) return new Map()
+
+  interface SimNode extends d3Force.SimulationNodeDatum { id: string }
+  const simNodes: SimNode[] = nodeIds.map(id => ({ id }))
+
+  const simLinks: d3Force.SimulationLinkDatum<SimNode>[] = edgePairs.map(e => ({
+    source: e.source,
+    target: e.target,
+  }))
+
+  const area = Math.max(600, nodeIds.length * spacing)
+  const cx = area / 2, cy = area / 2
+
+  const sim = d3Force.forceSimulation<SimNode>(simNodes)
+    .force('link', d3Force.forceLink<SimNode, d3Force.SimulationLinkDatum<SimNode>>(simLinks)
+      .id(d => d.id).distance(spacing).strength(0.5))
+    .force('charge', d3Force.forceManyBody<SimNode>().strength(-500))
+    .force('center', d3Force.forceCenter<SimNode>(cx, cy))
+    .force('collide', d3Force.forceCollide<SimNode>(50))
+    .stop()
+
+  for (let i = 0; i < 300; i++) sim.tick()
+
+  const result: PosMap = new Map()
+  simNodes.forEach(n => result.set(n.id, { x: n.x ?? cx, y: n.y ?? cy }))
+  return result
+}
+
+function computeDagreLayout(nodeIds: string[], edgePairs: EdgePair[]): PosMap {
+  if (nodeIds.length === 0) return new Map()
+  const g = new dagre.graphlib.Graph()
+  g.setGraph({ rankdir: 'LR', ranksep: 120, nodesep: 80, marginx: 60, marginy: 60 })
+  g.setDefaultEdgeLabel(() => ({}))
+  const nodeSet = new Set(nodeIds)
+  nodeIds.forEach(id => g.setNode(id, { width: 60, height: 60 }))
+  edgePairs.forEach(e => {
+    if (nodeSet.has(e.source) && nodeSet.has(e.target)) g.setEdge(e.source, e.target)
+  })
+  dagre.layout(g)
+  const result: PosMap = new Map()
+  nodeIds.forEach(id => {
+    const pos = g.node(id)
+    if (pos) result.set(id, { x: pos.x - 24, y: pos.y - 24 })
+  })
+  return result
+}
+
+function computeGridLayout(nodeIds: string[]): PosMap {
+  const cols = Math.max(1, Math.ceil(Math.sqrt(nodeIds.length)))
+  const result: PosMap = new Map()
+  nodeIds.forEach((id, i) => result.set(id, {
+    x: (i % cols) * 140 + 60,
+    y: Math.floor(i / cols) * 140 + 60,
+  }))
+  return result
+}
+
+function computeCircleLayout(nodeIds: string[]): PosMap {
+  const r = Math.max(140, nodeIds.length * 28)
+  const cx = r + 80, cy = r + 80
+  const result: PosMap = new Map()
+  nodeIds.forEach((id, i) => {
+    const angle = (i / nodeIds.length) * 2 * Math.PI - Math.PI / 2
+    result.set(id, { x: cx + r * Math.cos(angle) - 24, y: cy + r * Math.sin(angle) - 24 })
+  })
+  return result
+}
+
+function computeLayout(layout: LayoutName, nodeIds: string[], edgePairs: EdgePair[]): PosMap {
+  switch (layout) {
+    case 'breadthfirst': return computeDagreLayout(nodeIds, edgePairs)
+    case 'grid':         return computeGridLayout(nodeIds)
+    case 'circle':       return computeCircleLayout(nodeIds)
+    case 'cose-bilkent': return computeForceLayout(nodeIds, edgePairs, 240)
+    case 'cola':
+    default:             return computeForceLayout(nodeIds, edgePairs, 200)
+  }
+}
+
+// ── Edge helpers ────────────────────────────────────────────────────────────────
+
+function computeEdgeLabel(e: GraphEdge): string {
+  for (const ev of e.evidence) {
+    if (ev.type === 'connection_log' && ev.connection_type) return ev.connection_type.toUpperCase()
+  }
+  if (e.evidence.some(ev => ev.type === 'key_match'))    return 'key match'
+  if (e.evidence.some(ev => ev.type === 'bash_history')) return 'bash history'
+  if (e.evidence.some(ev => ev.type === 'known_hosts'))  return 'known hosts'
+  return 'connection'
+}
+
+function confidenceColor(conf: string): string {
+  if (conf === 'confirmed') return '#3fb950'
+  if (conf === 'observed')  return '#d29922'
+  return '#6e7681'
+}
+
+// ── Props ───────────────────────────────────────────────────────────────────────
 
 interface Props {
   graphData: GraphResponse
@@ -41,74 +223,9 @@ interface Props {
   onCanvasTap: () => void
 }
 
-function computeEdgeLabel(e: GraphEdge): string {
-  // Prefer actual connection_type from connection_log evidence
-  for (const ev of e.evidence) {
-    if (ev.type === 'connection_log' && ev.connection_type) {
-      return ev.connection_type.toUpperCase()
-    }
-  }
-  if (e.evidence.some(ev => ev.type === 'key_match')) return 'key match'
-  if (e.evidence.some(ev => ev.type === 'bash_history')) return 'bash history'
-  if (e.evidence.some(ev => ev.type === 'known_hosts')) return 'known hosts'
-  return 'connection'
-}
+// ── Inner component (needs ReactFlowProvider above) ─────────────────────────────
 
-function buildLayoutOptions(layout: LayoutName): cytoscape.LayoutOptions {
-  switch (layout) {
-    case 'cose-bilkent':
-      return {
-        name: 'cose-bilkent',
-        animate: true,
-        fit: true,
-        padding: 90,
-        nodeDimensionsIncludeLabels: true,
-        randomize: true,
-        idealEdgeLength: 180,
-        edgeElasticity: 0.45,
-      } as cytoscape.LayoutOptions
-    case 'breadthfirst':
-      return {
-        name: 'breadthfirst',
-        animate: true,
-        fit: true,
-        padding: 90,
-        directed: true,
-        spacingFactor: 1.5,
-      } as cytoscape.LayoutOptions
-    case 'grid':
-      return {
-        name: 'grid',
-        animate: true,
-        fit: true,
-        padding: 90,
-      } as cytoscape.LayoutOptions
-    case 'circle':
-      return {
-        name: 'circle',
-        animate: true,
-        fit: true,
-        padding: 90,
-      } as cytoscape.LayoutOptions
-    case 'cola':
-    default:
-      return {
-        name: 'cola',
-        animate: true,
-        infinite: false,
-        fit: true,
-        padding: 90,
-        nodeSpacing: 60,
-        edgeLength: 240,
-        maxSimulationTime: 3000,
-        convergenceThreshold: 0.01,
-        randomize: false,
-        avoidOverlap: true,
-      } as cytoscape.LayoutOptions
-  }
-}
-
-export default function GraphCanvas({
+function GraphCanvasInner({
   graphData,
   hiddenIds,
   pathFilter,
@@ -123,467 +240,226 @@ export default function GraphCanvas({
   onEdgeContextMenu,
   onCanvasTap,
 }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const cyRef = useRef<cytoscape.Core | null>(null)
+  const { fitView, setCenter, getNode } = useReactFlow()
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
+  const [edges, setEdges] = useEdgesState<Edge>([])
 
-  // Keep callbacks fresh so stable event handlers always call the latest version
-  const cbRef = useRef({ onNodeClick, onEdgeClick, onNodeDoubleClick, onNodeContextMenu, onEdgeContextMenu, onCanvasTap })
+  // Persist drag positions between renders
+  const userPositions = useRef<Map<string, { x: number; y: number }>>(new Map())
+  // Keep graphData accessible inside filter effect without adding it to deps
+  const graphDataRef = useRef(graphData)
+  useEffect(() => { graphDataRef.current = graphData }, [graphData])
+
+  // Persist layout name for comparison
+  const prevLayoutRef = useRef<LayoutName>(layout)
+
+  // ── Effect: track node drag positions ────────────────────────────────────────
+  const handleNodesChange: OnNodesChange = useCallback((changes) => {
+    for (const change of changes) {
+      if (change.type === 'position' && change.position) {
+        userPositions.current.set(change.id, change.position)
+      }
+    }
+    onNodesChange(changes)
+  }, [onNodesChange])
+
+  // ── Effect 1: structural rebuild (layout / graphData / hiddenIds) ─────────────
   useEffect(() => {
-    cbRef.current = { onNodeClick, onEdgeClick, onNodeDoubleClick, onNodeContextMenu, onEdgeContextMenu, onCanvasTap }
-  })
+    const layoutChanged = prevLayoutRef.current !== layout
+    prevLayoutRef.current = layout
+    if (layoutChanged) userPositions.current.clear()
 
-  // Track current layout for use inside element-rebuild effect
-  const layoutRef = useRef<LayoutName>(layout)
-  useEffect(() => { layoutRef.current = layout }, [layout])
+    const visibleIds = graphData.nodes
+      .filter(n => !hiddenIds.has(n.host_id))
+      .map(n => n.host_id)
+    const visibleSet = new Set(visibleIds)
 
-  // Track the currently-running layout so grab can stop it immediately
-  const activeLayoutRef = useRef<cytoscape.Layouts | null>(null)
+    const edgePairs: EdgePair[] = graphData.edges
+      .filter(e => visibleSet.has(e.src_host_id) && visibleSet.has(e.dst_host_id))
+      .map(e => ({ source: e.src_host_id, target: e.dst_host_id }))
 
-  // Keep lockedIds fresh so the drag-settle handler can re-apply user locks
-  const lockedIdsRef = useRef<Set<string> | undefined>(lockedIds)
-  useEffect(() => { lockedIdsRef.current = lockedIds }, [lockedIds])
+    // Only compute layout for nodes without a saved position
+    const needsLayout = visibleIds.filter(id => !userPositions.current.has(id))
+    const computed = needsLayout.length > 0 || layoutChanged
+      ? computeLayout(layout, layoutChanged ? visibleIds : needsLayout, edgePairs)
+      : new Map<string, { x: number; y: number }>()
 
-  // ── Initialize cytoscape once on mount ──────────────────────────────────────
-  useEffect(() => {
-    if (!containerRef.current) return
+    // Merge computed positions into user position store
+    for (const [id, pos] of computed) {
+      if (!userPositions.current.has(id) || layoutChanged) userPositions.current.set(id, pos)
+    }
 
-    const cy = cytoscape({
-      container: containerRef.current,
-      elements: [],
-      pixelRatio: 'auto',
-      style: [
-        {
-          selector: 'node',
-          style: {
-            'background-color': '#1a2332',
-            'border-color': '#3d8bcd',
-            'border-width': 2,
-            'label': 'data(label)',
-            'color': '#e6edf3',
-            'font-size': 18,
-            'min-zoomed-font-size': 8,
-            'text-valign': 'bottom',
-            'text-margin-y': 6,
-            'width': 48,
-            'height': 48,
-            'text-background-color': '#0d1117',
-            'text-background-opacity': 0.7,
-            'text-background-padding': '2px',
-            'text-background-shape': 'roundrectangle',
-          },
-        },
-        {
-          // Nodes with credentials get an amber ring
-          selector: 'node[?hasCredentials]',
-          style: {
-            'border-color': '#d29922',
-            'border-width': 3,
-          },
-        },
-        {
-          selector: 'node:selected',
-          style: {
-            'border-color': '#58a6ff',
-            'border-width': 3,
-            'background-color': '#1f2d3d',
-          },
-        },
-        {
-          selector: 'edge',
-          style: {
-            'curve-style': 'bezier',
-            'target-arrow-shape': 'triangle',
-            'width': 3,
-            'label': 'data(edgeLabel)',
-            'font-size': 9,
-            'color': '#8b949e',
-            'text-rotation': 'autorotate',
-            'text-margin-y': -6,
-          },
-        },
-        {
-          selector: 'edge[confidence = "confirmed"]',
-          style: {
-            'line-color': '#3fb950',
-            'target-arrow-color': '#3fb950',
-          },
-        },
-        {
-          selector: 'edge[confidence = "observed"]',
-          style: {
-            'line-color': '#d29922',
-            'target-arrow-color': '#d29922',
-          },
-        },
-        {
-          selector: 'edge[confidence = "indicator"]',
-          style: {
-            'line-color': '#6e7681',
-            'target-arrow-color': '#6e7681',
-          },
-        },
-        {
-          selector: 'edge:selected',
-          style: { 'width': 5 },
-        },
-        // Path highlighting — coral/red
-        {
-          selector: 'node.path-highlight',
-          style: {
-            'border-color': '#f78166',
-            'border-width': 4,
-            'background-color': '#2d1f1f',
-          },
-        },
-        {
-          selector: 'edge.path-highlight',
-          style: {
-            'line-color': '#f78166',
-            'target-arrow-color': '#f78166',
-            'width': 5,
-          },
-        },
-        // Dimmed elements (for highlight mode)
-        {
-          selector: '.dimmed',
-          style: {
-            'opacity': 0.18,
-          },
-        },
-        // Locked nodes — orange border, cannot be dragged
-        {
-          selector: 'node.node-locked',
-          style: {
-            'border-color': '#f78166',
-            'border-width': 3,
-          },
-        },
-      ],
-      userZoomingEnabled: true,
-      userPanningEnabled: true,
-      boxSelectionEnabled: false,
-    })
-
-    // Stable event handlers — always invoke the latest callback via cbRef
-    cy.on('tap', 'node', evt => {
-      cbRef.current.onNodeClick(evt.target.data('_node') as GraphNode)
-    })
-    cy.on('tap', 'edge', evt => {
-      cbRef.current.onEdgeClick(evt.target.data('_edge') as GraphEdge)
-    })
-    cy.on('dbltap', 'node', evt => {
-      cbRef.current.onNodeDoubleClick(evt.target.data('_node') as GraphNode)
-    })
-    cy.on('cxttap', 'node', evt => {
-      const me = evt.originalEvent as MouseEvent
-      cbRef.current.onNodeContextMenu(evt.target.data('_node') as GraphNode, me.clientX, me.clientY)
-    })
-    cy.on('cxttap', 'edge', evt => {
-      const me = evt.originalEvent as MouseEvent
-      cbRef.current.onEdgeContextMenu(evt.target.data('_edge') as GraphEdge, me.clientX, me.clientY)
-    })
-    cy.on('tap', evt => {
-      if (evt.target === cy) cbRef.current.onCanvasTap()
-    })
-
-    // Restore every node to its user-lock state (called after drag ends).
-    const restoreUserLocks = () => {
-      cy.nodes().forEach(n => {
-        if (lockedIdsRef.current?.has(n.id())) {
-          n.lock(); n.addClass('node-locked')
-        } else {
-          n.unlock(); n.removeClass('node-locked')
+    const rfNodes: Node[] = graphData.nodes
+      .filter(n => visibleSet.has(n.host_id))
+      .map(n => {
+        const pos = userPositions.current.get(n.host_id) ?? { x: 0, y: 0 }
+        return {
+          id: n.host_id,
+          type: 'host',
+          position: pos,
+          draggable: !lockedIds?.has(n.host_id),
+          data: {
+            label: n.nickname,
+            hasCredentials: n.credential_count > 0,
+            isLocked: lockedIds?.has(n.host_id) ?? false,
+            pathHighlight: false,
+            dimmed: false,
+            _node: n,
+          } satisfies HostNodeData,
         }
       })
-    }
 
-    // Track which node is being dragged so the free handler knows its neighbors.
-    let grabbedId: string | null = null
-    cy.on('grab', 'node', evt => {
-      grabbedId = evt.target.id()
-      // Stop any running layout.
-      if (activeLayoutRef.current) {
-        activeLayoutRef.current.stop()
-        activeLayoutRef.current = null
-      }
-      // Lock every node except the one being dragged. Even if a layout is still
-      // ticking internally, locked nodes cannot be repositioned by it.
-      cy.nodes().not(`#${CSS.escape(grabbedId!)}`).lock()
-    })
-
-    // After releasing, settle direct neighbors then restore all locks.
-    cy.on('free', 'node', () => {
-      const id = grabbedId
-      grabbedId = null
-
-      if (layoutRef.current !== 'cola' || !id) {
-        // Non-cola layout or edge case: just restore locks.
-        restoreUserLocks()
-        return
-      }
-
-      // Stop any layout that fired between grab and free.
-      if (activeLayoutRef.current) {
-        activeLayoutRef.current.stop()
-        activeLayoutRef.current = null
-      }
-
-      // Neighbors are still locked from grab — unlock them so cola can settle them.
-      const neighborhood = cy.$id(id).closedNeighborhood('node')
-      neighborhood.forEach(n => {
-        // Don't unlock nodes the user has explicitly locked.
-        if (!lockedIdsRef.current?.has(n.id())) n.unlock()
-      })
-
-      const settleLayout = cy.layout({
-        name: 'cola',
-        animate: true,
-        infinite: false,
-        fit: false,
-        padding: 90,
-        nodeSpacing: 60,
-        edgeLength: 240,
-        maxSimulationTime: 1500,
-        convergenceThreshold: 0.005,
-        randomize: false,
-        avoidOverlap: true,
-      } as cytoscape.LayoutOptions)
-
-      activeLayoutRef.current = settleLayout
-      settleLayout.on('layoutstop', () => {
-        if (activeLayoutRef.current === settleLayout) activeLayoutRef.current = null
-        restoreUserLocks()
-      })
-      settleLayout.run()
-    })
-
-    cyRef.current = cy
-
-    // Resize cytoscape when container becomes visible (e.g. tab switch from display:none)
-    const ro = new ResizeObserver(entries => {
-      const { width, height } = entries[0].contentRect
-      if (width > 0 && height > 0) {
-        cy.resize()
-        if (cy.elements().length > 0) cy.fit(undefined, 90)
-      }
-    })
-    ro.observe(containerRef.current)
-
-    return () => {
-      ro.disconnect()
-      cy.destroy()
-      cyRef.current = null
-    }
-  }, [])  // mount-only — events use cbRef for freshness
-
-  // ── Rebuild/update elements when graphData or hiddenIds change ───────────────
-  useEffect(() => {
-    const cy = cyRef.current
-    if (!cy) return
-
-    const visibleNodeIds = new Set(
-      graphData.nodes
-        .filter(n => !hiddenIds.has(n.host_id))
-        .map(n => n.host_id),
-    )
-
-    // All elements that should be on canvas
-    const allNodes: cytoscape.ElementDefinition[] = graphData.nodes
-      .filter(n => visibleNodeIds.has(n.host_id))
-      .map(n => ({
-        group: 'nodes' as const,
-        data: {
-          id: n.host_id,
-          label: n.nickname,
-          hasCredentials: n.credential_count > 0,
-          _node: n,
-        },
-      }))
-
-    const allEdges: cytoscape.ElementDefinition[] = graphData.edges
-      .filter(e => visibleNodeIds.has(e.src_host_id) && visibleNodeIds.has(e.dst_host_id))
-      .map(e => ({
-        group: 'edges' as const,
-        data: {
+    const rfEdges: Edge[] = graphData.edges
+      .filter(e => visibleSet.has(e.src_host_id) && visibleSet.has(e.dst_host_id))
+      .map(e => {
+        const color = confidenceColor(e.confidence)
+        return {
           id: `${e.src_host_id}__${e.dst_host_id}`,
           source: e.src_host_id,
           target: e.dst_host_id,
-          confidence: e.confidence,
-          edgeLabel: computeEdgeLabel(e),
-          _edge: e,
-        },
-      }))
-
-    const allElements = [...allNodes, ...allEdges]
-
-    const currentNodeIds = new Set(cy.nodes().map(n => n.id()))
-    const currentEdgeIds = new Set(cy.edges().map(e => e.id()))
-
-    // Nodes currently on canvas that are no longer visible
-    const goingAway = cy.nodes().filter(n => !visibleNodeIds.has(n.id()))
-
-    // New elements not yet on canvas
-    const incomingNodes = allNodes.filter(el => !currentNodeIds.has(el.data.id as string))
-    const incomingEdges = allEdges.filter(el => !currentEdgeIds.has(el.data.id as string))
-    const incoming = [...incomingNodes, ...incomingEdges]
-
-    function fullRebuild() {
-      const c = cyRef.current
-      if (!c) return
-      c.elements().remove()
-      if (allElements.length === 0) return
-
-      const added = c.add(allElements)
-      added.style({ opacity: 0 })
-
-      if (activeLayoutRef.current) { activeLayoutRef.current.stop(); activeLayoutRef.current = null }
-      const cyLayout = c.layout(buildLayoutOptions(layoutRef.current))
-      activeLayoutRef.current = cyLayout
-      cyLayout.one('layoutstop', () => {
-        if (activeLayoutRef.current === cyLayout) activeLayoutRef.current = null
-        c.fit(undefined, 90)
-        c.elements().animate(
-          { style: { opacity: 1 } } as cytoscape.AnimationOptions,
-          { duration: 250 },
-        )
+          label: computeEdgeLabel(e),
+          labelStyle: { fill: '#8b949e', fontSize: 9 },
+          style: { stroke: color, strokeWidth: 3 },
+          markerEnd: { type: MarkerType.ArrowClosed, color, width: 16, height: 16 },
+          data: { _edge: e } satisfies ConfEdgeData,
+        }
       })
-      cyLayout.run()
-    }
 
-    if (goingAway.length > 0) {
-      // Nodes being hidden — animate them out then rebuild
-      goingAway.stop(true, false)
-      goingAway.animate(
-        { style: { opacity: 0 } } as cytoscape.AnimationOptions,
-        { duration: 200, complete: fullRebuild },
+    setNodes(rfNodes)
+    setEdges(rfEdges)
+
+    if (visibleIds.length > 0) {
+      setTimeout(() => fitView({ padding: 0.15, duration: 300 }), 50)
+    }
+  // lockedIds is intentionally excluded — handled by Effect 2
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [graphData, hiddenIds, layout])
+
+  // ── Effect 2: styling updates (filters / locks) ────────────────────────────
+  useEffect(() => {
+    const gd = graphDataRef.current
+
+    setNodes(prev => prev.map(n => {
+      const node = (n.data as unknown as HostNodeData)._node
+
+      const inPath = pathFilter?.nodeIds.has(node.host_id) ?? null
+      const pathHighlight = pathFilter ? !!inPath : false
+      const hidden = pathFilter ? !inPath : false
+
+      const nodeEdges = gd.edges.filter(
+        e => e.src_host_id === node.host_id || e.dst_host_id === node.host_id,
       )
-    } else if (incoming.length > 0 && currentNodeIds.size > 0) {
-      // Expand: only new elements — add them without disturbing existing nodes
-      const added = cy.add(incoming)
-      added.style({ opacity: 0 })
-      if (activeLayoutRef.current) { activeLayoutRef.current.stop(); activeLayoutRef.current = null }
-      const cyLayout = cy.layout(buildLayoutOptions(layoutRef.current))
-      activeLayoutRef.current = cyLayout
-      cyLayout.one('layoutstop', () => {
-        if (activeLayoutRef.current === cyLayout) activeLayoutRef.current = null
-        cy.fit(undefined, 90)
-        added.animate(
-          { style: { opacity: 1 } } as cytoscape.AnimationOptions,
-          { duration: 250 },
-        )
-      })
-      cyLayout.run()
-    } else if (currentNodeIds.size === 0) {
-      // Initial load or cleared graph
-      fullRebuild()
-    }
-    // else: no structural change (shouldn't happen in normal flow)
-  }, [graphData, hiddenIds])
+      const nodeMatchesCred = credFilter
+        ? nodeEdges.some(e => e.evidence.some(ev => ev.credential_id === credFilter.credId))
+        : null
+      const dimmed = !pathFilter && credFilter?.mode === 'highlight'
+        ? nodeMatchesCred === false
+        : false
 
-  // ── Re-run layout when layout prop changes ───────────────────────────────────
-  useEffect(() => {
-    const cy = cyRef.current
-    if (!cy || cy.elements().length === 0) return
-    if (activeLayoutRef.current) { activeLayoutRef.current.stop(); activeLayoutRef.current = null }
-    const cyLayout = cy.layout(buildLayoutOptions(layout))
-    activeLayoutRef.current = cyLayout
-    cyLayout.one('layoutstop', () => { if (activeLayoutRef.current === cyLayout) activeLayoutRef.current = null })
-    cyLayout.run()
-  }, [layout])
-
-  // ── Apply path / credential filter ──────────────────────────────────────────
-  useEffect(() => {
-    const cy = cyRef.current
-    if (!cy) return
-
-    // Reset everything
-    cy.elements().removeClass('path-highlight dimmed')
-    cy.nodes().style('display', 'element')
-    cy.edges().style('display', 'element')
-
-    if (pathFilter) {
-      // Show only path nodes and edges; hide everything else
-      cy.nodes().forEach(n => {
-        if (pathFilter.nodeIds.has(n.id())) {
-          n.addClass('path-highlight')
-        } else {
-          n.style('display', 'none')
-        }
-      })
-      cy.edges().forEach(e => {
-        if (pathFilter.edgeKeys.has(e.id())) {
-          e.addClass('path-highlight')
-        } else {
-          e.style('display', 'none')
-        }
-      })
-    } else if (credFilter) {
-      if (credFilter.mode === 'filter') {
-        // Hide edges not using this credential, hide nodes with no visible edges
-        cy.edges().forEach(e => {
-          const edge = e.data('_edge') as GraphEdge
-          const matches = edge?.evidence?.some(ev => ev.credential_id === credFilter.credId)
-          if (matches) {
-            e.addClass('path-highlight')
-          } else {
-            e.style('display', 'none')
-          }
-        })
-        cy.nodes().forEach(n => {
-          const hasVisible = n.connectedEdges().some(
-            e => e.style('display') !== 'none',
-          )
-          if (!hasVisible) n.style('display', 'none')
-        })
-      } else {
-        // Highlight mode: keep all visible, highlight matching edges + their nodes; dim rest
-        const highlightedNodeIds = new Set<string>()
-        cy.edges().forEach(e => {
-          const edge = e.data('_edge') as GraphEdge
-          const matches = edge?.evidence?.some(ev => ev.credential_id === credFilter.credId)
-          if (matches) {
-            e.addClass('path-highlight')
-            highlightedNodeIds.add(edge.src_host_id)
-            highlightedNodeIds.add(edge.dst_host_id)
-          } else {
-            e.addClass('dimmed')
-          }
-        })
-        cy.nodes().forEach(n => {
-          if (highlightedNodeIds.has(n.id())) n.addClass('path-highlight')
-          else n.addClass('dimmed')
-        })
+      return {
+        ...n,
+        hidden,
+        draggable: !lockedIds?.has(node.host_id),
+        data: {
+          ...n.data,
+          isLocked: lockedIds?.has(node.host_id) ?? false,
+          pathHighlight,
+          dimmed,
+        },
       }
-    }
-  // graphData is included so the filter re-applies after a graph rebuild
-  // (fullRebuild removes all elements, so classes/display set by this effect
-  // would be lost without re-running when graphData changes)
-  }, [pathFilter, credFilter, graphData])
+    }))
 
-  // ── Apply/clear node locks ────────────────────────────────────────────────
-  useEffect(() => {
-    const cy = cyRef.current
-    if (!cy) return
-    cy.nodes().forEach(n => {
-      if (lockedIds?.has(n.id())) {
-        n.lock()
-        n.addClass('node-locked')
-      } else {
-        n.unlock()
-        n.removeClass('node-locked')
+    setEdges(prev => prev.map(e => {
+      const edge = (e.data as unknown as ConfEdgeData)._edge
+      const edgeKey = `${edge.src_host_id}__${edge.dst_host_id}`
+
+      const inPath = pathFilter?.edgeKeys.has(edgeKey) ?? null
+      const pathHighlight = pathFilter ? !!inPath : false
+      const hidden = pathFilter
+        ? !inPath
+        : credFilter?.mode === 'filter'
+        ? !edge.evidence.some(ev => ev.credential_id === credFilter?.credId)
+        : false
+      const dimmed = !pathFilter && credFilter?.mode === 'highlight'
+        ? !edge.evidence.some(ev => ev.credential_id === credFilter?.credId)
+        : false
+
+      const color = pathHighlight ? '#f78166' : confidenceColor(edge.confidence)
+      return {
+        ...e,
+        hidden,
+        style: {
+          stroke: color,
+          strokeWidth: pathHighlight ? 5 : 3,
+          opacity: dimmed ? 0.18 : 1,
+        },
+        markerEnd: { type: MarkerType.ArrowClosed, color, width: 16, height: 16 },
       }
-    })
-  }, [lockedIds, graphData])  // re-apply after rebuild
+    }))
+  }, [pathFilter, credFilter, lockedIds, setNodes, setEdges])
 
-  // ── Animate to a focused host ─────────────────────────────────────────────
+  // ── Effect: focus a specific host ──────────────────────────────────────────
   useEffect(() => {
     if (!focusHostId) return
-    const cy = cyRef.current
-    if (!cy) return
-    const ele = cy.getElementById(focusHostId)
-    if (ele.length === 0) return
-    cy.animate({ fit: { eles: ele, padding: 160 }, duration: 400 })
-  }, [focusHostId])
+    const node = getNode(focusHostId)
+    if (node) setCenter(node.position.x + 24, node.position.y + 24, { duration: 400, zoom: 1.5 })
+  }, [focusHostId, getNode, setCenter])
 
-  return <div ref={containerRef} className={styles.canvas} />
+  // ── Event handlers ──────────────────────────────────────────────────────────
+  const handleNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+    onNodeClick((node.data as unknown as HostNodeData)._node)
+  }, [onNodeClick])
+
+  const handleEdgeClick = useCallback((_: React.MouseEvent, edge: Edge) => {
+    onEdgeClick((edge.data as unknown as ConfEdgeData)._edge)
+  }, [onEdgeClick])
+
+  const handleNodeDoubleClick = useCallback((_: React.MouseEvent, node: Node) => {
+    onNodeDoubleClick((node.data as unknown as HostNodeData)._node)
+  }, [onNodeDoubleClick])
+
+  const handleNodeCtxMenu = useCallback((evt: React.MouseEvent, node: Node) => {
+    evt.preventDefault()
+    onNodeContextMenu((node.data as unknown as HostNodeData)._node, evt.clientX, evt.clientY)
+  }, [onNodeContextMenu])
+
+  const handleEdgeCtxMenu = useCallback((evt: React.MouseEvent, edge: Edge) => {
+    evt.preventDefault()
+    onEdgeContextMenu((edge.data as unknown as ConfEdgeData)._edge, evt.clientX, evt.clientY)
+  }, [onEdgeContextMenu])
+
+  return (
+    <div className={styles.canvas}>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        onNodesChange={handleNodesChange}
+        onNodeClick={handleNodeClick}
+        onEdgeClick={handleEdgeClick}
+        onNodeDoubleClick={handleNodeDoubleClick}
+        onNodeContextMenu={handleNodeCtxMenu}
+        onEdgeContextMenu={handleEdgeCtxMenu}
+        onPaneClick={onCanvasTap}
+        colorMode="dark"
+        minZoom={0.05}
+        maxZoom={4}
+        fitView
+        fitViewOptions={{ padding: 0.15 }}
+        elevateEdgesOnSelect
+        proOptions={{ hideAttribution: true }}
+      >
+        <Background color="#21262d" gap={28} />
+        <Controls />
+      </ReactFlow>
+    </div>
+  )
+}
+
+export default function GraphCanvas(props: Props) {
+  return (
+    <ReactFlowProvider>
+      <GraphCanvasInner {...props} />
+    </ReactFlowProvider>
+  )
 }

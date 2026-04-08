@@ -7,3 +7,60 @@
   position: absolute;
   inset: 0;
 }
+
+/* ── React Flow dark theme overrides ─────────────────────────────────────── */
+
+/* Background already set via colorMode="dark" — remove default white */
+.canvas :global(.react-flow__background) {
+  background: transparent;
+}
+
+/* Controls (zoom buttons) */
+.canvas :global(.react-flow__controls) {
+  box-shadow: none;
+  border: 1px solid var(--border, #30363d);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.canvas :global(.react-flow__controls button) {
+  background: var(--bg-surface, #161b22);
+  border-color: var(--border, #30363d);
+  color: var(--text-primary, #c9d1d9);
+  width: 28px;
+  height: 28px;
+}
+
+.canvas :global(.react-flow__controls button:hover) {
+  background: var(--bg-surface-2, #1c2128);
+}
+
+.canvas :global(.react-flow__controls button svg) {
+  fill: var(--text-primary, #c9d1d9);
+}
+
+/* Edge labels */
+.canvas :global(.react-flow__edge-text) {
+  fill: #8b949e !important;
+  font-size: 9px;
+}
+
+.canvas :global(.react-flow__edge-textbg) {
+  fill: rgba(13,17,23,0.7) !important;
+}
+
+/* Remove the default selection box blue */
+.canvas :global(.react-flow__selection) {
+  border-color: var(--accent, #58a6ff);
+  background: rgba(88,166,255,0.06);
+}
+
+/* Hide handle dots — nodes use invisible handles for connection routing only */
+.canvas :global(.react-flow__handle) {
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  min-width: unset;
+  min-height: unset;
+}
