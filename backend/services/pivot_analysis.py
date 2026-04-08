@@ -1,6 +1,5 @@
-"""Pivot path analysis — BFS/DFS path finding over the aggregated edge graph."""
-from collections import defaultdict, deque
-
+"""Pivot path analysis — path finding over the aggregated edge graph using NetworkX."""
+import networkx as nx
 from sqlalchemy.orm import Session
 
 from schemas import (
@@ -23,11 +22,11 @@ def find_paths(
     """Find pivot paths between two hosts, with optional waypoint constraints."""
     graph = build_graph(db, op_id)
 
-    # Build adjacency map and edge lookup
-    adj: dict[str, list[str]] = defaultdict(list)
+    # Build directed graph and edge lookup
+    G: nx.DiGraph = nx.DiGraph()
     edge_lookup: dict[tuple[str, str], GraphEdge] = {}
     for edge in graph.edges:
-        adj[edge.src_host_id].append(edge.dst_host_id)
+        G.add_edge(edge.src_host_id, edge.dst_host_id)
         edge_lookup[(edge.src_host_id, edge.dst_host_id)] = edge
 
     src = request.src_host_id
@@ -38,9 +37,9 @@ def find_paths(
 
     # Find raw paths
     if request.mode == "shortest":
-        raw_paths = _bfs_shortest(adj, src, dst)
+        raw_paths = _nx_shortest(G, src, dst)
     else:
-        raw_paths = _dfs_all(adj, src, dst)
+        raw_paths = _nx_all(G, src, dst)
 
     # Filter by waypoint constraints
     filtered = _apply_waypoints(raw_paths, request.waypoints)
@@ -60,50 +59,27 @@ def find_paths(
     return PathFinderResponse(paths=results, truncated=truncated)
 
 
-def _bfs_shortest(
-    adj: dict[str, list[str]],
-    src: str,
-    dst: str,
-) -> list[list[str]]:
-    """BFS — returns the first (shortest) path found, or empty list."""
-    queue: deque[list[str]] = deque([[src]])
-    visited: set[str] = {src}
-    while queue:
-        path = queue.popleft()
-        if len(path) > _MAX_DEPTH + 1:
-            break
-        current = path[-1]
-        for neighbor in adj.get(current, []):
-            new_path = path + [neighbor]
-            if neighbor == dst:
-                return [new_path]
-            if neighbor not in visited:
-                visited.add(neighbor)
-                queue.append(new_path)
-    return []
+def _nx_shortest(G: nx.DiGraph, src: str, dst: str) -> list[list[str]]:
+    """Return the shortest path from src to dst, or empty list if none exists."""
+    try:
+        path = nx.shortest_path(G, src, dst)
+        if len(path) - 1 > _MAX_DEPTH:
+            return []
+        return [path]
+    except (nx.NetworkXNoPath, nx.NodeNotFound):
+        return []
 
 
-def _dfs_all(
-    adj: dict[str, list[str]],
-    src: str,
-    dst: str,
-) -> list[list[str]]:
-    """Iterative DFS — returns all simple paths up to _MAX_DEPTH hops, capped at _MAX_PATHS."""
+def _nx_all(G: nx.DiGraph, src: str, dst: str) -> list[list[str]]:
+    """Return all simple paths up to _MAX_DEPTH hops, capped at _MAX_PATHS."""
     results: list[list[str]] = []
-    # Stack entries: (current_path, visited_set)
-    stack: list[tuple[list[str], set[str]]] = [([src], {src})]
-    while stack and len(results) < _MAX_PATHS:
-        path, visited = stack.pop()
-        if len(path) > _MAX_DEPTH + 1:
-            continue
-        current = path[-1]
-        for neighbor in adj.get(current, []):
-            if neighbor == dst:
-                results.append(path + [dst])
-                if len(results) >= _MAX_PATHS:
-                    break
-            elif neighbor not in visited:
-                stack.append((path + [neighbor], visited | {neighbor}))
+    try:
+        for path in nx.all_simple_paths(G, src, dst, cutoff=_MAX_DEPTH):
+            results.append(path)
+            if len(results) >= _MAX_PATHS:
+                break
+    except (nx.NetworkXNoPath, nx.NodeNotFound):
+        pass
     return results
 
 
