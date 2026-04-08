@@ -286,35 +286,54 @@ export default function GraphCanvas({
       if (evt.target === cy) cbRef.current.onCanvasTap()
     })
 
+    // Restore every node to its user-lock state (called after drag ends).
+    const restoreUserLocks = () => {
+      cy.nodes().forEach(n => {
+        if (lockedIdsRef.current?.has(n.id())) {
+          n.lock(); n.addClass('node-locked')
+        } else {
+          n.unlock(); n.removeClass('node-locked')
+        }
+      })
+    }
+
     // Track which node is being dragged so the free handler knows its neighbors.
     let grabbedId: string | null = null
     cy.on('grab', 'node', evt => {
       grabbedId = evt.target.id()
-      // Stop any running layout immediately so nothing moves during the drag.
+      // Stop any running layout.
       if (activeLayoutRef.current) {
         activeLayoutRef.current.stop()
         activeLayoutRef.current = null
       }
+      // Lock every node except the one being dragged. Even if a layout is still
+      // ticking internally, locked nodes cannot be repositioned by it.
+      cy.nodes().not(`#${CSS.escape(grabbedId!)}`).lock()
     })
 
-    // After releasing a drag, settle only the dragged node and its direct
-    // neighbors — all other nodes stay put.
+    // After releasing, settle direct neighbors then restore all locks.
     cy.on('free', 'node', () => {
-      if (layoutRef.current !== 'cola') return
       const id = grabbedId
       grabbedId = null
-      if (!id) return
 
-      // Stop any layout that may have started between grab and free.
+      if (layoutRef.current !== 'cola' || !id) {
+        // Non-cola layout or edge case: just restore locks.
+        restoreUserLocks()
+        return
+      }
+
+      // Stop any layout that fired between grab and free.
       if (activeLayoutRef.current) {
         activeLayoutRef.current.stop()
         activeLayoutRef.current = null
       }
 
-      // Lock everything outside the immediate neighborhood so the cola settle
-      // only moves the dragged node and its direct neighbors.
+      // Neighbors are still locked from grab — unlock them so cola can settle them.
       const neighborhood = cy.$id(id).closedNeighborhood('node')
-      cy.nodes().not(neighborhood).lock()
+      neighborhood.forEach(n => {
+        // Don't unlock nodes the user has explicitly locked.
+        if (!lockedIdsRef.current?.has(n.id())) n.unlock()
+      })
 
       const settleLayout = cy.layout({
         name: 'cola',
@@ -331,21 +350,10 @@ export default function GraphCanvas({
       } as cytoscape.LayoutOptions)
 
       activeLayoutRef.current = settleLayout
-
       settleLayout.on('layoutstop', () => {
         if (activeLayoutRef.current === settleLayout) activeLayoutRef.current = null
-        // Unlock all, then re-apply user-set locks so double-click locks survive.
-        cy.nodes().forEach(n => {
-          if (lockedIdsRef.current?.has(n.id())) {
-            n.lock()
-            n.addClass('node-locked')
-          } else {
-            n.unlock()
-            n.removeClass('node-locked')
-          }
-        })
+        restoreUserLocks()
       })
-
       settleLayout.run()
     })
 
