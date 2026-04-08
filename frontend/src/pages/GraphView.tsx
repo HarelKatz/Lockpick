@@ -28,7 +28,6 @@ interface Props {
   allHosts: Host[]
   credentials: Credential[]
   focusHostId?: string | null
-  isVisible?: boolean
 }
 
 function mergeGraphResponses(existing: GraphResponse, incoming: GraphResponse): GraphResponse {
@@ -44,7 +43,7 @@ function mergeGraphResponses(existing: GraphResponse, incoming: GraphResponse): 
   }
 }
 
-export default function GraphView({ op, allHosts, credentials, focusHostId, isVisible }: Props) {
+export default function GraphView({ op, allHosts, credentials, focusHostId }: Props) {
   const [graphData, setGraphData] = useState<GraphResponse>({ nodes: [], edges: [] })
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set())
@@ -385,7 +384,6 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, isVi
             layout={layout}
             lockedIds={lockedIds}
             focusHostId={focusHostId}
-            isVisible={isVisible ?? true}
             onNodeClick={handleNodeClick}
             onEdgeClick={handleEdgeClick}
             onNodeDoubleClick={handleNodeDoubleClick}

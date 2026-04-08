@@ -10,7 +10,7 @@
  *  - Each tick → React Flow positions updated for non-dragged nodes
  *  - Drag stop → unpin, alphaTarget(0) → simulation cools and stops naturally
  */
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ReactFlow,
   Background,
@@ -265,7 +265,6 @@ interface Props {
   layout: LayoutName
   lockedIds?: Set<string>
   focusHostId?: string | null
-  isVisible?: boolean
   onNodeClick: (node: GraphNode) => void
   onEdgeClick: (edge: GraphEdge) => void
   onNodeDoubleClick: (node: GraphNode) => void
@@ -284,7 +283,6 @@ function GraphCanvasInner({
   layout,
   lockedIds,
   focusHostId,
-  isVisible,
   onNodeClick,
   onEdgeClick,
   onNodeDoubleClick,
@@ -302,8 +300,11 @@ function GraphCanvasInner({
   const simNodeMap   = useRef<Map<string, SimNode>>(new Map())
   const draggingId   = useRef<string | null>(null)
   const rafPending   = useRef(false)
-  // Set to true when fitView is needed but the container was hidden (display:none)
+  // pendingFit guards against re-fitting on resize after a fit is done.
+  // fitRequest increments each time a fit is requested; it causes the fit effect
+  // to re-run even when rfWidth is already non-zero (container was visible).
   const pendingFit   = useRef(false)
+  const [fitRequest, setFitRequest] = useState(0)
   // Reactive: updates when React Flow's ResizeObserver fires (display:none → visible)
   const rfWidth = useStore((s) => s.width)
 
@@ -439,34 +440,24 @@ function GraphCanvasInner({
     buildSim(posMap, edgePairs)
 
     // Fit the viewport when: initial graph load (0 → N nodes) or layout switch.
-    // fitView() reads container dimensions from React Flow's own ResizeObserver
-    // store — always accurate — and uses node.width/height we pre-set above,
-    // so it works immediately without waiting for React Flow to measure nodes.
     // We skip re-fitting on incremental changes (expand, credential updates) so
     // the user's zoom/pan isn't reset while they're exploring.
     //
-    // If the container is currently hidden (display:none, isVisible===false),
-    // React Flow's ResizeObserver reports 0×0 and fitView() is a no-op.
-    // In that case we set pendingFit so the isVisible effect can fit later.
+    // Both cases (container already visible, or hidden via display:none) are
+    // handled by the unified fit effect below. Setting pendingFit + incrementing
+    // fitRequest causes that effect to fire; it then waits until rfWidth > 0
+    // (i.e. React Flow's ResizeObserver has measured the container) before
+    // calling fitView. This eliminates the timing race in both scenarios.
     const wasEmpty = prevCount === 0
-    let fitRaf: number | null = null
     if ((wasEmpty || layoutChanged) && visibleIds.length > 0) {
-      if (isVisible === false) {
-        pendingFit.current = true
-      } else {
-        fitRaf = requestAnimationFrame(() => {
-          fitView({ padding: 0.15, maxZoom: 1.5 })
-        })
-      }
+      pendingFit.current = true
+      setFitRequest(r => r + 1)
     }
 
-    return () => {
-      simRef.current?.stop()
-      if (fitRaf !== null) cancelAnimationFrame(fitRaf)
-    }
+    return () => { simRef.current?.stop() }
   // lockedIds excluded — handled by Effect 2; fitView is stable (RF guarantee)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graphData, hiddenIds, layout, isVisible])
+  }, [graphData, hiddenIds, layout])
 
   // ── Effect 2: styling updates (filters / locks) — no position recompute ──────
   useEffect(() => {
@@ -523,18 +514,21 @@ function GraphCanvasInner({
     }))
   }, [pathFilter, credFilter, lockedIds, setNodes, setEdges])
 
-  // ── Deferred fit: fire as soon as the RF container gains real dimensions ────
-  // When the graph tab is hidden (display:none), React Flow stores width=0 for
-  // the container, so fitView() is a no-op. pendingFit is set in Effect 1 when
-  // fitView was needed but the container was hidden.
-  // rfWidth is sourced directly from React Flow's Zustand store — it updates
-  // exactly when the internal ResizeObserver fires after display:none is removed,
-  // eliminating the timing race of a fixed double-rAF.
+  // ── Unified fit effect ─────────────────────────────────────────────────────
+  // Fires when fitRequest increments (Effect 1 requested a fit) OR when rfWidth
+  // goes from 0 → N (container was hidden and just became visible).
+  //
+  // pendingFit guards against re-fitting on window resize after a fit is done.
+  // rfWidth === 0 guard ensures we wait until React Flow has real dimensions.
+  //
+  // Together these two variables handle both scenarios without timing guesswork:
+  //   • Container already visible: rfWidth > 0, fitRequest change fires immediately
+  //   • Container hidden (display:none): rfWidth = 0 defers until it gains dimensions
   useEffect(() => {
     if (!pendingFit.current || rfWidth === 0) return
     pendingFit.current = false
     fitView({ padding: 0.15, maxZoom: 1.5 })
-  }, [rfWidth, fitView])
+  }, [fitRequest, rfWidth, fitView])
 
   // ── Focus a specific host ──────────────────────────────────────────────────
   useEffect(() => {
