@@ -136,6 +136,9 @@ export default function GraphCanvas({
   const layoutRef = useRef<LayoutName>(layout)
   useEffect(() => { layoutRef.current = layout }, [layout])
 
+  // Track the currently-running layout so grab can stop it immediately
+  const activeLayoutRef = useRef<cytoscape.Layouts | null>(null)
+
   // Keep lockedIds fresh so the drag-settle handler can re-apply user locks
   const lockedIdsRef = useRef<Set<string> | undefined>(lockedIds)
   useEffect(() => { lockedIdsRef.current = lockedIds }, [lockedIds])
@@ -287,6 +290,11 @@ export default function GraphCanvas({
     let grabbedId: string | null = null
     cy.on('grab', 'node', evt => {
       grabbedId = evt.target.id()
+      // Stop any running layout immediately so nothing moves during the drag.
+      if (activeLayoutRef.current) {
+        activeLayoutRef.current.stop()
+        activeLayoutRef.current = null
+      }
     })
 
     // After releasing a drag, settle only the dragged node and its direct
@@ -296,6 +304,12 @@ export default function GraphCanvas({
       const id = grabbedId
       grabbedId = null
       if (!id) return
+
+      // Stop any layout that may have started between grab and free.
+      if (activeLayoutRef.current) {
+        activeLayoutRef.current.stop()
+        activeLayoutRef.current = null
+      }
 
       // Lock everything outside the immediate neighborhood so the cola settle
       // only moves the dragged node and its direct neighbors.
@@ -316,7 +330,10 @@ export default function GraphCanvas({
         avoidOverlap: true,
       } as cytoscape.LayoutOptions)
 
+      activeLayoutRef.current = settleLayout
+
       settleLayout.on('layoutstop', () => {
+        if (activeLayoutRef.current === settleLayout) activeLayoutRef.current = null
         // Unlock all, then re-apply user-set locks so double-click locks survive.
         cy.nodes().forEach(n => {
           if (lockedIdsRef.current?.has(n.id())) {
@@ -411,8 +428,11 @@ export default function GraphCanvas({
       const added = c.add(allElements)
       added.style({ opacity: 0 })
 
+      if (activeLayoutRef.current) { activeLayoutRef.current.stop(); activeLayoutRef.current = null }
       const cyLayout = c.layout(buildLayoutOptions(layoutRef.current))
+      activeLayoutRef.current = cyLayout
       cyLayout.one('layoutstop', () => {
+        if (activeLayoutRef.current === cyLayout) activeLayoutRef.current = null
         c.fit(undefined, 90)
         c.elements().animate(
           { style: { opacity: 1 } } as cytoscape.AnimationOptions,
@@ -433,8 +453,11 @@ export default function GraphCanvas({
       // Expand: only new elements — add them without disturbing existing nodes
       const added = cy.add(incoming)
       added.style({ opacity: 0 })
+      if (activeLayoutRef.current) { activeLayoutRef.current.stop(); activeLayoutRef.current = null }
       const cyLayout = cy.layout(buildLayoutOptions(layoutRef.current))
+      activeLayoutRef.current = cyLayout
       cyLayout.one('layoutstop', () => {
+        if (activeLayoutRef.current === cyLayout) activeLayoutRef.current = null
         cy.fit(undefined, 90)
         added.animate(
           { style: { opacity: 1 } } as cytoscape.AnimationOptions,
@@ -453,7 +476,11 @@ export default function GraphCanvas({
   useEffect(() => {
     const cy = cyRef.current
     if (!cy || cy.elements().length === 0) return
-    cy.layout(buildLayoutOptions(layout)).run()
+    if (activeLayoutRef.current) { activeLayoutRef.current.stop(); activeLayoutRef.current = null }
+    const cyLayout = cy.layout(buildLayoutOptions(layout))
+    activeLayoutRef.current = cyLayout
+    cyLayout.one('layoutstop', () => { if (activeLayoutRef.current === cyLayout) activeLayoutRef.current = null })
+    cyLayout.run()
   }, [layout])
 
   // ── Apply path / credential filter ──────────────────────────────────────────
