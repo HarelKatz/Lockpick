@@ -11,13 +11,18 @@ import {
   useNodesState,
   useEdgesState,
   useReactFlow,
+  useNodesInitialized,
+  useInternalNode,
   ReactFlowProvider,
   MarkerType,
   Position,
   Handle,
+  BaseEdge,
+  getStraightPath,
   type Node,
   type Edge,
   type NodeProps,
+  type EdgeProps,
   type OnNodesChange,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
@@ -46,7 +51,56 @@ interface ConfEdgeData {
   _edge: GraphEdge
 }
 
-// ── Custom node component ───────────────────────────────────────────────────────
+// ── Floating edge — draws a straight line between circular node boundaries ──────
+// Uses useInternalNode to read the actual rendered node positions and computes
+// the intersection with the circle (radius 27px) so the arrow lands exactly on
+// the node border regardless of direction.
+
+const NODE_RADIUS = 27
+
+function FloatingEdge({ id, source, target, style, markerEnd, label, labelStyle }: EdgeProps) {
+  const sourceNode = useInternalNode(source)
+  const targetNode = useInternalNode(target)
+
+  if (!sourceNode || !targetNode) return null
+
+  // Node positions are top-left; centre = pos + 24 (half of 48px node)
+  const sx = sourceNode.internals.positionAbsolute.x + 24
+  const sy = sourceNode.internals.positionAbsolute.y + 24
+  const tx = targetNode.internals.positionAbsolute.x + 24
+  const ty = targetNode.internals.positionAbsolute.y + 24
+
+  const dx = tx - sx
+  const dy = ty - sy
+  const len = Math.sqrt(dx * dx + dy * dy) || 1
+
+  // Start and end on the circle boundaries (subtract a little from end for arrowhead)
+  const startX = sx + (dx / len) * NODE_RADIUS
+  const startY = sy + (dy / len) * NODE_RADIUS
+  const endX   = tx - (dx / len) * (NODE_RADIUS + 2)
+  const endY   = ty - (dy / len) * (NODE_RADIUS + 2)
+
+  const [edgePath, labelX, labelY] = getStraightPath({
+    sourceX: startX, sourceY: startY,
+    targetX: endX,   targetY: endY,
+  })
+
+  return (
+    <BaseEdge
+      id={id}
+      path={edgePath}
+      style={style}
+      markerEnd={markerEnd}
+      label={label}
+      labelX={labelX}
+      labelY={labelY}
+      labelStyle={labelStyle}
+      interactionWidth={12}
+    />
+  )
+}
+
+// ── Custom host node ────────────────────────────────────────────────────────────
 
 function HostNode({ data: raw, selected }: NodeProps) {
   const data = raw as unknown as HostNodeData
@@ -62,23 +116,22 @@ function HostNode({ data: raw, selected }: NodeProps) {
     ? '#d29922'
     : '#3d8bcd'
 
-  const borderWidth = pathHighlight || selected || isLocked ? 3 : 2
-
   return (
     <div style={{
       width: 48,
       height: 48,
       borderRadius: '50%',
       background: pathHighlight ? '#2d1f1f' : selected ? '#1f2d3d' : '#1a2332',
-      border: `${borderWidth}px solid ${borderColor}`,
+      border: `${pathHighlight || selected || isLocked ? 3 : 2}px solid ${borderColor}`,
       opacity: dimmed ? 0.18 : 1,
       cursor: 'pointer',
       position: 'relative',
     }}>
+      {/* Invisible centered handles — required by React Flow but unused for routing */}
       <Handle type="target" position={Position.Left}
-        style={{ opacity: 0, pointerEvents: 'none', width: 1, height: 1 }} />
+        style={{ left: '50%', top: '50%', opacity: 0, width: 0, height: 0, minWidth: 0, minHeight: 0, transform: 'none' }} />
       <Handle type="source" position={Position.Right}
-        style={{ opacity: 0, pointerEvents: 'none', width: 1, height: 1 }} />
+        style={{ left: '50%', top: '50%', opacity: 0, width: 0, height: 0, minWidth: 0, minHeight: 0, transform: 'none' }} />
       <div style={{
         position: 'absolute',
         top: '100%',
@@ -101,6 +154,7 @@ function HostNode({ data: raw, selected }: NodeProps) {
 }
 
 const nodeTypes = { host: HostNode }
+const edgeTypes = { floating: FloatingEdge }
 
 // ── Layout computation ──────────────────────────────────────────────────────────
 
@@ -112,10 +166,8 @@ function computeForceLayout(nodeIds: string[], edgePairs: EdgePair[], spacing = 
 
   interface SimNode extends d3Force.SimulationNodeDatum { id: string }
   const simNodes: SimNode[] = nodeIds.map(id => ({ id }))
-
   const simLinks: d3Force.SimulationLinkDatum<SimNode>[] = edgePairs.map(e => ({
-    source: e.source,
-    target: e.target,
+    source: e.source, target: e.target,
   }))
 
   const area = Math.max(600, nodeIds.length * spacing)
@@ -241,6 +293,7 @@ function GraphCanvasInner({
   onCanvasTap,
 }: Props) {
   const { fitView, setCenter, getNode } = useReactFlow()
+  const nodesInitialized = useNodesInitialized()
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges] = useEdgesState<Edge>([])
 
@@ -250,10 +303,18 @@ function GraphCanvasInner({
   const graphDataRef = useRef(graphData)
   useEffect(() => { graphDataRef.current = graphData }, [graphData])
 
-  // Persist layout name for comparison
   const prevLayoutRef = useRef<LayoutName>(layout)
 
-  // ── Effect: track node drag positions ────────────────────────────────────────
+  // ── fitView: trigger only after React Flow has measured all nodes ─────────────
+  const pendingFitView = useRef(false)
+  useEffect(() => {
+    if (nodesInitialized && pendingFitView.current) {
+      pendingFitView.current = false
+      fitView({ padding: 0.15, duration: 300 })
+    }
+  }, [nodesInitialized, fitView])
+
+  // ── Track node drag positions ─────────────────────────────────────────────────
   const handleNodesChange: OnNodesChange = useCallback((changes) => {
     for (const change of changes) {
       if (change.type === 'position' && change.position) {
@@ -262,6 +323,47 @@ function GraphCanvasInner({
     }
     onNodesChange(changes)
   }, [onNodesChange])
+
+  // ── Neo4j-style drag: connected neighbors spring along with the dragged node ──
+  const prevDragPos = useRef<{ x: number; y: number } | null>(null)
+
+  const handleNodeDragStart = useCallback((_: React.MouseEvent, node: Node) => {
+    prevDragPos.current = { x: node.position.x, y: node.position.y }
+  }, [])
+
+  const handleNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
+    if (!prevDragPos.current) {
+      prevDragPos.current = { x: node.position.x, y: node.position.y }
+      return
+    }
+    const dx = node.position.x - prevDragPos.current.x
+    const dy = node.position.y - prevDragPos.current.y
+    prevDragPos.current = { x: node.position.x, y: node.position.y }
+
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return
+
+    // Collect direct neighbors from graph data
+    const connectedIds = new Set<string>()
+    for (const e of graphDataRef.current.edges) {
+      if (e.src_host_id === node.id) connectedIds.add(e.dst_host_id)
+      if (e.dst_host_id === node.id) connectedIds.add(e.src_host_id)
+    }
+    if (connectedIds.size === 0) return
+
+    // Spring factor: neighbors move 50% of the drag delta
+    const SPRING = 0.5
+    setNodes(prev => prev.map(n => {
+      if (!connectedIds.has(n.id)) return n
+      const newPos = { x: n.position.x + dx * SPRING, y: n.position.y + dy * SPRING }
+      userPositions.current.set(n.id, newPos)
+      return { ...n, position: newPos }
+    }))
+  }, [setNodes])
+
+  const handleNodeDragStop = useCallback((_: React.MouseEvent, node: Node) => {
+    prevDragPos.current = null
+    userPositions.current.set(node.id, node.position)
+  }, [])
 
   // ── Effect 1: structural rebuild (layout / graphData / hiddenIds) ─────────────
   useEffect(() => {
@@ -278,36 +380,32 @@ function GraphCanvasInner({
       .filter(e => visibleSet.has(e.src_host_id) && visibleSet.has(e.dst_host_id))
       .map(e => ({ source: e.src_host_id, target: e.dst_host_id }))
 
-    // Only compute layout for nodes without a saved position
+    // Only compute positions for nodes that don't already have one
     const needsLayout = visibleIds.filter(id => !userPositions.current.has(id))
     const computed = needsLayout.length > 0 || layoutChanged
       ? computeLayout(layout, layoutChanged ? visibleIds : needsLayout, edgePairs)
       : new Map<string, { x: number; y: number }>()
 
-    // Merge computed positions into user position store
     for (const [id, pos] of computed) {
       if (!userPositions.current.has(id) || layoutChanged) userPositions.current.set(id, pos)
     }
 
     const rfNodes: Node[] = graphData.nodes
       .filter(n => visibleSet.has(n.host_id))
-      .map(n => {
-        const pos = userPositions.current.get(n.host_id) ?? { x: 0, y: 0 }
-        return {
-          id: n.host_id,
-          type: 'host',
-          position: pos,
-          draggable: !lockedIds?.has(n.host_id),
-          data: {
-            label: n.nickname,
-            hasCredentials: n.credential_count > 0,
-            isLocked: lockedIds?.has(n.host_id) ?? false,
-            pathHighlight: false,
-            dimmed: false,
-            _node: n,
-          } satisfies HostNodeData,
-        }
-      })
+      .map(n => ({
+        id: n.host_id,
+        type: 'host',
+        position: userPositions.current.get(n.host_id) ?? { x: 0, y: 0 },
+        draggable: !lockedIds?.has(n.host_id),
+        data: {
+          label: n.nickname,
+          hasCredentials: n.credential_count > 0,
+          isLocked: lockedIds?.has(n.host_id) ?? false,
+          pathHighlight: false,
+          dimmed: false,
+          _node: n,
+        } satisfies HostNodeData,
+      }))
 
     const rfEdges: Edge[] = graphData.edges
       .filter(e => visibleSet.has(e.src_host_id) && visibleSet.has(e.dst_host_id))
@@ -315,6 +413,7 @@ function GraphCanvasInner({
         const color = confidenceColor(e.confidence)
         return {
           id: `${e.src_host_id}__${e.dst_host_id}`,
+          type: 'floating',
           source: e.src_host_id,
           target: e.dst_host_id,
           label: computeEdgeLabel(e),
@@ -328,10 +427,8 @@ function GraphCanvasInner({
     setNodes(rfNodes)
     setEdges(rfEdges)
 
-    if (visibleIds.length > 0) {
-      setTimeout(() => fitView({ padding: 0.15, duration: 300 }), 50)
-    }
-  // lockedIds is intentionally excluded — handled by Effect 2
+    if (visibleIds.length > 0) pendingFitView.current = true
+  // lockedIds excluded — handled by Effect 2
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graphData, hiddenIds, layout])
 
@@ -341,7 +438,6 @@ function GraphCanvasInner({
 
     setNodes(prev => prev.map(n => {
       const node = (n.data as unknown as HostNodeData)._node
-
       const inPath = pathFilter?.nodeIds.has(node.host_id) ?? null
       const pathHighlight = pathFilter ? !!inPath : false
       const hidden = pathFilter ? !inPath : false
@@ -372,7 +468,6 @@ function GraphCanvasInner({
     setEdges(prev => prev.map(e => {
       const edge = (e.data as unknown as ConfEdgeData)._edge
       const edgeKey = `${edge.src_host_id}__${edge.dst_host_id}`
-
       const inPath = pathFilter?.edgeKeys.has(edgeKey) ?? null
       const pathHighlight = pathFilter ? !!inPath : false
       const hidden = pathFilter
@@ -388,17 +483,13 @@ function GraphCanvasInner({
       return {
         ...e,
         hidden,
-        style: {
-          stroke: color,
-          strokeWidth: pathHighlight ? 5 : 3,
-          opacity: dimmed ? 0.18 : 1,
-        },
+        style: { stroke: color, strokeWidth: pathHighlight ? 5 : 3, opacity: dimmed ? 0.18 : 1 },
         markerEnd: { type: MarkerType.ArrowClosed, color, width: 16, height: 16 },
       }
     }))
   }, [pathFilter, credFilter, lockedIds, setNodes, setEdges])
 
-  // ── Effect: focus a specific host ──────────────────────────────────────────
+  // ── Focus a specific host ──────────────────────────────────────────────────
   useEffect(() => {
     if (!focusHostId) return
     const node = getNode(focusHostId)
@@ -434,18 +525,20 @@ function GraphCanvasInner({
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={handleNodesChange}
         onNodeClick={handleNodeClick}
         onEdgeClick={handleEdgeClick}
         onNodeDoubleClick={handleNodeDoubleClick}
         onNodeContextMenu={handleNodeCtxMenu}
         onEdgeContextMenu={handleEdgeCtxMenu}
+        onNodeDragStart={handleNodeDragStart}
+        onNodeDrag={handleNodeDrag}
+        onNodeDragStop={handleNodeDragStop}
         onPaneClick={onCanvasTap}
         colorMode="dark"
         minZoom={0.05}
         maxZoom={4}
-        fitView
-        fitViewOptions={{ padding: 0.15 }}
         elevateEdgesOnSelect
         proOptions={{ hideAttribution: true }}
       >
