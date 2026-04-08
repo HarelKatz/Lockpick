@@ -290,7 +290,7 @@ function GraphCanvasInner({
   onEdgeContextMenu,
   onCanvasTap,
 }: Props) {
-  const { setCenter, getNode, fitView } = useReactFlow()
+  const { setCenter, getNode, setViewport } = useReactFlow()
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges] = useEdgesState<Edge>([])
 
@@ -305,8 +305,9 @@ function GraphCanvasInner({
   // to re-run even when rfWidth is already non-zero (container was visible).
   const pendingFit   = useRef(false)
   const [fitRequest, setFitRequest] = useState(0)
-  // Reactive: updates when React Flow's ResizeObserver fires (display:none → visible)
-  const rfWidth = useStore((s) => s.width)
+  // Reactive: both update when React Flow's ResizeObserver fires (display:none → visible)
+  const rfWidth  = useStore((s) => s.width)
+  const rfHeight = useStore((s) => s.height)
 
   // Last known RF positions (top-left); source of truth between re-renders
   const savedPos = useRef<Map<string, { x: number; y: number }>>(new Map())
@@ -365,6 +366,42 @@ function GraphCanvasInner({
 
     simRef.current = sim
   }, [flushSimPositions])
+
+  // ── Manual viewport fit ─────────────────────────────────────────────────────
+  // Bypasses fitView() which relies on React Flow's internal per-node ResizeObserver
+  // measurements (node.measured.width/height). Those measurements are 0×0 when nodes
+  // render inside a hidden container, making fitView a silent no-op regardless of timing.
+  //
+  // Instead we compute the viewport directly from:
+  //   • savedPos.current — node top-left positions we computed ourselves
+  //   • hardcoded 48px node size (matches the HostNode render)
+  //   • rfWidth/rfHeight — container dimensions from RF's store (reliable)
+  const fitAll = useCallback((): boolean => {
+    const positions = Array.from(savedPos.current.values())
+    if (positions.length === 0 || rfWidth === 0 || rfHeight === 0) return false
+
+    const NODE_W = 48
+    const NODE_H = 48 + 30  // circle + label clearance below
+
+    const minX = Math.min(...positions.map(p => p.x))
+    const minY = Math.min(...positions.map(p => p.y))
+    const maxX = Math.max(...positions.map(p => p.x + NODE_W))
+    const maxY = Math.max(...positions.map(p => p.y + NODE_H))
+    const gW = maxX - minX
+    const gH = maxY - minY
+    if (gW === 0 || gH === 0) return false
+
+    const pad = 0.15
+    const zoom = Math.min(
+      (rfWidth  * (1 - 2 * pad)) / gW,
+      (rfHeight * (1 - 2 * pad)) / gH,
+      1.5,   // maxZoom
+    )
+    const x = rfWidth  / 2 - (minX + gW / 2) * zoom
+    const y = rfHeight / 2 - (minY + gH / 2) * zoom
+    setViewport({ x, y, zoom })
+    return true
+  }, [rfWidth, rfHeight, setViewport])
 
   // ── Effect 1: structural rebuild (layout / graphData / hiddenIds) ─────────────
   useEffect(() => {
@@ -519,16 +556,13 @@ function GraphCanvasInner({
   // goes from 0 → N (container was hidden and just became visible).
   //
   // pendingFit guards against re-fitting on window resize after a fit is done.
-  // rfWidth === 0 guard ensures we wait until React Flow has real dimensions.
+  // rfWidth === 0 guard ensures we wait until the container has real dimensions.
   //
-  // Together these two variables handle both scenarios without timing guesswork:
-  //   • Container already visible: rfWidth > 0, fitRequest change fires immediately
-  //   • Container hidden (display:none): rfWidth = 0 defers until it gains dimensions
+  // fitAll() is used instead of fitView() — see its comment above for why.
   useEffect(() => {
     if (!pendingFit.current || rfWidth === 0) return
-    pendingFit.current = false
-    fitView({ padding: 0.15, maxZoom: 1.5 })
-  }, [fitRequest, rfWidth, fitView])
+    if (fitAll()) pendingFit.current = false
+  }, [fitRequest, rfWidth, fitAll])
 
   // ── Focus a specific host ──────────────────────────────────────────────────
   useEffect(() => {
