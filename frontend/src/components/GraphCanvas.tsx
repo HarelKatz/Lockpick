@@ -2,6 +2,13 @@
  * React Flow graph canvas.
  * Purely driven by props — parent owns graphData and hiddenIds.
  * Events bubble up via callbacks.
+ *
+ * Physics model (mirrors Neo4j Browser):
+ *  - Simulation is initialized from the computed layout but starts STOPPED (alpha=0)
+ *  - Drag start → alphaTarget(0.3).restart() wakes the simulation; dragged node is
+ *    pinned via fx/fy so spring forces pull its neighbors toward it
+ *  - Each tick → React Flow positions updated for non-dragged nodes
+ *  - Drag stop → unpin, alphaTarget(0) → simulation cools and stops naturally
  */
 import { useCallback, useEffect, useRef } from 'react'
 import {
@@ -51,10 +58,15 @@ interface ConfEdgeData {
   _edge: GraphEdge
 }
 
-// ── Floating edge — draws a straight line between circular node boundaries ──────
-// Uses useInternalNode to read the actual rendered node positions and computes
-// the intersection with the circle (radius 27px) so the arrow lands exactly on
-// the node border regardless of direction.
+// d3-force simulation node — uses CENTER coordinates (RF position = center - 24)
+interface SimNode extends d3Force.SimulationNodeDatum {
+  id: string
+}
+
+// ── Floating edge ───────────────────────────────────────────────────────────────
+// Reads actual node positions via useInternalNode and draws a straight line
+// between the circular node boundaries, so the arrow always lands correctly
+// regardless of the direction between the two nodes.
 
 const NODE_RADIUS = 27
 
@@ -64,7 +76,7 @@ function FloatingEdge({ id, source, target, style, markerEnd, label, labelStyle 
 
   if (!sourceNode || !targetNode) return null
 
-  // Node positions are top-left; centre = pos + 24 (half of 48px node)
+  // positionAbsolute is the top-left corner; centre = pos + 24 (half of 48px)
   const sx = sourceNode.internals.positionAbsolute.x + 24
   const sy = sourceNode.internals.positionAbsolute.y + 24
   const tx = targetNode.internals.positionAbsolute.x + 24
@@ -74,7 +86,6 @@ function FloatingEdge({ id, source, target, style, markerEnd, label, labelStyle 
   const dy = ty - sy
   const len = Math.sqrt(dx * dx + dy * dy) || 1
 
-  // Start and end on the circle boundaries (subtract a little from end for arrowhead)
   const startX = sx + (dx / len) * NODE_RADIUS
   const startY = sy + (dy / len) * NODE_RADIUS
   const endX   = tx - (dx / len) * (NODE_RADIUS + 2)
@@ -127,7 +138,7 @@ function HostNode({ data: raw, selected }: NodeProps) {
       cursor: 'pointer',
       position: 'relative',
     }}>
-      {/* Invisible centered handles — required by React Flow but unused for routing */}
+      {/* Invisible centered handles — needed by React Flow but ignored by FloatingEdge */}
       <Handle type="target" position={Position.Left}
         style={{ left: '50%', top: '50%', opacity: 0, width: 0, height: 0, minWidth: 0, minHeight: 0, transform: 'none' }} />
       <Handle type="source" position={Position.Right}
@@ -156,87 +167,74 @@ function HostNode({ data: raw, selected }: NodeProps) {
 const nodeTypes = { host: HostNode }
 const edgeTypes = { floating: FloatingEdge }
 
-// ── Layout computation ──────────────────────────────────────────────────────────
+// ── Deterministic initial layout ────────────────────────────────────────────────
+// Used only for the first placement. After that, drag physics take over.
 
 type EdgePair = { source: string; target: string }
-type PosMap = Map<string, { x: number; y: number }>
+type PosMap   = Map<string, { x: number; y: number }>
 
-function computeForceLayout(nodeIds: string[], edgePairs: EdgePair[], spacing = 200): PosMap {
+function initialLayout(layout: LayoutName, nodeIds: string[], edgePairs: EdgePair[]): PosMap {
   if (nodeIds.length === 0) return new Map()
 
-  interface SimNode extends d3Force.SimulationNodeDatum { id: string }
+  switch (layout) {
+    case 'breadthfirst': return dagreLayout(nodeIds, edgePairs)
+    case 'grid':         return gridLayout(nodeIds)
+    case 'circle':       return circleLayout(nodeIds)
+    default: {
+      // Force-directed: run synchronously for instant placement
+      const spacing = layout === 'cose-bilkent' ? 240 : 200
+      return forceLayout(nodeIds, edgePairs, spacing)
+    }
+  }
+}
+
+function forceLayout(nodeIds: string[], edgePairs: EdgePair[], spacing: number): PosMap {
   const simNodes: SimNode[] = nodeIds.map(id => ({ id }))
   const simLinks: d3Force.SimulationLinkDatum<SimNode>[] = edgePairs.map(e => ({
     source: e.source, target: e.target,
   }))
-
-  const area = Math.max(600, nodeIds.length * spacing)
-  const cx = area / 2, cy = area / 2
-
+  const cx = (nodeIds.length * spacing) / 2
   const sim = d3Force.forceSimulation<SimNode>(simNodes)
     .force('link', d3Force.forceLink<SimNode, d3Force.SimulationLinkDatum<SimNode>>(simLinks)
       .id(d => d.id).distance(spacing).strength(0.5))
     .force('charge', d3Force.forceManyBody<SimNode>().strength(-500))
-    .force('center', d3Force.forceCenter<SimNode>(cx, cy))
+    .force('center', d3Force.forceCenter<SimNode>(cx, cx))
     .force('collide', d3Force.forceCollide<SimNode>(50))
     .stop()
-
   for (let i = 0; i < 300; i++) sim.tick()
-
   const result: PosMap = new Map()
-  simNodes.forEach(n => result.set(n.id, { x: n.x ?? cx, y: n.y ?? cy }))
+  simNodes.forEach(n => result.set(n.id, { x: (n.x ?? cx) - 24, y: (n.y ?? cx) - 24 }))
   return result
 }
 
-function computeDagreLayout(nodeIds: string[], edgePairs: EdgePair[]): PosMap {
-  if (nodeIds.length === 0) return new Map()
+function dagreLayout(nodeIds: string[], edgePairs: EdgePair[]): PosMap {
   const g = new dagre.graphlib.Graph()
   g.setGraph({ rankdir: 'LR', ranksep: 120, nodesep: 80, marginx: 60, marginy: 60 })
   g.setDefaultEdgeLabel(() => ({}))
   const nodeSet = new Set(nodeIds)
   nodeIds.forEach(id => g.setNode(id, { width: 60, height: 60 }))
-  edgePairs.forEach(e => {
-    if (nodeSet.has(e.source) && nodeSet.has(e.target)) g.setEdge(e.source, e.target)
-  })
+  edgePairs.forEach(e => { if (nodeSet.has(e.source) && nodeSet.has(e.target)) g.setEdge(e.source, e.target) })
   dagre.layout(g)
   const result: PosMap = new Map()
-  nodeIds.forEach(id => {
-    const pos = g.node(id)
-    if (pos) result.set(id, { x: pos.x - 24, y: pos.y - 24 })
-  })
+  nodeIds.forEach(id => { const p = g.node(id); if (p) result.set(id, { x: p.x - 24, y: p.y - 24 }) })
   return result
 }
 
-function computeGridLayout(nodeIds: string[]): PosMap {
+function gridLayout(nodeIds: string[]): PosMap {
   const cols = Math.max(1, Math.ceil(Math.sqrt(nodeIds.length)))
   const result: PosMap = new Map()
-  nodeIds.forEach((id, i) => result.set(id, {
-    x: (i % cols) * 140 + 60,
-    y: Math.floor(i / cols) * 140 + 60,
-  }))
+  nodeIds.forEach((id, i) => result.set(id, { x: (i % cols) * 140 + 60, y: Math.floor(i / cols) * 140 + 60 }))
   return result
 }
 
-function computeCircleLayout(nodeIds: string[]): PosMap {
+function circleLayout(nodeIds: string[]): PosMap {
   const r = Math.max(140, nodeIds.length * 28)
-  const cx = r + 80, cy = r + 80
   const result: PosMap = new Map()
   nodeIds.forEach((id, i) => {
-    const angle = (i / nodeIds.length) * 2 * Math.PI - Math.PI / 2
-    result.set(id, { x: cx + r * Math.cos(angle) - 24, y: cy + r * Math.sin(angle) - 24 })
+    const a = (i / nodeIds.length) * 2 * Math.PI - Math.PI / 2
+    result.set(id, { x: r + 80 + r * Math.cos(a) - 24, y: r + 80 + r * Math.sin(a) - 24 })
   })
   return result
-}
-
-function computeLayout(layout: LayoutName, nodeIds: string[], edgePairs: EdgePair[]): PosMap {
-  switch (layout) {
-    case 'breadthfirst': return computeDagreLayout(nodeIds, edgePairs)
-    case 'grid':         return computeGridLayout(nodeIds)
-    case 'circle':       return computeCircleLayout(nodeIds)
-    case 'cose-bilkent': return computeForceLayout(nodeIds, edgePairs, 240)
-    case 'cola':
-    default:             return computeForceLayout(nodeIds, edgePairs, 200)
-  }
 }
 
 // ── Edge helpers ────────────────────────────────────────────────────────────────
@@ -275,7 +273,7 @@ interface Props {
   onCanvasTap: () => void
 }
 
-// ── Inner component (needs ReactFlowProvider above) ─────────────────────────────
+// ── Inner component ─────────────────────────────────────────────────────────────
 
 function GraphCanvasInner({
   graphData,
@@ -297,15 +295,23 @@ function GraphCanvasInner({
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges] = useEdgesState<Edge>([])
 
-  // Persist drag positions between renders
-  const userPositions = useRef<Map<string, { x: number; y: number }>>(new Map())
-  // Keep graphData accessible inside filter effect without adding it to deps
+  // ── Physics simulation state ────────────────────────────────────────────────
+  // Simulation uses CENTER coordinates; RF position = center - 24
+  const simRef       = useRef<d3Force.Simulation<SimNode, never> | null>(null)
+  const simNodeMap   = useRef<Map<string, SimNode>>(new Map())
+  const draggingId   = useRef<string | null>(null)
+  const rafPending   = useRef(false)
+
+  // Last known RF positions (top-left); source of truth between re-renders
+  const savedPos = useRef<Map<string, { x: number; y: number }>>(new Map())
+
+  // graphData ref for callbacks that can't list graphData as dep
   const graphDataRef = useRef(graphData)
   useEffect(() => { graphDataRef.current = graphData }, [graphData])
 
   const prevLayoutRef = useRef<LayoutName>(layout)
 
-  // ── fitView: trigger only after React Flow has measured all nodes ─────────────
+  // ── fitView after React Flow measures nodes ─────────────────────────────────
   const pendingFitView = useRef(false)
   useEffect(() => {
     if (nodesInitialized && pendingFitView.current) {
@@ -314,62 +320,59 @@ function GraphCanvasInner({
     }
   }, [nodesInitialized, fitView])
 
-  // ── Track node drag positions ─────────────────────────────────────────────────
-  const handleNodesChange: OnNodesChange = useCallback((changes) => {
-    for (const change of changes) {
-      if (change.type === 'position' && change.position) {
-        userPositions.current.set(change.id, change.position)
-      }
-    }
-    onNodesChange(changes)
-  }, [onNodesChange])
-
-  // ── Neo4j-style drag: connected neighbors spring along with the dragged node ──
-  const prevDragPos = useRef<{ x: number; y: number } | null>(null)
-
-  const handleNodeDragStart = useCallback((_: React.MouseEvent, node: Node) => {
-    prevDragPos.current = { x: node.position.x, y: node.position.y }
-  }, [])
-
-  const handleNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
-    if (!prevDragPos.current) {
-      prevDragPos.current = { x: node.position.x, y: node.position.y }
-      return
-    }
-    const dx = node.position.x - prevDragPos.current.x
-    const dy = node.position.y - prevDragPos.current.y
-    prevDragPos.current = { x: node.position.x, y: node.position.y }
-
-    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return
-
-    // Collect direct neighbors from graph data
-    const connectedIds = new Set<string>()
-    for (const e of graphDataRef.current.edges) {
-      if (e.src_host_id === node.id) connectedIds.add(e.dst_host_id)
-      if (e.dst_host_id === node.id) connectedIds.add(e.src_host_id)
-    }
-    if (connectedIds.size === 0) return
-
-    // Spring factor: neighbors move 50% of the drag delta
-    const SPRING = 0.5
+  // ── Simulation tick → push positions into React Flow ───────────────────────
+  const flushSimPositions = useCallback(() => {
+    rafPending.current = false
     setNodes(prev => prev.map(n => {
-      if (!connectedIds.has(n.id)) return n
-      const newPos = { x: n.position.x + dx * SPRING, y: n.position.y + dy * SPRING }
-      userPositions.current.set(n.id, newPos)
-      return { ...n, position: newPos }
+      if (n.id === draggingId.current) return n  // RF owns the dragged node
+      const sn = simNodeMap.current.get(n.id)
+      if (!sn || sn.x === undefined || sn.y === undefined) return n
+      const pos = { x: sn.x - 24, y: sn.y - 24 }
+      savedPos.current.set(n.id, pos)
+      return { ...n, position: pos }
     }))
   }, [setNodes])
 
-  const handleNodeDragStop = useCallback((_: React.MouseEvent, node: Node) => {
-    prevDragPos.current = null
-    userPositions.current.set(node.id, node.position)
-  }, [])
+  // ── Build / rebuild the physics simulation ──────────────────────────────────
+  const buildSim = useCallback((
+    nodePositions: Map<string, { x: number; y: number }>,
+    edgePairs: EdgePair[],
+  ) => {
+    simRef.current?.stop()
+
+    const simNodes: SimNode[] = Array.from(nodePositions.entries()).map(([id, pos]) => ({
+      id,
+      x: pos.x + 24,  // convert RF top-left → d3 center
+      y: pos.y + 24,
+    }))
+    simNodeMap.current = new Map(simNodes.map(n => [n.id, n]))
+
+    const sim = d3Force.forceSimulation<SimNode>(simNodes)
+      .force('link',
+        d3Force.forceLink<SimNode, d3Force.SimulationLinkDatum<SimNode>>(
+          edgePairs.map(e => ({ source: e.source, target: e.target }))
+        ).id(d => d.id).distance(180).strength(0.5)
+      )
+      .force('charge', d3Force.forceManyBody<SimNode>().strength(-350))
+      .force('collide', d3Force.forceCollide<SimNode>(52))
+      .alpha(0)   // start stopped — only wakes on drag
+      .alphaDecay(0.04)
+      .on('tick', () => {
+        if (!rafPending.current) {
+          rafPending.current = true
+          requestAnimationFrame(flushSimPositions)
+        }
+      })
+
+    simRef.current = sim
+  }, [flushSimPositions])
 
   // ── Effect 1: structural rebuild (layout / graphData / hiddenIds) ─────────────
   useEffect(() => {
     const layoutChanged = prevLayoutRef.current !== layout
     prevLayoutRef.current = layout
-    if (layoutChanged) userPositions.current.clear()
+
+    if (layoutChanged) savedPos.current.clear()
 
     const visibleIds = graphData.nodes
       .filter(n => !hiddenIds.has(n.host_id))
@@ -380,22 +383,22 @@ function GraphCanvasInner({
       .filter(e => visibleSet.has(e.src_host_id) && visibleSet.has(e.dst_host_id))
       .map(e => ({ source: e.src_host_id, target: e.dst_host_id }))
 
-    // Only compute positions for nodes that don't already have one
-    const needsLayout = visibleIds.filter(id => !userPositions.current.has(id))
-    const computed = needsLayout.length > 0 || layoutChanged
-      ? computeLayout(layout, layoutChanged ? visibleIds : needsLayout, edgePairs)
-      : new Map<string, { x: number; y: number }>()
-
-    for (const [id, pos] of computed) {
-      if (!userPositions.current.has(id) || layoutChanged) userPositions.current.set(id, pos)
+    // Compute positions only for nodes that don't already have a saved position
+    const needsLayout = visibleIds.filter(id => !savedPos.current.has(id))
+    if (needsLayout.length > 0 || layoutChanged) {
+      const computed = initialLayout(layout, layoutChanged ? visibleIds : needsLayout, edgePairs)
+      for (const [id, pos] of computed) {
+        if (!savedPos.current.has(id) || layoutChanged) savedPos.current.set(id, pos)
+      }
     }
 
+    // Build RF nodes and edges
     const rfNodes: Node[] = graphData.nodes
       .filter(n => visibleSet.has(n.host_id))
       .map(n => ({
         id: n.host_id,
         type: 'host',
-        position: userPositions.current.get(n.host_id) ?? { x: 0, y: 0 },
+        position: savedPos.current.get(n.host_id) ?? { x: 0, y: 0 },
         draggable: !lockedIds?.has(n.host_id),
         data: {
           label: n.nickname,
@@ -427,12 +430,20 @@ function GraphCanvasInner({
     setNodes(rfNodes)
     setEdges(rfEdges)
 
+    // (Re)build simulation from current positions
+    const posMap = new Map(
+      visibleIds.map(id => [id, savedPos.current.get(id) ?? { x: 0, y: 0 }])
+    )
+    buildSim(posMap, edgePairs)
+
     if (visibleIds.length > 0) pendingFitView.current = true
+
+    return () => { simRef.current?.stop() }
   // lockedIds excluded — handled by Effect 2
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graphData, hiddenIds, layout])
 
-  // ── Effect 2: styling updates (filters / locks) ────────────────────────────
+  // ── Effect 2: styling updates (filters / locks) — no position recompute ──────
   useEffect(() => {
     const gd = graphDataRef.current
 
@@ -449,8 +460,7 @@ function GraphCanvasInner({
         ? nodeEdges.some(e => e.evidence.some(ev => ev.credential_id === credFilter.credId))
         : null
       const dimmed = !pathFilter && credFilter?.mode === 'highlight'
-        ? nodeMatchesCred === false
-        : false
+        ? nodeMatchesCred === false : false
 
       return {
         ...n,
@@ -476,8 +486,7 @@ function GraphCanvasInner({
         ? !edge.evidence.some(ev => ev.credential_id === credFilter?.credId)
         : false
       const dimmed = !pathFilter && credFilter?.mode === 'highlight'
-        ? !edge.evidence.some(ev => ev.credential_id === credFilter?.credId)
-        : false
+        ? !edge.evidence.some(ev => ev.credential_id === credFilter?.credId) : false
 
       const color = pathHighlight ? '#f78166' : confidenceColor(edge.confidence)
       return {
@@ -495,6 +504,48 @@ function GraphCanvasInner({
     const node = getNode(focusHostId)
     if (node) setCenter(node.position.x + 24, node.position.y + 24, { duration: 400, zoom: 1.5 })
   }, [focusHostId, getNode, setCenter])
+
+  // ── Track drag position for savedPos (dragged node only) ───────────────────
+  const handleNodesChange: OnNodesChange = useCallback((changes) => {
+    for (const change of changes) {
+      if (change.type === 'position' && change.position) {
+        savedPos.current.set(change.id, change.position)
+      }
+    }
+    onNodesChange(changes)
+  }, [onNodesChange])
+
+  // ── Neo4j-style drag using live simulation ─────────────────────────────────
+  const handleNodeDragStart = useCallback((_: React.MouseEvent, node: Node) => {
+    draggingId.current = node.id
+    const sn = simNodeMap.current.get(node.id)
+    if (!sn) return
+    // Pin the dragged node so forces don't move it — RF owns its position
+    sn.fx = node.position.x + 24
+    sn.fy = node.position.y + 24
+    // Wake the simulation — spring + repulsion forces now act on all neighbors
+    simRef.current?.alphaTarget(0.3).restart()
+  }, [])
+
+  const handleNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
+    const sn = simNodeMap.current.get(node.id)
+    if (!sn) return
+    // Follow the cursor: update the pinned position each frame
+    sn.fx = node.position.x + 24
+    sn.fy = node.position.y + 24
+  }, [])
+
+  const handleNodeDragStop = useCallback((_: React.MouseEvent, node: Node) => {
+    draggingId.current = null
+    const sn = simNodeMap.current.get(node.id)
+    if (sn) {
+      sn.fx = undefined
+      sn.fy = undefined
+    }
+    savedPos.current.set(node.id, node.position)
+    // Let simulation cool down naturally — nodes settle into their new positions
+    simRef.current?.alphaTarget(0)
+  }, [])
 
   // ── Event handlers ──────────────────────────────────────────────────────────
   const handleNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
