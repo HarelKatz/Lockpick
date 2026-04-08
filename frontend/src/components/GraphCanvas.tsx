@@ -18,7 +18,6 @@ import {
   useNodesState,
   useEdgesState,
   useReactFlow,
-  useNodesInitialized,
   useInternalNode,
   ReactFlowProvider,
   MarkerType,
@@ -291,7 +290,6 @@ function GraphCanvasInner({
   onCanvasTap,
 }: Props) {
   const { fitView, setCenter, getNode } = useReactFlow()
-  const nodesInitialized = useNodesInitialized()
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges] = useEdgesState<Edge>([])
 
@@ -311,14 +309,8 @@ function GraphCanvasInner({
 
   const prevLayoutRef = useRef<LayoutName>(layout)
 
-  // ── fitView after React Flow measures nodes ─────────────────────────────────
-  const pendingFitView = useRef(false)
-  useEffect(() => {
-    if (nodesInitialized && pendingFitView.current) {
-      pendingFitView.current = false
-      fitView({ padding: 0.15, duration: 300 })
-    }
-  }, [nodesInitialized, fitView])
+  // ── fitView: cancel previous timer and refire after each structural rebuild ──
+  const fitViewTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── Simulation tick → push positions into React Flow ───────────────────────
   const flushSimPositions = useCallback(() => {
@@ -436,9 +428,18 @@ function GraphCanvasInner({
     )
     buildSim(posMap, edgePairs)
 
-    if (visibleIds.length > 0) pendingFitView.current = true
+    if (fitViewTimer.current) clearTimeout(fitViewTimer.current)
+    if (visibleIds.length > 0) {
+      fitViewTimer.current = setTimeout(() => {
+        fitViewTimer.current = null
+        fitView({ padding: 0.15, duration: 300 })
+      }, 200)
+    }
 
-    return () => { simRef.current?.stop() }
+    return () => {
+      simRef.current?.stop()
+      if (fitViewTimer.current) { clearTimeout(fitViewTimer.current); fitViewTimer.current = null }
+    }
   // lockedIds excluded — handled by Effect 2
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graphData, hiddenIds, layout])
