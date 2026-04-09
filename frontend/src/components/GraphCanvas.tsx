@@ -302,11 +302,9 @@ function GraphCanvasInner({
   const rafPending   = useRef(false)
   // pendingFit: a fit is outstanding but may not yet be deliverable.
   // fitRequest: increments to re-trigger the fit effect when rfWidth is already > 0.
-  // rfInitialized: true once onInit fires, meaning d3-zoom is ready to accept setViewport.
-  const pendingFit      = useRef(false)
+  const pendingFit  = useRef(false)
   const [fitRequest, setFitRequest] = useState(0)
-  const [rfInitialized, setRfInitialized] = useState(false)
-  // Reactive: updates when React Flow's ResizeObserver fires (display:none → visible)
+  // Reactive: updates when React Flow's ResizeObserver fires
   const rfWidth  = useStore((s) => s.width)
   const rfHeight = useStore((s) => s.height)
 
@@ -560,16 +558,14 @@ function GraphCanvasInner({
   // rfWidth === 0 guard ensures we wait until the container has real dimensions.
   //
   // fitAll() is used instead of fitView() — see its comment above for why.
-  // fitAll requires three things to be true simultaneously:
-  //   1. pendingFit — a fit was requested (initial load or layout switch)
-  //   2. rfWidth > 0 — container has real dimensions (not display:none)
-  //   3. rfInitialized — onInit has fired, d3-zoom is ready for setViewport
-  // The effect re-runs whenever any of these change, so whichever arrives last
-  // is what actually triggers the fit.
+  // Fit fires when both pendingFit is set AND the container has real dimensions.
+  // Because GraphCanvas is now lazily mounted (only when Graph tab is first opened),
+  // React Flow always initialises d3-zoom on a visible container — so setViewport
+  // is guaranteed to work by the time rfWidth > 0.
   useEffect(() => {
-    if (!pendingFit.current || rfWidth === 0 || !rfInitialized) return
+    if (!pendingFit.current || rfWidth === 0) return
     if (fitAll()) pendingFit.current = false
-  }, [fitRequest, rfWidth, rfInitialized, fitAll])
+  }, [fitRequest, rfWidth, fitAll])
 
   // ── Focus a specific host ──────────────────────────────────────────────────
   useEffect(() => {
@@ -650,7 +646,6 @@ function GraphCanvasInner({
         edges={edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        onInit={() => setRfInitialized(true)}
         onNodesChange={handleNodesChange}
         onNodeClick={handleNodeClick}
         onEdgeClick={handleEdgeClick}

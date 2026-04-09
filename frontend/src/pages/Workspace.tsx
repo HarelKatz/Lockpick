@@ -383,6 +383,17 @@ export default function Workspace({ op, onBack }: Props) {
       return 'data'
     }
   })
+  // GraphView is mounted lazily — only once the Graph tab is first opened.
+  // This ensures React Flow's d3-zoom initialises on a container with real
+  // dimensions rather than on a display:none container (which has width=0,
+  // causing d3-zoom to be broken and setViewport to silently fail).
+  const [graphMounted, setGraphMounted] = useState(() => {
+    try {
+      return sessionStorage.getItem(`lockpick_tab_${op.id}`) === 'graph'
+    } catch {
+      return false
+    }
+  })
   const [hosts, setHosts] = useState<Host[]>([])
   const [credentials, setCredentials] = useState<Credential[]>([])
   const [links, setLinks] = useState<CredentialLink[]>([])
@@ -620,17 +631,20 @@ export default function Workspace({ op, onBack }: Props) {
           </button>
           <button
             className={`${styles.tabBtn} ${tab === 'graph' ? styles.tabActive : ''}`}
-            onClick={() => { setTab('graph'); sessionStorage.setItem(`lockpick_tab_${op.id}`, 'graph') }}
+            onClick={() => { setTab('graph'); setGraphMounted(true); sessionStorage.setItem(`lockpick_tab_${op.id}`, 'graph') }}
           >
             Graph
           </button>
         </div>
       </header>
 
-      {/* Graph tab — always mounted to preserve state; hidden when on data tab */}
-      <div style={tab !== 'graph' ? { display: 'none' } : { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-        <GraphView op={op} allHosts={hosts} credentials={credentials} focusHostId={focusEntityId} />
-      </div>
+      {/* Graph tab — mounted lazily on first visit so React Flow initialises with
+          real container dimensions. After that kept mounted to preserve state. */}
+      {graphMounted && (
+        <div style={tab !== 'graph' ? { display: 'none' } : { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <GraphView op={op} allHosts={hosts} credentials={credentials} focusHostId={focusEntityId} />
+        </div>
+      )}
 
       {/* Data tab */}
       <main className={styles.main} style={tab !== 'data' ? { display: 'none' } : undefined}>
