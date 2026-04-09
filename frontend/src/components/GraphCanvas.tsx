@@ -31,6 +31,7 @@ import {
   type NodeProps,
   type EdgeProps,
   type OnNodesChange,
+  type Viewport,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import * as d3Force from 'd3-force'
@@ -290,9 +291,16 @@ function GraphCanvasInner({
   onEdgeContextMenu,
   onCanvasTap,
 }: Props) {
-  const { setCenter, getNode, setViewport } = useReactFlow()
+  const { getNode } = useReactFlow()
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges] = useEdgesState<Edge>([])
+
+  // ── Controlled viewport ─────────────────────────────────────────────────────
+  // We use React Flow's controlled viewport API (viewport + onViewportChange props)
+  // instead of the imperative setViewport(). With the controlled API, React Flow
+  // applies the viewport value inside its own effect chain — after d3-zoom is
+  // initialized — so there is no timing race.
+  const [viewport, setVP] = useState<Viewport>({ x: 0, y: 0, zoom: 1 })
 
   // ── Physics simulation state ────────────────────────────────────────────────
   // Simulation uses CENTER coordinates; RF position = center - 24
@@ -300,12 +308,12 @@ function GraphCanvasInner({
   const simNodeMap   = useRef<Map<string, SimNode>>(new Map())
   const draggingId   = useRef<string | null>(null)
   const rafPending   = useRef(false)
-  // pendingFit guards against re-fitting on resize after a fit is done.
-  // fitRequest increments each time a fit is requested; it causes the fit effect
-  // to re-run even when rfWidth is already non-zero (container was visible).
+  // pendingFit guards against re-fitting on window resize after a fit is done.
+  // fitRequest increments each time a fit is needed; triggers the fit effect
+  // even when rfWidth is already non-zero (container was already visible).
   const pendingFit   = useRef(false)
   const [fitRequest, setFitRequest] = useState(0)
-  // Reactive: both update when React Flow's ResizeObserver fires (display:none → visible)
+  // Reactive: updates when React Flow's ResizeObserver fires (display:none → visible)
   const rfWidth  = useStore((s) => s.width)
   const rfHeight = useStore((s) => s.height)
 
@@ -395,13 +403,13 @@ function GraphCanvasInner({
     const zoom = Math.min(
       (rfWidth  * (1 - 2 * pad)) / gW,
       (rfHeight * (1 - 2 * pad)) / gH,
-      1.5,   // maxZoom
+      1.5,
     )
     const x = rfWidth  / 2 - (minX + gW / 2) * zoom
     const y = rfHeight / 2 - (minY + gH / 2) * zoom
-    setViewport({ x, y, zoom })
+    setVP({ x, y, zoom })
     return true
-  }, [rfWidth, rfHeight, setViewport])
+  }, [rfWidth, rfHeight, setVP])
 
   // ── Effect 1: structural rebuild (layout / graphData / hiddenIds) ─────────────
   useEffect(() => {
@@ -568,8 +576,17 @@ function GraphCanvasInner({
   useEffect(() => {
     if (!focusHostId) return
     const node = getNode(focusHostId)
-    if (node) setCenter(node.position.x + 24, node.position.y + 24, { duration: 400, zoom: 1.5 })
-  }, [focusHostId, getNode, setCenter])
+    if (node) {
+      const cx = node.position.x + 24
+      const cy = node.position.y + 24
+      setVP({
+        x: rfWidth  / 2 - cx * 1.5,
+        y: rfHeight / 2 - cy * 1.5,
+        zoom: 1.5,
+      })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusHostId])
 
   // ── Track drag position for savedPos (dragged node only) ───────────────────
   const handleNodesChange: OnNodesChange = useCallback((changes) => {
@@ -643,6 +660,8 @@ function GraphCanvasInner({
         edges={edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        viewport={viewport}
+        onViewportChange={setVP}
         onNodesChange={handleNodesChange}
         onNodeClick={handleNodeClick}
         onEdgeClick={handleEdgeClick}
