@@ -627,10 +627,9 @@ export default function Workspace({ op, onBack }: Props) {
         </div>
       </header>
 
-      {/* Tab content area — both panels always rendered and always have real dimensions.
-          Using visibility:hidden instead of display:none so React Flow's d3-zoom
-          initialises on a container with actual dimensions (display:none → width=0 →
-          d3Zoom never initialises → setViewport silently fails forever). */}
+      {/* Tab content area — both panels always rendered with real dimensions.
+          visibility:hidden (not display:none) keeps real dimensions in layout
+          so ForceGraph2D's ResizeObserver measures the container correctly. */}
       <div style={{ position: 'relative', flex: 1, minHeight: 0, overflow: 'hidden' }}>
 
         {/* Graph panel */}
