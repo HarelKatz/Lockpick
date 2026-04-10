@@ -290,68 +290,58 @@ export default function GraphCanvas({
   }, [graphData, hiddenIds, layout])
 
   // ── Effect 2: styling (path filter, cred filter, locks) ──────────────────────
+  // Mutates d3 node/link objects IN PLACE — no new objects, no setFgData,
+  // no simulation reinitialization.  d3 already mutates these same objects
+  // every tick; one extra mutation per style change is safe.
+  //
+  // fgData is intentionally in deps: re-apply styles after Effect 1 creates
+  // fresh node objects (structural rebuild).
   useEffect(() => {
     const gd = graphDataRef.current
 
-    setFgData(prev => {
-      const nodes = prev.nodes.map(n => {
-        const node = n._node
-        const inPath = pathFilter?.nodeIds.has(node.host_id) ?? null
-        const pathHighlight = pathFilter ? !!inPath : false
+    for (const n of fgData.nodes) {
+      const node = n._node
+      const inPath = pathFilter?.nodeIds.has(node.host_id) ?? null
+      n.pathHighlight = pathFilter ? !!inPath : false
 
-        const nodeEdges = gd.edges.filter(
-          e => e.src_host_id === node.host_id || e.dst_host_id === node.host_id,
-        )
-        const nodeMatchesCred = credFilter
-          ? nodeEdges.some(e => e.evidence.some(ev => ev.credential_id === credFilter.credId))
-          : null
-        const dimmed = !pathFilter && credFilter?.mode === 'highlight'
-          ? nodeMatchesCred === false : false
+      const nodeEdges = gd.edges.filter(
+        e => e.src_host_id === node.host_id || e.dst_host_id === node.host_id,
+      )
+      const nodeMatchesCred = credFilter
+        ? nodeEdges.some(e => e.evidence.some(ev => ev.credential_id === credFilter.credId))
+        : null
+      n.dimmed = !pathFilter && credFilter?.mode === 'highlight'
+        ? nodeMatchesCred === false : false
 
-        const pinned = STATIC_LAYOUTS.includes(prevLayoutRef.current) || (lockedIds?.has(node.host_id) ?? false)
-        return {
-          ...n,
-          fx: pinned ? n.x : undefined,
-          fy: pinned ? n.y : undefined,
-          isLocked: lockedIds?.has(node.host_id) ?? false,
-          pathHighlight,
-          dimmed,
-        }
-      })
+      const pinned = STATIC_LAYOUTS.includes(prevLayoutRef.current) || (lockedIds?.has(node.host_id) ?? false)
+      n.fx = pinned ? n.x : undefined
+      n.fy = pinned ? n.y : undefined
+      n.isLocked = lockedIds?.has(node.host_id) ?? false
+    }
 
-      const links = prev.links.map(l => {
-        const edge = l._edge
-        const edgeKey = `${edge.src_host_id}__${edge.dst_host_id}`
-        const inPath = pathFilter?.edgeKeys.has(edgeKey) ?? null
-        const pathHighlight = pathFilter ? !!inPath : false
-        const hiddenByFilter = pathFilter
-          ? !inPath
-          : credFilter?.mode === 'filter'
-          ? !edge.evidence.some(ev => ev.credential_id === credFilter?.credId)
-          : false
-        const dimmed = !pathFilter && credFilter?.mode === 'highlight'
-          ? !edge.evidence.some(ev => ev.credential_id === credFilter?.credId) : false
+    for (const l of fgData.links) {
+      const edge = l._edge
+      const edgeKey = `${edge.src_host_id}__${edge.dst_host_id}`
+      const inPath = pathFilter?.edgeKeys.has(edgeKey) ?? null
+      const pathHighlight = pathFilter ? !!inPath : false
+      const hiddenByFilter = pathFilter
+        ? !inPath
+        : credFilter?.mode === 'filter'
+        ? !edge.evidence.some(ev => ev.credential_id === credFilter?.credId)
+        : false
+      const dimmed = !pathFilter && credFilter?.mode === 'highlight'
+        ? !edge.evidence.some(ev => ev.credential_id === credFilter?.credId) : false
 
-        const color = pathHighlight ? '#f78166' : confidenceColor(edge.confidence)
-        // d3 mutates link.source/target from string IDs to node object refs.
-        // When setFgData creates new node objects, those refs become stale — d3
-        // won't re-resolve objects, only strings.  Reset to IDs so the next
-        // simulation pass re-resolves them against the fresh node objects.
-        const srcId = typeof l.source === 'object' ? (l.source as FGNode).id : l.source as string
-        const tgtId = typeof l.target === 'object' ? (l.target as FGNode).id : l.target as string
-        return {
-          ...l,
-          source: srcId,
-          target: tgtId,
-          color,
-          lineWidth: pathHighlight ? 4 : 2,
-          dimmed: dimmed || hiddenByFilter,
-        }
-      })
+      l.color = pathHighlight ? '#f78166' : confidenceColor(edge.confidence)
+      l.lineWidth = pathHighlight ? 4 : 2
+      l.dimmed = dimmed || hiddenByFilter
+    }
 
-      return { nodes, links }
-    })
-  }, [pathFilter, credFilter, lockedIds])
+    // Briefly reheat so d3 applies the fx/fy constraints and the rAF loop
+    // redraws the canvas (loop may be stopped if the simulation already settled).
+    graphRef.current?.d3ReheatSimulation()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathFilter, credFilter, lockedIds, fgData])
 
   // ── Focus a specific host ─────────────────────────────────────────────────────
   useEffect(() => {
