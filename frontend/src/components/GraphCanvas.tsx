@@ -206,7 +206,7 @@ export default function GraphCanvas({
   useEffect(() => {
     if (!graphRef.current || dims.w === 0) return
     graphRef.current.d3Force('link')?.distance(180).strength(0.5)
-    graphRef.current.d3Force('charge')?.strength(-350)
+    graphRef.current.d3Force('charge')?.strength(-200)
     graphRef.current.d3Force('collision', d3Force.forceCollide(52))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dims.w > 0])
@@ -555,7 +555,7 @@ export default function GraphCanvas({
           cooldownTicks={150}
           warmupTicks={0}
           d3AlphaDecay={0.04}
-          d3VelocityDecay={0.4}
+          d3VelocityDecay={0.6}
         />
       )}
     </div>
