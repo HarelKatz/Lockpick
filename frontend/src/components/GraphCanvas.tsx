@@ -6,7 +6,7 @@
  * Purely driven by props — parent owns graphData and hiddenIds.
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { ForceGraph2D } from 'react-force-graph'
+import ForceGraph2D from 'react-force-graph-2d'
 import * as d3Force from 'd3-force'
 import dagre from '@dagrejs/dagre'
 import type { GraphEdge, GraphNode, GraphResponse } from '../types'
