@@ -10,7 +10,7 @@
  *  - Each tick → React Flow positions updated for non-dragged nodes
  *  - Drag stop → unpin, alphaTarget(0) → simulation cools and stops naturally
  */
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import {
   ReactFlow,
   Background,
@@ -18,7 +18,6 @@ import {
   useNodesState,
   useEdgesState,
   useReactFlow,
-  useStore,
   useInternalNode,
   ReactFlowProvider,
   MarkerType,
@@ -31,6 +30,7 @@ import {
   type NodeProps,
   type EdgeProps,
   type OnNodesChange,
+  type ReactFlowInstance,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import * as d3Force from 'd3-force'
@@ -290,7 +290,7 @@ function GraphCanvasInner({
   onEdgeContextMenu,
   onCanvasTap,
 }: Props) {
-  const { setCenter, getNode, setViewport } = useReactFlow()
+  const { setCenter, getNode } = useReactFlow()
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges] = useEdgesState<Edge>([])
 
@@ -300,13 +300,10 @@ function GraphCanvasInner({
   const simNodeMap   = useRef<Map<string, SimNode>>(new Map())
   const draggingId   = useRef<string | null>(null)
   const rafPending   = useRef(false)
-  // pendingFit: a fit is outstanding but may not yet be deliverable.
-  // fitRequest: increments to re-trigger the fit effect when rfWidth is already > 0.
-  const pendingFit  = useRef(false)
-  const [fitRequest, setFitRequest] = useState(0)
-  // Reactive: updates when React Flow's ResizeObserver fires
-  const rfWidth  = useStore((s) => s.width)
-  const rfHeight = useStore((s) => s.height)
+  // rfInstance: set by onInit, guaranteed to have d3Zoom ready.
+  // fitNeededRef: set when a fit is needed; consumed by the [nodes] effect.
+  const rfInstance   = useRef<ReactFlowInstance | null>(null)
+  const fitNeededRef = useRef(false)
 
   // Last known RF positions (top-left); source of truth between re-renders
   const savedPos = useRef<Map<string, { x: number; y: number }>>(new Map())
@@ -365,42 +362,6 @@ function GraphCanvasInner({
 
     simRef.current = sim
   }, [flushSimPositions])
-
-  // ── Manual viewport fit ─────────────────────────────────────────────────────
-  // Bypasses fitView() which relies on React Flow's internal per-node ResizeObserver
-  // measurements (node.measured.width/height). Those measurements are 0×0 when nodes
-  // render inside a hidden container, making fitView a silent no-op regardless of timing.
-  //
-  // Instead we compute the viewport directly from:
-  //   • savedPos.current — node top-left positions we computed ourselves
-  //   • hardcoded 48px node size (matches the HostNode render)
-  //   • rfWidth/rfHeight — container dimensions from RF's store (reliable)
-  const fitAll = useCallback((): boolean => {
-    const positions = Array.from(savedPos.current.values())
-    if (positions.length === 0 || rfWidth === 0 || rfHeight === 0) return false
-
-    const NODE_W = 48
-    const NODE_H = 48 + 30  // circle + label clearance below
-
-    const minX = Math.min(...positions.map(p => p.x))
-    const minY = Math.min(...positions.map(p => p.y))
-    const maxX = Math.max(...positions.map(p => p.x + NODE_W))
-    const maxY = Math.max(...positions.map(p => p.y + NODE_H))
-    const gW = maxX - minX
-    const gH = maxY - minY
-    if (gW === 0 || gH === 0) return false
-
-    const pad = 0.15
-    const zoom = Math.min(
-      (rfWidth  * (1 - 2 * pad)) / gW,
-      (rfHeight * (1 - 2 * pad)) / gH,
-      1.5,
-    )
-    const x = rfWidth  / 2 - (minX + gW / 2) * zoom
-    const y = rfHeight / 2 - (minY + gH / 2) * zoom
-    setViewport({ x, y, zoom })
-    return true
-  }, [rfWidth, rfHeight, setViewport])
 
   // ── Effect 1: structural rebuild (layout / graphData / hiddenIds) ─────────────
   useEffect(() => {
@@ -479,15 +440,12 @@ function GraphCanvasInner({
     // We skip re-fitting on incremental changes (expand, credential updates) so
     // the user's zoom/pan isn't reset while they're exploring.
     //
-    // Both cases (container already visible, or hidden via display:none) are
-    // handled by the unified fit effect below. Setting pendingFit + incrementing
-    // fitRequest causes that effect to fire; it then waits until rfWidth > 0
-    // (i.e. React Flow's ResizeObserver has measured the container) before
-    // calling fitView. This eliminates the timing race in both scenarios.
+    // Set the flag here; the [nodes] effect below consumes it after React commits
+    // the new nodes to state — at which point d3Zoom is guaranteed to be ready
+    // (container always has real dimensions via visibility:hidden, never display:none).
     const wasEmpty = prevCount === 0
     if ((wasEmpty || layoutChanged) && visibleIds.length > 0) {
-      pendingFit.current = true
-      setFitRequest(r => r + 1)
+      fitNeededRef.current = true
     }
 
     return () => { simRef.current?.stop() }
@@ -550,22 +508,16 @@ function GraphCanvasInner({
     }))
   }, [pathFilter, credFilter, lockedIds, setNodes, setEdges])
 
-  // ── Unified fit effect ─────────────────────────────────────────────────────
-  // Fires when fitRequest increments (Effect 1 requested a fit) OR when rfWidth
-  // goes from 0 → N (container was hidden and just became visible).
-  //
-  // pendingFit guards against re-fitting on window resize after a fit is done.
-  // rfWidth === 0 guard ensures we wait until the container has real dimensions.
-  //
-  // fitAll() is used instead of fitView() — see its comment above for why.
-  // Fit fires when both pendingFit is set AND the container has real dimensions.
-  // Because GraphCanvas is now lazily mounted (only when Graph tab is first opened),
-  // React Flow always initialises d3-zoom on a visible container — so setViewport
-  // is guaranteed to work by the time rfWidth > 0.
+  // ── Fit effect — fires after React commits new nodes to state ─────────────
+  // Effect1 sets fitNeededRef then calls setNodes. After React commits, this
+  // effect runs — d3Zoom is initialised (container always has real dimensions)
+  // and rfInstance is available, so fitView works reliably.
   useEffect(() => {
-    if (!pendingFit.current || rfWidth === 0) return
-    if (fitAll()) pendingFit.current = false
-  }, [fitRequest, rfWidth, fitAll])
+    if (!fitNeededRef.current || !rfInstance.current) return
+    fitNeededRef.current = false
+    rfInstance.current.fitView({ padding: 0.15, maxZoom: 1.5 })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes])
 
   // ── Focus a specific host ──────────────────────────────────────────────────
   useEffect(() => {
@@ -656,6 +608,13 @@ function GraphCanvasInner({
         onNodeDrag={handleNodeDrag}
         onNodeDragStop={handleNodeDragStop}
         onPaneClick={onCanvasTap}
+        onInit={(instance) => {
+          rfInstance.current = instance
+          if (fitNeededRef.current) {
+            fitNeededRef.current = false
+            instance.fitView({ padding: 0.15, maxZoom: 1.5 })
+          }
+        }}
         colorMode="dark"
         minZoom={0.05}
         maxZoom={4}
