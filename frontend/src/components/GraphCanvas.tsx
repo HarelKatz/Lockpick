@@ -208,6 +208,10 @@ export default function GraphCanvas({
     graphRef.current.d3Force('link')?.distance(180).strength(0.5)
     graphRef.current.d3Force('charge')?.strength(-80)
     graphRef.current.d3Force('collision', d3Force.forceCollide(52))
+    // Weaken forceCenter so d3ReheatSimulation() (called when locking a node)
+    // doesn't yank all non-locked nodes toward the canvas midpoint, which made
+    // the locked node appear "stuck to the screen" while everything else relocated.
+    graphRef.current.d3Force('center')?.strength(0.01)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dims.w > 0])
 
