@@ -333,8 +333,16 @@ export default function GraphCanvas({
           ? !edge.evidence.some(ev => ev.credential_id === credFilter?.credId) : false
 
         const color = pathHighlight ? '#f78166' : confidenceColor(edge.confidence)
+        // d3 mutates link.source/target from string IDs to node object refs.
+        // When setFgData creates new node objects, those refs become stale — d3
+        // won't re-resolve objects, only strings.  Reset to IDs so the next
+        // simulation pass re-resolves them against the fresh node objects.
+        const srcId = typeof l.source === 'object' ? (l.source as FGNode).id : l.source as string
+        const tgtId = typeof l.target === 'object' ? (l.target as FGNode).id : l.target as string
         return {
           ...l,
+          source: srcId,
+          target: tgtId,
           color,
           lineWidth: pathHighlight ? 4 : 2,
           dimmed: dimmed || hiddenByFilter,
