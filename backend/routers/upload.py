@@ -6,10 +6,6 @@ GET  /api/ops/{op_id}/uploads/{safe_name} — serve a raw uploaded file
 """
 from __future__ import annotations
 
-import base64
-import hashlib
-import io
-import json
 import logging
 import os
 import uuid
@@ -33,33 +29,15 @@ from models import (
     Operation,
 )
 from parsers import UploadMetadata
-from parsers.authorized_keys import AuthorizedKeysParser
-from parsers.bash_history import BashHistoryParser
-from parsers.auth_log import AuthLogParser
-from parsers.known_hosts import KnownHostsParser
-from parsers.passwd import PasswdParser
-from parsers.private_key import PrivateKeyParser
-from parsers.ssh_config import SshConfigParser
-from parsers.wtmp import WtmpParser
+from parsers.registry import PARSER_REGISTRY
 from schemas import UploadFileInfo
 from services.activity import log_activity
 from services.ip_resolver import resolve_ip
+from services.key_utils import infer_key_info
 
 log = logging.getLogger(__name__)
 
 router = APIRouter(tags=["upload"])
-
-_PARSERS = {
-    "authorized_keys": AuthorizedKeysParser,
-    "known_hosts": KnownHostsParser,
-    "ssh_config": SshConfigParser,
-    "private_key": PrivateKeyParser,
-    "public_key": AuthorizedKeysParser,  # treat lone pub key as authorized_key
-    "auth_log": AuthLogParser,
-    "wtmp": WtmpParser,
-    "bash_history": BashHistoryParser,
-    "passwd": PasswdParser,
-}
 
 
 def _now() -> datetime:
@@ -68,41 +46,6 @@ def _now() -> datetime:
 
 def _uuid() -> str:
     return str(uuid.uuid4())
-
-
-def _infer_fingerprint(value: str) -> tuple[Optional[str], Optional[str]]:
-    """Return (key_type, sha256_fingerprint) for an SSH public or private key, or (None, None)."""
-    try:
-        import paramiko
-
-        # Try as private key first
-        f = io.StringIO(value)
-        for cls in (paramiko.RSAKey, paramiko.ECDSAKey):
-            try:
-                key = cls.from_private_key(f)
-                raw = key.asbytes()
-                fp = "SHA256:" + base64.b64encode(hashlib.sha256(raw).digest()).rstrip(b"=").decode()
-                return key.get_name(), fp
-            except Exception:
-                f.seek(0)
-        if hasattr(paramiko, "Ed25519Key"):
-            try:
-                key = paramiko.Ed25519Key.from_private_key(f)
-                raw = key.asbytes()
-                fp = "SHA256:" + base64.b64encode(hashlib.sha256(raw).digest()).rstrip(b"=").decode()
-                return key.get_name(), fp
-            except Exception:
-                pass
-
-        # Try as public key (space-separated: keytype base64 [comment])
-        parts = value.strip().split()
-        if len(parts) >= 2:
-            raw = base64.b64decode(parts[1])
-            fp = "SHA256:" + base64.b64encode(hashlib.sha256(raw).digest()).rstrip(b"=").decode()
-            return parts[0], fp
-    except Exception:
-        pass
-    return None, None
 
 
 def _get_or_create_host_user(
@@ -133,6 +76,30 @@ def _get_or_create_host_user(
     db.add(hu)
     db.flush()
     return hu
+
+
+def _resolve_ip_side(
+    db: Session,
+    op_id: str,
+    raw_ip: str,
+    upload_host_ip: str,
+    upload_host_id: str,
+) -> tuple[str, Optional[str], bool]:
+    """Resolve one ConnectionData IP to (resolved_ip, host_id, is_new_auto_host).
+
+    The ``__upload_host__`` sentinel is replaced with the known upload-host IP.
+    For any other IP, resolve_ip is called with create_if_missing=True and the
+    returned boolean indicates whether a *new* auto-created host was added.
+    """
+    if raw_ip == "__upload_host__":
+        return upload_host_ip, upload_host_id, False
+    resolved_host_id = resolve_ip(db, op_id, raw_ip, create_if_missing=True)
+    is_new = False
+    if resolved_host_id and resolved_host_id != upload_host_id:
+        h = db.query(Host).filter(Host.id == resolved_host_id).first()
+        if h and h.comment and "Auto-created" in h.comment:
+            is_new = True
+    return raw_ip, resolved_host_id, is_new
 
 
 def _find_pivot_opportunities(
@@ -196,10 +163,10 @@ async def upload_file(
     if not host:
         raise HTTPException(status_code=404, detail="Host not found in this operation")
 
-    if file_type not in _PARSERS:
+    if file_type not in PARSER_REGISTRY:
         raise HTTPException(
             status_code=422,
-            detail=f"Unsupported file_type '{file_type}'. Supported: {sorted(_PARSERS)}",
+            detail=f"Unsupported file_type '{file_type}'. Supported: {sorted(PARSER_REGISTRY)}",
         )
 
     content = await file.read()
@@ -225,7 +192,7 @@ async def upload_file(
         filename=filename,
     )
 
-    parser_cls = _PARSERS[file_type]
+    parser_cls = PARSER_REGISTRY[file_type]
     try:
         result = parser_cls().parse(content, metadata)
     except Exception as e:
@@ -256,7 +223,7 @@ async def upload_file(
     new_links = 0
 
     for cred_data in result.credentials_found:
-        key_type, fingerprint = _infer_fingerprint(cred_data.value)
+        key_type, fingerprint = infer_key_info(cred_data.value)
 
         # Dedup: find existing Credential with same fingerprint in this op
         existing_cred: Optional[Credential] = None
@@ -311,29 +278,13 @@ async def upload_file(
 
     for conn_data in result.connections_found:
         # Resolve src/dst IPs — replace __upload_host__ sentinel
-        src_ip = conn_data.src_ip
-        dst_ip = conn_data.dst_ip
-
-        if src_ip == "__upload_host__":
-            src_ip = upload_host_ip
-            src_host_id = host_id
-        else:
-            src_host_id = resolve_ip(db, op_id, src_ip, create_if_missing=True)
-            if src_host_id and src_host_id not in {host_id}:
-                # Check if it was newly created
-                h = db.query(Host).filter(Host.id == src_host_id).first()
-                if h and h.comment and "Auto-created" in h.comment:
-                    new_hosts += 1
-
-        if dst_ip == "__upload_host__":
-            dst_ip = upload_host_ip
-            dst_host_id = host_id
-        else:
-            dst_host_id = resolve_ip(db, op_id, dst_ip, create_if_missing=True)
-            if dst_host_id and dst_host_id not in {host_id}:
-                h = db.query(Host).filter(Host.id == dst_host_id).first()
-                if h and h.comment and "Auto-created" in h.comment:
-                    new_hosts += 1
+        src_ip, src_host_id, src_new = _resolve_ip_side(
+            db, op_id, conn_data.src_ip, upload_host_ip, host_id
+        )
+        dst_ip, dst_host_id, dst_new = _resolve_ip_side(
+            db, op_id, conn_data.dst_ip, upload_host_ip, host_id
+        )
+        new_hosts += src_new + dst_new
 
         # Match fingerprint to existing Credential for confirmed confidence
         cred_id = None

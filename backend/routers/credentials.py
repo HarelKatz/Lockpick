@@ -1,17 +1,12 @@
 """CRUD endpoints for Credentials and CredentialLinks."""
-import base64
-import hashlib
-import io
-import logging
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Credential, CredentialLink, Host
-from routers.deps import get_op_or_404
+from routers.deps import get_cred_or_404, get_op_or_404
 from services.activity import log_activity
+from services.key_utils import infer_key_info
 from schemas import (
     CredentialCreate,
     CredentialLinkCreate,
@@ -21,48 +16,7 @@ from schemas import (
     CredentialUpdate,
 )
 
-log = logging.getLogger(__name__)
-
 router = APIRouter(tags=["credentials"])
-
-
-def _infer_key_info(value: str, passphrase: Optional[str]) -> tuple[Optional[str], Optional[str]]:
-    """Parse a private key with paramiko and return (key_type, sha256_fingerprint).
-
-    Returns (None, None) on any failure — never raises.
-    """
-    try:
-        import paramiko
-
-        pw = passphrase.encode() if passphrase else None
-        f = io.StringIO(value)
-
-        for cls in (
-            paramiko.RSAKey,
-            paramiko.Ed25519Key,
-            paramiko.ECDSAKey,
-            paramiko.DSSKey,
-        ):
-            try:
-                key = cls.from_private_key(f, password=pw)
-                pub_bytes = key.asbytes()
-                digest = hashlib.sha256(pub_bytes).digest()
-                fingerprint = "SHA256:" + base64.b64encode(digest).rstrip(b"=").decode()
-                return key.get_name(), fingerprint
-            except Exception:
-                f.seek(0)
-
-    except Exception:
-        log.debug("paramiko key inference failed", exc_info=True)
-
-    return None, None
-
-
-def _get_cred_or_404(cred_id: str, db: Session) -> Credential:
-    cred = db.query(Credential).filter(Credential.id == cred_id).first()
-    if not cred:
-        raise HTTPException(status_code=404, detail="Credential not found")
-    return cred
 
 
 # ─── Credentials ──────────────────────────────────────────────────────────────
@@ -73,7 +27,7 @@ def create_credential(op_id: str, body: CredentialCreate, db: Session = Depends(
 
     key_type, fingerprint = None, None
     if body.cred_type == "private_key":
-        key_type, fingerprint = _infer_key_info(body.value, body.passphrase)
+        key_type, fingerprint = infer_key_info(body.value, body.passphrase)
 
     cred = Credential(
         op_id=op_id,
@@ -106,12 +60,12 @@ def list_credentials(op_id: str, db: Session = Depends(get_db)):
 
 @router.get("/credentials/{cred_id}", response_model=CredentialRead)
 def get_credential(cred_id: str, db: Session = Depends(get_db)):
-    return _get_cred_or_404(cred_id, db)
+    return get_cred_or_404(cred_id, db)
 
 
 @router.patch("/credentials/{cred_id}", response_model=CredentialRead)
 def update_credential(cred_id: str, body: CredentialUpdate, db: Session = Depends(get_db)):
-    cred = _get_cred_or_404(cred_id, db)
+    cred = get_cred_or_404(cred_id, db)
     if body.name is not None:
         cred.name = body.name or None
     if body.value is not None:
@@ -119,12 +73,12 @@ def update_credential(cred_id: str, body: CredentialUpdate, db: Session = Depend
         # Re-infer key info when value changes (for private keys)
         if cred.cred_type == "private_key":
             passphrase = body.passphrase if body.passphrase is not None else cred.passphrase
-            cred.key_type, cred.fingerprint = _infer_key_info(body.value, passphrase)
+            cred.key_type, cred.fingerprint = infer_key_info(body.value, passphrase)
     if body.passphrase is not None:
         cred.passphrase = body.passphrase
         # Re-infer fingerprint if passphrase changed (encrypted key needs correct passphrase)
         if cred.cred_type == "private_key" and body.value is None:
-            cred.key_type, cred.fingerprint = _infer_key_info(cred.value, body.passphrase)
+            cred.key_type, cred.fingerprint = infer_key_info(cred.value, body.passphrase)
     if body.comment is not None:
         cred.comment = body.comment
     db.commit()
@@ -134,7 +88,7 @@ def update_credential(cred_id: str, body: CredentialUpdate, db: Session = Depend
 
 @router.delete("/credentials/{cred_id}", status_code=204)
 def delete_credential(cred_id: str, db: Session = Depends(get_db)):
-    cred = _get_cred_or_404(cred_id, db)
+    cred = get_cred_or_404(cred_id, db)
     label = cred.name or (cred.fingerprint[:22] if cred.fingerprint else cred.cred_type)
     log_activity(db, cred.op_id, "credential.delete", "credential", entity_id=cred_id, detail=f"Deleted {cred.cred_type}: {label}")
     db.delete(cred)
@@ -145,7 +99,7 @@ def delete_credential(cred_id: str, db: Session = Depends(get_db)):
 
 @router.post("/credential-links", response_model=CredentialLinkRead, status_code=201)
 def create_credential_link(body: CredentialLinkCreate, db: Session = Depends(get_db)):
-    _get_cred_or_404(body.credential_id, db)
+    get_cred_or_404(body.credential_id, db)
     host = db.query(Host).filter(Host.id == body.host_id).first()
     if not host:
         raise HTTPException(status_code=404, detail="Host not found")

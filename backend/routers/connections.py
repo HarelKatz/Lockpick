@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import ConnectionRecord, Credential
-from routers.deps import get_op_or_404
+from routers.deps import get_connection_or_404, get_op_or_404
 from services.activity import log_activity
 from schemas import ConnectionRecordCreate, ConnectionRecordRead, ConnectionRecordUpdate
 
@@ -71,17 +71,12 @@ def list_connections(
 
 @router.get("/connections/{connection_id}", response_model=ConnectionRecordRead)
 def get_connection(connection_id: str, db: Session = Depends(get_db)):
-    record = db.query(ConnectionRecord).filter(ConnectionRecord.id == connection_id).first()
-    if not record:
-        raise HTTPException(status_code=404, detail="Connection record not found")
-    return record
+    return get_connection_or_404(connection_id, db)
 
 
 @router.patch("/connections/{connection_id}", response_model=ConnectionRecordRead)
 def update_connection(connection_id: str, body: ConnectionRecordUpdate, db: Session = Depends(get_db)):
-    record = db.query(ConnectionRecord).filter(ConnectionRecord.id == connection_id).first()
-    if not record:
-        raise HTTPException(status_code=404, detail="Connection record not found")
+    record = get_connection_or_404(connection_id, db)
     for field in (
         "src_host_id", "src_ip", "src_user",
         "dst_host_id", "dst_ip", "dst_user",
@@ -102,9 +97,7 @@ def update_connection(connection_id: str, body: ConnectionRecordUpdate, db: Sess
 
 @router.delete("/connections/{connection_id}", status_code=204)
 def delete_connection(connection_id: str, db: Session = Depends(get_db)):
-    record = db.query(ConnectionRecord).filter(ConnectionRecord.id == connection_id).first()
-    if not record:
-        raise HTTPException(status_code=404, detail="Connection record not found")
+    record = get_connection_or_404(connection_id, db)
     log_activity(db, record.op_id, "connection.delete", "connection",
                  entity_id=connection_id,
                  detail=f"Deleted {record.connection_type} connection: {record.src_ip} → {record.dst_ip}")

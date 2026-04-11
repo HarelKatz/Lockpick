@@ -16,6 +16,27 @@ from schemas import (
 # Confidence ranking for comparison
 _CONFIDENCE_RANK = {"confirmed": 2, "observed": 1, "indicator": 0}
 
+# Source-file substrings that mark a connection record as an "indicator" rather
+# than an observed connection (no server-side authentication evidence).
+_INDICATOR_SOURCES = ("bash_history", "known_hosts")
+
+
+def _classify_connection_evidence(record: ConnectionRecord) -> tuple[str, str]:
+    """Return (evidence_type, confidence) for a ConnectionRecord.
+
+    Rules (in priority order):
+    - bash_history / known_hosts source → indicator
+    - from_dst_logs + credential match → confirmed
+    - everything else → observed
+    """
+    source_file = record.source_file or ""
+    for indicator_src in _INDICATOR_SOURCES:
+        if indicator_src in source_file:
+            return indicator_src, "indicator"
+    if record.direction_context == "from_dst_logs" and record.credential_id:
+        return "connection_log", "confirmed"
+    return "connection_log", "observed"
+
 
 def _max_confidence(confidences: list[str]) -> str:
     """Return the highest-ranked confidence string from a list."""
@@ -167,24 +188,7 @@ def build_graph(
         if src not in host_id_set or dst not in host_id_set:
             continue
 
-        source_file = record.source_file or ""
-
-        if "bash_history" in source_file:
-            ev_type = "bash_history"
-            confidence = "indicator"
-        elif "known_hosts" in source_file:
-            ev_type = "known_hosts"
-            confidence = "indicator"
-        elif record.direction_context == "from_dst_logs" and record.credential_id:
-            ev_type = "connection_log"
-            confidence = "confirmed"
-        elif record.direction_context == "from_dst_logs":
-            ev_type = "connection_log"
-            confidence = "observed"
-        else:
-            ev_type = "connection_log"
-            confidence = "observed"
-
+        ev_type, confidence = _classify_connection_evidence(record)
         conn_cred_obj = cred_by_id.get(record.credential_id) if record.credential_id else None
         edge_evidence[(src, dst)].append(EvidenceItem(
             type=ev_type,

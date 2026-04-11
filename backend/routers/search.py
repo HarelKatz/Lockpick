@@ -18,6 +18,17 @@ router = APIRouter()
 _MAX_PER_TYPE = 100
 
 
+def _first_match(q: str, fields: tuple) -> tuple[str, str] | None:
+    """Return (field_name, value) for the first field whose value contains *q*,
+    or None if no field matches.  Accepts ``(field_name, value)`` pairs.
+    """
+    ql = q.lower()
+    for field, val in fields:
+        if val and ql in val.lower():
+            return field, val
+    return None
+
+
 @router.get("/ops/{op_id}/search", response_model=SearchResponse)
 def search_op(
     op_id: str,
@@ -40,16 +51,16 @@ def search_op(
         .limit(_MAX_PER_TYPE)
         .all()
     ):
-        for field, val in (("nickname", host.nickname), ("comment", host.comment)):
-            if val and q.lower() in val.lower():
-                results.append(SearchResult(
-                    type="host",
-                    host_id=host.id,
-                    nickname=host.nickname,
-                    matched_field=field,
-                    snippet=val,
-                ))
-                break  # one result per host
+        m = _first_match(q, (("nickname", host.nickname), ("comment", host.comment)))
+        if m:
+            field, val = m
+            results.append(SearchResult(
+                type="host",
+                host_id=host.id,
+                nickname=host.nickname,
+                matched_field=field,
+                snippet=val,
+            ))
 
     # ── Host IPs ───────────────────────────────────────────────────────────────
     for ip in (
@@ -99,19 +110,19 @@ def search_op(
         .limit(_MAX_PER_TYPE)
         .all()
     ):
-        for field, val in (
+        m = _first_match(q, (
             ("name", cred.name),
             ("comment", cred.comment),
             ("fingerprint", cred.fingerprint),
-        ):
-            if val and q.lower() in val.lower():
-                results.append(SearchResult(
-                    type="credential",
-                    credential_id=cred.id,
-                    matched_field=field,
-                    snippet=val,
-                ))
-                break
+        ))
+        if m:
+            field, val = m
+            results.append(SearchResult(
+                type="credential",
+                credential_id=cred.id,
+                matched_field=field,
+                snippet=val,
+            ))
 
     # ── Connections ────────────────────────────────────────────────────────────
     for conn in (
@@ -129,20 +140,20 @@ def search_op(
         .limit(_MAX_PER_TYPE)
         .all()
     ):
-        for field, val in (
+        m = _first_match(q, (
             ("src_ip", conn.src_ip),
             ("dst_ip", conn.dst_ip),
             ("src_user", conn.src_user),
             ("dst_user", conn.dst_user),
             ("raw_line", conn.raw_line),
-        ):
-            if val and q.lower() in val.lower():
-                results.append(SearchResult(
-                    type="connection",
-                    connection_id=conn.id,
-                    matched_field=field,
-                    snippet=val[:200] if len(val) > 200 else val,
-                ))
-                break
+        ))
+        if m:
+            field, val = m
+            results.append(SearchResult(
+                type="connection",
+                connection_id=conn.id,
+                matched_field=field,
+                snippet=val[:200],
+            ))
 
     return SearchResponse(query=q, results=results, total=len(results))

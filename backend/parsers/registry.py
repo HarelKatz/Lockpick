@@ -1,0 +1,27 @@
+"""Maps file_type strings to parser classes.
+
+Centralises the parser registry so upload.py is decoupled from individual
+parser modules.  Adding a new parser means updating this file only — no
+changes required in the router.
+"""
+from parsers import BaseParser
+from parsers.authorized_keys import AuthorizedKeysParser
+from parsers.auth_log import AuthLogParser
+from parsers.bash_history import BashHistoryParser
+from parsers.known_hosts import KnownHostsParser
+from parsers.passwd import PasswdParser
+from parsers.private_key import PrivateKeyParser
+from parsers.ssh_config import SshConfigParser
+from parsers.wtmp import WtmpParser
+
+PARSER_REGISTRY: dict[str, type[BaseParser]] = {
+    "authorized_keys": AuthorizedKeysParser,
+    "known_hosts": KnownHostsParser,
+    "ssh_config": SshConfigParser,
+    "private_key": PrivateKeyParser,
+    "public_key": AuthorizedKeysParser,  # lone public key → same parser
+    "auth_log": AuthLogParser,
+    "wtmp": WtmpParser,
+    "bash_history": BashHistoryParser,
+    "passwd": PasswdParser,
+}
