@@ -19,6 +19,14 @@
   max-width: 320px;
 }
 
+.rightPanelOverlay {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 10;
+}
+
 .canvasArea {
   display: flex;
   flex: 1;

@@ -143,8 +143,8 @@ interface Props {
   layout: LayoutName
   lockedIds?: Set<string>
   focusHostId?: string | null
-  onNodeClick: (node: GraphNode) => void
-  onEdgeClick: (edge: GraphEdge) => void
+  onNodeClick: (node: GraphNode, clientX: number) => void
+  onEdgeClick: (edge: GraphEdge, clientX: number) => void
   onNodeDoubleClick: (node: GraphNode) => void
   onNodeContextMenu: (node: GraphNode, x: number, y: number) => void
   onEdgeContextMenu: (edge: GraphEdge, x: number, y: number) => void
@@ -198,6 +198,8 @@ export default function GraphCanvas({
   const selectedNodeIdRef = useRef<string | null>(null)
   // Double-click detection — ForceGraph2D has no onNodeDoubleClick prop
   const lastClickRef = useRef<{ id: string; time: number } | null>(null)
+  // Pending single-click timer — delayed so double-click can preempt it
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── Graph data state ─────────────────────────────────────────────────────────
   const [fgData, setFgData] = useState<{ nodes: FGNode[]; links: FGLink[] }>({ nodes: [], links: [] })
@@ -475,19 +477,25 @@ export default function GraphCanvas({
 
   // ── Event handlers ────────────────────────────────────────────────────────────
 
-  // ForceGraph2D has no onNodeDoubleClick — detect it via click timing
+  // ForceGraph2D has no onNodeDoubleClick — detect it via click timing.
+  // Single-click is delayed 250 ms so double-click can preempt it.
   const handleNodeClick = useCallback((node: object, evt: MouseEvent) => {
-    void evt
     const n = node as FGNode
     selectedNodeIdRef.current = n.id
     const now = Date.now()
     const last = lastClickRef.current
+    if (clickTimerRef.current) clearTimeout(clickTimerRef.current)
     if (last?.id === n.id && now - last.time < 400) {
-      onNodeDoubleClick(n._node)
       lastClickRef.current = null
+      clickTimerRef.current = null
+      onNodeDoubleClick(n._node)
     } else {
       lastClickRef.current = { id: n.id, time: now }
-      onNodeClick(n._node)
+      const cx = evt.clientX
+      clickTimerRef.current = setTimeout(() => {
+        clickTimerRef.current = null
+        onNodeClick(n._node, cx)
+      }, 250)
     }
   }, [onNodeClick, onNodeDoubleClick])
 
@@ -496,8 +504,7 @@ export default function GraphCanvas({
   }, [onNodeContextMenu])
 
   const handleLinkClick = useCallback((link: object, evt: MouseEvent) => {
-    void evt
-    onEdgeClick((link as FGLink)._edge)
+    onEdgeClick((link as FGLink)._edge, evt.clientX)
   }, [onEdgeClick])
 
   const handleLinkRightClick = useCallback((link: object, evt: MouseEvent) => {
@@ -512,6 +519,10 @@ export default function GraphCanvas({
   }, [])
 
   const handleBackgroundClick = useCallback(() => {
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current)
+      clickTimerRef.current = null
+    }
     selectedNodeIdRef.current = null
     onCanvasTap()
   }, [onCanvasTap])

@@ -58,6 +58,8 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
   const [selectedPath, setSelectedPath] = useState<PathResult | null>(null)
   const [layout, setLayout] = useState<LayoutName>('cola')
   const [lockedIds, setLockedIds] = useState<Set<string>>(new Set())
+  const [panelMode, setPanelMode] = useState<'push' | 'overlay'>('overlay')
+  const canvasAreaRef = useRef<HTMLDivElement>(null)
 
   // Load full graph on mount
   const loadFullGraph = useCallback(async () => {
@@ -126,14 +128,22 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
 
   // ── Event handlers ────────────────────────────────────────────────────────
 
-  function handleNodeClick(node: GraphNode) {
+  function getPanelMode(clientX: number): 'push' | 'overlay' {
+    if (!canvasAreaRef.current) return 'overlay'
+    const rect = canvasAreaRef.current.getBoundingClientRect()
+    return clientX > rect.right - 320 ? 'push' : 'overlay'
+  }
+
+  function handleNodeClick(node: GraphNode, clientX: number) {
+    if (rightPanel === null) setPanelMode(getPanelMode(clientX))
     setSelectedNode(node)
     setSelectedEdge(null)
     setNodeCtxMenu(null)
     setEdgeCtxMenu(null)
   }
 
-  function handleEdgeClick(edge: GraphEdge) {
+  function handleEdgeClick(edge: GraphEdge, clientX: number) {
+    if (rightPanel === null) setPanelMode(getPanelMode(clientX))
     setSelectedEdge(edge)
     setSelectedNode(null)
     setNodeCtxMenu(null)
@@ -311,7 +321,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
         loading={loading}
       />
 
-      <div className={styles.canvasArea}>
+      <div ref={canvasAreaRef} className={styles.canvasArea}>
         {/* Toolbar: layout + credential filter */}
         <div className={styles.graphToolbar}>
           <label className={styles.toolbarLabel}>Layout:</label>
@@ -409,7 +419,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
         />
       </div>
 
-      <div className={`${styles.rightPanelWrapper} ${rightPanel ? styles.rightPanelOpen : ''}`}>
+      <div className={[styles.rightPanelWrapper, rightPanel ? styles.rightPanelOpen : '', panelMode === 'overlay' ? styles.rightPanelOverlay : ''].join(' ')}>
         {rightPanel ?? lastPanelRef.current}
       </div>
 
