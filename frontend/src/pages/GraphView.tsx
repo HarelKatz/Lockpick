@@ -405,7 +405,9 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
         />
       </div>
 
-      {rightPanel}
+      <div className={`${styles.rightPanelWrapper} ${rightPanel ? styles.rightPanelOpen : ''}`}>
+        {rightPanel}
+      </div>
 
       {nodeCtxMenu && (
         <NodeContextMenu

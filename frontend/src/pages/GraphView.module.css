@@ -6,6 +6,17 @@
   position: relative;
 }
 
+.rightPanelWrapper {
+  flex-shrink: 0;
+  max-width: 0;
+  overflow: hidden;
+  transition: max-width 120ms ease;
+}
+
+.rightPanelOpen {
+  max-width: 320px;
+}
+
 .canvasArea {
   display: flex;
   flex: 1;
