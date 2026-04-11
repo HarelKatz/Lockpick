@@ -201,6 +201,9 @@ export default function GraphCanvas({
 
   // ── Graph data state ─────────────────────────────────────────────────────────
   const [fgData, setFgData] = useState<{ nodes: FGNode[]; links: FGLink[] }>({ nodes: [], links: [] })
+  // Ref so the boundary force can read current nodes without calling graphData()
+  const fgNodesRef = useRef<FGNode[]>([])
+  useEffect(() => { fgNodesRef.current = fgData.nodes }, [fgData])
 
   // ── Customize d3-force whenever canvas dimensions change ────────────────────
   useEffect(() => {
@@ -216,10 +219,7 @@ export default function GraphCanvas({
     const { w, h } = dims
     const pad = 54  // node radius (27) + comfortable margin
     graphRef.current.d3Force('boundary', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const nodes = (graphRef.current?.graphData() as any)?.nodes as FGNode[] | undefined
-      if (!nodes) return
-      for (const n of nodes) {
+      for (const n of fgNodesRef.current) {
         if (n.fx != null) continue  // locked / static-layout nodes stay put
         n.x = Math.max(pad, Math.min(w - pad, n.x ?? w / 2))
         n.y = Math.max(pad, Math.min(h - pad, n.y ?? h / 2))
