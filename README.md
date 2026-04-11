@@ -46,6 +46,7 @@ cd backend
 uv sync
 mkdir -p ../data
 uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
+# or: make dev-backend
 ```
 
 API available at **http://localhost:8000**. Interactive docs at **http://localhost:8000/docs**.
@@ -56,6 +57,7 @@ API available at **http://localhost:8000**. Interactive docs at **http://localho
 cd frontend
 npm install
 npm run dev
+# or: make dev-frontend
 ```
 
 Dev server at **http://localhost:5173** — proxies `/api` requests to `localhost:8000`.

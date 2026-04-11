@@ -45,13 +45,14 @@ backend/
 ├── database.py      # SQLAlchemy engine, session factory, Base
 ├── models.py        # ORM models
 ├── schemas.py       # Pydantic request/response models
-├── routers/         # operations.py, hosts.py, credentials.py, connections.py
-├── parsers/         # File parsers implementing BaseParser
+├── routers/         # One file per resource group (operations, hosts, credentials, connections, graph, upload, search, stats, export_import, activity)
+├── parsers/         # File parsers implementing BaseParser; registry.py maps file_type → class
 ├── services/        # Graph builder, IP resolver, pivot analysis
 │   ├── graph_builder.py   # Aggregate CredentialLinks + ConnectionRecords → edge objects
 │   ├── ip_resolver.py     # Match IPs/hostnames to known hosts (best-effort)
-│   ├── key_matcher.py     # Cross-reference fingerprints across an op
-│   └── pivot_analysis.py  # BFS path finding between hosts (Phase 7)
+│   ├── key_utils.py       # Cross-reference fingerprints across an op
+│   ├── pivot_analysis.py  # BFS path finding between hosts (Phase 7)
+│   └── activity.py        # log_activity() — call before db.commit() in all write endpoints
 └── alembic/         # Migrations
 
 frontend/src/
@@ -60,11 +61,16 @@ frontend/src/
 ├── index.css        # Global styles + CSS custom properties
 ├── types/           # TypeScript interfaces matching backend schemas
 ├── api/             # Typed API client functions
+├── components/      # Shared UI components
+├── utils/           # Shared utility functions
 └── pages/           # Top-level page components
 
 tests/
 ├── conftest.py      # Shared fixtures (in-memory DB, TestClient)
-└── test_api/        # API integration tests
+├── fixtures/        # Sample files for parser tests
+├── test_api/        # API integration tests
+├── test_parsers/    # Parser unit tests
+└── test_services/   # Service layer tests
 ```
 
 ## Adding a New Endpoint

@@ -15,8 +15,9 @@ backend/               Python FastAPI application
 │   ├── operations.py  CRUD for Operations
 │   ├── hosts.py       CRUD for Hosts, HostIPs, HostUsers
 │   ├── credentials.py CRUD for Credentials and CredentialLinks
-│   └── connections.py CRUD for ConnectionRecords
-├── parsers/           File parsers, one per file type
+│   ├── connections.py CRUD for ConnectionRecords
+│   └── …              graph.py, upload.py, search.py, stats.py, export_import.py, activity.py
+├── parsers/           File parsers, one per file type; registry.py maps file_type → class
 ├── services/          Graph builder, IP resolver, pivot analysis
 └── alembic/           Database migrations
 
@@ -28,11 +29,16 @@ frontend/              React + TypeScript SPA
 │   ├── index.css      Global styles, CSS custom properties
 │   ├── types/         TypeScript interfaces matching backend schemas
 │   ├── api/           Typed API client functions
+│   ├── components/    Shared UI components
+│   ├── utils/         Shared utility functions
 │   └── pages/         Top-level page components
 
 tests/
 ├── conftest.py        Shared fixtures (in-memory DB, TestClient)
-└── test_api/          API integration tests
+├── fixtures/          Sample files for parser tests
+├── test_api/          API integration tests
+├── test_parsers/      Parser unit tests
+└── test_services/     Service layer tests
 ```
 
 ### Data Flow
@@ -104,12 +110,12 @@ class MyFileTypeParser(BaseParser):
 
 ### Step 2: Register the parser
 
-In `backend/parsers/__init__.py`, add your parser to the registry:
+In `backend/parsers/registry.py`, add your parser to the registry:
 
 ```python
 from parsers.my_file_type import MyFileTypeParser
 
-PARSER_REGISTRY = {
+PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     # existing parsers ...
     "my_file_type": MyFileTypeParser,
 }
@@ -160,8 +166,8 @@ def test_parse_malformed_input(parser, metadata):
 - **Handle gzip** — check for gzip magic bytes and decompress if needed
 - **Use `metadata.host_id`** as the source host for the parsed data
 - **Return counts in `result.stats`** for the UI summary (e.g. `{"hosts": 3, "connections": 12}`)
-- **IP resolution** — use the `IpResolver` service to match raw IPs to existing hosts in the op
-- **Fingerprint matching** — use `KeyMatcher` service when parsing SSH keys to find instant pivot opportunities
+- **IP resolution** — use `resolve_ip()` from `services/ip_resolver.py` to match raw IPs to existing hosts in the op
+- **Fingerprint matching** — parsers return raw key material in `CredentialData`; fingerprint extraction (`key_utils.infer_key_info`) and cross-referencing against existing credentials is handled automatically by the upload router
 
 ## Dark Theme Guidelines
 
