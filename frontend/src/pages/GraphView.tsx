@@ -295,6 +295,11 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
         allHosts={allHosts}
         selectedIds={selectedIds}
         onSelectionChange={ids => {
+          setHiddenIds(prev => {
+            const next = new Set(prev)
+            for (const id of ids) next.delete(id)
+            return next
+          })
           setSelectedIds(ids)
           setIsInitialized(true)
         }}
