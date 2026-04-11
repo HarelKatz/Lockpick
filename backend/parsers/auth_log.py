@@ -15,10 +15,6 @@ _ACCEPTED_RE = re.compile(
 )
 # Fingerprint anywhere on the line after the initial match
 _FP_RE = re.compile(r"(?P<fp>SHA256:[A-Za-z0-9+/=]+)")
-# Failed password for root from 10.0.0.5 port 12345
-_FAILED_RE = re.compile(
-    r"Failed\s+(?P<method>\S+)\s+for(?:\s+invalid user)?\s+(?P<user>\S+)\s+from\s+(?P<ip>\S+)"
-)
 # Disconnect / session closed lines (ignored, but we can still skip gracefully)
 
 # Timestamp at start of syslog lines: "Mar 15 14:22:00" or ISO "2024-03-15T14:22:00"
@@ -96,22 +92,6 @@ class AuthLogParser(BaseParser):
                 result.connections_found.append(conn)
                 accepted += 1
                 continue
-
-            # Failed lines — also useful as evidence, but lower confidence
-            m = _FAILED_RE.search(raw_line)
-            if m:
-                method = _normalise_method(m.group("method"))
-                conn = ConnectionData(
-                    src_ip=m.group("ip"),
-                    dst_ip="__upload_host__",
-                    connection_type="ssh",
-                    direction_context="from_dst_logs",
-                    dst_user=m.group("user"),
-                    auth_method=method,
-                    timestamp=ts_str,
-                    raw_line=raw_line[:512],
-                )
-                result.connections_found.append(conn)
 
         result.stats = {
             "lines_parsed": len(text.splitlines()),

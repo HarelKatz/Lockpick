@@ -27,8 +27,16 @@ def metadata():
 def test_parses_accepted_logins(metadata):
     content = (FIXTURES / "auth.log").read_bytes()
     result = AuthLogParser().parse(content, metadata)
-    accepted = [c for c in result.connections_found if c.auth_method in ("publickey", "password")]
-    assert len(accepted) >= 2
+    # Fixture has exactly 2 Accepted lines and 2 Failed lines; only accepted become connections
+    assert len(result.connections_found) == 2
+    assert all("Accepted" in c.raw_line for c in result.connections_found)
+
+
+def test_failed_logins_not_in_connections(metadata):
+    content = (FIXTURES / "auth.log").read_bytes()
+    result = AuthLogParser().parse(content, metadata)
+    assert not any("Failed" in c.raw_line for c in result.connections_found)
+
 
 
 def test_fingerprint_extracted(metadata):

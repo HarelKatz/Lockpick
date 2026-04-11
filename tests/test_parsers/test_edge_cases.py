@@ -138,10 +138,10 @@ class TestAuthLogMixedFormats:
         """Mixed syslog + ISO lines should all produce connections."""
         assert len(result.connections_found) >= 4
 
-    def test_failed_login_included(self, result):
-        """Failed publickey lines should produce connection records too."""
+    def test_failed_login_excluded(self, result):
+        """Failed auth lines must not produce connection records."""
         srcs = {c.src_ip for c in result.connections_found}
-        assert "10.0.0.3" in srcs  # failed publickey for badguy
+        assert "10.0.0.3" not in srcs  # failed publickey for badguy — not a real connection
 
     def test_non_sshd_lines_ignored(self, result):
         """sudo lines should not produce connection records."""

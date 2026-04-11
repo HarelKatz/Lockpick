@@ -100,7 +100,7 @@ def test_upload_auth_log(client, tmp_path):
     )
     assert resp.status_code == 200
     body = resp.json()
-    assert body["summary"]["new_connections"] >= 3
+    assert body["summary"]["new_connections"] >= 2
 
 
 def test_upload_private_key(client, tmp_path):
