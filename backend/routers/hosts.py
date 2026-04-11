@@ -5,7 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Host, HostIP, HostUser, Operation
+from models import Host, HostIP, HostUser
+from routers.deps import get_op_or_404
 from services.activity import log_activity
 from schemas import (
     HostCreate,
@@ -22,13 +23,6 @@ router = APIRouter(tags=["hosts"])
 
 # ─── Hosts ────────────────────────────────────────────────────────────────────
 
-def _get_op_or_404(op_id: str, db: Session) -> Operation:
-    op = db.query(Operation).filter(Operation.id == op_id).first()
-    if not op:
-        raise HTTPException(status_code=404, detail="Operation not found")
-    return op
-
-
 def _get_host_or_404(host_id: str, db: Session) -> Host:
     host = db.query(Host).filter(Host.id == host_id).first()
     if not host:
@@ -38,7 +32,7 @@ def _get_host_or_404(host_id: str, db: Session) -> Host:
 
 @router.post("/ops/{op_id}/hosts", response_model=HostRead, status_code=201)
 def create_host(op_id: str, body: HostCreate, db: Session = Depends(get_db)):
-    _get_op_or_404(op_id, db)
+    get_op_or_404(op_id, db)
     host = Host(op_id=op_id, nickname=body.nickname, comment=body.comment)
     db.add(host)
     log_activity(db, op_id, "host.create", "host", detail=f"Added host '{body.nickname}'")
@@ -49,7 +43,7 @@ def create_host(op_id: str, body: HostCreate, db: Session = Depends(get_db)):
 
 @router.get("/ops/{op_id}/hosts", response_model=List[HostRead])
 def list_hosts(op_id: str, db: Session = Depends(get_db)):
-    _get_op_or_404(op_id, db)
+    get_op_or_404(op_id, db)
     return (
         db.query(Host)
         .filter(Host.op_id == op_id)

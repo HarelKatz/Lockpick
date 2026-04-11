@@ -37,10 +37,6 @@ from schemas import (
 router = APIRouter()
 
 
-def _now() -> datetime:
-    return datetime.now(timezone.utc)
-
-
 # ─── Export ───────────────────────────────────────────────────────────────────
 
 @router.get("/ops/{op_id}/export")
@@ -69,7 +65,7 @@ def export_op(op_id: str, db: Session = Depends(get_db)):
     )
 
     export_data = OpExport(
-        exported_at=_now(),
+        exported_at=datetime.now(timezone.utc),
         operation=OperationRead.model_validate(op),
         hosts=[ExportHost.model_validate(h) for h in hosts],
         credentials=[ExportCredential.model_validate(c) for c in credentials],
@@ -79,7 +75,7 @@ def export_op(op_id: str, db: Session = Depends(get_db)):
     )
 
     safe_name = re.sub(r"[^a-z0-9_\-]", "_", op.name.lower())[:40]
-    date_str = _now().strftime("%Y%m%d_%H%M")
+    date_str = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M")
     filename = f"lockpick-{safe_name}-{date_str}.json"
 
     response = JSONResponse(

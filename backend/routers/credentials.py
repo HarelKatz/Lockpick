@@ -9,7 +9,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Credential, CredentialLink, Host, Operation
+from models import Credential, CredentialLink, Host
+from routers.deps import get_op_or_404
 from services.activity import log_activity
 from schemas import (
     CredentialCreate,
@@ -57,13 +58,6 @@ def _infer_key_info(value: str, passphrase: Optional[str]) -> tuple[Optional[str
     return None, None
 
 
-def _get_op_or_404(op_id: str, db: Session) -> Operation:
-    op = db.query(Operation).filter(Operation.id == op_id).first()
-    if not op:
-        raise HTTPException(status_code=404, detail="Operation not found")
-    return op
-
-
 def _get_cred_or_404(cred_id: str, db: Session) -> Credential:
     cred = db.query(Credential).filter(Credential.id == cred_id).first()
     if not cred:
@@ -75,7 +69,7 @@ def _get_cred_or_404(cred_id: str, db: Session) -> Credential:
 
 @router.post("/ops/{op_id}/credentials", response_model=CredentialRead, status_code=201)
 def create_credential(op_id: str, body: CredentialCreate, db: Session = Depends(get_db)):
-    _get_op_or_404(op_id, db)
+    get_op_or_404(op_id, db)
 
     key_type, fingerprint = None, None
     if body.cred_type == "private_key":
@@ -101,7 +95,7 @@ def create_credential(op_id: str, body: CredentialCreate, db: Session = Depends(
 
 @router.get("/ops/{op_id}/credentials", response_model=List[CredentialRead])
 def list_credentials(op_id: str, db: Session = Depends(get_db)):
-    _get_op_or_404(op_id, db)
+    get_op_or_404(op_id, db)
     return (
         db.query(Credential)
         .filter(Credential.op_id == op_id)
@@ -175,7 +169,7 @@ def create_credential_link(body: CredentialLinkCreate, db: Session = Depends(get
 
 @router.get("/ops/{op_id}/credential-links", response_model=List[CredentialLinkRead])
 def list_credential_links(op_id: str, db: Session = Depends(get_db)):
-    _get_op_or_404(op_id, db)
+    get_op_or_404(op_id, db)
     return (
         db.query(CredentialLink)
         .join(Credential, CredentialLink.credential_id == Credential.id)

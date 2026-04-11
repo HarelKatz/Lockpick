@@ -14,10 +14,6 @@ from sqlalchemy.orm import Session
 from models import Host, HostIP
 
 
-def _now() -> datetime:
-    return datetime.now(timezone.utc)
-
-
 def resolve_ip(
     db: Session,
     op_id: str,
@@ -65,7 +61,7 @@ def resolve_ip(
         op_id=op_id,
         nickname=ip,
         comment="Auto-created by parser (unresolved IP/hostname)",
-        created_at=_now(),
+        created_at=datetime.now(timezone.utc),
     )
     db.add(host)
 
@@ -74,7 +70,7 @@ def resolve_ip(
         host_id=host_id,
         ip_address=ip,
         source="parsed",
-        first_seen_at=_now(),
+        first_seen_at=datetime.now(timezone.utc),
     )
     db.add(host_ip)
     db.flush()

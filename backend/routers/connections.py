@@ -5,18 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import ConnectionRecord, Credential, Operation
+from models import ConnectionRecord, Credential
+from routers.deps import get_op_or_404
 from services.activity import log_activity
 from schemas import ConnectionRecordCreate, ConnectionRecordRead, ConnectionRecordUpdate
 
 router = APIRouter(tags=["connections"])
-
-
-def _get_op_or_404(op_id: str, db: Session) -> Operation:
-    op = db.query(Operation).filter(Operation.id == op_id).first()
-    if not op:
-        raise HTTPException(status_code=404, detail="Operation not found")
-    return op
 
 
 @router.post("/ops/{op_id}/connections", response_model=ConnectionRecordRead, status_code=201)
@@ -25,7 +19,7 @@ def create_connection(
     body: ConnectionRecordCreate,
     db: Session = Depends(get_db),
 ):
-    _get_op_or_404(op_id, db)
+    get_op_or_404(op_id, db)
     if body.credential_id is not None:
         cred = db.query(Credential).filter(
             Credential.id == body.credential_id,
@@ -66,7 +60,7 @@ def list_connections(
     dst_host_id: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
-    _get_op_or_404(op_id, db)
+    get_op_or_404(op_id, db)
     q = db.query(ConnectionRecord).filter(ConnectionRecord.op_id == op_id)
     if src_host_id:
         q = q.filter(ConnectionRecord.src_host_id == src_host_id)

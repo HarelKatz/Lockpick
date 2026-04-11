@@ -1,23 +1,16 @@
 """Graph endpoints — compute pivot graph on demand."""
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Operation
+from routers.deps import get_op_or_404
 from schemas import GraphResponse, PathFinderRequest, PathFinderResponse
 from services.graph_builder import build_graph, expand_host
 from services.pivot_analysis import find_paths
 
 router = APIRouter(tags=["graph"])
-
-
-def _get_op_or_404(op_id: str, db: Session) -> Operation:
-    op = db.query(Operation).filter(Operation.id == op_id).first()
-    if not op:
-        raise HTTPException(status_code=404, detail="Operation not found")
-    return op
 
 
 @router.get("/ops/{op_id}/graph", response_model=GraphResponse)
@@ -27,7 +20,7 @@ def get_graph(
     db: Session = Depends(get_db),
 ) -> GraphResponse:
     """Return nodes and edges for an operation, optionally filtered to a host subset."""
-    _get_op_or_404(op_id, db)
+    get_op_or_404(op_id, db)
     parsed_ids = (
         [h.strip() for h in host_ids.split(",") if h.strip()]
         if host_ids
@@ -44,7 +37,7 @@ def expand_host_endpoint(
     db: Session = Depends(get_db),
 ) -> GraphResponse:
     """Return the target host plus all adjacent hosts and edges, filtered by evidence type."""
-    _get_op_or_404(op_id, db)
+    get_op_or_404(op_id, db)
     return expand_host(db, op_id, host_id, evidence_type)
 
 
@@ -55,5 +48,5 @@ def find_graph_paths(
     db: Session = Depends(get_db),
 ) -> PathFinderResponse:
     """BFS/DFS pivot path finder. Max depth 8, max 30 paths returned."""
-    _get_op_or_404(op_id, db)
+    get_op_or_404(op_id, db)
     return find_paths(db, op_id, body)

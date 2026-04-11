@@ -15,10 +15,6 @@ export async function listHosts(opId: string): Promise<Host[]> {
   return api.get<Host[]>(`/ops/${opId}/hosts`)
 }
 
-export async function getHost(hostId: string): Promise<Host> {
-  return api.get<Host>(`/hosts/${hostId}`)
-}
-
 export async function createHost(opId: string, data: CreateHostRequest): Promise<Host> {
   return api.post<Host>(`/ops/${opId}/hosts`, data)
 }
@@ -37,10 +33,6 @@ export async function addHostIP(hostId: string, data: CreateHostIPRequest): Prom
 
 export async function deleteHostIP(hostId: string, ipId: string): Promise<void> {
   return api.delete(`/hosts/${hostId}/ips/${ipId}`)
-}
-
-export async function listHostUsers(hostId: string): Promise<HostUser[]> {
-  return api.get<HostUser[]>(`/hosts/${hostId}/users`)
 }
 
 export async function createHostUser(hostId: string, data: CreateHostUserRequest): Promise<HostUser> {
