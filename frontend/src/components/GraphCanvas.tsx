@@ -341,9 +341,9 @@ export default function GraphCanvas({
       l.dimmed = dimmed || hiddenByFilter
     }
 
-    // Briefly reheat so d3 applies the fx/fy constraints and the rAF loop
-    // redraws the canvas (loop may be stopped if the simulation already settled).
-    graphRef.current?.d3ReheatSimulation()
+    // No reheat needed: autoPauseRedraw={false} keeps the rAF loop running so
+    // the canvas redraws immediately. Reheating would restart physics at alpha=1
+    // and move all non-locked nodes, making the locked node appear screen-anchored.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathFilter, credFilter, lockedIds, fgData])
 
@@ -558,6 +558,7 @@ export default function GraphCanvas({
           warmupTicks={0}
           d3AlphaDecay={0.04}
           d3VelocityDecay={0.8}
+          autoPauseRedraw={false}
         />
       )}
     </div>
