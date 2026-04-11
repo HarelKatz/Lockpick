@@ -25,7 +25,7 @@ _SYSLOG_TS_RE = re.compile(
 _AUTH_METHODS = {"publickey", "password", "keyboard-interactive", "hostbased"}
 
 
-def _normalise_method(raw: str) -> str | None:
+def _normalise_method(raw: str) -> str:
     raw = raw.lower().strip()
     return raw if raw in _AUTH_METHODS else "unknown"
 
@@ -36,7 +36,7 @@ def _parse_ts(ts_str: str) -> str | None:
             dt = datetime.strptime(ts_str.strip(), fmt)
             # syslog lines lack the year — use current year as best guess
             if dt.year == 1900:
-                dt = dt.replace(year=datetime.now().year)
+                dt = dt.replace(year=datetime.now(timezone.utc).year)
             return dt.replace(tzinfo=timezone.utc).isoformat()
         except ValueError:
             continue

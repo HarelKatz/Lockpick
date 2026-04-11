@@ -65,12 +65,9 @@ class SshConfigParser(BaseParser):
             if not line or line.startswith("#"):
                 continue
 
-            try:
-                key, _, value = line.partition(" ")
-                key = key.lower().strip()
-                value = value.strip()
-            except Exception:
-                continue
+            key, _, value = line.partition(" ")
+            key = key.lower().strip()
+            value = value.strip()
 
             if key == "host":
                 flush_block()

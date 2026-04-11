@@ -9,7 +9,7 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
 
 from parsers import UploadMetadata
-from parsers.wtmp import WtmpParser, _UTMP_FMT, _UTMP_SIZE, UT_USER_PROCESS
+from parsers.wtmp import WtmpParser, _UTMP_FMT, _UTMP_SIZE, _UT_USER_PROCESS
 
 
 @pytest.fixture
@@ -22,7 +22,7 @@ def metadata():
     )
 
 
-def _make_utmp_record(user: str, host: str, ts: int, ut_type: int = UT_USER_PROCESS) -> bytes:
+def _make_utmp_record(user: str, host: str, ts: int, ut_type: int = _UT_USER_PROCESS) -> bytes:
     """Build a minimal utmp record."""
     return struct.pack(
         _UTMP_FMT,

@@ -62,7 +62,6 @@ class AuthorizedKeysParser(BaseParser):
                 result.warnings.append(f"Line {lineno}: unrecognised format, skipping")
                 continue
 
-            key_type = parts[idx]
             key_b64 = parts[idx + 1]
             fingerprint = _fingerprint(key_b64)
 

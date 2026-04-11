@@ -23,8 +23,8 @@ from parsers import BaseParser, ConnectionData, ParseResult, UploadMetadata
 _UTMP_FMT = "=hi32s4s32s256s4sl2l4i20s"
 _UTMP_SIZE = struct.calcsize(_UTMP_FMT)
 
-UT_USER_PROCESS = 7   # login process
-UT_LOGIN_PROCESS = 6
+_UT_USER_PROCESS = 7   # USER_PROCESS: normal login
+_UT_LOGIN_PROCESS = 6  # LOGIN_PROCESS: getty / terminal login
 
 
 def _decode_str(b: bytes) -> str:
@@ -78,7 +78,7 @@ class WtmpParser(BaseParser):
             ) = fields
             addr_v6 = list(addr_v6_and_pad[:4])
 
-            if ut_type not in (UT_USER_PROCESS, UT_LOGIN_PROCESS):
+            if ut_type not in (_UT_USER_PROCESS, _UT_LOGIN_PROCESS):
                 continue
 
             user = _decode_str(ut_user)

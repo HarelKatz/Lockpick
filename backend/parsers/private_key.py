@@ -51,8 +51,9 @@ class PrivateKeyParser(BaseParser):
                 result.warnings.append("Could not parse private key — unsupported format or corrupted")
                 return result
         except Exception as e:
-            encrypted_hint = "PasswordRequiredException" in type(e).__name__ or "encrypted" in str(e).lower()
-            if encrypted_hint:
+            # _load_private_key only propagates PasswordRequiredException;
+            # check the exact class name to avoid importing paramiko at module level.
+            if type(e).__name__ == "PasswordRequiredException":
                 # Still store it — we just can't compute fingerprint
                 result.warnings.append(
                     "Private key is passphrase-protected — stored without fingerprint. "
@@ -91,8 +92,8 @@ class PrivateKeyParser(BaseParser):
             b64 = base64.b64encode(digest).decode().rstrip("=")
             fp_str = f"SHA256:{b64}"
             result.stats["fingerprint"] = fp_str
-        except Exception:
-            pass
+        except Exception as e:
+            result.warnings.append(f"Could not compute fingerprint: {e}")
 
         result.stats["key_type"] = key_type or "unknown"
         return result

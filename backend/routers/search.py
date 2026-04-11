@@ -1,6 +1,4 @@
 """GET /ops/{op_id}/search?q= — global search across all op data."""
-from typing import List, Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -30,7 +28,7 @@ def search_op(
         raise HTTPException(status_code=404, detail="Operation not found")
 
     pattern = f"%{q}%"
-    results: List[SearchResult] = []
+    results: list[SearchResult] = []
 
     # ── Hosts ──────────────────────────────────────────────────────────────────
     for host in (

@@ -1,3 +1,6 @@
+/**
+ * Activity log API — retrieves recent write events for an operation.
+ */
 import { api } from './client'
 import type { ActivityLog } from '../types'
 

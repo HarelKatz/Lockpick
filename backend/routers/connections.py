@@ -1,5 +1,5 @@
 """CRUD endpoints for ConnectionRecords."""
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -59,7 +59,7 @@ def create_connection(
     return record
 
 
-@router.get("/ops/{op_id}/connections", response_model=List[ConnectionRecordRead])
+@router.get("/ops/{op_id}/connections", response_model=list[ConnectionRecordRead])
 def list_connections(
     op_id: str,
     src_host_id: Optional[str] = None,

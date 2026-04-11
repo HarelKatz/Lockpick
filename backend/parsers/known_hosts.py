@@ -51,18 +51,16 @@ class KnownHostsParser(BaseParser):
                 if not candidate or candidate in _SKIP_IPS:
                     continue
 
-                # We record an outbound indicator from the upload host to each known host
+                # We record an outbound indicator from the upload host to each known host.
+                # src_ip uses a sentinel so the router resolves it to the actual upload host.
                 conn = ConnectionData(
-                    src_ip=metadata.host_id,   # placeholder — router replaces with real IP
+                    src_ip="__upload_host__",
                     dst_ip=candidate,
                     connection_type="ssh",
                     direction_context="from_src_logs",
                     src_user=src_user,
                     raw_line=raw_line[:512],
                 )
-                # Tag with a sentinel so the router knows src is the upload host
-                conn.src_ip = "__upload_host__"
-                conn.dst_ip = candidate
                 result.connections_found.append(conn)
                 hosts_seen += 1
 

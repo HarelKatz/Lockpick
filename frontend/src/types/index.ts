@@ -127,6 +127,11 @@ export interface UpdateOperationRequest {
   description?: string | null
 }
 
+export interface UpdateHostRequest {
+  nickname?: string
+  comment?: string | null
+}
+
 export interface UpdateCredentialRequest {
   name?: string | null
   value?: string
