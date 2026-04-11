@@ -146,9 +146,9 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed phase: Phase 8 — Polish & UX (complete)**
+**Last completed: Phase 8 + post-phase graph/UX hardening**
 
-Phases 1–8 are fully implemented and tested. Phase 9 (MCP server) is next.
+Phases 1–8 are fully implemented and tested. Post-phase work replaced the graph library (cytoscape.js → React Flow → react-force-graph-2d) and added several UX fixes to the graph view. Phase 9 (MCP server) is next.
 
 **Next phase: Phase 9 — MCP Server**
 
@@ -187,7 +187,7 @@ Those things belong in commit messages and GitHub issues.
 
 ### Phases 1–7 — Complete
 
-All infrastructure, CRUD APIs, edit/delete UI, HostUser entity, schema hardening, graph visualization (cytoscape.js + BFS pivot analysis), file upload + parsing engine (8 parsers, IP resolver, pivot detection), and pivot path analysis are implemented and tested.
+All infrastructure, CRUD APIs, edit/delete UI, HostUser entity, schema hardening, graph visualization (react-force-graph-2d + d3-force, BFS pivot analysis), file upload + parsing engine (8 parsers, IP resolver, pivot detection), and pivot path analysis are implemented and tested.
 
 **Upload file invariants** (future phases must not break these):
 - Files stored at `data/uploads/{op_id}/{uuid}_{filename}`
@@ -202,6 +202,12 @@ All infrastructure, CRUD APIs, edit/delete UI, HostUser entity, schema hardening
 All polish features implemented: global search (`GET /ops/{op_id}/search?q=`), op export (`GET /ops/{op_id}/export`) and import (`POST /ops/import`, `create_new` mode with ID remapping), graph layout switcher (cola/cose-bilkent/breadthfirst/grid/circle), keyboard shortcuts (Ctrl+F search, Del hide node, Esc close modals), bulk file upload (multi-file queue, auto-detect, sequential processing), activity log (DB-backed, hooked into all write endpoints, `GET /ops/{op_id}/activity`), and notification banner (30s polling via `GET /ops/{op_id}/stats`).
 
 **Phase 8 invariants:** `ActivityLog` table exists with composite index on `(op_id, created_at)`. `log_activity()` in `services/activity.py` must be called before `db.commit()` in write endpoints — it adds to the session, not commits independently. Export format is `lockpick_export_version: 1`.
+
+**Post-phase graph/UX invariants:**
+- Graph uses `react-force-graph-2d` (`ForceGraph2D`) with `d3-force` — not cytoscape.js or React Flow.
+- `GraphCanvas` owns all d3/simulation state; `GraphView` owns all selection/filter state. Keep these separate.
+- Node single-click is delayed 250 ms to allow double-click (lock) to preempt it. Do not revert this.
+- Right detail panel slides in from the right. Mode is `push` (shrinks canvas) when the clicked node falls in the rightmost 320 px of the canvas; otherwise `overlay` (absolute, canvas unchanged). Mode is evaluated once on open and held through the close transition.
 
 ### Phase 9 — MCP Server
 

@@ -15,7 +15,7 @@ SSH pivot tracker for red teams. Ingests raw evidence (private keys, `authorized
 
 - **Backend**: Python 3.12, FastAPI, SQLAlchemy ORM, Alembic, uv
 - **Database**: SQLite at `./data/tracker.db`
-- **Frontend**: React 18, Vite, TypeScript, cytoscape.js (for graph)
+- **Frontend**: React 18, Vite, TypeScript, react-force-graph-2d + d3-force (for graph)
 - **Tests**: pytest + httpx (integration tests against real in-memory DB)
 - **Deploy**: Docker Compose (backend + nginx-served frontend)
 
