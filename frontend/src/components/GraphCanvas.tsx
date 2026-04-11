@@ -202,18 +202,31 @@ export default function GraphCanvas({
   // ── Graph data state ─────────────────────────────────────────────────────────
   const [fgData, setFgData] = useState<{ nodes: FGNode[]; links: FGLink[] }>({ nodes: [], links: [] })
 
-  // ── Customize d3-force once container is ready ───────────────────────────────
+  // ── Customize d3-force whenever canvas dimensions change ────────────────────
   useEffect(() => {
     if (!graphRef.current || dims.w === 0) return
     graphRef.current.d3Force('link')?.distance(180).strength(0.5)
-    graphRef.current.d3Force('charge')?.strength(-80)
+    // distanceMax: charge only repels nodes within 120px — nodes further apart
+    // don't push each other, so dragging one node doesn't disturb distant groups.
+    graphRef.current.d3Force('charge')?.strength(-80).distanceMax(120)
     graphRef.current.d3Force('collision', d3Force.forceCollide(52))
-    // Weaken forceCenter so d3ReheatSimulation() (called when locking a node)
-    // doesn't yank all non-locked nodes toward the canvas midpoint, which made
-    // the locked node appear "stuck to the screen" while everything else relocated.
     graphRef.current.d3Force('center')?.strength(0.01)
+    // Boundary: hard-clamp node positions to canvas edges on every tick so nodes
+    // can never drift off-screen. Re-registered whenever canvas resizes.
+    const { w, h } = dims
+    const pad = 54  // node radius (27) + comfortable margin
+    graphRef.current.d3Force('boundary', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const nodes = (graphRef.current?.graphData() as any)?.nodes as FGNode[] | undefined
+      if (!nodes) return
+      for (const n of nodes) {
+        if (n.fx != null) continue  // locked / static-layout nodes stay put
+        n.x = Math.max(pad, Math.min(w - pad, n.x ?? w / 2))
+        n.y = Math.max(pad, Math.min(h - pad, n.y ?? h / 2))
+      }
+    })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dims.w > 0])
+  }, [dims.w, dims.h])
 
   // ── Effect 1: structural rebuild ─────────────────────────────────────────────
   useEffect(() => {
