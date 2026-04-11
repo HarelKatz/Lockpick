@@ -213,7 +213,7 @@ export default function GraphCanvas({
     // don't push each other, so dragging one node doesn't disturb distant groups.
     graphRef.current.d3Force('charge')?.strength(-80).distanceMax(120)
     graphRef.current.d3Force('collision', d3Force.forceCollide(52))
-    graphRef.current.d3Force('center')?.strength(0.01)
+    graphRef.current.d3Force('center', null)  // no gravity toward canvas center
     // Boundary: hard-clamp node positions to canvas edges on every tick so nodes
     // can never drift off-screen. Re-registered whenever canvas resizes.
     const { w, h } = dims
