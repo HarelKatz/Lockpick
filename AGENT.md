@@ -148,9 +148,9 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 **Last completed: Phase 8 + post-phase graph/UX hardening**
 
-Phases 1–8 are fully implemented and tested. Post-phase work replaced the graph library (cytoscape.js → React Flow → react-force-graph-2d) and added several UX fixes to the graph view. Phase 9 (MCP server) is next.
+Phases 1–8 are fully implemented and tested. Post-phase work replaced the graph library (cytoscape.js → React Flow → react-force-graph-2d) and added several UX fixes to the graph view. Phase 9 (Operational Command Generation) is next.
 
-**Next phase: Phase 9 — MCP Server**
+**Next phase: Phase 9 — Operational Command Generation**
 
 ---
 
@@ -209,7 +209,113 @@ All polish features implemented: global search (`GET /ops/{op_id}/search?q=`), o
 - Node single-click is delayed 250 ms to allow double-click (lock) to preempt it. Do not revert this.
 - Right detail panel slides in from the right. Mode is `push` (shrinks canvas) when the clicked node falls in the rightmost 320 px of the canvas; otherwise `overlay` (absolute, canvas unchanged). Mode is evaluated once on open and held through the close transition.
 
-### Phase 9 — MCP Server
+### Phase 9 — Operational Command Generation
+
+New endpoint: `POST /ops/{op_id}/graph/paths/commands`
+- Accepts same `PathFinderRequest` body as the existing path finder; reuses `find_paths()` from `services/pivot_analysis.py`
+- Returns a JSON object with four output formats per path:
+  1. **ProxyJump one-liner** — `ssh -J user@hop1,user@hop2 user@target`
+  2. **proxychains.conf block** — `[ProxyList]` socks5 entries per hop
+  3. **Step-by-step walkthrough** — sequential interactive SSH commands with per-hop context (which credential, which user, what IP); each step includes a human-readable note (e.g. "From HostB as root, pivot to HostC:")
+  4. **SSH config block** — `Host` alias entries using `ProxyJump` directives; paste into `~/.ssh/config` then `ssh <alias>`
+- Uses `pivotable_users` from each edge to pick src_user/dst_user per hop; falls back to `username` from CredentialLink
+- Credential reference in output: credential name if set, otherwise `SHA256:<fingerprint>` — never key material
+- Frontend: "Generate Commands" button in the path finder results panel → modal with four tabs + copy button per tab
+
+**Invariants:** Endpoint is read-only — no DB writes. Output is `application/json`. Hops with no resolvable username emit `<user>` as a placeholder. Private key material is never included in output.
+
+---
+
+### Phase 10 — WebSocket Live Push + Per-Host Notes
+
+**WebSocket:**
+- `GET /ops/{op_id}/ws` — WebSocket endpoint (FastAPI native `WebSocket` parameter)
+- Server broadcasts a lightweight JSON event `{type, entity_type, entity_id, op_id}` after every successful DB write (post-commit in routers)
+- Frontend replaces 30s stats polling with WS listener; on event, refetches only the affected entity type
+- Graceful fallback: if WS disconnects, fall back to 30s polling
+
+**Per-Host Notes:**
+- New table `HostNote`: `id`, `op_id` (FK), `host_id` (FK), `content` (text), `created_at`
+- New endpoints: `POST /hosts/{host_id}/notes`, `GET /hosts/{host_id}/notes`, `DELETE /hosts/{host_id}/notes/{note_id}`
+- Host detail panel gains a "Notes" tab (timestamped, multi-entry, deletable)
+- `log_activity()` on create/delete
+
+**Invariants:** WS events are fire-and-forget — no guaranteed delivery, no replay. `Host.comment` is retained (single-line label; notes are the multi-entry scratchpad). Alembic migration required for `HostNote`.
+
+---
+
+### Phase 11 — Host Status Tags
+
+Add a `status` enum column to `Host` (nullable, so existing hosts are unaffected):
+- Values: `entry_point | compromised | pivot | target | scoped_out | unreachable`
+- Alembic migration required (batch_alter_table)
+- Extend `HostUpdate` schema and `PATCH /hosts/{host_id}` to accept `status`
+- `GraphNode` schema gains `status` field (nullable string)
+- Graph nodes reflect status via color/badge; graph filter panel can filter by status
+- Host detail panel shows a status picker
+
+**Invariants:** `Host.status` is nullable (null = unclassified). Graph node color falls back to confidence-based color when status is null.
+
+---
+
+### Phase 12 — Parser Suite (nmap XML, /etc/shadow, /etc/ssh/sshd_config)
+
+Three new parsers using existing tables — no schema migrations:
+
+**nmap XML** (`file_type: nmap_xml`): Parses `<host>`, `<address>`, `<hostname>`, `<port>` elements. Emits `HostData` (nickname from hostname if present, else IP; IPs list). No credentials or connections.
+
+**`/etc/shadow`** (`file_type: shadow`): Parses `username:hash:...` lines. Emits `HostUser` records (source: `passwd_file`) and `Credential` records (cred_type: `password`, value: hash) with `CredentialLink` (relationship: `found_on_disk`). Locked accounts (`!`, `*` hash prefix) imported but flagged in warnings.
+
+**`/etc/ssh/sshd_config`** (`file_type: sshd_config`): Parses `AllowUsers`, `AllowGroups`, `DenyUsers`, `Port`, `PermitRootLogin`, `PasswordAuthentication`. Emits `HostUser` records for each username in `AllowUsers` (source: `log_evidence`). Config flags stored in stats dict — no new model fields.
+
+**Invariants:** All three follow the "never crash on bad input" rule. Fixture files in `tests/fixtures/`. Register in `parsers/registry.py`.
+
+---
+
+### Phase 13 — Domain/Hostname Support + /etc/hosts + /etc/sudoers
+
+**Domain/Hostname Support:**
+- Add `addr_type` enum column (`ipv4 | ipv6 | hostname`) to `HostIP`; default `ipv4` for existing rows. The `ip_address` field holds either a numeric IP or an FQDN depending on type.
+- Alembic migration required (batch_alter_table)
+- IP resolver (`services/ip_resolver.py`) extended to match on FQDNs/hostnames in addition to numeric IPs
+- Frontend: host address list displays type badge (IPv4 / IPv6 / hostname) next to each entry
+
+**`/etc/hosts` parser** (`file_type: etc_hosts`): Parses `<ip> <hostname> [aliases...]` lines (skips comments, loopback). Creates a `HostIP` record for the IP (addr_type: `ipv4`/`ipv6`) and one per hostname (addr_type: `hostname`), all linked to the same resolved or new host. If a host already has the IP, hostnames are added; otherwise a new host is created.
+
+**`/etc/sudoers` + `sudoers.d/*` parser** (`file_type: sudoers`):
+- New table `SudoRule`: `id`, `host_id` (FK), `op_id` (FK), `subject` (string), `subject_type` (enum: `user | group`), `run_as` (string, default `root`), `commands` (text), `nopasswd` (bool), `raw_line` (nullable), `created_at`
+- Alembic migration required
+- New endpoints: `GET /hosts/{host_id}/sudo-rules`, `DELETE /hosts/{host_id}/sudo-rules/{rule_id}` — no manual create (sudo rules come from parsed files only)
+- Parser handles `%group` prefix (subject_type: group), `NOPASSWD:` tag, `ALL=(ALL:ALL)` patterns
+- Host detail panel gains a "Sudo Rules" tab
+- `sudoers.d/*` files use the same parser — each file uploaded individually with `file_type: sudoers`
+
+**Invariants:** `SudoRule` records are host-scoped; `op_id` stored for bulk queries. Sudo rules do not affect BFS pivot path confidence — informational context only.
+
+---
+
+### Phase 14 — Engagement Report Export
+
+New endpoint: `GET /ops/{op_id}/report?format=markdown|html`
+- Renders a structured engagement summary using existing export logic: op metadata, host inventory table (nickname, IPs/hostnames, status tag, credential count), credential inventory, pivot paths (calls `find_paths`), sudo escalation summary per host, activity timeline
+- Markdown is primary format; HTML wraps markdown output in a minimal printable template — no external PDF library
+- Frontend: "Export Report" button in op header with format picker
+
+**Invariants:** Report is read-only. Password hashes and private key material are redacted to first 8 chars + `...`. Fingerprints shown in full (not sensitive).
+
+---
+
+### Phase 15 — Graph Path Highlight + Time Slider
+
+**Path Highlight Mode:** Shift+click a second node → graph dims all nodes/edges not on any BFS path between the two selected hosts. Calls existing `POST /ops/{op_id}/graph/paths`. Highlighted path edges shown in accent color with increased stroke width. Esc clears selection.
+
+**Time Slider:** Appears at the bottom of GraphView when at least one `ConnectionRecord` in the op has a non-null timestamp. Range: min → max timestamp. Dragging filters edges: only show ConnectionRecords with `timestamp ≤ slider_value`. Key-match edges (no timestamp) always shown. Slider state is local — no DB writes, no API calls.
+
+**Invariants:** Path highlight and time slider are independent features that can be active simultaneously. Neither modifies graph data — both are pure frontend filter/render state.
+
+---
+
+### Phase 16 — MCP Server
 
 A standalone MCP (Model Context Protocol) server that lets an AI agent (e.g. Claude Desktop) help a red teamer navigate the operation data and find pivot paths using natural language. This phase is last — implement only when all other phases are complete and stable.
 
