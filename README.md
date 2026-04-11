@@ -97,7 +97,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for a full architecture overview, data fl
 
 - **Backend**: Python 3.12, FastAPI, SQLAlchemy ORM, Alembic, uv
 - **Database**: SQLite (single file in `./data/`)
-- **Frontend**: React 18, Vite, TypeScript
+- **Frontend**: React 18, Vite, TypeScript, react-force-graph-2d + d3-force
 - **Container**: Docker Compose (multi-stage builds)
 - **Tests**: pytest, httpx
 

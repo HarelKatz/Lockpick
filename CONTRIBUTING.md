@@ -16,8 +16,8 @@ backend/               Python FastAPI application
 │   ├── hosts.py       CRUD for Hosts, HostIPs, HostUsers
 │   ├── credentials.py CRUD for Credentials and CredentialLinks
 │   └── connections.py CRUD for ConnectionRecords
-├── parsers/           (Phase 4) File parsers, one per file type
-├── services/          (Phase 3+) Graph builder, IP resolver, pivot analysis
+├── parsers/           File parsers, one per file type
+├── services/          Graph builder, IP resolver, pivot analysis
 └── alembic/           Database migrations
 
 frontend/              React + TypeScript SPA
@@ -68,7 +68,7 @@ Browser → nginx (port 3000)
 7. Add TypeScript types to `frontend/src/types/index.ts`
 8. Add API client functions to `frontend/src/api/`
 
-## How to Add a New File Parser (Phase 4+)
+## How to Add a New File Parser
 
 All parsers live in `backend/parsers/` and implement the `BaseParser` interface.
 
