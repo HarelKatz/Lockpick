@@ -288,6 +288,10 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
     )
     : null
 
+  // Keep last panel content in the DOM during the close transition so it slides back out
+  const lastPanelRef = useRef<React.ReactNode>(null)
+  if (rightPanel !== null) lastPanelRef.current = rightPanel
+
   return (
     <div className={styles.layout}>
       <HostSelector
@@ -406,7 +410,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
       </div>
 
       <div className={`${styles.rightPanelWrapper} ${rightPanel ? styles.rightPanelOpen : ''}`}>
-        {rightPanel}
+        {rightPanel ?? lastPanelRef.current}
       </div>
 
       {nodeCtxMenu && (
