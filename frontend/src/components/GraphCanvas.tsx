@@ -201,32 +201,23 @@ export default function GraphCanvas({
 
   // ── Graph data state ─────────────────────────────────────────────────────────
   const [fgData, setFgData] = useState<{ nodes: FGNode[]; links: FGLink[] }>({ nodes: [], links: [] })
-  // Ref so the boundary force can read current nodes without calling graphData()
-  const fgNodesRef = useRef<FGNode[]>([])
-  useEffect(() => { fgNodesRef.current = fgData.nodes }, [fgData])
+  // Ref so Effect 1 can read current dims without taking them as a dependency
+  const dimsRef = useRef(dims)
+  useEffect(() => { dimsRef.current = dims }, [dims])
 
-  // ── Customize d3-force whenever canvas dimensions change ────────────────────
+  // ── Customize d3-force once container is ready ───────────────────────────────
   useEffect(() => {
     if (!graphRef.current || dims.w === 0) return
-    graphRef.current.d3Force('link')?.distance(180).strength(0.5)
-    // distanceMax: charge only repels nodes within 120px — nodes further apart
-    // don't push each other, so dragging one node doesn't disturb distant groups.
-    graphRef.current.d3Force('charge')?.strength(-80).distanceMax(120)
-    graphRef.current.d3Force('collision', d3Force.forceCollide(52))
-    graphRef.current.d3Force('center', null)  // no gravity toward canvas center
-    // Boundary: hard-clamp node positions to canvas edges on every tick so nodes
-    // can never drift off-screen. Re-registered whenever canvas resizes.
-    const { w, h } = dims
-    const pad = 54  // node radius (27) + comfortable margin
-    graphRef.current.d3Force('boundary', () => {
-      for (const n of fgNodesRef.current) {
-        if (n.fx != null) continue  // locked / static-layout nodes stay put
-        n.x = Math.max(pad, Math.min(w - pad, n.x ?? w / 2))
-        n.y = Math.max(pad, Math.min(h - pad, n.y ?? h / 2))
-      }
-    })
+    // Increase link distance so node labels have room to breathe.
+    graphRef.current.d3Force('link')?.distance(200).strength(0.5)
+    // Repel only nearby nodes (distanceMax=250) — dragging one node won't disturb
+    // groups that are far away. Strength -120 gives enough push to separate clusters.
+    graphRef.current.d3Force('charge')?.strength(-120).distanceMax(250)
+    // Collision radius larger than node radius so labels don't overlap.
+    graphRef.current.d3Force('collision', d3Force.forceCollide(64))
+    graphRef.current.d3Force('center', null)  // no gravity toward any canvas point
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dims.w, dims.h])
+  }, [dims.w > 0])
 
   // ── Effect 1: structural rebuild ─────────────────────────────────────────────
   useEffect(() => {
@@ -250,6 +241,18 @@ export default function GraphCanvas({
     const needsLayout = visibleIds.filter(id => !savedPos.current.has(id))
     if (needsLayout.length > 0 || layoutChanged) {
       const computed = initialLayout(layout, layoutChanged ? visibleIds : needsLayout, edgePairs)
+      // For force layouts, translate positions so nodes spawn at the canvas centre.
+      // Static layouts (grid, circle, dagre) fill space deliberately — leave them.
+      const { w, h } = dimsRef.current
+      if (w > 0 && h > 0 && !STATIC_LAYOUTS.includes(layout) && computed.size > 0) {
+        let sumX = 0, sumY = 0
+        for (const pos of computed.values()) { sumX += pos.x; sumY += pos.y }
+        const avgX = sumX / computed.size + 24  // top-left → centre (+24 for half-node)
+        const avgY = sumY / computed.size + 24
+        const dx = w / 2 - avgX
+        const dy = h / 2 - avgY
+        for (const [id, pos] of computed) computed.set(id, { x: pos.x + dx, y: pos.y + dy })
+      }
       for (const [id, pos] of computed) {
         if (!savedPos.current.has(id) || layoutChanged) savedPos.current.set(id, pos)
       }
