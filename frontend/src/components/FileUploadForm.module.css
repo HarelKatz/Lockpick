@@ -44,6 +44,11 @@
   border-color: var(--accent);
 }
 
+.selectUnset {
+  border-color: var(--warning);
+  color: var(--text-muted);
+}
+
 .select option {
   background: var(--bg-surface);
 }

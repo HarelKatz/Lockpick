@@ -47,7 +47,7 @@ function needsUser(ft: UploadFileType | null): boolean {
 }
 
 export default function FileUploadForm({ opId, hosts, onSuccess }: Props) {
-  const [hostId, setHostId] = useState<string>(hosts[0]?.id ?? '')
+  const [hostId, setHostId] = useState<string>('')
   const [queue, setQueue] = useState<QueuedFile[]>([])
   const [dragging, setDragging] = useState(false)
   const [processing, setProcessing] = useState(false)
@@ -153,13 +153,17 @@ export default function FileUploadForm({ opId, hosts, onSuccess }: Props) {
     <form className={styles.form} onSubmit={handleUploadAll}>
       {/* Host */}
       <div className={styles.field}>
-        <label className={styles.label}>Host (files came from)</label>
+        <label className={styles.label}>
+          Which host did these files come from? <span className={styles.required}>*</span>
+        </label>
         <select
-          className={styles.select}
+          className={`${styles.select} ${!hostId ? styles.selectUnset : ''}`}
           value={hostId}
           onChange={e => setHostId(e.target.value)}
         >
-          {hosts.length === 0 && <option value="">— add a host first —</option>}
+          <option value="" disabled>
+            {hosts.length === 0 ? '— add a host first —' : '— select host —'}
+          </option>
           {hosts.map(h => (
             <option key={h.id} value={h.id}>
               {h.nickname}{h.ips.length > 0 ? ` (${h.ips[0].ip_address})` : ''}
