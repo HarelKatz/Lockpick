@@ -15,7 +15,7 @@ import os
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
@@ -241,7 +241,12 @@ async def upload_file(
         upload_host_ip = host.nickname  # fallback to nickname
 
     # ── 1. Create HostUser records ────────────────────────────────────────────
-    user_source = "authorized_keys" if file_type == "authorized_keys" else "passwd_file" if file_type == "passwd" else "log_evidence"
+    if file_type == "authorized_keys":
+        user_source = "authorized_keys"
+    elif file_type == "passwd":
+        user_source = "passwd_file"
+    else:
+        user_source = "log_evidence"
     for (uname, shell, home_dir) in result.host_users_found:
         _get_or_create_host_user(db, host_id, uname, shell, home_dir, user_source)
 
@@ -317,7 +322,7 @@ async def upload_file(
             if src_host_id and src_host_id not in {host_id}:
                 # Check if it was newly created
                 h = db.query(Host).filter(Host.id == src_host_id).first()
-                if h and h.comment and "Auto-created" in (h.comment or ""):
+                if h and h.comment and "Auto-created" in h.comment:
                     new_hosts += 1
 
         if dst_ip == "__upload_host__":
@@ -327,7 +332,7 @@ async def upload_file(
             dst_host_id = resolve_ip(db, op_id, dst_ip, create_if_missing=True)
             if dst_host_id and dst_host_id not in {host_id}:
                 h = db.query(Host).filter(Host.id == dst_host_id).first()
-                if h and h.comment and "Auto-created" in (h.comment or ""):
+                if h and h.comment and "Auto-created" in h.comment:
                     new_hosts += 1
 
         # Match fingerprint to existing Credential for confirmed confidence
@@ -399,7 +404,7 @@ async def upload_file(
 
 # ─── List uploaded files ──────────────────────────────────────────────────────
 
-@router.get("/ops/{op_id}/uploads", response_model=List[UploadFileInfo])
+@router.get("/ops/{op_id}/uploads", response_model=list[UploadFileInfo])
 def list_uploads(op_id: str, db: Session = Depends(get_db)):
     """List all raw files uploaded for an op, enriched with host associations."""
     op = db.query(Operation).filter(Operation.id == op_id).first()

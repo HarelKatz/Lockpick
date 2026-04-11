@@ -7,6 +7,7 @@ import type {
   HostIP,
   HostUser,
   CreateHostRequest,
+  UpdateHostRequest,
   CreateHostIPRequest,
   CreateHostUserRequest,
 } from '../types'
@@ -19,7 +20,7 @@ export async function createHost(opId: string, data: CreateHostRequest): Promise
   return api.post<Host>(`/ops/${opId}/hosts`, data)
 }
 
-export async function updateHost(hostId: string, data: Partial<CreateHostRequest>): Promise<Host> {
+export async function updateHost(hostId: string, data: UpdateHostRequest): Promise<Host> {
   return api.patch<Host>(`/hosts/${hostId}`, data)
 }
 

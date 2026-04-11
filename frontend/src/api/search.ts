@@ -1,3 +1,6 @@
+/**
+ * Global search API — searches hosts, credentials, and connections within an operation.
+ */
 import { api } from './client'
 import type { SearchResponse } from '../types'
 

@@ -1,6 +1,6 @@
 """Pydantic request/response models."""
 from datetime import datetime
-from typing import List, Literal, Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -46,7 +46,7 @@ class SearchResult(BaseModel):
 
 class SearchResponse(BaseModel):
     query: str
-    results: List[SearchResult]
+    results: list[SearchResult]
     total: int
 
 
@@ -351,8 +351,8 @@ class ExportHost(BaseModel):
     nickname: str
     comment: Optional[str]
     created_at: datetime
-    ips: List[ExportHostIP]
-    users: List[ExportHostUser]
+    ips: list[ExportHostIP]
+    users: list[ExportHostUser]
 
 
 class ExportCredential(BaseModel):
@@ -412,11 +412,11 @@ class OpExport(BaseModel):
     lockpick_export_version: int = 1
     exported_at: datetime
     operation: OperationRead
-    hosts: List[ExportHost]
-    credentials: List[ExportCredential]
-    credential_links: List[ExportCredentialLink]
-    connections: List[ExportConnection]
-    activity_log: List[ExportActivityEntry]
+    hosts: list[ExportHost]
+    credentials: list[ExportCredential]
+    credential_links: list[ExportCredentialLink]
+    connections: list[ExportConnection]
+    activity_log: list[ExportActivityEntry]
 
 
 class ImportRequest(BaseModel):

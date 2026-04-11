@@ -1,6 +1,4 @@
 """CRUD endpoints for Hosts and HostIPs."""
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -41,7 +39,7 @@ def create_host(op_id: str, body: HostCreate, db: Session = Depends(get_db)):
     return host
 
 
-@router.get("/ops/{op_id}/hosts", response_model=List[HostRead])
+@router.get("/ops/{op_id}/hosts", response_model=list[HostRead])
 def list_hosts(op_id: str, db: Session = Depends(get_db)):
     get_op_or_404(op_id, db)
     return (
@@ -95,7 +93,7 @@ def add_host_ip(host_id: str, body: HostIPCreate, db: Session = Depends(get_db))
     return ip
 
 
-@router.get("/hosts/{host_id}/ips", response_model=List[HostIPRead])
+@router.get("/hosts/{host_id}/ips", response_model=list[HostIPRead])
 def list_host_ips(host_id: str, db: Session = Depends(get_db)):
     _get_host_or_404(host_id, db)
     return db.query(HostIP).filter(HostIP.host_id == host_id).all()
@@ -129,7 +127,7 @@ def create_host_user(host_id: str, body: HostUserCreate, db: Session = Depends(g
     return user
 
 
-@router.get("/hosts/{host_id}/users", response_model=List[HostUserRead])
+@router.get("/hosts/{host_id}/users", response_model=list[HostUserRead])
 def list_host_users(host_id: str, db: Session = Depends(get_db)):
     _get_host_or_404(host_id, db)
     return db.query(HostUser).filter(HostUser.host_id == host_id).all()

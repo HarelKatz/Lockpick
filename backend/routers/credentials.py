@@ -3,7 +3,7 @@ import base64
 import hashlib
 import io
 import logging
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -93,7 +93,7 @@ def create_credential(op_id: str, body: CredentialCreate, db: Session = Depends(
     return cred
 
 
-@router.get("/ops/{op_id}/credentials", response_model=List[CredentialRead])
+@router.get("/ops/{op_id}/credentials", response_model=list[CredentialRead])
 def list_credentials(op_id: str, db: Session = Depends(get_db)):
     get_op_or_404(op_id, db)
     return (
@@ -167,7 +167,7 @@ def create_credential_link(body: CredentialLinkCreate, db: Session = Depends(get
     return link
 
 
-@router.get("/ops/{op_id}/credential-links", response_model=List[CredentialLinkRead])
+@router.get("/ops/{op_id}/credential-links", response_model=list[CredentialLinkRead])
 def list_credential_links(op_id: str, db: Session = Depends(get_db)):
     get_op_or_404(op_id, db)
     return (

@@ -1,3 +1,7 @@
+/**
+ * Export and import API for Lockpick operations.
+ * Export triggers a browser download; import posts a parsed OpExport object.
+ */
 import { api } from './client'
 import type { ImportResponse } from '../types'
 
@@ -15,6 +19,10 @@ export function exportOp(opId: string): void {
   document.body.removeChild(a)
 }
 
+/**
+ * Import a previously exported operation.
+ * @param data - Parsed JSON from a Lockpick export file (lockpick_export_version: 1).
+ */
 export function importOp(data: unknown, nameOverride?: string): Promise<ImportResponse> {
   return api.post<ImportResponse>('/ops/import', {
     mode: 'create_new',

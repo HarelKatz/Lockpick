@@ -1,6 +1,4 @@
 """GET /ops/{op_id}/activity — recent activity log entries."""
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -11,7 +9,7 @@ from schemas import ActivityLogRead
 router = APIRouter()
 
 
-@router.get("/ops/{op_id}/activity", response_model=List[ActivityLogRead])
+@router.get("/ops/{op_id}/activity", response_model=list[ActivityLogRead])
 def get_activity(
     op_id: str,
     limit: int = Query(default=50, ge=1, le=200),

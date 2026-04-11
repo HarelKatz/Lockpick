@@ -69,7 +69,7 @@ def export_op(op_id: str, db: Session = Depends(get_db)):
         operation=OperationRead.model_validate(op),
         hosts=[ExportHost.model_validate(h) for h in hosts],
         credentials=[ExportCredential.model_validate(c) for c in credentials],
-        credential_links=[ExportCredentialLink.model_validate(l) for l in cred_links],
+        credential_links=[ExportCredentialLink.model_validate(link) for link in cred_links],
         connections=[ExportConnection.model_validate(c) for c in connections],
         activity_log=[ExportActivityEntry.model_validate(a) for a in activity],
     )
@@ -109,7 +109,7 @@ def import_op(body: ImportRequest, db: Session = Depends(get_db)):
         + [ip.id for h in src.hosts for ip in h.ips]
         + [u.id for h in src.hosts for u in h.users]
         + [c.id for c in src.credentials]
-        + [l.id for l in src.credential_links]
+        + [link.id for link in src.credential_links]
         + [c.id for c in src.connections]
         + [a.id for a in src.activity_log]
     )
@@ -172,15 +172,15 @@ def import_op(body: ImportRequest, db: Session = Depends(get_db)):
         ))
 
     # 4. Credential links
-    for l in src.credential_links:
+    for link in src.credential_links:
         db.add(CredentialLink(
-            id=remap(l.id),
-            credential_id=remap(l.credential_id),
-            host_id=remap(l.host_id),
-            username=l.username,
-            host_user_id=remap(l.host_user_id),
-            relationship_type=l.relationship_type,
-            file_source=l.file_source,
+            id=remap(link.id),
+            credential_id=remap(link.credential_id),
+            host_id=remap(link.host_id),
+            username=link.username,
+            host_user_id=remap(link.host_user_id),
+            relationship_type=link.relationship_type,
+            file_source=link.file_source,
         ))
 
     # 5. Connections

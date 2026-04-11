@@ -2,9 +2,7 @@
  * File upload, listing, and serving API.
  */
 import type { UploadFile, UploadFileType, UploadResult } from '../types'
-import { ApiError } from './client'
-
-const BASE_URL = '/api'
+import { ApiError, BASE_URL } from './client'
 
 /** List all uploaded files for an operation. */
 export async function listUploads(opId: string): Promise<UploadFile[]> {

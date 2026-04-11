@@ -3,7 +3,7 @@
  * Uses relative /api prefix so nginx can proxy to backend.
  */
 
-const BASE_URL = '/api'
+export const BASE_URL = '/api'
 
 export class ApiError extends Error {
   status: number

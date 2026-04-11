@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type {
   Operation, Host, Credential, CredentialLink, ConnectionRecord, UploadFile, ActivityLog,
+  SearchResult,
 } from '../types'
 import { listHosts, deleteHost } from '../api/hosts'
 import { listCredentials, deleteCredential, listCredentialLinks, deleteCredentialLink } from '../api/credentials'
@@ -28,6 +29,9 @@ import GraphView from './GraphView'
 import styles from './Workspace.module.css'
 
 type WorkspaceTab = 'data' | 'graph'
+
+/** Duration (ms) to highlight a search-jumped element before clearing. */
+const HIGHLIGHT_DURATION_MS = 1500
 
 interface Props {
   op: Operation
@@ -447,7 +451,11 @@ export default function Workspace({ op, onBack }: Props) {
   useEffect(() => { fetchAll() }, [fetchAll])
 
   const refreshActivity = useCallback(async () => {
-    try { setActivityLog(await getActivityLog(op.id)) } catch {}
+    try {
+      setActivityLog(await getActivityLog(op.id))
+    } catch (err) {
+      console.error('Failed to refresh activity log:', err)
+    }
   }, [op.id])
 
   // Poll for new records every 30s — notify if total changed since last refresh
@@ -479,7 +487,7 @@ export default function Workspace({ op, onBack }: Props) {
 
   // ─── Search select handler ────────────────────────────────────────────────
 
-  function handleSearchSelect(result: import('../types').SearchResult) {
+  function handleSearchSelect(result: SearchResult) {
     setSearchOpen(false)
     if (tab === 'graph') {
       if (result.host_id) setFocusEntityId(result.host_id)
@@ -494,7 +502,7 @@ export default function Workspace({ op, onBack }: Props) {
       }
       if (elementId) {
         setHighlightId(elementId)
-        setTimeout(() => setHighlightId(null), 1500)
+        setTimeout(() => setHighlightId(null), HIGHLIGHT_DURATION_MS)
         requestAnimationFrame(() => {
           document.getElementById(elementId!)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
         })
@@ -512,8 +520,9 @@ export default function Workspace({ op, onBack }: Props) {
       setHosts(prev => prev.filter(h => h.id !== deleteHostTarget.id))
       setDeleteHostTarget(null)
       refreshActivity()
-    } catch {
-      /* ignore — leave modal open so user can retry */
+    } catch (err) {
+      console.error('Failed to delete host:', err)
+      // Leave modal open so user can retry.
     } finally {
       setDeleteLoading(false)
     }
@@ -528,8 +537,9 @@ export default function Workspace({ op, onBack }: Props) {
       setLinks(prev => prev.filter(l => l.credential_id !== deleteCredTarget.id))
       setDeleteCredTarget(null)
       refreshActivity()
-    } catch {
-      /* ignore */
+    } catch (err) {
+      console.error('Failed to delete credential:', err)
+      // Leave modal open so user can retry.
     } finally {
       setDeleteLoading(false)
     }
@@ -543,8 +553,9 @@ export default function Workspace({ op, onBack }: Props) {
       setLinks(prev => prev.filter(l => l.id !== deleteLinkTarget.id))
       setDeleteLinkTarget(null)
       refreshActivity()
-    } catch {
-      /* ignore */
+    } catch (err) {
+      console.error('Failed to delete credential link:', err)
+      // Leave modal open so user can retry.
     } finally {
       setDeleteLoading(false)
     }
@@ -558,8 +569,9 @@ export default function Workspace({ op, onBack }: Props) {
       setConnections(prev => prev.filter(c => c.id !== deleteConnTarget.id))
       setDeleteConnTarget(null)
       refreshActivity()
-    } catch {
-      /* ignore */
+    } catch (err) {
+      console.error('Failed to delete connection:', err)
+      // Leave modal open so user can retry.
     } finally {
       setDeleteLoading(false)
     }

@@ -30,6 +30,21 @@ interface Props {
   focusHostId?: string | null
 }
 
+/** Human-readable label for a credential, used in sidebar and panel displays. */
+function credLabel(c: Credential): string {
+  const type = c.key_type
+    ? c.key_type.replace('ssh-', '').toUpperCase()
+    : c.cred_type.replace('_', ' ')
+  const label = c.name
+    || c.comment
+    || (c.fingerprint ? c.fingerprint.slice(7, 23) + '…' : c.id.slice(0, 8))
+  return `${type}: ${label}`
+}
+
+/**
+ * Merge two GraphResponse objects, with `incoming` winning on conflicts.
+ * Node and edge maps are keyed by host_id and "src__dst" respectively.
+ */
 function mergeGraphResponses(existing: GraphResponse, incoming: GraphResponse): GraphResponse {
   const nodeMap = new Map(existing.nodes.map(n => [n.host_id, n]))
   for (const n of incoming.nodes) nodeMap.set(n.host_id, n)
@@ -103,6 +118,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
     }
     loadFiltered()
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // isInitialized intentionally excluded: including it would re-run on the flag flip itself.
   }, [selectedIds, op.id])
 
   // ── Selectable hosts for PathFinder (all known hosts, not just visible) ──────
@@ -113,18 +129,6 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
     for (const n of graphData.nodes) map.set(n.host_id, { id: n.host_id, nickname: n.nickname })
     return Array.from(map.values())
   }, [allHosts, graphData.nodes])
-
-  // ── Credential display label ──────────────────────────────────────────────
-
-  function credLabel(c: Credential): string {
-    const type = c.key_type
-      ? c.key_type.replace('ssh-', '').toUpperCase()
-      : c.cred_type.replace('_', ' ')
-    const label = c.name
-      || c.comment
-      || (c.fingerprint ? c.fingerprint.slice(7, 23) + '…' : c.id.slice(0, 8))
-    return `${type}: ${label}`
-  }
 
   // ── Event handlers ────────────────────────────────────────────────────────
 
@@ -231,6 +235,8 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Empty deps intentional: handleHide is accessed via selectedNodeRef to avoid
+  // re-subscribing the keydown listener on every render while still seeing latest state.
   }, [])
 
   function handleHighlightPath(path: PathResult | null) {
