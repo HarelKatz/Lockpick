@@ -287,6 +287,9 @@ export type UploadFileType =
   | 'wtmp'
   | 'bash_history'
   | 'passwd'
+  | 'shadow'
+  | 'sshd_config'
+  | 'nmap_xml'
 
 export interface UploadSummary {
   new_credentials: number

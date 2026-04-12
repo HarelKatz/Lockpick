@@ -10,10 +10,13 @@ export function detectFileType(filename: string): UploadFileType | null {
   if (base === 'authorized_keys') return 'authorized_keys'
   if (base === 'known_hosts') return 'known_hosts'
   if (base === 'passwd') return 'passwd'
+  if (base === 'shadow') return 'shadow'
+  if (base === 'sshd_config') return 'sshd_config'
   if (base === 'wtmp' || base === 'btmp') return 'wtmp'
   if (base === '.bash_history' || base === 'bash_history') return 'bash_history'
   if (base === 'auth.log' || base === 'secure' || base === 'secure.log' || base === 'auth.log.1') return 'auth_log'
   if (base === 'ssh_config') return 'ssh_config'
+  if (base.includes('nmap') && base.endsWith('.xml')) return 'nmap_xml'
 
   // Private key patterns
   if (

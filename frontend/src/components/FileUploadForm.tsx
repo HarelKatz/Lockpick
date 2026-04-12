@@ -18,6 +18,9 @@ const FILE_TYPES: { value: UploadFileType; label: string; needsUser: boolean }[]
   { value: 'wtmp',            label: 'wtmp / btmp',          needsUser: false },
   { value: 'bash_history',    label: '.bash_history',        needsUser: true },
   { value: 'passwd',          label: '/etc/passwd',          needsUser: false },
+  { value: 'shadow',          label: '/etc/shadow',          needsUser: false },
+  { value: 'sshd_config',     label: '/etc/ssh/sshd_config', needsUser: false },
+  { value: 'nmap_xml',        label: 'nmap XML scan',        needsUser: false },
 ]
 
 type FileStatus = 'pending' | 'uploading' | 'done' | 'error'
