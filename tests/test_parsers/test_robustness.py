@@ -20,9 +20,12 @@ from parsers.auth_log import AuthLogParser
 from parsers.authorized_keys import AuthorizedKeysParser
 from parsers.bash_history import BashHistoryParser
 from parsers.known_hosts import KnownHostsParser
+from parsers.nmap_xml import NmapXmlParser
 from parsers.passwd import PasswdParser
 from parsers.private_key import PrivateKeyParser
+from parsers.shadow import ShadowParser
 from parsers.ssh_config import SshConfigParser
+from parsers.sshd_config import SshdConfigParser
 from parsers.wtmp import WtmpParser
 
 BAD = Path(__file__).parent.parent / "fixtures" / "bad"
@@ -41,9 +44,12 @@ PARSERS = [
     ("authorized_keys", AuthorizedKeysParser, "testuser"),
     ("bash_history",    BashHistoryParser,    "testuser"),
     ("known_hosts",     KnownHostsParser,     "testuser"),
+    ("nmap_xml",        NmapXmlParser,        None),
     ("passwd",          PasswdParser,         None),
     ("private_key",     PrivateKeyParser,     "testuser"),
+    ("shadow",          ShadowParser,         None),
     ("ssh_config",      SshConfigParser,      "testuser"),
+    ("sshd_config",     SshdConfigParser,     None),
     ("wtmp",            WtmpParser,           None),
 ]
 

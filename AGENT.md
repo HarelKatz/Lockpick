@@ -146,9 +146,9 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed: Phase 9 — Operational Command Generation**
+**Last completed: Phase 12 — Parser Suite (nmap XML, /etc/shadow, /etc/ssh/sshd_config)**
 
-Phases 1–9 are fully implemented and tested. Phase 9 added `POST /ops/{op_id}/graph/paths/commands` and a "Generate Commands" modal with 4 tabs (ProxyJump, proxychains, Walkthrough, SSH Config).
+Three new parsers added (`nmap_xml`, `shadow`, `sshd_config`), registered in registry, with fixture files and full unit test coverage (26 new tests). Phases 10 and 11 remain unimplemented.
 
 **Next phase: Phase 10 — WebSocket Live Push + Per-Host Notes**
 
@@ -225,17 +225,9 @@ Add a `status` enum column to `Host` (nullable, so existing hosts are unaffected
 
 ---
 
-### Phase 12 — Parser Suite (nmap XML, /etc/shadow, /etc/ssh/sshd_config)
+### Phase 12 — Complete
 
-Three new parsers using existing tables — no schema migrations:
-
-**nmap XML** (`file_type: nmap_xml`): Parses `<host>`, `<address>`, `<hostname>`, `<port>` elements. Emits `HostData` (nickname from hostname if present, else IP; IPs list). No credentials or connections.
-
-**`/etc/shadow`** (`file_type: shadow`): Parses `username:hash:...` lines. Emits `HostUser` records (source: `passwd_file`) and `Credential` records (cred_type: `password`, value: hash) with `CredentialLink` (relationship: `found_on_disk`). Locked accounts (`!`, `*` hash prefix) imported but flagged in warnings.
-
-**`/etc/ssh/sshd_config`** (`file_type: sshd_config`): Parses `AllowUsers`, `AllowGroups`, `DenyUsers`, `Port`, `PermitRootLogin`, `PasswordAuthentication`. Emits `HostUser` records for each username in `AllowUsers` (source: `log_evidence`). Config flags stored in stats dict — no new model fields.
-
-**Invariants:** All three follow the "never crash on bad input" rule. Fixture files in `tests/fixtures/`. Register in `parsers/registry.py`.
+Added three parsers (`nmap_xml`, `shadow`, `sshd_config`) with fixture files and unit tests; no schema changes required.
 
 ---
 

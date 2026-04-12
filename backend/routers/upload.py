@@ -210,7 +210,7 @@ async def upload_file(
     # ── 1. Create HostUser records ────────────────────────────────────────────
     if file_type == "authorized_keys":
         user_source = "authorized_keys"
-    elif file_type == "passwd":
+    elif file_type in ("passwd", "shadow"):
         user_source = "passwd_file"
     else:
         user_source = "log_evidence"
