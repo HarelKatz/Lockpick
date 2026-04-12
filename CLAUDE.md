@@ -105,7 +105,16 @@ class BaseParser:
     def parse(self, content: bytes, metadata: UploadMetadata) -> ParseResult: ...
 ```
 
-Parsers **must never crash** on bad input — catch exceptions, append to `warnings`, and continue. Fixture files for parser tests live in `tests/fixtures/`.
+**Parser guidelines (must follow):**
+- Never crash on bad input — catch exceptions, append to `warnings`, and continue
+- Decode bytes with `errors='replace'` to handle corrupt input
+- Check for gzip magic bytes (`content[:2] == b'\x1f\x8b'`) and decompress before parsing
+- Use `metadata.host_id` as the source host for all emitted records
+- Return counts in `result.stats` (e.g. `{"hosts": 3, "connections": 12}`) — the UI shows this summary
+- IP matching: use `resolve_ip()` from `services/ip_resolver.py` to map raw IPs to existing hosts
+- Fingerprint extraction: return raw key material in `CredentialData`; `key_utils.infer_key_info` and cross-referencing against existing credentials is handled automatically by the upload router — parsers do not compute fingerprints
+
+Fixture files for parser tests live in `tests/fixtures/`.
 
 ## Frontend Conventions
 
@@ -127,7 +136,31 @@ Key variables: `--text-primary`, `--text-muted`, `--bg-surface`, `--bg-surface-2
 
 Use CSS modules (`.module.css` alongside the component) — not global styles.
 
-## Git Commit Format
+## Git Commits
+
+**Committing is not optional and does not require the user to ask.** Every unit of work ends with a commit. If you changed files and did not commit, the task is not done.
+
+### What requires a commit
+
+Commit after completing **any** of these:
+- A feature, bug fix, or refactor (backend or frontend)
+- A new or updated parser
+- A schema change + Alembic migration
+- A new or updated test file
+- An edit to `CLAUDE.md` or `AGENT.md`
+
+Skip only for: isolated typo fixes, single-line CSS tweaks, comment-only edits to non-guide files.
+
+### Pre-commit gate (code changes)
+
+```bash
+make test                       # must pass — fix failures before committing
+cd frontend && npm run build    # must succeed — fix build errors before committing
+```
+
+For documentation-only changes (`.md` files only), skip the build gate and commit directly.
+
+### Commit format
 
 ```
 type(scope): short description
@@ -136,11 +169,11 @@ types: feat, fix, refactor, test, docs, chore
 scopes: backend, frontend, parsers, docker, schema
 ```
 
-**When to commit:** After each significant unit of work — a named task, a new feature, a bug fix, a schema change, a new parser, or a completed refactor. Commit before moving on to the next task; do not batch unrelated changes. Skip a commit for minor edits: typos, single-line CSS tweaks, comment-only changes.
+Stage specific files — never `git add .` (risks staging `.env`, keys, or build artifacts).
 
-**Commit autonomously — do not wait for the user to ask.** After completing a significant task, run `make test` + `cd frontend && npm run build`, then commit immediately. The user should never need to prompt you to commit.
+### The rule
 
-**Before committing:** `make test` + `cd frontend && npm run build`. Stage specific files — avoid `git add .`.
+**Commit as part of completing the work, not after.** Do not batch multiple unrelated changes into one commit. Do not defer committing to the end of a session. The user must never have to prompt a commit — if they do, you failed this instruction.
 
 ## AGENT.md Maintenance
 
