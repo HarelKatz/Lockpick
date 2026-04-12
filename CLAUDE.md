@@ -2,7 +2,7 @@
 
 ## What this project is
 
-SSH pivot tracker for red teams. Ingests raw evidence (private keys, `authorized_keys`, `auth.log`, `known_hosts`, bash history) and builds a relationship graph showing lateral movement paths across an engagement. Runs as a shared web server — single `docker compose up -d`, no external dependencies.
+SSH pivot tracker for red teams. Ingests raw evidence (private keys, `authorized_keys`, `auth.log`, `known_hosts`, bash history, `/etc/passwd`, `/etc/shadow`, `/etc/ssh/sshd_config`, nmap XML) and builds a relationship graph showing lateral movement paths across an engagement. Runs as a shared web server — single `docker compose up -d`, no external dependencies.
 
 @AGENT.md
 
@@ -98,6 +98,7 @@ class ParseResult:
     hosts_found: list[HostData]
     credentials_found: list[CredentialData]
     connections_found: list[ConnectionData]
+    host_users_found: list[tuple[str, Optional[str], Optional[str]]]  # (username, shell, home_dir)
     warnings: list[str]
     stats: dict
 

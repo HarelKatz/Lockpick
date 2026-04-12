@@ -189,7 +189,7 @@ Those things belong in commit messages and GitHub issues.
 
 ### Phases 1–9 — Complete
 
-Full stack built and tested: CRUD APIs, graph visualization, file upload + 8 parsers, BFS pivot analysis, global search, export/import, activity log, and operational command generation.
+Full stack built and tested: CRUD APIs, graph visualization, file upload + 8 parsers, BFS pivot analysis, global search, export/import, activity log, and operational command generation. (Parser count is now 11 — see Phase 12.)
 
 ---
 
