@@ -184,3 +184,172 @@ def test_expand_host_returns_neighbors(client, op, host_a, host_b):
     assert host_a["id"] in node_ids
     assert host_b["id"] in node_ids
     assert len(data["edges"]) == 1
+
+
+# ─── /graph/paths/commands ────────────────────────────────────────────────────
+
+def _cmd_body(src_id, dst_id):
+    return {"src_host_id": src_id, "dst_host_id": dst_id, "mode": "shortest", "waypoints": []}
+
+
+def test_commands_op_not_found(client):
+    resp = client.post("/api/ops/nonexistent/graph/paths/commands", json=_cmd_body("a", "b"))
+    assert resp.status_code == 404
+
+
+def test_commands_no_path(client, op, host_a, host_b):
+    """No connections — endpoint returns empty paths list."""
+    resp = client.post(
+        f"/api/ops/{op['id']}/graph/paths/commands",
+        json=_cmd_body(host_a["id"], host_b["id"]),
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["paths"] == []
+    assert data["truncated"] is False
+
+
+def test_commands_response_shape(client, op, host_a, host_b):
+    """Each path object has all four command format keys."""
+    client.post(
+        f"/api/ops/{op['id']}/connections",
+        json={
+            "src_host_id": host_a["id"], "src_ip": "10.0.0.1",
+            "dst_host_id": host_b["id"], "dst_ip": "10.0.0.2",
+            "connection_type": "ssh", "direction_context": "from_dst_logs",
+            "source_file": "auth.log",
+        },
+    )
+    resp = client.post(
+        f"/api/ops/{op['id']}/graph/paths/commands",
+        json=_cmd_body(host_a["id"], host_b["id"]),
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data["paths"]) == 1
+    p = data["paths"][0]
+    assert "proxyjump" in p
+    assert "proxychains" in p
+    assert "walkthrough" in p
+    assert "ssh_config" in p
+    assert p["host_ids"] == [host_a["id"], host_b["id"]]
+
+
+def test_commands_single_hop_users(client, op, host_a, host_b):
+    """Single-hop path with users — ProxyJump has no -J; users appear in output."""
+    client.post(
+        f"/api/ops/{op['id']}/connections",
+        json={
+            "src_host_id": host_a["id"], "src_ip": "10.0.0.1", "src_user": "bob",
+            "dst_host_id": host_b["id"], "dst_ip": "10.0.0.2", "dst_user": "root",
+            "connection_type": "ssh", "direction_context": "from_dst_logs",
+            "source_file": "auth.log",
+        },
+    )
+    resp = client.post(
+        f"/api/ops/{op['id']}/graph/paths/commands",
+        json=_cmd_body(host_a["id"], host_b["id"]),
+    )
+    assert resp.status_code == 200
+    p = resp.json()["paths"][0]
+    # ProxyJump: single hop, no -J
+    assert "-J" not in p["proxyjump"]
+    assert "root@10.0.0.2" in p["proxyjump"]
+    # Walkthrough contains both users
+    assert "bob" in p["walkthrough"]
+    assert "root" in p["walkthrough"]
+    # SSH config contains destination IP and user
+    assert "10.0.0.2" in p["ssh_config"]
+    assert "root" in p["ssh_config"]
+
+
+def test_commands_single_hop_no_users(client, op, host_a, host_b):
+    """Single-hop path with no users — placeholders appear in output."""
+    client.post(
+        f"/api/ops/{op['id']}/connections",
+        json={
+            "src_host_id": host_a["id"], "src_ip": "10.0.0.1",
+            "dst_host_id": host_b["id"], "dst_ip": "10.0.0.2",
+            "connection_type": "ssh", "direction_context": "from_dst_logs",
+            "source_file": "auth.log",
+        },
+    )
+    resp = client.post(
+        f"/api/ops/{op['id']}/graph/paths/commands",
+        json=_cmd_body(host_a["id"], host_b["id"]),
+    )
+    assert resp.status_code == 200
+    p = resp.json()["paths"][0]
+    assert "<user>" in p["proxyjump"]
+    assert "<user>" in p["walkthrough"]
+
+
+def test_commands_multihop(client, op, host_a, host_b):
+    """Three-node path — ProxyJump uses -J; walkthrough has 2 steps; SSH config has 2 Host blocks."""
+    resp_c = client.post(f"/api/ops/{op['id']}/hosts", json={"nickname": "hostC"})
+    host_c = resp_c.json()
+    client.post(f"/api/hosts/{host_c['id']}/ips", json={"ip_address": "10.0.0.3"})
+
+    # A→B
+    client.post(
+        f"/api/ops/{op['id']}/connections",
+        json={
+            "src_host_id": host_a["id"], "src_ip": "10.0.0.1", "src_user": "bob",
+            "dst_host_id": host_b["id"], "dst_ip": "10.0.0.2", "dst_user": "alice",
+            "connection_type": "ssh", "direction_context": "from_dst_logs",
+            "source_file": "auth.log",
+        },
+    )
+    # B→C
+    client.post(
+        f"/api/ops/{op['id']}/connections",
+        json={
+            "src_host_id": host_b["id"], "src_ip": "10.0.0.2", "src_user": "alice",
+            "dst_host_id": host_c["id"], "dst_ip": "10.0.0.3", "dst_user": "root",
+            "connection_type": "ssh", "direction_context": "from_dst_logs",
+            "source_file": "auth.log",
+        },
+    )
+
+    resp = client.post(
+        f"/api/ops/{op['id']}/graph/paths/commands",
+        json=_cmd_body(host_a["id"], host_c["id"]),
+    )
+    assert resp.status_code == 200
+    p = resp.json()["paths"][0]
+    # ProxyJump must use -J chain
+    assert "-J" in p["proxyjump"]
+    assert "alice@10.0.0.2" in p["proxyjump"]
+    assert "root@10.0.0.3" in p["proxyjump"]
+    # Walkthrough has 2 steps
+    assert "Step 1:" in p["walkthrough"]
+    assert "Step 2:" in p["walkthrough"]
+    # SSH config has 2 Host entries (for hop B and target C)
+    assert p["ssh_config"].count("Host lockpick-") == 2
+
+
+def test_commands_named_credential(client, op, host_a, host_b):
+    """Connection with a named credential — label appears in walkthrough."""
+    cred_resp = client.post(
+        f"/api/ops/{op['id']}/credentials",
+        json={"cred_type": "private_key", "name": "my-pivot-key", "value": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAtest"},
+    )
+    cred_id = cred_resp.json()["id"]
+
+    client.post(
+        f"/api/ops/{op['id']}/connections",
+        json={
+            "src_host_id": host_a["id"], "src_ip": "10.0.0.1", "src_user": "bob",
+            "dst_host_id": host_b["id"], "dst_ip": "10.0.0.2", "dst_user": "root",
+            "connection_type": "ssh", "direction_context": "from_dst_logs",
+            "source_file": "auth.log",
+            "credential_id": cred_id,
+        },
+    )
+    resp = client.post(
+        f"/api/ops/{op['id']}/graph/paths/commands",
+        json=_cmd_body(host_a["id"], host_b["id"]),
+    )
+    assert resp.status_code == 200
+    p = resp.json()["paths"][0]
+    assert "my-pivot-key" in p["walkthrough"]

@@ -10,6 +10,7 @@ import type {
   WaypointPosition,
 } from '../types'
 import { findPaths } from '../api/graph'
+import CommandsModal from './CommandsModal'
 import styles from './PathFinder.module.css'
 
 interface Props {
@@ -56,6 +57,7 @@ export default function PathFinder({ nodes, opId, onHighlightPath }: Props) {
   const [filterConfirmed, setFilterConfirmed] = useState(true)
   const [filterObserved, setFilterObserved] = useState(true)
   const [filterTheoretical, setFilterTheoretical] = useState(true)
+  const [commandsOpen, setCommandsOpen] = useState(false)
 
   function addWaypoint() {
     setWaypoints(prev => [...prev, { host_id: '', position: 'anywhere', relative_to: null }])
@@ -229,9 +231,17 @@ export default function PathFinder({ nodes, opId, onHighlightPath }: Props) {
 
       {error && <p className={styles.error}>{error}</p>}
 
+      {commandsOpen && src && dst && (
+        <CommandsModal
+          opId={opId}
+          request={{ src_host_id: src, dst_host_id: dst, mode, waypoints: waypoints.filter(wp => wp.host_id) }}
+          onClose={() => setCommandsOpen(false)}
+        />
+      )}
+
       {result && (
         <div className={styles.results}>
-          {/* Confidence filter */}
+          {/* Confidence filter + Generate Commands */}
           <div className={styles.filterRow}>
             <span className={styles.filterLabel}>Show:</span>
             {(['confirmed', 'observed', 'theoretical'] as PathType[]).map(type => (
@@ -250,6 +260,13 @@ export default function PathFinder({ nodes, opId, onHighlightPath }: Props) {
                 </span>
               </label>
             ))}
+            <button
+              className={styles.genCmdsBtn}
+              style={{ marginLeft: 'auto' }}
+              onClick={() => setCommandsOpen(true)}
+            >
+              Generate Commands
+            </button>
           </div>
 
           {filteredPaths.length === 0 && (

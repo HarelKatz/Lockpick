@@ -331,3 +331,16 @@ export interface PathFinderResponse {
   paths: PathResult[]
   truncated: boolean
 }
+
+export interface PathCommands {
+  host_ids: string[]
+  proxyjump: string
+  proxychains: string
+  walkthrough: string
+  ssh_config: string
+}
+
+export interface PathCommandsResponse {
+  paths: PathCommands[]
+  truncated: boolean
+}

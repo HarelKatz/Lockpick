@@ -325,6 +325,19 @@ class PathFinderResponse(BaseModel):
     truncated: bool
 
 
+class PathCommands(BaseModel):
+    host_ids: list[str]
+    proxyjump: str
+    proxychains: str
+    walkthrough: str
+    ssh_config: str
+
+
+class PathCommandsResponse(BaseModel):
+    paths: list[PathCommands]
+    truncated: bool
+
+
 # ─── Export / Import ──────────────────────────────────────────────────────────
 
 class ExportHostIP(BaseModel):

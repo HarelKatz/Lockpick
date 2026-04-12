@@ -2,7 +2,12 @@
  * API functions for graph endpoints.
  */
 import { api } from './client'
-import type { GraphResponse, PathFinderRequest, PathFinderResponse } from '../types'
+import type {
+  GraphResponse,
+  PathCommandsResponse,
+  PathFinderRequest,
+  PathFinderResponse,
+} from '../types'
 
 export async function fetchGraph(
   opId: string,
@@ -28,4 +33,11 @@ export async function findPaths(
   req: PathFinderRequest,
 ): Promise<PathFinderResponse> {
   return api.post<PathFinderResponse>(`/ops/${opId}/graph/paths`, req)
+}
+
+export async function generateCommands(
+  opId: string,
+  req: PathFinderRequest,
+): Promise<PathCommandsResponse> {
+  return api.post<PathCommandsResponse>(`/ops/${opId}/graph/paths/commands`, req)
 }

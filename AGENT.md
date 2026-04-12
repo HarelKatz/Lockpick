@@ -146,11 +146,11 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed: Phase 8 + post-phase graph/UX hardening**
+**Last completed: Phase 9 — Operational Command Generation**
 
-Phases 1–8 are fully implemented and tested. Post-phase work replaced the graph library (cytoscape.js → React Flow → react-force-graph-2d) and added several UX fixes to the graph view. Phase 9 (Operational Command Generation) is next.
+Phases 1–9 are fully implemented and tested. Phase 9 added `POST /ops/{op_id}/graph/paths/commands` and a "Generate Commands" modal with 4 tabs (ProxyJump, proxychains, Walkthrough, SSH Config).
 
-**Next phase: Phase 9 — Operational Command Generation**
+**Next phase: Phase 10 — WebSocket Live Push + Per-Host Notes**
 
 ---
 
@@ -209,20 +209,11 @@ All polish features implemented: global search (`GET /ops/{op_id}/search?q=`), o
 - Node single-click is delayed 250 ms to allow double-click (lock) to preempt it. Do not revert this.
 - Right detail panel slides in from the right. Mode is `push` (shrinks canvas) when the clicked node falls in the rightmost 320 px of the canvas; otherwise `overlay` (absolute, canvas unchanged). Mode is evaluated once on open and held through the close transition.
 
-### Phase 9 — Operational Command Generation
+### Phase 9 — Complete
 
-New endpoint: `POST /ops/{op_id}/graph/paths/commands`
-- Accepts same `PathFinderRequest` body as the existing path finder; reuses `find_paths()` from `services/pivot_analysis.py`
-- Returns a JSON object with four output formats per path:
-  1. **ProxyJump one-liner** — `ssh -J user@hop1,user@hop2 user@target`
-  2. **proxychains.conf block** — `[ProxyList]` socks5 entries per hop
-  3. **Step-by-step walkthrough** — sequential interactive SSH commands with per-hop context (which credential, which user, what IP); each step includes a human-readable note (e.g. "From HostB as root, pivot to HostC:")
-  4. **SSH config block** — `Host` alias entries using `ProxyJump` directives; paste into `~/.ssh/config` then `ssh <alias>`
-- Uses `pivotable_users` from each edge to pick src_user/dst_user per hop; falls back to `username` from CredentialLink
-- Credential reference in output: credential name if set, otherwise `SHA256:<fingerprint>` — never key material
-- Frontend: "Generate Commands" button in the path finder results panel → modal with four tabs + copy button per tab
+Added `POST /ops/{op_id}/graph/paths/commands` (read-only, reuses `find_paths()`). Returns ProxyJump one-liner, proxychains.conf block, step-by-step walkthrough, and SSH config block per path. Frontend: "Generate Commands" button in PathFinder results → 4-tab modal with per-tab copy button.
 
-**Invariants:** Endpoint is read-only — no DB writes. Output is `application/json`. Hops with no resolvable username emit `<user>` as a placeholder. Private key material is never included in output.
+**Invariants:** Endpoint is read-only — no DB writes. Credential references use name or `SHA256:<fingerprint>`, never key material. Hops with no resolvable username emit `<user>` placeholder.
 
 ---
 
