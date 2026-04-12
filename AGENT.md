@@ -173,9 +173,11 @@ AGENT.md is both architecture documentation and the project roadmap.
 Those things belong in commit messages and GitHub issues.
 
 **Completed phases:**
-- Once a phase is done, collapse its detail to 3–5 lines maximum. Keep only: what the phase added to the architecture and any invariants future phases must respect.
+- Once a phase is done, collapse its entry to ONE sentence describing what was added — no feature lists, no invariants.
+- Any constraint future phases must respect goes into **Architecture Rules** — never inline in a phase entry. Phase entries are temporary scaffolding; Architecture Rules are permanent.
+- Merge consecutive completed phases into a single "Phases X–Y — Complete" block.
 - Do NOT preserve a "What was built" component list — git history has that.
-- The "Phases 1–5 — Complete" entry above is the model: one line, no detail.
+- The "Phases 1–9 — Complete" entry below is the model: one line, nothing else.
 
 **Planned File Structure:**
 - Do NOT maintain a file tree in this document. The codebase is the source of truth.
@@ -185,35 +187,9 @@ Those things belong in commit messages and GitHub issues.
 
 ## Implementation Phases
 
-### Phases 1–7 — Complete
+### Phases 1–9 — Complete
 
-All infrastructure, CRUD APIs, edit/delete UI, HostUser entity, schema hardening, graph visualization (react-force-graph-2d + d3-force, BFS pivot analysis), file upload + parsing engine (8 parsers, IP resolver, pivot detection), and pivot path analysis are implemented and tested.
-
-**Upload file invariants** (future phases must not break these):
-- Files stored at `data/uploads/{op_id}/{uuid}_{filename}`
-- `GET /api/ops/{op_id}/uploads` — lists files (disk scan + DB enrichment)
-- `GET /api/ops/{op_id}/uploads/{safe_name}?download=true` — serves raw file
-- Update/delete intentionally unsupported: parsed records have no per-file provenance marker; replacing a file creates duplicates
-
-**Phase 7 invariants:** `classifyPath()` helper classifies paths as confirmed/observed/theoretical; active tab persists across refresh.
-
-### Phase 8 — Complete
-
-All polish features implemented: global search (`GET /ops/{op_id}/search?q=`), op export (`GET /ops/{op_id}/export`) and import (`POST /ops/import`, `create_new` mode with ID remapping), graph layout switcher (cola/cose-bilkent/breadthfirst/grid/circle), keyboard shortcuts (Ctrl+F search, Del hide node, Esc close modals), bulk file upload (multi-file queue, auto-detect, sequential processing), activity log (DB-backed, hooked into all write endpoints, `GET /ops/{op_id}/activity`), and notification banner (30s polling via `GET /ops/{op_id}/stats`).
-
-**Phase 8 invariants:** `ActivityLog` table exists with composite index on `(op_id, created_at)`. `log_activity()` in `services/activity.py` must be called before `db.commit()` in write endpoints — it adds to the session, not commits independently. Export format is `lockpick_export_version: 1`.
-
-**Post-phase graph/UX invariants:**
-- Graph uses `react-force-graph-2d` (`ForceGraph2D`) with `d3-force` — not cytoscape.js or React Flow.
-- `GraphCanvas` owns all d3/simulation state; `GraphView` owns all selection/filter state. Keep these separate.
-- Node single-click is delayed 250 ms to allow double-click (lock) to preempt it. Do not revert this.
-- Right detail panel slides in from the right. Mode is `push` (shrinks canvas) when the clicked node falls in the rightmost 320 px of the canvas; otherwise `overlay` (absolute, canvas unchanged). Mode is evaluated once on open and held through the close transition.
-
-### Phase 9 — Complete
-
-Added `POST /ops/{op_id}/graph/paths/commands` (read-only, reuses `find_paths()`). Returns ProxyJump one-liner, proxychains.conf block, step-by-step walkthrough, and SSH config block per path. Frontend: "Generate Commands" button in PathFinder results → 4-tab modal with per-tab copy button.
-
-**Invariants:** Endpoint is read-only — no DB writes. Credential references use name or `SHA256:<fingerprint>`, never key material. Hops with no resolvable username emit `<user>` placeholder.
+Full stack built and tested: CRUD APIs, graph visualization, file upload + 8 parsers, BFS pivot analysis, global search, export/import, activity log, and operational command generation.
 
 ---
 
@@ -343,5 +319,12 @@ A standalone MCP (Model Context Protocol) server that lets an AI agent (e.g. Cla
 4. **No authentication on the tool** — it runs on a trusted network / VPN. The red team trusts each other.
 5. **All state in `./data/`** — DB file, uploaded raw files, nothing else. This directory is the only thing that needs to be backed up or moved.
 6. **IP resolution is best-effort** — when a parser finds an IP, try to match it to an existing host. If no match, create an "unresolved" host with just that IP. The user can merge hosts later.
+7. **Activity log** — `log_activity()` (`services/activity.py`) must be called before `db.commit()` in every write endpoint. It adds to the current session and does not commit independently.
+8. **Export format** — op exports use `lockpick_export_version: 1`. Import remaps all IDs — never re-use original IDs from an export.
+9. **File uploads** — raw files stored at `data/uploads/{op_id}/{uuid}_{filename}`. Update/delete is intentionally unsupported: parsed records carry no per-file provenance marker, so replacing a file would create duplicates.
+10. **Graph library** — frontend graph uses `react-force-graph-2d` (ForceGraph2D) + d3-force. Never reintroduce cytoscape.js or React Flow.
+11. **Graph state ownership** — `GraphCanvas` owns all d3/simulation state; `GraphView` owns all selection/filter state. Keep these separate.
+12. **Graph click timing** — node single-click is delayed 250 ms to let double-click (lock/unlock) preempt it. Do not remove or shorten this delay.
+13. **Graph detail panel** — right detail panel uses `push` mode (shrinks canvas) when the clicked node falls in the rightmost 320 px of the canvas; `overlay` (absolute, canvas unchanged) otherwise. Mode is evaluated once on open and held through the close transition.
 
 ---
