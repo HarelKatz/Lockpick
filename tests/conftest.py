@@ -58,3 +58,12 @@ def client(db_session):
     with TestClient(app, raise_server_exceptions=True) as c:
         yield c
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def upload_dir(tmp_path, monkeypatch):
+    """Redirect settings.upload_path to a temp directory for upload listing tests."""
+    d = tmp_path / "uploads"
+    d.mkdir()
+    monkeypatch.setattr("config.settings.upload_path", str(d))
+    return d
