@@ -8,6 +8,8 @@ import type {
   Operation, Host, Credential, CredentialLink, ConnectionRecord, UploadFile, ActivityLog,
   SearchResult,
 } from '../types'
+import { useOpWebSocket } from '../hooks/useOpWebSocket'
+import WsStatusIndicator from '../components/WsStatusIndicator'
 import { listHosts, deleteHost } from '../api/hosts'
 import { listCredentials, deleteCredential, listCredentialLinks, deleteCredentialLink } from '../api/credentials'
 import { listConnections, deleteConnection } from '../api/connections'
@@ -461,18 +463,32 @@ export default function Workspace({ op, onBack }: Props) {
     }
   }, [op.id])
 
-  // Poll for new records every 30s — notify if total changed since last refresh
+  // WebSocket live push — refetch stats on any event
+  const { status: wsStatus, reconnectIn, reconnect } = useOpWebSocket(
+    op.id,
+    useCallback(async () => {
+      try {
+        const s = await getOpStats(op.id)
+        setCurrentTotal(s.total_records)
+      } catch {
+        // ignore errors — banner will just not update
+      }
+    }, [op.id]),
+  )
+
+  // Fallback: poll every 30s when WS is disconnected
   useEffect(() => {
+    if (wsStatus !== 'disconnected') return
     const id = setInterval(async () => {
       try {
         const s = await getOpStats(op.id)
         setCurrentTotal(s.total_records)
       } catch {
-        // ignore poll errors — banner will just not update
+        // ignore poll errors
       }
     }, 30_000)
     return () => clearInterval(id)
-  }, [op.id])
+  }, [op.id, wsStatus])
 
   // Ctrl+F → open search modal (wired to SearchModal in step 5)
   useEffect(() => {
@@ -609,6 +625,11 @@ export default function Workspace({ op, onBack }: Props) {
           )}
         </div>
         <div className={styles.headerActions}>
+          <WsStatusIndicator
+            status={wsStatus}
+            reconnectIn={reconnectIn}
+            onReconnect={reconnect}
+          />
           <button
             className={styles.headerBtn}
             onClick={() => exportOp(op.id)}
