@@ -9,6 +9,7 @@ from models import ConnectionRecord, Credential
 from routers.deps import get_connection_or_404, get_op_or_404
 from services.activity import log_activity
 from schemas import ConnectionRecordCreate, ConnectionRecordRead, ConnectionRecordUpdate
+from ws_manager import broadcast_sync
 
 router = APIRouter(tags=["connections"])
 
@@ -50,6 +51,7 @@ def create_connection(
                  detail=f"Added {body.connection_type} connection: {src} → {dst}")
     db.commit()
     db.refresh(record)
+    broadcast_sync(op_id, {"type": "update", "entity_type": "connection", "entity_id": record.id, "op_id": op_id})
     return record
 
 
@@ -98,8 +100,10 @@ def update_connection(connection_id: str, body: ConnectionRecordUpdate, db: Sess
 @router.delete("/connections/{connection_id}", status_code=204)
 def delete_connection(connection_id: str, db: Session = Depends(get_db)):
     record = get_connection_or_404(connection_id, db)
-    log_activity(db, record.op_id, "connection.delete", "connection",
+    op_id = record.op_id
+    log_activity(db, op_id, "connection.delete", "connection",
                  entity_id=connection_id,
                  detail=f"Deleted {record.connection_type} connection: {record.src_ip} → {record.dst_ip}")
     db.delete(record)
     db.commit()
+    broadcast_sync(op_id, {"type": "update", "entity_type": "connection", "entity_id": connection_id, "op_id": op_id})
