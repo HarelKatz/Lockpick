@@ -145,5 +145,139 @@
 .empty {
   color: var(--text-muted);
   font-size: var(--font-size-xs);
-  padding: 8px 12px;
+  padding: 8px 0;
+}
+
+/* ─── Tab bar ──────────────────────────────────────────────────────────────── */
+
+.tabBar {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+.tabBtn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  margin-bottom: -1px;
+  padding: 7px 10px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.tabBtn:hover {
+  color: var(--text-primary);
+}
+
+.tabActive {
+  border-bottom-color: var(--accent);
+  color: var(--text-primary);
+}
+
+/* ─── Address list with addr_type badge ───────────────────────────────────── */
+
+.addrList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.addrRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.addrTypeBadge {
+  color: var(--text-muted);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+/* ─── Sudo rules ──────────────────────────────────────────────────────────── */
+
+.sudoRule {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  padding: 7px 8px;
+}
+
+.sudoRuleHeader {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 4px;
+}
+
+.sudoSubject {
+  align-items: center;
+  color: var(--text-primary);
+  display: flex;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  gap: 4px;
+}
+
+.sudoRunAs {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.groupBadge {
+  background: rgba(88, 166, 255, 0.12);
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 5px;
+}
+
+.nopasswdBadge {
+  background: rgba(210, 153, 34, 0.15);
+  border-radius: var(--radius-sm);
+  color: var(--warning);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
+}
+
+.deleteRuleBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  margin-left: auto;
+  padding: 2px 4px;
+}
+
+.deleteRuleBtn:hover {
+  color: var(--danger);
+}
+
+.sudoCommands {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sudoError {
+  color: var(--danger);
+  font-size: var(--font-size-xs);
+  padding: 4px 0;
 }

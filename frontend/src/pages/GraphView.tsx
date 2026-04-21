@@ -291,6 +291,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
         edges={graphData.edges.filter(
           e => e.src_host_id === selectedNode.host_id || e.dst_host_id === selectedNode.host_id,
         )}
+        host={allHosts.find(h => h.id === selectedNode.host_id) ?? null}
         onClose={() => setSelectedNode(null)}
       />
     )
