@@ -64,6 +64,7 @@ Thumbs.db
 
 # Logs
 *.log
+!tests/fixtures/**
 
 # Alembic (keep versions, ignore pycache)
 backend/alembic/__pycache__/

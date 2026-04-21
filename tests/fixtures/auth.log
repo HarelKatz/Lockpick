@@ -1,0 +1,5 @@
+Mar 15 14:20:01 web01 sshd[1234]: Accepted publickey for root from 10.10.0.5 port 52341 ssh2: RSA SHA256:abc123def456
+Mar 15 14:21:00 web01 sshd[1235]: Failed password for admin from 10.10.0.8 port 33211 ssh2
+Mar 15 14:22:30 web01 sshd[1236]: Accepted password for alice from 10.10.0.9 port 41200 ssh2
+Mar 15 14:23:00 web01 sshd[1237]: Failed publickey for invalid user badguy from 10.10.0.10 port 22
+Mar 15 14:24:00 web01 kernel: random: crng init done
