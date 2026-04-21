@@ -467,15 +467,20 @@ export default function Workspace({ op, onBack }: Props) {
     }
   }, [op.id])
 
-  // WebSocket live push — refetch stats on any event
+  // WebSocket live push — refetch stats on any event; reload graph+hosts on host changes
   const { status: wsStatus, reconnectIn, reconnect } = useOpWebSocket(
     op.id,
-    useCallback(async () => {
+    useCallback(async (event: unknown) => {
       try {
         const s = await getOpStats(op.id)
         setCurrentTotal(s.total_records)
       } catch {
         // ignore errors — banner will just not update
+      }
+      const ev = event as { entity_type?: string }
+      if (ev?.entity_type === 'host' || ev?.entity_type === 'credential' || ev?.entity_type === 'connection') {
+        listHosts(op.id).then(setHosts).catch(() => {})
+        graphReloadRef.current?.()
       }
     }, [op.id]),
   )

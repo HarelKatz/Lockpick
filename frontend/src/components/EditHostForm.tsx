@@ -18,7 +18,7 @@ function isValidIP(ip: string, addrType: AddrType): boolean {
   return false
 }
 import type { Host, HostIP, HostUser } from '../types'
-import { updateHost, addHostIP, deleteHostIP, createHostUser, deleteHostUser } from '../api/hosts'
+import { createHost, updateHost, addHostIP, deleteHostIP, createHostUser, deleteHostUser } from '../api/hosts'
 import styles from './EditModal.module.css'
 
 const USER_SOURCES: { value: HostUser['source']; label: string }[] = [
@@ -29,17 +29,23 @@ const USER_SOURCES: { value: HostUser['source']; label: string }[] = [
 ]
 
 interface Props {
-  host: Host
+  /** Existing host to edit. When absent, form is in create mode. */
+  host?: Host
+  /** Required in create mode — the operation to create the host in. */
+  opId?: string
   onSaved: (updated: Host) => void
   onClose: () => void
 }
 
-export default function EditHostForm({ host, onSaved, onClose }: Props) {
-  const [nickname, setNickname] = useState(host.nickname)
-  const [comment, setComment] = useState(host.comment ?? '')
-  const [formStatus, setFormStatus] = useState(host.status ?? '')
-  const [ips, setIps] = useState<HostIP[]>(host.ips)
-  const [users, setUsers] = useState<HostUser[]>(host.users)
+export default function EditHostForm({ host, opId, onSaved, onClose }: Props) {
+  const isCreate = !host
+
+  const [nickname, setNickname] = useState(host?.nickname ?? '')
+  const [comment, setComment] = useState(host?.comment ?? '')
+  const [formStatus, setFormStatus] = useState(host?.status ?? '')
+  const [ips, setIps] = useState<HostIP[]>(host?.ips ?? [])
+  const [pendingIps, setPendingIps] = useState<{ ip_address: string; addr_type: AddrType }[]>([])
+  const [users, setUsers] = useState<HostUser[]>(host?.users ?? [])
   const [newIp, setNewIp] = useState('')
   const [addrType, setAddrType] = useState<AddrType>('ipv4')
   const [newUsername, setNewUsername] = useState('')
@@ -58,10 +64,15 @@ export default function EditHostForm({ host, onSaved, onClose }: Props) {
       setError(`"${trimmed}" is not a valid ${label}`)
       return
     }
-    setIpLoading(true)
     setError(null)
+    if (isCreate) {
+      setPendingIps(prev => [...prev, { ip_address: trimmed, addr_type: addrType }])
+      setNewIp('')
+      return
+    }
+    setIpLoading(true)
     try {
-      const created = await addHostIP(host.id, { ip_address: trimmed, addr_type: addrType })
+      const created = await addHostIP(host!.id, { ip_address: trimmed, addr_type: addrType })
       setIps(prev => [...prev, created])
       setNewIp('')
     } catch {
@@ -72,14 +83,14 @@ export default function EditHostForm({ host, onSaved, onClose }: Props) {
   }
 
   async function handleRemoveIp(ip: HostIP) {
-    if (ips.length <= 1) {
-      setError('A host must have at least one IP address.')
+    if (ips.length <= 1 && pendingIps.length === 0) {
+      setError('A host must have at least one address.')
       return
     }
     setIpLoading(true)
     setError(null)
     try {
-      await deleteHostIP(host.id, ip.id)
+      await deleteHostIP(host!.id, ip.id)
       setIps(prev => prev.filter(i => i.id !== ip.id))
     } catch {
       setError('Failed to remove IP.')
@@ -94,7 +105,7 @@ export default function EditHostForm({ host, onSaved, onClose }: Props) {
     setUserLoading(true)
     setError(null)
     try {
-      const created = await createHostUser(host.id, {
+      const created = await createHostUser(host!.id, {
         username: trimmed,
         shell: newShell.trim() || null,
         source: newUserSource,
@@ -114,7 +125,7 @@ export default function EditHostForm({ host, onSaved, onClose }: Props) {
     setUserLoading(true)
     setError(null)
     try {
-      await deleteHostUser(host.id, u.id)
+      await deleteHostUser(host!.id, u.id)
       setUsers(prev => prev.filter(x => x.id !== u.id))
     } catch {
       setError('Failed to remove user.')
@@ -132,14 +143,30 @@ export default function EditHostForm({ host, onSaved, onClose }: Props) {
     setError(null)
     setLoading(true)
     try {
-      const updated = await updateHost(host.id, {
-        nickname: nickname.trim(),
-        comment: comment.trim() || null,
-        status: formStatus || null,
-      })
-      onSaved({ ...updated, ips, users })
+      if (isCreate) {
+        const newHost = await createHost(opId!, {
+          nickname: nickname.trim(),
+          comment: comment.trim() || null,
+        })
+        // Add any buffered IPs
+        const addedIps: HostIP[] = []
+        for (const ip of pendingIps) {
+          try {
+            const created = await addHostIP(newHost.id, ip)
+            addedIps.push(created)
+          } catch { /* ignore per-IP failures */ }
+        }
+        onSaved({ ...newHost, ips: addedIps, users: [], notes: [] })
+      } else {
+        const updated = await updateHost(host!.id, {
+          nickname: nickname.trim(),
+          comment: comment.trim() || null,
+          status: formStatus || null,
+        })
+        onSaved({ ...updated, ips, users })
+      }
     } catch {
-      setError('Failed to save changes.')
+      setError(isCreate ? 'Failed to create host.' : 'Failed to save changes.')
     } finally {
       setLoading(false)
     }
@@ -187,17 +214,12 @@ export default function EditHostForm({ host, onSaved, onClose }: Props) {
       </div>
 
       <div className={styles.field}>
-        <label>IP Addresses</label>
+        <label>IPs / Hostnames</label>
         <div className={styles.ipList}>
           {ips.map(ip => (
             <div key={ip.id} className={styles.ipRow}>
               <span className={styles.ipRowInput}>
-                <input
-                  type="text"
-                  value={ip.ip_address}
-                  readOnly
-                  disabled
-                />
+                <input type="text" value={ip.ip_address} readOnly disabled />
               </span>
               <span style={{ color: 'var(--text-muted)', fontSize: '.8em', flexShrink: 0 }}>
                 {ip.addr_type}
@@ -208,6 +230,24 @@ export default function EditHostForm({ host, onSaved, onClose }: Props) {
                 onClick={() => handleRemoveIp(ip)}
                 disabled={ipLoading || loading}
                 aria-label={`Remove ${ip.ip_address}`}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          {pendingIps.map((ip, i) => (
+            <div key={i} className={styles.ipRow}>
+              <span className={styles.ipRowInput}>
+                <input type="text" value={ip.ip_address} readOnly disabled />
+              </span>
+              <span style={{ color: 'var(--text-muted)', fontSize: '.8em', flexShrink: 0 }}>
+                {ip.addr_type} (pending)
+              </span>
+              <button
+                type="button"
+                className={styles.removeBtn}
+                onClick={() => setPendingIps(prev => prev.filter((_, j) => j !== i))}
+                disabled={loading}
               >
                 ✕
               </button>
@@ -246,7 +286,7 @@ export default function EditHostForm({ host, onSaved, onClose }: Props) {
         </div>
       </div>
 
-      <div className={styles.field}>
+      {!isCreate && <div className={styles.field}>
         <label>Known Users</label>
         <div className={styles.ipList}>
           {users.map(u => (
@@ -310,7 +350,7 @@ export default function EditHostForm({ host, onSaved, onClose }: Props) {
             </button>
           </div>
         </div>
-      </div>
+      </div>}
 
       {error && <p className={styles.error}>{error}</p>}
 
@@ -319,7 +359,7 @@ export default function EditHostForm({ host, onSaved, onClose }: Props) {
           Cancel
         </button>
         <button type="submit" className={styles.btnPrimary} disabled={loading}>
-          {loading ? 'Saving…' : 'Save Changes'}
+          {loading ? (isCreate ? 'Creating…' : 'Saving…') : (isCreate ? 'Create Host' : 'Save Changes')}
         </button>
       </div>
     </form>
