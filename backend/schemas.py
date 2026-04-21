@@ -119,6 +119,22 @@ class SudoRuleRead(BaseModel):
     created_at: datetime
 
 
+# ─── HostNote ─────────────────────────────────────────────────────────────────
+
+class HostNoteCreate(BaseModel):
+    content: str
+
+
+class HostNoteRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    op_id: str
+    host_id: str
+    content: str
+    created_at: datetime
+
+
 # ─── Host ─────────────────────────────────────────────────────────────────────
 
 class HostCreate(BaseModel):
@@ -143,6 +159,7 @@ class HostRead(BaseModel):
     created_at: datetime
     ips: list[HostIPRead] = []
     users: list[HostUserRead] = []
+    notes: list[HostNoteRead] = []
 
 
 # ─── Credential ───────────────────────────────────────────────────────────────

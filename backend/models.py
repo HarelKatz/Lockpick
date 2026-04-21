@@ -58,6 +58,7 @@ class Host(Base):
     users = relationship("HostUser", back_populates="host", cascade="all, delete-orphan")
     credential_links = relationship("CredentialLink", back_populates="host", cascade="all, delete-orphan")
     sudo_rules = relationship("SudoRule", back_populates="host", cascade="all, delete-orphan")
+    notes = relationship("HostNote", back_populates="host", cascade="all, delete-orphan")
     src_connections = relationship(
         "ConnectionRecord",
         foreign_keys="ConnectionRecord.src_host_id",
@@ -232,6 +233,19 @@ class SudoRule(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
 
     host = relationship("Host", back_populates="sudo_rules")
+
+
+class HostNote(Base):
+    """A freeform note attached to a host."""
+    __tablename__ = "host_notes"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    op_id = Column(String(36), ForeignKey("operations.id", ondelete="CASCADE"), nullable=False)
+    host_id = Column(String(36), ForeignKey("hosts.id", ondelete="CASCADE"), nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+
+    host = relationship("Host", back_populates="notes")
 
 
 class ActivityLog(Base):
