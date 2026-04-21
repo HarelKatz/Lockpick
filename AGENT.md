@@ -148,7 +148,7 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 **Last completed: Phases 10, 11, 13 + post-release bug fixes**
 
-Phases 10/11/13 are complete. Bug fixes: nginx WS proxy headers, graph node border color (null status uses neutral gray not blue), sudoers parser rewritten for real-world files, datetime timezone (TZDateTime TypeDecorator attaches UTC so JS parses correctly), EditHostForm create mode, WS callback triggers graph reload on host events.
+Phases 10/11/13 are complete. Bug fixes (rounds 1–2): nginx WS proxy headers, graph node border color, sudoers parser rewrite, datetime TZDateTime, EditHostForm create mode, WS callback graph reload, IP row CSS overflow, WS broadcast thread safety (run_coroutine_threadsafe), ManualEntryForm hostname/addr_type support, add_host_ip now saves addr_type, silent fetchAll prevents blank tab on add.
 
 **Next: Phase 14 — Engagement Report Export**
 
