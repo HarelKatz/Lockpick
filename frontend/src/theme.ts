@@ -37,3 +37,23 @@ export const theme = {
 } as const
 
 export type ThemeColor = keyof typeof theme
+
+/** Colors for host status tags (Phase 11). */
+export const statusColors: Record<string, string> = {
+  entry_point:  '#58a6ff',  // blue
+  compromised:  '#f85149',  // red
+  pivot:        '#d29922',  // orange
+  target:       '#bc8cff',  // purple
+  scoped_out:   '#3fb950',  // green
+  unreachable:  '#6e7681',  // gray
+}
+
+/** Human-readable labels for host status values. */
+export const STATUS_LABELS: Record<string, string> = {
+  entry_point:  'Entry Point',
+  compromised:  'Compromised',
+  pivot:        'Pivot',
+  target:       'Target',
+  scoped_out:   'Scoped Out',
+  unreachable:  'Unreachable',
+}

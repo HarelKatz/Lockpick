@@ -52,6 +52,7 @@ export interface HostIP {
   id: string
   host_id: string
   ip_address: string
+  addr_type: 'ipv4' | 'ipv6' | 'hostname'
   source: 'manual' | 'parsed'
   first_seen_at: string
 }
@@ -71,6 +72,7 @@ export interface Host {
   op_id: string
   nickname: string
   comment: string | null
+  status: string | null
   created_at: string
   ips: HostIP[]
   users: HostUser[]
@@ -130,6 +132,7 @@ export interface UpdateOperationRequest {
 export interface UpdateHostRequest {
   nickname?: string
   comment?: string | null
+  status?: string | null
 }
 
 export interface UpdateCredentialRequest {
@@ -173,6 +176,7 @@ export interface CreateHostRequest {
 
 export interface CreateHostIPRequest {
   ip_address: string
+  addr_type?: 'ipv4' | 'ipv6' | 'hostname'
   source?: 'manual' | 'parsed'
 }
 
@@ -234,6 +238,7 @@ export interface GraphNode {
   ips: string[]
   user_count: number
   credential_count: number
+  status: string | null
 }
 
 export interface GraphEdge {
@@ -290,6 +295,8 @@ export type UploadFileType =
   | 'shadow'
   | 'sshd_config'
   | 'nmap_xml'
+  | 'etc_hosts'
+  | 'sudoers'
 
 export interface UploadSummary {
   new_credentials: number

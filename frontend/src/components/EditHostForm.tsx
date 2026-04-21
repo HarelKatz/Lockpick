@@ -3,13 +3,17 @@
  * immediate API calls (add/remove without waiting for form submit).
  */
 import { useState } from 'react'
+import { statusColors, STATUS_LABELS } from '../theme'
 
-function isValidIP(ip: string): boolean {
+type AddrType = 'ipv4' | 'ipv6' | 'hostname'
+
+function isValidIP(ip: string, addrType: AddrType): boolean {
+  if (addrType === 'hostname') return ip.trim().length > 0
+  if (addrType === 'ipv6' || ip.includes(':')) {
+    return /^[0-9a-fA-F:]+$/.test(ip) && ip.split(':').length <= 8
+  }
   if (/^(\d{1,3}\.){3}\d{1,3}$/.test(ip)) {
     return ip.split('.').every(n => parseInt(n, 10) <= 255)
-  }
-  if (ip.includes(':')) {
-    return /^[0-9a-fA-F:]+$/.test(ip) && ip.split(':').length <= 8
   }
   return false
 }
@@ -33,9 +37,11 @@ interface Props {
 export default function EditHostForm({ host, onSaved, onClose }: Props) {
   const [nickname, setNickname] = useState(host.nickname)
   const [comment, setComment] = useState(host.comment ?? '')
+  const [formStatus, setFormStatus] = useState(host.status ?? '')
   const [ips, setIps] = useState<HostIP[]>(host.ips)
   const [users, setUsers] = useState<HostUser[]>(host.users)
   const [newIp, setNewIp] = useState('')
+  const [addrType, setAddrType] = useState<AddrType>('ipv4')
   const [newUsername, setNewUsername] = useState('')
   const [newShell, setNewShell] = useState('')
   const [newUserSource, setNewUserSource] = useState<HostUser['source']>('manual')
@@ -47,14 +53,15 @@ export default function EditHostForm({ host, onSaved, onClose }: Props) {
   async function handleAddIp() {
     const trimmed = newIp.trim()
     if (!trimmed) return
-    if (!isValidIP(trimmed)) {
-      setError(`"${trimmed}" is not a valid IP address`)
+    if (!isValidIP(trimmed, addrType)) {
+      const label = addrType === 'hostname' ? 'hostname' : 'IP address'
+      setError(`"${trimmed}" is not a valid ${label}`)
       return
     }
     setIpLoading(true)
     setError(null)
     try {
-      const created = await addHostIP(host.id, { ip_address: trimmed })
+      const created = await addHostIP(host.id, { ip_address: trimmed, addr_type: addrType })
       setIps(prev => [...prev, created])
       setNewIp('')
     } catch {
@@ -128,6 +135,7 @@ export default function EditHostForm({ host, onSaved, onClose }: Props) {
       const updated = await updateHost(host.id, {
         nickname: nickname.trim(),
         comment: comment.trim() || null,
+        status: formStatus || null,
       })
       onSaved({ ...updated, ips, users })
     } catch {
@@ -162,6 +170,23 @@ export default function EditHostForm({ host, onSaved, onClose }: Props) {
       </div>
 
       <div className={styles.field}>
+        <label>Status</label>
+        <select
+          value={formStatus}
+          onChange={e => setFormStatus(e.target.value)}
+          disabled={loading}
+          style={{ width: '100%' }}
+        >
+          <option value="">— unset —</option>
+          {Object.entries(STATUS_LABELS).map(([value, label]) => (
+            <option key={value} value={value} style={{ color: statusColors[value] }}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className={styles.field}>
         <label>IP Addresses</label>
         <div className={styles.ipList}>
           {ips.map(ip => (
@@ -186,13 +211,23 @@ export default function EditHostForm({ host, onSaved, onClose }: Props) {
             </div>
           ))}
           <div className={styles.ipRow}>
+            <select
+              value={addrType}
+              onChange={e => setAddrType(e.target.value as AddrType)}
+              disabled={ipLoading || loading}
+              style={{ flex: '0 0 auto' }}
+            >
+              <option value="ipv4">IPv4</option>
+              <option value="ipv6">IPv6</option>
+              <option value="hostname">Hostname</option>
+            </select>
             <span className={styles.ipRowInput}>
               <input
                 type="text"
                 value={newIp}
                 onChange={e => setNewIp(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddIp() } }}
-                placeholder="Add IP address…"
+                placeholder={addrType === 'hostname' ? 'Add hostname…' : 'Add IP address…'}
                 disabled={ipLoading || loading}
               />
             </span>
