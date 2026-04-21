@@ -7,6 +7,7 @@ from models import Credential, CredentialLink, Host
 from routers.deps import get_cred_or_404, get_op_or_404
 from services.activity import log_activity
 from services.key_utils import infer_key_info
+from ws_manager import broadcast_sync
 from schemas import (
     CredentialCreate,
     CredentialLinkCreate,
@@ -44,6 +45,7 @@ def create_credential(op_id: str, body: CredentialCreate, db: Session = Depends(
     log_activity(db, op_id, "credential.create", "credential", detail=f"Added {cred.cred_type}: {label}")
     db.commit()
     db.refresh(cred)
+    broadcast_sync(op_id, {"type": "update", "entity_type": "credential", "entity_id": cred.id, "op_id": op_id})
     return cred
 
 
@@ -90,9 +92,11 @@ def update_credential(cred_id: str, body: CredentialUpdate, db: Session = Depend
 def delete_credential(cred_id: str, db: Session = Depends(get_db)):
     cred = get_cred_or_404(cred_id, db)
     label = cred.name or (cred.fingerprint[:22] if cred.fingerprint else cred.cred_type)
-    log_activity(db, cred.op_id, "credential.delete", "credential", entity_id=cred_id, detail=f"Deleted {cred.cred_type}: {label}")
+    op_id = cred.op_id
+    log_activity(db, op_id, "credential.delete", "credential", entity_id=cred_id, detail=f"Deleted {cred.cred_type}: {label}")
     db.delete(cred)
     db.commit()
+    broadcast_sync(op_id, {"type": "update", "entity_type": "credential", "entity_id": cred_id, "op_id": op_id})
 
 
 # ─── CredentialLinks ──────────────────────────────────────────────────────────

@@ -10,6 +10,7 @@ import ForceGraph2D from 'react-force-graph-2d'
 import * as d3Force from 'd3-force'
 import dagre from '@dagrejs/dagre'
 import type { GraphEdge, GraphNode, GraphResponse } from '../types'
+import { statusColors } from '../theme'
 import styles from './GraphCanvas.module.css'
 
 // ── Exported types (consumed by GraphView) ─────────────────────────────────────
@@ -29,6 +30,7 @@ interface FGNode {
   isLocked: boolean
   pathHighlight: boolean
   dimmed: boolean
+  status: string | null
   _node: GraphNode
 }
 
@@ -140,6 +142,7 @@ interface Props {
   hiddenIds: Set<string>
   pathFilter: PathFilter | null
   credFilter: CredFilter | null
+  statusFilters: Set<string>
   layout: LayoutName
   lockedIds?: Set<string>
   focusHostId?: string | null
@@ -158,6 +161,7 @@ export default function GraphCanvas({
   hiddenIds,
   pathFilter,
   credFilter,
+  statusFilters,
   layout,
   lockedIds,
   focusHostId,
@@ -279,6 +283,7 @@ export default function GraphCanvas({
           isLocked: lockedIds?.has(n.host_id) ?? false,
           pathHighlight: false,
           dimmed: false,
+          status: n.status ?? null,
           _node: n,
         }
       })
@@ -332,8 +337,15 @@ export default function GraphCanvas({
       const nodeMatchesCred = credFilter
         ? nodeEdges.some(e => e.evidence.some(ev => ev.credential_id === credFilter.credId))
         : null
-      n.dimmed = !pathFilter && credFilter?.mode === 'highlight'
-        ? nodeMatchesCred === false : false
+
+      // Status filter: dim nodes whose status is set AND not in the active filter set.
+      // Nodes with status=null are never dimmed by the status filter.
+      const statusDimmed = statusFilters.size > 0
+        ? (node.status !== null && !statusFilters.has(node.status ?? ''))
+        : false
+
+      n.dimmed = statusDimmed || (!pathFilter && credFilter?.mode === 'highlight'
+        ? nodeMatchesCred === false : false)
 
       const pinned = STATIC_LAYOUTS.includes(prevLayoutRef.current) || (lockedIds?.has(node.host_id) ?? false)
       n.fx = pinned ? n.x : undefined
@@ -363,7 +375,7 @@ export default function GraphCanvas({
     // the canvas redraws immediately. Reheating would restart physics at alpha=1
     // and move all non-locked nodes, making the locked node appear screen-anchored.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathFilter, credFilter, lockedIds, fgData])
+  }, [pathFilter, credFilter, statusFilters, lockedIds, fgData])
 
   // ── Focus a specific host ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -380,22 +392,30 @@ export default function GraphCanvas({
 
   const drawNode = useCallback((node: object, ctx: CanvasRenderingContext2D, globalScale: number) => {
     const n = node as FGNode
-    const { x = 0, y = 0, pathHighlight, dimmed, isLocked, hasCredentials, label } = n
+    const { x = 0, y = 0, pathHighlight, dimmed, isLocked, hasCredentials, label, status } = n
     const isSelected = n.id === selectedNodeIdRef.current
     const r = 27
 
     ctx.globalAlpha = dimmed ? 0.18 : 1
 
-    // Circle fill
+    // Circle fill — status color overrides default confidence-based fill
     ctx.beginPath()
     ctx.arc(x, y, r, 0, 2 * Math.PI)
-    ctx.fillStyle = pathHighlight ? '#2d1f1f' : isSelected ? '#1f2d3d' : '#1a2332'
+    if (pathHighlight) {
+      ctx.fillStyle = '#2d1f1f'
+    } else if (status && statusColors[status]) {
+      // Use a darkened tint of the status color as fill
+      ctx.fillStyle = '#1a2332'
+    } else {
+      ctx.fillStyle = isSelected ? '#1f2d3d' : '#1a2332'
+    }
     ctx.fill()
 
-    // Circle border
+    // Circle border — status color takes priority over credential/default colors
     const borderColor = pathHighlight ? '#f78166'
       : isLocked     ? '#d97706'
       : isSelected   ? '#58a6ff'
+      : status && statusColors[status] ? statusColors[status]
       : hasCredentials ? '#d29922'
       : '#3d8bcd'
     ctx.lineWidth = (pathHighlight || isSelected || isLocked ? 3 : 2) / globalScale

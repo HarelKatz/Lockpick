@@ -53,7 +53,21 @@ export interface HostIP {
   host_id: string
   ip_address: string
   source: 'manual' | 'parsed'
+  addr_type: 'ipv4' | 'ipv6' | 'hostname'
   first_seen_at: string
+}
+
+export interface SudoRule {
+  id: string
+  host_id: string
+  op_id: string
+  subject: string
+  subject_type: 'user' | 'group'
+  run_as: string
+  commands: string
+  nopasswd: boolean
+  raw_line: string | null
+  created_at: string
 }
 
 export interface HostUser {
@@ -66,14 +80,32 @@ export interface HostUser {
   created_at: string
 }
 
+export type HostStatus =
+  | 'entry_point'
+  | 'compromised'
+  | 'pivot'
+  | 'target'
+  | 'scoped_out'
+  | 'unreachable'
+
+export interface HostNote {
+  id: string
+  op_id: string
+  host_id: string
+  content: string
+  created_at: string
+}
+
 export interface Host {
   id: string
   op_id: string
   nickname: string
   comment: string | null
+  status: string | null
   created_at: string
   ips: HostIP[]
   users: HostUser[]
+  notes?: HostNote[]
 }
 
 export interface Credential {
@@ -130,6 +162,7 @@ export interface UpdateOperationRequest {
 export interface UpdateHostRequest {
   nickname?: string
   comment?: string | null
+  status?: string | null
 }
 
 export interface UpdateCredentialRequest {
@@ -234,6 +267,7 @@ export interface GraphNode {
   ips: string[]
   user_count: number
   credential_count: number
+  status: string | null
 }
 
 export interface GraphEdge {
@@ -290,6 +324,8 @@ export type UploadFileType =
   | 'shadow'
   | 'sshd_config'
   | 'nmap_xml'
+  | 'etc_hosts'
+  | 'sudoers'
 
 export interface UploadSummary {
   new_credentials: number

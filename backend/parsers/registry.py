@@ -8,6 +8,7 @@ from parsers import BaseParser
 from parsers.authorized_keys import AuthorizedKeysParser
 from parsers.auth_log import AuthLogParser
 from parsers.bash_history import BashHistoryParser
+from parsers.etc_hosts import EtcHostsParser
 from parsers.known_hosts import KnownHostsParser
 from parsers.nmap_xml import NmapXmlParser
 from parsers.passwd import PasswdParser
@@ -15,6 +16,7 @@ from parsers.private_key import PrivateKeyParser
 from parsers.shadow import ShadowParser
 from parsers.ssh_config import SshConfigParser
 from parsers.sshd_config import SshdConfigParser
+from parsers.sudoers import SudoersParser
 from parsers.wtmp import WtmpParser
 
 PARSER_REGISTRY: dict[str, type[BaseParser]] = {
@@ -30,4 +32,6 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "nmap_xml": NmapXmlParser,
     "shadow": ShadowParser,
     "sshd_config": SshdConfigParser,
+    "etc_hosts": EtcHostsParser,
+    "sudoers": SudoersParser,
 }

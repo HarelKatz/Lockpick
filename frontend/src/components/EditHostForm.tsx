@@ -174,6 +174,9 @@ export default function EditHostForm({ host, onSaved, onClose }: Props) {
                   disabled
                 />
               </span>
+              <span style={{ color: 'var(--text-muted)', fontSize: '.8em', flexShrink: 0 }}>
+                {ip.addr_type}
+              </span>
               <button
                 type="button"
                 className={styles.removeBtn}

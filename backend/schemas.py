@@ -88,6 +88,7 @@ class HostUserRead(BaseModel):
 class HostIPCreate(BaseModel):
     ip_address: str
     source: Literal["manual", "parsed"] = "manual"
+    addr_type: str = "ipv4"
 
 
 class HostIPRead(BaseModel):
@@ -97,7 +98,41 @@ class HostIPRead(BaseModel):
     host_id: str
     ip_address: str
     source: str
+    addr_type: str
     first_seen_at: datetime
+
+
+# ─── SudoRule ─────────────────────────────────────────────────────────────────
+
+class SudoRuleRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    host_id: str
+    op_id: str
+    subject: str
+    subject_type: str
+    run_as: str
+    commands: str
+    nopasswd: bool
+    raw_line: Optional[str]
+    created_at: datetime
+
+
+# ─── HostNote ─────────────────────────────────────────────────────────────────
+
+class HostNoteCreate(BaseModel):
+    content: str
+
+
+class HostNoteRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    op_id: str
+    host_id: str
+    content: str
+    created_at: datetime
 
 
 # ─── Host ─────────────────────────────────────────────────────────────────────
@@ -107,9 +142,15 @@ class HostCreate(BaseModel):
     comment: Optional[str] = None
 
 
+_HOST_STATUS = Literal[
+    "entry_point", "compromised", "pivot", "target", "scoped_out", "unreachable"
+]
+
+
 class HostUpdate(BaseModel):
     nickname: Optional[str] = None
     comment: Optional[str] = None
+    status: Optional[_HOST_STATUS] = None
 
 
 class HostRead(BaseModel):
@@ -119,9 +160,11 @@ class HostRead(BaseModel):
     op_id: str
     nickname: str
     comment: Optional[str]
+    status: Optional[str] = None
     created_at: datetime
     ips: list[HostIPRead] = []
     users: list[HostUserRead] = []
+    notes: list[HostNoteRead] = []
 
 
 # ─── Credential ───────────────────────────────────────────────────────────────
@@ -285,6 +328,7 @@ class GraphNode(BaseModel):
     ips: list[str]
     user_count: int
     credential_count: int
+    status: Optional[str] = None
 
 
 class GraphEdge(BaseModel):

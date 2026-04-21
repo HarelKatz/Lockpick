@@ -28,6 +28,7 @@ from models import (
     HostUser,
     Operation,
     SshConfigPattern,
+    SudoRule,
 )
 from parsers import UploadMetadata
 from parsers.registry import PARSER_REGISTRY
@@ -375,9 +376,25 @@ async def upload_file(
             created_at=_now(),
         ))
 
+    # ── 5. Persist SudoRule records ───────────────────────────────────────────
+    new_sudo_rules = 0
+    for sr in result.sudo_rules_found:
+        db.add(SudoRule(
+            host_id=host_id,
+            op_id=op_id,
+            subject=sr.subject,
+            subject_type=sr.subject_type,
+            run_as=sr.run_as,
+            commands=sr.commands,
+            nopasswd=sr.nopasswd,
+            raw_line=sr.raw_line,
+        ))
+        new_sudo_rules += 1
+
     log_activity(db, op_id, "upload.parse", "upload",
                  detail=f"Parsed {file_type} file '{filename}': "
-                        f"{new_creds} creds, {new_links} links, {new_connections} connections, {new_hosts} hosts")
+                        f"{new_creds} creds, {new_links} links, {new_connections} connections, "
+                        f"{new_hosts} hosts, {new_sudo_rules} sudo rules")
     db.commit()
 
     # ── 4. Check for new pivot opportunities ─────────────────────────────────

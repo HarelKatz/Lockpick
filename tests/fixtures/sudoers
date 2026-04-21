@@ -1,0 +1,10 @@
+# /etc/sudoers - sample fixture for parser tests
+
+Defaults    env_reset
+Defaults    secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+root    ALL=(ALL:ALL) ALL
+%admin  ALL=(ALL) ALL
+alice   ALL=(root) NOPASSWD: /bin/bash, /usr/bin/apt
+bob     ALL=(ALL:ALL) /bin/systemctl restart nginx
+%sudo   ALL=(ALL:ALL) NOPASSWD: ALL

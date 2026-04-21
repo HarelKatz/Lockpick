@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import (
+    Boolean,
     Column,
     DateTime,
     Enum,
@@ -43,12 +44,21 @@ class Host(Base):
     op_id = Column(String(36), ForeignKey("operations.id", ondelete="CASCADE"), nullable=False)
     nickname = Column(String(255), nullable=False)
     comment = Column(Text, nullable=True)
+    status = Column(
+        Enum(
+            "entry_point", "compromised", "pivot", "target", "scoped_out", "unreachable",
+            name="host_status",
+        ),
+        nullable=True,
+    )
     created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
 
     operation = relationship("Operation", back_populates="hosts")
     ips = relationship("HostIP", back_populates="host", cascade="all, delete-orphan")
     users = relationship("HostUser", back_populates="host", cascade="all, delete-orphan")
     credential_links = relationship("CredentialLink", back_populates="host", cascade="all, delete-orphan")
+    sudo_rules = relationship("SudoRule", back_populates="host", cascade="all, delete-orphan")
+    notes = relationship("HostNote", back_populates="host", cascade="all, delete-orphan")
     src_connections = relationship(
         "ConnectionRecord",
         foreign_keys="ConnectionRecord.src_host_id",
@@ -66,11 +76,16 @@ class HostIP(Base):
 
     id = Column(String(36), primary_key=True, default=_uuid)
     host_id = Column(String(36), ForeignKey("hosts.id", ondelete="CASCADE"), nullable=False)
-    ip_address = Column(String(45), nullable=False)  # IPv6 max length
+    ip_address = Column(String(255), nullable=False)  # IPv6 max length; also holds FQDNs
     source = Column(
         Enum("manual", "parsed", name="hostip_source"),
         nullable=False,
         default="manual",
+    )
+    addr_type = Column(
+        Enum("ipv4", "ipv6", "hostname", name="hostip_addr_type"),
+        nullable=False,
+        default="ipv4",
     )
     first_seen_at = Column(DateTime(timezone=True), nullable=False, default=_now)
 
@@ -196,6 +211,41 @@ class SshConfigPattern(Base):
     pattern = Column(String(512), nullable=False)   # space-joined alias list, e.g. "jb.*" or "box? !box0"
     username = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+
+
+class SudoRule(Base):
+    """A sudo rule parsed from /etc/sudoers or sudoers.d/* on a host."""
+    __tablename__ = "sudo_rules"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    host_id = Column(String(36), ForeignKey("hosts.id", ondelete="CASCADE"), nullable=False)
+    op_id = Column(String(36), ForeignKey("operations.id", ondelete="CASCADE"), nullable=False)
+    subject = Column(String(255), nullable=False)
+    subject_type = Column(
+        Enum("user", "group", name="sudorule_subject_type"),
+        nullable=False,
+        default="user",
+    )
+    run_as = Column(String(255), nullable=False, default="root")
+    commands = Column(Text, nullable=False)
+    nopasswd = Column(Boolean, nullable=False, default=False)
+    raw_line = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+
+    host = relationship("Host", back_populates="sudo_rules")
+
+
+class HostNote(Base):
+    """A freeform note attached to a host."""
+    __tablename__ = "host_notes"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    op_id = Column(String(36), ForeignKey("operations.id", ondelete="CASCADE"), nullable=False)
+    host_id = Column(String(36), ForeignKey("hosts.id", ondelete="CASCADE"), nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+
+    host = relationship("Host", back_populates="notes")
 
 
 class ActivityLog(Base):

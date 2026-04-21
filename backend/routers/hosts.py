@@ -3,18 +3,22 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Host, HostIP, HostUser
+from models import Host, HostIP, HostNote, HostUser, SudoRule
 from routers.deps import get_host_or_404, get_op_or_404
 from services.activity import log_activity
 from services.ssh_pattern import apply_patterns_to_host
+from ws_manager import broadcast_sync
 from schemas import (
     HostCreate,
     HostIPCreate,
     HostIPRead,
+    HostNoteCreate,
+    HostNoteRead,
     HostRead,
     HostUpdate,
     HostUserCreate,
     HostUserRead,
+    SudoRuleRead,
 )
 
 router = APIRouter(tags=["hosts"])
@@ -32,6 +36,7 @@ def create_host(op_id: str, body: HostCreate, db: Session = Depends(get_db)):
     apply_patterns_to_host(db, host)
     db.commit()
     db.refresh(host)
+    broadcast_sync(op_id, {"type": "update", "entity_type": "host", "entity_id": host.id, "op_id": op_id})
     return host
 
 
@@ -58,18 +63,23 @@ def update_host(host_id: str, body: HostUpdate, db: Session = Depends(get_db)):
         host.nickname = body.nickname
     if body.comment is not None:
         host.comment = body.comment
+    if "status" in body.model_fields_set:
+        host.status = body.status  # None clears it; a valid string sets it
     log_activity(db, host.op_id, "host.update", "host", entity_id=host_id, detail=f"Updated host '{host.nickname}'")
     db.commit()
     db.refresh(host)
+    broadcast_sync(host.op_id, {"type": "update", "entity_type": "host", "entity_id": host_id, "op_id": host.op_id})
     return host
 
 
 @router.delete("/hosts/{host_id}", status_code=204)
 def delete_host(host_id: str, db: Session = Depends(get_db)):
     host = get_host_or_404(host_id, db)
-    log_activity(db, host.op_id, "host.delete", "host", entity_id=host_id, detail=f"Deleted host '{host.nickname}'")
+    op_id = host.op_id
+    log_activity(db, op_id, "host.delete", "host", entity_id=host_id, detail=f"Deleted host '{host.nickname}'")
     db.delete(host)
     db.commit()
+    broadcast_sync(op_id, {"type": "update", "entity_type": "host", "entity_id": host_id, "op_id": op_id})
 
 
 # ─── HostIPs ──────────────────────────────────────────────────────────────────
@@ -140,3 +150,68 @@ def delete_host_user(host_id: str, user_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     db.delete(user)
     db.commit()
+
+
+# ─── SudoRules ────────────────────────────────────────────────────────────────
+
+@router.get("/hosts/{host_id}/sudo-rules", response_model=list[SudoRuleRead])
+def list_sudo_rules(host_id: str, db: Session = Depends(get_db)):
+    get_host_or_404(host_id, db)
+    return (
+        db.query(SudoRule)
+        .filter(SudoRule.host_id == host_id)
+        .order_by(SudoRule.created_at.asc())
+        .all()
+    )
+
+
+@router.delete("/hosts/{host_id}/sudo-rules/{rule_id}", status_code=204)
+def delete_sudo_rule(host_id: str, rule_id: str, db: Session = Depends(get_db)):
+    host = get_host_or_404(host_id, db)
+    rule = db.query(SudoRule).filter(SudoRule.id == rule_id, SudoRule.host_id == host_id).first()
+    if not rule:
+        raise HTTPException(status_code=404, detail="Sudo rule not found")
+    log_activity(db, host.op_id, "sudo_rule.delete", "sudo_rule", entity_id=rule_id,
+                 detail=f"Deleted sudo rule for subject '{rule.subject}' on host '{host.nickname}'")
+    db.delete(rule)
+    db.commit()
+
+
+# ─── HostNotes ────────────────────────────────────────────────────────────────
+
+@router.post("/hosts/{host_id}/notes", response_model=HostNoteRead, status_code=201)
+def create_host_note(host_id: str, body: HostNoteCreate, db: Session = Depends(get_db)):
+    host = get_host_or_404(host_id, db)
+    note = HostNote(op_id=host.op_id, host_id=host_id, content=body.content)
+    db.add(note)
+    db.flush()
+    log_activity(db, host.op_id, "host_note.create", "host_note", entity_id=note.id,
+                 detail=f"Added note to host '{host.nickname}'")
+    db.commit()
+    db.refresh(note)
+    broadcast_sync(host.op_id, {"type": "update", "entity_type": "host", "entity_id": host_id, "op_id": host.op_id})
+    return note
+
+
+@router.get("/hosts/{host_id}/notes", response_model=list[HostNoteRead])
+def list_host_notes(host_id: str, db: Session = Depends(get_db)):
+    get_host_or_404(host_id, db)
+    return (
+        db.query(HostNote)
+        .filter(HostNote.host_id == host_id)
+        .order_by(HostNote.created_at.asc())
+        .all()
+    )
+
+
+@router.delete("/hosts/{host_id}/notes/{note_id}", status_code=204)
+def delete_host_note(host_id: str, note_id: str, db: Session = Depends(get_db)):
+    host = get_host_or_404(host_id, db)
+    note = db.query(HostNote).filter(HostNote.id == note_id, HostNote.host_id == host_id).first()
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    log_activity(db, host.op_id, "host_note.delete", "host_note", entity_id=note_id,
+                 detail=f"Deleted note from host '{host.nickname}'")
+    db.delete(note)
+    db.commit()
+    broadcast_sync(host.op_id, {"type": "update", "entity_type": "host", "entity_id": host_id, "op_id": host.op_id})
