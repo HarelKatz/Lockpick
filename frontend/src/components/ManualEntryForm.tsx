@@ -4,12 +4,11 @@
  */
 import { useState, useCallback } from 'react'
 
-function isValidIP(ip: string): boolean {
-  // IPv4
+function isValidAddress(ip: string, addrType: 'ipv4' | 'ipv6' | 'hostname'): boolean {
+  if (addrType === 'hostname') return ip.trim().length > 0
   if (/^(\d{1,3}\.){3}\d{1,3}$/.test(ip)) {
     return ip.split('.').every(n => parseInt(n, 10) <= 255)
   }
-  // IPv6 — accept any colon-hex string up to 8 groups
   if (ip.includes(':')) {
     return /^[0-9a-fA-F:]+$/.test(ip) && ip.split(':').length <= 8
   }
@@ -42,6 +41,7 @@ interface Props {
 
 interface IPEntry {
   ip_address: string
+  addr_type: 'ipv4' | 'ipv6' | 'hostname'
 }
 
 interface UserEntry {
@@ -60,13 +60,13 @@ const USER_SOURCES: { value: CreateHostUserRequest['source']; label: string }[] 
 function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) {
   const [nickname, setNickname] = useState('')
   const [comment, setComment] = useState('')
-  const [ips, setIps] = useState<IPEntry[]>([{ ip_address: '' }])
+  const [ips, setIps] = useState<IPEntry[]>([{ ip_address: '', addr_type: 'ipv4' }])
   const [users, setUsers] = useState<UserEntry[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   function addIpRow() {
-    setIps(prev => [...prev, { ip_address: '' }])
+    setIps(prev => [...prev, { ip_address: '', addr_type: 'ipv4' }])
   }
 
   function removeIpRow(idx: number) {
@@ -75,6 +75,10 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
 
   function updateIp(idx: number, value: string) {
     setIps(prev => prev.map((row, i) => i === idx ? { ...row, ip_address: value } : row))
+  }
+
+  function updateAddrType(idx: number, value: IPEntry['addr_type']) {
+    setIps(prev => prev.map((row, i) => i === idx ? { ...row, addr_type: value } : row))
   }
 
   function addUserRow() {
@@ -97,12 +101,12 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
     }
     const validIps = ips.filter(ip => ip.ip_address.trim())
     if (validIps.length === 0) {
-      setError('At least one IP address is required')
+      setError('At least one address is required')
       return
     }
     for (const ip of validIps) {
-      if (!isValidIP(ip.ip_address.trim())) {
-        setError(`"${ip.ip_address.trim()}" is not a valid IP address`)
+      if (!isValidAddress(ip.ip_address.trim(), ip.addr_type)) {
+        setError(`"${ip.ip_address.trim()}" is not a valid ${ip.addr_type === 'hostname' ? 'hostname' : 'IP address'}`)
         return
       }
     }
@@ -115,7 +119,7 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
         comment: comment.trim() || null,
       })
       for (const ip of validIps) {
-        await addHostIP(host.id, { ip_address: ip.ip_address.trim() })
+        await addHostIP(host.id, { ip_address: ip.ip_address.trim(), addr_type: ip.addr_type })
       }
       for (const u of validUsers) {
         await createHostUser(host.id, {
@@ -158,15 +162,25 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
       </div>
 
       <div className={styles.field}>
-        <label>IP Addresses</label>
+        <label>IPs / Hostnames</label>
         <div className={styles.ipList}>
           {ips.map((ip, idx) => (
             <div key={idx} className={styles.ipRow}>
+              <select
+                value={ip.addr_type}
+                onChange={e => updateAddrType(idx, e.target.value as IPEntry['addr_type'])}
+                className={styles.addrTypeSelect}
+                disabled={loading}
+              >
+                <option value="ipv4">IPv4</option>
+                <option value="ipv6">IPv6</option>
+                <option value="hostname">Hostname</option>
+              </select>
               <input
                 type="text"
                 value={ip.ip_address}
                 onChange={e => updateIp(idx, e.target.value)}
-                placeholder="IP address"
+                placeholder={ip.addr_type === 'hostname' ? 'e.g. myserver.example.com' : ip.addr_type === 'ipv6' ? 'e.g. ::1' : 'e.g. 10.0.0.1'}
                 className={styles.ipMain}
                 disabled={loading}
               />
@@ -176,7 +190,7 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
                   className={styles.removeBtn}
                   onClick={() => removeIpRow(idx)}
                   disabled={loading}
-                  aria-label="Remove IP"
+                  aria-label="Remove address"
                 >
                   ✕
                 </button>
@@ -184,7 +198,7 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
             </div>
           ))}
           <button type="button" className={styles.addRowBtn} onClick={addIpRow} disabled={loading}>
-            + Add IP
+            + Add address
           </button>
         </div>
       </div>

@@ -91,6 +91,7 @@ def add_host_ip(host_id: str, body: HostIPCreate, db: Session = Depends(get_db))
         host_id=host_id,
         ip_address=body.ip_address,
         source=body.source,
+        addr_type=body.addr_type,
     )
     db.add(ip)
     db.flush()

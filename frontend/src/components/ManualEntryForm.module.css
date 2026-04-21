@@ -118,7 +118,23 @@
 }
 
 .ipMain {
-  flex: 3;
+  flex: 1;
+  min-width: 0;
+}
+
+.addrTypeSelect {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  padding: 7px 10px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+  flex-shrink: 0;
+  width: auto;
+  box-sizing: border-box;
 }
 
 .ipCidr {

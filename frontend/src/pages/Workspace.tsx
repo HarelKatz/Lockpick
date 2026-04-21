@@ -424,8 +424,8 @@ export default function Workspace({ op, onBack }: Props) {
   const [deleteConnTarget, setDeleteConnTarget] = useState<ConnectionRecord | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true)
+  const fetchAll = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
     setError(null)
     try {
       const [hostsData, credsData, linksData, connsData, uploadsData, statsData, activityData] = await Promise.all([
@@ -708,7 +708,7 @@ export default function Workspace({ op, onBack }: Props) {
         {error && !loading && (
           <div className={styles.stateError}>
             <p>{error}</p>
-            <button className={styles.retryBtn} onClick={fetchAll}>Retry</button>
+            <button className={styles.retryBtn} onClick={() => fetchAll()}>Retry</button>
           </div>
         )}
 
@@ -854,7 +854,7 @@ export default function Workspace({ op, onBack }: Props) {
       )}
 
       {/* FAB + add modal */}
-      <AddDataModal opId={op.id} hosts={hosts} credentials={credentials} onDataAdded={fetchAll} />
+      <AddDataModal opId={op.id} hosts={hosts} credentials={credentials} onDataAdded={() => fetchAll(true)} />
 
       {/* ─── Edit modals ─── */}
       {editHost && (
