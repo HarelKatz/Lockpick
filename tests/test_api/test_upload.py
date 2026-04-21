@@ -35,7 +35,7 @@ def test_upload_authorized_keys(client, tmp_path):
     assert resp.status_code == 200
     body = resp.json()
     assert body["ok"] is True
-    assert body["summary"]["new_credentials"] >= 2
+    assert body["summary"]["new_credentials"] == 3
     assert body["file_type"] == "authorized_keys"
 
 
@@ -52,7 +52,7 @@ def test_upload_known_hosts(client, tmp_path):
     assert resp.status_code == 200
     body = resp.json()
     assert body["ok"] is True
-    assert body["summary"]["new_connections"] >= 3
+    assert body["summary"]["new_connections"] == 4
 
 
 def test_upload_bash_history(client, tmp_path):
@@ -67,7 +67,7 @@ def test_upload_bash_history(client, tmp_path):
     )
     assert resp.status_code == 200
     body = resp.json()
-    assert body["summary"]["new_connections"] >= 5
+    assert body["summary"]["new_connections"] == 7
 
 
 def test_upload_passwd(client, tmp_path):
@@ -100,7 +100,7 @@ def test_upload_auth_log(client, tmp_path):
     )
     assert resp.status_code == 200
     body = resp.json()
-    assert body["summary"]["new_connections"] >= 2
+    assert body["summary"]["new_connections"] == 2
 
 
 def test_upload_private_key(client, tmp_path):
@@ -143,7 +143,7 @@ def test_pivot_detection(client, tmp_path):
     )
     assert r2.status_code == 200
     body = r2.json()
-    assert len(body["pivot_opportunities"]) >= 1
+    assert len(body["pivot_opportunities"]) == 1
     assert "hostA" in body["pivot_opportunities"][0]
     assert "hostB" in body["pivot_opportunities"][0]
 

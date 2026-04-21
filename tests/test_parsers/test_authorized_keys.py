@@ -27,8 +27,7 @@ def metadata():
 def test_parses_valid_keys(metadata):
     content = (FIXTURES / "authorized_keys").read_bytes()
     result = AuthorizedKeysParser().parse(content, metadata)
-    # should find at least 2 valid keys (one fixture key + the generated one)
-    assert len(result.credentials_found) >= 2
+    assert len(result.credentials_found) == 3
     for cred in result.credentials_found:
         assert cred.cred_type == "public_key"
         assert cred.relationship_type == "authorized_key"
@@ -44,7 +43,7 @@ def test_records_host_user(metadata):
 def test_stats_populated(metadata):
     content = (FIXTURES / "authorized_keys").read_bytes()
     result = AuthorizedKeysParser().parse(content, metadata)
-    assert result.stats["keys_parsed"] >= 2
+    assert result.stats["keys_parsed"] == 3
 
 
 def test_empty_file(metadata):

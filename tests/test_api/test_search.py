@@ -44,7 +44,7 @@ def test_search_matches_host_by_nickname(client, op):
     resp = client.get(f"/api/ops/{op['id']}/search?q=webserver")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["total"] >= 1
+    assert data["total"] == 1
     match = next(r for r in data["results"] if r["type"] == "host")
     assert match["matched_field"] == "nickname"
     assert "webserver" in match["snippet"]
@@ -58,7 +58,7 @@ def test_search_matches_host_by_comment(client, op):
     resp = client.get(f"/api/ops/{op['id']}/search?q=dev")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["total"] >= 1
+    assert data["total"] == 1
     match = next(r for r in data["results"] if r["type"] == "host")
     assert match["matched_field"] == "comment"
 
@@ -73,7 +73,7 @@ def test_search_matches_credential_by_name(client, op):
     resp = client.get(f"/api/ops/{op['id']}/search?q=alice")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["total"] >= 1
+    assert data["total"] == 1
     match = next(r for r in data["results"] if r["type"] == "credential")
     assert match["matched_field"] == "name"
 
@@ -95,7 +95,7 @@ def test_search_matches_host_ip(client, op):
     resp = client.get(f"/api/ops/{op['id']}/search?q=10.0.1")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["total"] >= 1
+    assert data["total"] == 1
     match = next(r for r in data["results"] if r["type"] == "host_ip")
     assert match["matched_field"] == "ip_address"
     assert "10.0.1" in match["snippet"]
@@ -116,7 +116,7 @@ def test_search_matches_connection_by_src_ip(client, op):
     resp = client.get(f"/api/ops/{op['id']}/search?q=192.168.5")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["total"] >= 1
+    assert data["total"] == 1
     match = next(r for r in data["results"] if r["type"] == "connection")
     assert match["matched_field"] == "src_ip"
 
@@ -135,7 +135,7 @@ def test_search_matches_connection_by_src_user(client, op):
     resp = client.get(f"/api/ops/{op['id']}/search?q=jsmith")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["total"] >= 1
+    assert data["total"] == 1
     match = next(r for r in data["results"] if r["type"] == "connection")
     assert match["matched_field"] == "src_user"
 
@@ -154,7 +154,7 @@ def test_search_matches_connection_by_raw_line(client, op):
     resp = client.get(f"/api/ops/{op['id']}/search?q=Accepted")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["total"] >= 1
+    assert data["total"] == 1
     match = next(r for r in data["results"] if r["type"] == "connection")
     assert match["matched_field"] == "raw_line"
 
@@ -171,6 +171,6 @@ def test_search_matches_host_user_by_username(client, op):
     resp = client.get(f"/api/ops/{op['id']}/search?q=deploy")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["total"] >= 1
+    assert data["total"] == 1
     match = next(r for r in data["results"] if r["type"] == "host_user")
     assert match["matched_field"] == "username"

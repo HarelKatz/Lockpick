@@ -46,7 +46,7 @@ def test_user_at_host_extracted(metadata):
     content = (FIXTURES / "bash_history").read_bytes()
     result = BashHistoryParser().parse(content, metadata)
     root_conns = [c for c in result.connections_found if c.dst_user == "root"]
-    assert len(root_conns) >= 1
+    assert len(root_conns) == 3
 
 
 def test_dash_l_flag(metadata):

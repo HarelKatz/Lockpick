@@ -26,9 +26,9 @@ def test_activity_logged_after_host_create(client, op):
     resp = client.get(f"/api/ops/{op['id']}/activity")
     assert resp.status_code == 200
     entries = resp.json()
-    assert len(entries) >= 1
+    assert len(entries) == 1
     host_create_entries = [e for e in entries if e["action"] == "host.create"]
-    assert len(host_create_entries) >= 1
+    assert len(host_create_entries) == 1
     entry = host_create_entries[0]
     assert entry["entity_type"] == "host"
 
@@ -40,7 +40,7 @@ def test_activity_entries_sorted_newest_first(client, op):
     resp = client.get(f"/api/ops/{op['id']}/activity")
     assert resp.status_code == 200
     entries = resp.json()
-    assert len(entries) >= 3
+    assert len(entries) == 3
     timestamps = [
         datetime.fromisoformat(e["created_at"].rstrip("Z"))
         for e in entries

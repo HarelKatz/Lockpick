@@ -56,14 +56,14 @@ def test_all_dst_upload_host(metadata):
 def test_stats_populated(metadata):
     content = (FIXTURES / "auth.log").read_bytes()
     result = AuthLogParser().parse(content, metadata)
-    assert result.stats["accepted_logins"] >= 2
+    assert result.stats["accepted_logins"] == 2
 
 
 def test_gzip_decompressed(metadata):
     content = (FIXTURES / "auth.log").read_bytes()
     gz = gzip.compress(content)
     result = AuthLogParser().parse(gz, metadata)
-    assert len(result.connections_found) > 0
+    assert len(result.connections_found) == 2
 
 
 def test_empty_file(metadata):

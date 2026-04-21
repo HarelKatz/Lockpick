@@ -115,7 +115,7 @@ class TestAuthLogISOTimestamps:
     def test_accepted_logins_parsed(self, result):
         accepted = [c for c in result.connections_found
                     if c.auth_method in ("publickey", "password")]
-        assert len(accepted) >= 3
+        assert len(accepted) == 3
 
     def test_fingerprint_extracted(self, result):
         fps = [c.credential_fingerprint for c in result.connections_found
@@ -136,7 +136,7 @@ class TestAuthLogMixedFormats:
 
     def test_syslog_and_iso_both_parsed(self, result):
         """Mixed syslog + ISO lines should all produce connections."""
-        assert len(result.connections_found) >= 4
+        assert len(result.connections_found) == 4
 
     def test_failed_login_excluded(self, result):
         """Failed auth lines must not produce connection records."""
@@ -171,8 +171,8 @@ class TestSshConfigFull:
         assert isinstance(result.connections_found, list)
 
     def test_blocks_parsed_count(self, result):
-        """Should parse at least 2 concrete host blocks."""
-        assert result.stats.get("blocks_parsed", 0) >= 2
+        """ssh_config_full.txt has exactly 5 Host blocks."""
+        assert result.stats.get("blocks_parsed", 0) == 5
 
 
 class TestSshConfigMinimal:

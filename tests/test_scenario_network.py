@@ -172,7 +172,7 @@ def test_password_connection_count(loaded_op):
             if e["src_host_id"] == src_id and e["dst_host_id"] == dst_id:
                 password_edges.append(e)
                 break
-    assert len(password_edges) >= 2
+    assert len(password_edges) == 2
 
 
 def test_monitoring_is_isolated(loaded_op):
