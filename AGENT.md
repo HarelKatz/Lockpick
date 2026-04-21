@@ -146,11 +146,11 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed: Phases 10 & 11 — WebSocket Live Push + Per-Host Notes + Host Status Tags**
+**Last completed: Phases 10, 11, 13 + post-release bug fixes**
 
-Phase 10: WS endpoint `/api/ops/{op_id}/ws`; `ConnectionManager` broadcasts fire-and-forget events after every DB write; `useOpWebSocket` hook with exponential backoff + fallback polling; `WsStatusIndicator` in workspace header; `HostNote` CRUD + Notes tab in `HostDetailSidebar`. Phase 11: `Host.status` nullable enum; status color/filter in graph; status picker in sidebar.
+Phases 10/11/13 are complete. Bug fixes: nginx WS proxy headers, graph node border color (null status uses neutral gray not blue), sudoers parser rewritten for real-world files, datetime timezone (TZDateTime TypeDecorator attaches UTC so JS parses correctly), EditHostForm create mode, WS callback triggers graph reload on host events.
 
-**Next: Phase 13 — Domain/Hostname Support + /etc/hosts + /etc/sudoers**
+**Next: Phase 14 — Engagement Report Export**
 
 ---
 
