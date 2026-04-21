@@ -5,6 +5,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { GraphEdge, GraphNode, Host, SudoRule } from '../types'
 import { getSudoRules, deleteSudoRule } from '../api/hosts'
+import { updateHost } from '../api/hosts'
+import { statusColors, STATUS_LABELS } from '../theme'
 import styles from './HostDetailSidebar.module.css'
 
 const CONFIDENCE_LABEL: Record<string, string> = {
@@ -33,6 +35,7 @@ export default function HostDetailSidebar({ node, edges, host, onClose }: Props)
   const [sudoRules, setSudoRules] = useState<SudoRule[]>([])
   const [sudoLoading, setSudoLoading] = useState(false)
   const [sudoError, setSudoError] = useState<string | null>(null)
+  const [currentStatus, setCurrentStatus] = useState<string | null>(host?.status ?? null)
 
   const loadSudoRules = useCallback(async () => {
     if (!host) return
@@ -54,11 +57,24 @@ export default function HostDetailSidebar({ node, edges, host, onClose }: Props)
     }
   }, [tab, loadSudoRules])
 
-  // Reset tab when a different node is selected
+  // Reset tab and status when a different node is selected
   useEffect(() => {
     setTab('info')
     setSudoRules([])
-  }, [node.host_id])
+    setCurrentStatus(host?.status ?? null)
+  }, [node.host_id, host?.status])
+
+  async function handleStatusChange(value: string) {
+    if (!host) return
+    const newStatus = value || null
+    setCurrentStatus(newStatus)
+    try {
+      await updateHost(host.id, { status: newStatus })
+    } catch {
+      // Revert on failure
+      setCurrentStatus(host.status ?? null)
+    }
+  }
 
   async function handleDeleteRule(ruleId: string) {
     if (!host) return
@@ -100,6 +116,29 @@ export default function HostDetailSidebar({ node, edges, host, onClose }: Props)
       <div className={styles.body}>
         {(!host || tab === 'info') && (
           <>
+            {host && (
+              <div className={styles.section}>
+                <div className={styles.sectionLabel}>Status</div>
+                <div className={styles.statusPickerRow}>
+                  {currentStatus && (
+                    <span
+                      className={styles.statusDot}
+                      style={{ background: statusColors[currentStatus] ?? 'var(--text-muted)' }}
+                    />
+                  )}
+                  <select
+                    className={styles.statusSelect}
+                    value={currentStatus ?? ''}
+                    onChange={e => handleStatusChange(e.target.value)}
+                  >
+                    <option value="">— unset —</option>
+                    {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
             {host && host.ips.length > 0 ? (
               <div className={styles.section}>
                 <div className={styles.sectionLabel}>IPs / Hostnames</div>
