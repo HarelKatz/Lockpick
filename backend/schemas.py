@@ -88,6 +88,7 @@ class HostUserRead(BaseModel):
 class HostIPCreate(BaseModel):
     ip_address: str
     source: Literal["manual", "parsed"] = "manual"
+    addr_type: str = "ipv4"
 
 
 class HostIPRead(BaseModel):
@@ -97,7 +98,25 @@ class HostIPRead(BaseModel):
     host_id: str
     ip_address: str
     source: str
+    addr_type: str
     first_seen_at: datetime
+
+
+# ─── SudoRule ─────────────────────────────────────────────────────────────────
+
+class SudoRuleRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    host_id: str
+    op_id: str
+    subject: str
+    subject_type: str
+    run_as: str
+    commands: str
+    nopasswd: bool
+    raw_line: Optional[str]
+    created_at: datetime
 
 
 # ─── Host ─────────────────────────────────────────────────────────────────────
