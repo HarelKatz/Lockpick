@@ -46,6 +46,17 @@ class SshConfigPatternData:
 
 
 @dataclass
+class SudoRuleData:
+    """A sudo rule discovered while parsing a sudoers file."""
+    subject: str
+    subject_type: str           # "user" | "group"
+    run_as: str
+    commands: str
+    nopasswd: bool
+    raw_line: Optional[str] = None
+
+
+@dataclass
 class ParseResult:
     """Aggregate output from a parser."""
     hosts_found: list[HostData] = field(default_factory=list)
@@ -54,6 +65,7 @@ class ParseResult:
     # (username, host label) pairs for HostUser records to create
     host_users_found: list[tuple[str, Optional[str], Optional[str]]] = field(default_factory=list)
     patterns_found: list[SshConfigPatternData] = field(default_factory=list)
+    sudo_rules_found: list[SudoRuleData] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     stats: dict = field(default_factory=dict)
 
