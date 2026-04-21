@@ -1,0 +1,14 @@
+# /etc/hosts - sample fixture for parser tests
+127.0.0.1   localhost
+::1         localhost ip6-localhost ip6-loopback
+
+10.0.0.1    gateway.internal gateway
+10.0.0.10   webserver.internal web01
+192.168.1.50  db-primary.corp db-primary
+
+# Comment only line
+255.255.255.255  broadcasthost
+0.0.0.0  blackhole
+
+# Another real host
+172.16.5.20  dev-box.internal dev-box
