@@ -80,11 +80,20 @@ export interface HostUser {
   created_at: string
 }
 
+export type HostStatus =
+  | 'entry_point'
+  | 'compromised'
+  | 'pivot'
+  | 'target'
+  | 'scoped_out'
+  | 'unreachable'
+
 export interface Host {
   id: string
   op_id: string
   nickname: string
   comment: string | null
+  status: string | null
   created_at: string
   ips: HostIP[]
   users: HostUser[]
@@ -144,6 +153,7 @@ export interface UpdateOperationRequest {
 export interface UpdateHostRequest {
   nickname?: string
   comment?: string | null
+  status?: string | null
 }
 
 export interface UpdateCredentialRequest {
@@ -248,6 +258,7 @@ export interface GraphNode {
   ips: string[]
   user_count: number
   credential_count: number
+  status: string | null
 }
 
 export interface GraphEdge {

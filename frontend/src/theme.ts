@@ -37,3 +37,21 @@ export const theme = {
 } as const
 
 export type ThemeColor = keyof typeof theme
+
+export const statusColors: Record<string, string> = {
+  entry_point:  '#58a6ff',  // blue (accent)
+  compromised:  '#f85149',  // red (danger)
+  pivot:        '#d29922',  // orange (warning)
+  target:       '#3fb950',  // green (success)
+  scoped_out:   '#6e7681',  // gray (muted)
+  unreachable:  '#8b949e',  // lighter gray
+}
+
+export const STATUS_LABELS: Record<string, string> = {
+  entry_point:  'Entry Point',
+  compromised:  'Compromised',
+  pivot:        'Pivot',
+  target:       'Target',
+  scoped_out:   'Scoped Out',
+  unreachable:  'Unreachable',
+}
