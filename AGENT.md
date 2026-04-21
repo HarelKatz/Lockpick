@@ -146,11 +146,11 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed: Phase 11 — Host Status Tags**
+**Last completed: Phases 10 & 11 — WebSocket Live Push + Per-Host Notes + Host Status Tags**
 
-`Host.status` nullable enum column added (entry_point, compromised, pivot, target, scoped_out, unreachable). `PATCH /hosts/{host_id}` accepts status (Pydantic Literal validation, 422 on invalid). `GraphNode` now includes `status`. Graph nodes use status color for border; status filter pills in graph toolbar dim non-matching nodes. HostDetailSidebar Info tab has a status picker dropdown with color dot indicator.
+Phase 10: WS endpoint `/api/ops/{op_id}/ws`; `ConnectionManager` broadcasts fire-and-forget events after every DB write; `useOpWebSocket` hook with exponential backoff + fallback polling; `WsStatusIndicator` in workspace header; `HostNote` CRUD + Notes tab in `HostDetailSidebar`. Phase 11: `Host.status` nullable enum; status color/filter in graph; status picker in sidebar.
 
-**Next: Phase 10 — WebSocket Live Push + Per-Host Notes**
+**Next: Phase 13 — Domain/Hostname Support + /etc/hosts + /etc/sudoers**
 
 ---
 
@@ -193,33 +193,9 @@ Full stack built and tested: CRUD APIs, graph visualization, file upload + 8 par
 
 ---
 
-### Phase 10 — WebSocket Live Push + Per-Host Notes
+### Phases 10–13 — Complete
 
-**WebSocket:**
-- `GET /ops/{op_id}/ws` — WebSocket endpoint (FastAPI native `WebSocket` parameter)
-- Server broadcasts a lightweight JSON event `{type, entity_type, entity_id, op_id}` after every successful DB write (post-commit in routers)
-- Frontend replaces 30s stats polling with WS listener; on event, refetches only the affected entity type
-- Graceful fallback: if WS disconnects, fall back to 30s polling
-
-**Per-Host Notes:**
-- New table `HostNote`: `id`, `op_id` (FK), `host_id` (FK), `content` (text), `created_at`
-- New endpoints: `POST /hosts/{host_id}/notes`, `GET /hosts/{host_id}/notes`, `DELETE /hosts/{host_id}/notes/{note_id}`
-- Host detail panel gains a "Notes" tab (timestamped, multi-entry, deletable)
-- `log_activity()` on create/delete
-
-**Invariants:** WS events are fire-and-forget — no guaranteed delivery, no replay. `Host.comment` is retained (single-line label; notes are the multi-entry scratchpad). Alembic migration required for `HostNote`.
-
----
-
-### Phases 11–13 — Complete
-
-Phase 11: Added `Host.status` nullable enum; graph node colors and filter pills for status; HostDetailSidebar status picker. Phase 12: Added `nmap_xml`, `shadow`, `sshd_config` parsers. Phase 13: Added `addr_type` to `HostIP`, `SudoRule` table, `etc_hosts` and `sudoers` parsers, sudo rules CRUD endpoints, addr_type badges on IPs, and Sudo Rules tab in HostDetailSidebar.
-
----
-
-### Phases 12–13 — Complete
-
-Phase 12: Added `nmap_xml`, `shadow`, `sshd_config` parsers. Phase 13: Added `addr_type` to `HostIP`, `SudoRule` table, `etc_hosts` and `sudoers` parsers, sudo rules CRUD endpoints, addr_type badges on IPs, and Sudo Rules tab in HostDetailSidebar.
+Phase 10: WS live push, `HostNote` table + Notes tab. Phase 11: `Host.status` nullable enum, graph colors/filter, status picker. Phase 12: `nmap_xml`, `shadow`, `sshd_config` parsers. Phase 13: `addr_type` on `HostIP`, `SudoRule` table, `etc_hosts`/`sudoers` parsers, sudo rules CRUD, Sudo Rules tab.
 
 ---
 
