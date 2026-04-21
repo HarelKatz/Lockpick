@@ -44,6 +44,13 @@ class Host(Base):
     op_id = Column(String(36), ForeignKey("operations.id", ondelete="CASCADE"), nullable=False)
     nickname = Column(String(255), nullable=False)
     comment = Column(Text, nullable=True)
+    status = Column(
+        Enum(
+            "entry_point", "compromised", "pivot", "target", "scoped_out", "unreachable",
+            name="host_status",
+        ),
+        nullable=True,
+    )
     created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
 
     operation = relationship("Operation", back_populates="hosts")
