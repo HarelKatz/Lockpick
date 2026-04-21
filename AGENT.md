@@ -146,9 +146,9 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed: Parser data-quality fixes — SSH config pattern handling, loopback routing, shadow user filtering**
+**Last completed: Phase 13 — Domain/Hostname Support + /etc/hosts + /etc/sudoers**
 
-SSH config wildcards/tokens (`jb.*`, `%h`, `*.example.com`) no longer create junk hosts; instead, matched existing hosts get indicator edges and unmatched patterns are stored in `SshConfigPattern` for retroactive resolution when new hosts are added. `127.0.0.1`/loopback is now mapped to the upload host. Shadow parser no longer creates HostUser records for service accounts with no usable password hash.
+`HostIP` now has `addr_type` (ipv4|ipv6|hostname), widened `ip_address` column to 255 chars for FQDNs. `ip_resolver.py` infers addr_type and does case-insensitive hostname matching. New parsers: `etc_hosts` and `sudoers`. `SudoRule` table added; upload router persists parsed sudo rules. Endpoints: `GET/DELETE /hosts/{host_id}/sudo-rules`. Frontend: addr_type badge on IPs in HostCard and EditHostForm; HostDetailSidebar gains Info|Sudo Rules tabs when full Host data is available.
 
 **Next phase: Phase 10 — WebSocket Live Push + Per-Host Notes**
 
@@ -225,31 +225,9 @@ Add a `status` enum column to `Host` (nullable, so existing hosts are unaffected
 
 ---
 
-### Phase 12 — Complete
+### Phases 12–13 — Complete
 
-Added three parsers (`nmap_xml`, `shadow`, `sshd_config`) with fixture files and unit tests; no schema changes required.
-
----
-
-### Phase 13 — Domain/Hostname Support + /etc/hosts + /etc/sudoers
-
-**Domain/Hostname Support:**
-- Add `addr_type` enum column (`ipv4 | ipv6 | hostname`) to `HostIP`; default `ipv4` for existing rows. The `ip_address` field holds either a numeric IP or an FQDN depending on type.
-- Alembic migration required (batch_alter_table)
-- IP resolver (`services/ip_resolver.py`) extended to match on FQDNs/hostnames in addition to numeric IPs
-- Frontend: host address list displays type badge (IPv4 / IPv6 / hostname) next to each entry
-
-**`/etc/hosts` parser** (`file_type: etc_hosts`): Parses `<ip> <hostname> [aliases...]` lines (skips comments, loopback). Creates a `HostIP` record for the IP (addr_type: `ipv4`/`ipv6`) and one per hostname (addr_type: `hostname`), all linked to the same resolved or new host. If a host already has the IP, hostnames are added; otherwise a new host is created.
-
-**`/etc/sudoers` + `sudoers.d/*` parser** (`file_type: sudoers`):
-- New table `SudoRule`: `id`, `host_id` (FK), `op_id` (FK), `subject` (string), `subject_type` (enum: `user | group`), `run_as` (string, default `root`), `commands` (text), `nopasswd` (bool), `raw_line` (nullable), `created_at`
-- Alembic migration required
-- New endpoints: `GET /hosts/{host_id}/sudo-rules`, `DELETE /hosts/{host_id}/sudo-rules/{rule_id}` — no manual create (sudo rules come from parsed files only)
-- Parser handles `%group` prefix (subject_type: group), `NOPASSWD:` tag, `ALL=(ALL:ALL)` patterns
-- Host detail panel gains a "Sudo Rules" tab
-- `sudoers.d/*` files use the same parser — each file uploaded individually with `file_type: sudoers`
-
-**Invariants:** `SudoRule` records are host-scoped; `op_id` stored for bulk queries. Sudo rules do not affect BFS pivot path confidence — informational context only.
+Phase 12: Added `nmap_xml`, `shadow`, `sshd_config` parsers. Phase 13: Added `addr_type` to `HostIP`, `SudoRule` table, `etc_hosts` and `sudoers` parsers, sudo rules CRUD endpoints, addr_type badges on IPs, and Sudo Rules tab in HostDetailSidebar.
 
 ---
 
@@ -438,5 +416,7 @@ A standalone MCP (Model Context Protocol) server that lets an AI agent (e.g. Cla
 13. **Graph detail panel** — right detail panel uses `push` mode (shrinks canvas) when the clicked node falls in the rightmost 320 px of the canvas; `overlay` (absolute, canvas unchanged) otherwise. Mode is evaluated once on open and held through the close transition.
 14. **SSH config patterns** — `Host` blocks with wildcard/token aliases (`jb.*`, `*.example.com`, `%h`) are stored as `SshConfigPattern` records (table: `ssh_config_patterns`), never as hosts. The `services/ssh_pattern.py` `ssh_match()` function implements SSH glob semantics (`fnmatch` + `!` negation, case-insensitive). Pattern-to-host edges are created at upload time (existing hosts) and retroactively when a new host/IP is added.
 15. **Loopback routing** — `127.x.x.x`, `::1`, and `localhost` in connection records always resolve to the upload host, never create new host records. Handled in `_resolve_ip_side()` (`routers/upload.py`).
+16. **HostIP addr_type** — `HostIP.ip_address` holds either a numeric IP or FQDN; `addr_type` (ipv4|ipv6|hostname) disambiguates. IP resolver infers addr_type via `_infer_addr_type()` and sets it on new records. Hostname lookups are case-insensitive.
+17. **SudoRule** — read-only from the upload pipeline; no manual create endpoint. `SudoRule.op_id` stored for bulk queries. Sudo rules do not affect BFS pivot path confidence — informational context only.
 
 ---
