@@ -146,11 +146,11 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed: Phase 13 — Domain/Hostname Support + /etc/hosts + /etc/sudoers**
+**Last completed: Phase 11 — Host Status Tags**
 
-`HostIP` now has `addr_type` (ipv4|ipv6|hostname), widened `ip_address` column to 255 chars for FQDNs. `ip_resolver.py` infers addr_type and does case-insensitive hostname matching. New parsers: `etc_hosts` and `sudoers`. `SudoRule` table added; upload router persists parsed sudo rules. Endpoints: `GET/DELETE /hosts/{host_id}/sudo-rules`. Frontend: addr_type badge on IPs in HostCard and EditHostForm; HostDetailSidebar gains Info|Sudo Rules tabs when full Host data is available.
+`Host.status` nullable enum column added (entry_point, compromised, pivot, target, scoped_out, unreachable). `PATCH /hosts/{host_id}` accepts status (Pydantic Literal validation, 422 on invalid). `GraphNode` now includes `status`. Graph nodes use status color for border; status filter pills in graph toolbar dim non-matching nodes. HostDetailSidebar Info tab has a status picker dropdown with color dot indicator.
 
-**Next phase: Phase 10 — WebSocket Live Push + Per-Host Notes**
+**Next: Phase 10 — WebSocket Live Push + Per-Host Notes**
 
 ---
 
@@ -211,17 +211,9 @@ Full stack built and tested: CRUD APIs, graph visualization, file upload + 8 par
 
 ---
 
-### Phase 11 — Host Status Tags
+### Phases 11–13 — Complete
 
-Add a `status` enum column to `Host` (nullable, so existing hosts are unaffected):
-- Values: `entry_point | compromised | pivot | target | scoped_out | unreachable`
-- Alembic migration required (batch_alter_table)
-- Extend `HostUpdate` schema and `PATCH /hosts/{host_id}` to accept `status`
-- `GraphNode` schema gains `status` field (nullable string)
-- Graph nodes reflect status via color/badge; graph filter panel can filter by status
-- Host detail panel shows a status picker
-
-**Invariants:** `Host.status` is nullable (null = unclassified). Graph node color falls back to confidence-based color when status is null.
+Phase 11: Added `Host.status` nullable enum; graph node colors and filter pills for status; HostDetailSidebar status picker. Phase 12: Added `nmap_xml`, `shadow`, `sshd_config` parsers. Phase 13: Added `addr_type` to `HostIP`, `SudoRule` table, `etc_hosts` and `sudoers` parsers, sudo rules CRUD endpoints, addr_type badges on IPs, and Sudo Rules tab in HostDetailSidebar.
 
 ---
 
