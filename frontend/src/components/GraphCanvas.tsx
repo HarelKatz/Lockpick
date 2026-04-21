@@ -10,6 +10,7 @@ import ForceGraph2D from 'react-force-graph-2d'
 import * as d3Force from 'd3-force'
 import dagre from '@dagrejs/dagre'
 import type { GraphEdge, GraphNode, GraphResponse } from '../types'
+import { theme, statusColors } from '../theme'
 import styles from './GraphCanvas.module.css'
 
 // ── Exported types (consumed by GraphView) ─────────────────────────────────────
@@ -29,6 +30,7 @@ interface FGNode {
   isLocked: boolean
   pathHighlight: boolean
   dimmed: boolean
+  status: string | null
   _node: GraphNode
 }
 
@@ -279,6 +281,7 @@ export default function GraphCanvas({
           isLocked: lockedIds?.has(n.host_id) ?? false,
           pathHighlight: false,
           dimmed: false,
+          status: n.status ?? null,
           _node: n,
         }
       })
@@ -380,7 +383,7 @@ export default function GraphCanvas({
 
   const drawNode = useCallback((node: object, ctx: CanvasRenderingContext2D, globalScale: number) => {
     const n = node as FGNode
-    const { x = 0, y = 0, pathHighlight, dimmed, isLocked, hasCredentials, label } = n
+    const { x = 0, y = 0, pathHighlight, dimmed, isLocked, hasCredentials, label, status } = n
     const isSelected = n.id === selectedNodeIdRef.current
     const r = 27
 
@@ -392,12 +395,13 @@ export default function GraphCanvas({
     ctx.fillStyle = pathHighlight ? '#2d1f1f' : isSelected ? '#1f2d3d' : '#1a2332'
     ctx.fill()
 
-    // Circle border
+    // Circle border — status color takes priority over credential/default fallback
     const borderColor = pathHighlight ? '#f78166'
       : isLocked     ? '#d97706'
-      : isSelected   ? '#58a6ff'
-      : hasCredentials ? '#d29922'
-      : '#3d8bcd'
+      : isSelected   ? theme.accent
+      : status && statusColors[status] ? statusColors[status]
+      : hasCredentials ? theme.warning
+      : theme.border
     ctx.lineWidth = (pathHighlight || isSelected || isLocked ? 3 : 2) / globalScale
     ctx.strokeStyle = borderColor
     ctx.stroke()
