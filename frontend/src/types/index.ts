@@ -88,6 +88,14 @@ export type HostStatus =
   | 'scoped_out'
   | 'unreachable'
 
+export interface HostNote {
+  id: string
+  op_id: string
+  host_id: string
+  content: string
+  created_at: string
+}
+
 export interface Host {
   id: string
   op_id: string
@@ -97,6 +105,7 @@ export interface Host {
   created_at: string
   ips: HostIP[]
   users: HostUser[]
+  notes?: HostNote[]
 }
 
 export interface Credential {

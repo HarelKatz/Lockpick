@@ -311,3 +311,105 @@
   border-color: var(--accent);
   outline: none;
 }
+
+/* ─── Notes tab ───────────────────────────────────────────────────────────── */
+
+.noteList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.noteItem {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 7px 8px;
+  position: relative;
+}
+
+.noteHeader {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.noteTimestamp {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.deleteNoteBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.deleteNoteBtn:hover {
+  color: var(--danger);
+}
+
+.noteContent {
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.noteForm {
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+.noteTextarea {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+  min-height: 64px;
+  padding: 6px 8px;
+  resize: vertical;
+  width: 100%;
+}
+
+.noteTextarea:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.noteAddBtn {
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-inverse);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  margin-top: 6px;
+  padding: 5px 12px;
+  transition: opacity 0.15s;
+}
+
+.noteAddBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.noteAddBtn:not(:disabled):hover {
+  opacity: 0.85;
+}
+
+.noteError {
+  color: var(--danger);
+  font-size: var(--font-size-xs);
+  margin-top: 4px;
+}

@@ -1,10 +1,10 @@
 /**
  * Right sidebar — shows detail for a selected graph node.
- * If a full Host object is provided, shows tabs: Info | Sudo Rules.
+ * If a full Host object is provided, shows tabs: Info | Sudo Rules | Notes.
  */
 import { useState, useEffect, useCallback } from 'react'
-import type { GraphEdge, GraphNode, Host, SudoRule } from '../types'
-import { getSudoRules, deleteSudoRule } from '../api/hosts'
+import type { GraphEdge, GraphNode, Host, HostNote, SudoRule } from '../types'
+import { getSudoRules, deleteSudoRule, getHostNotes, createHostNote, deleteHostNote } from '../api/hosts'
 import { updateHost } from '../api/hosts'
 import { statusColors, STATUS_LABELS } from '../theme'
 import styles from './HostDetailSidebar.module.css'
@@ -21,7 +21,7 @@ const ADDR_TYPE_LABEL: Record<string, string> = {
   hostname: 'hostname',
 }
 
-type Tab = 'info' | 'sudo'
+type Tab = 'info' | 'sudo' | 'notes'
 
 interface Props {
   node: GraphNode
@@ -32,10 +32,21 @@ interface Props {
 
 export default function HostDetailSidebar({ node, edges, host, onClose }: Props) {
   const [tab, setTab] = useState<Tab>('info')
+
+  // Sudo rules state
   const [sudoRules, setSudoRules] = useState<SudoRule[]>([])
   const [sudoLoading, setSudoLoading] = useState(false)
   const [sudoError, setSudoError] = useState<string | null>(null)
+
+  // Status state
   const [currentStatus, setCurrentStatus] = useState<string | null>(host?.status ?? null)
+
+  // Notes state
+  const [notes, setNotes] = useState<HostNote[]>([])
+  const [notesLoading, setNotesLoading] = useState(false)
+  const [notesError, setNotesError] = useState<string | null>(null)
+  const [noteText, setNoteText] = useState('')
+  const [noteAdding, setNoteAdding] = useState(false)
 
   const loadSudoRules = useCallback(async () => {
     if (!host) return
@@ -51,16 +62,31 @@ export default function HostDetailSidebar({ node, edges, host, onClose }: Props)
     }
   }, [host])
 
-  useEffect(() => {
-    if (tab === 'sudo') {
-      loadSudoRules()
+  const loadNotes = useCallback(async () => {
+    if (!host) return
+    setNotesLoading(true)
+    setNotesError(null)
+    try {
+      const fetched = await getHostNotes(host.id)
+      setNotes(fetched)
+    } catch {
+      setNotesError('Failed to load notes.')
+    } finally {
+      setNotesLoading(false)
     }
-  }, [tab, loadSudoRules])
+  }, [host])
+
+  useEffect(() => {
+    if (tab === 'sudo') loadSudoRules()
+    if (tab === 'notes') loadNotes()
+  }, [tab, loadSudoRules, loadNotes])
 
   // Reset tab and status when a different node is selected
   useEffect(() => {
     setTab('info')
     setSudoRules([])
+    setNotes([])
+    setNoteText('')
     setCurrentStatus(host?.status ?? null)
   }, [node.host_id, host?.status])
 
@@ -86,6 +112,38 @@ export default function HostDetailSidebar({ node, edges, host, onClose }: Props)
     }
   }
 
+  async function handleAddNote() {
+    if (!host || !noteText.trim()) return
+    setNoteAdding(true)
+    setNotesError(null)
+    try {
+      const note = await createHostNote(host.id, noteText.trim())
+      setNotes(prev => [...prev, note])
+      setNoteText('')
+    } catch {
+      setNotesError('Failed to add note.')
+    } finally {
+      setNoteAdding(false)
+    }
+  }
+
+  async function handleDeleteNote(noteId: string) {
+    if (!host) return
+    try {
+      await deleteHostNote(host.id, noteId)
+      setNotes(prev => prev.filter(n => n.id !== noteId))
+    } catch {
+      setNotesError('Failed to delete note.')
+    }
+  }
+
+  function formatNoteTimestamp(iso: string): string {
+    return new Date(iso).toLocaleString(undefined, {
+      month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    })
+  }
+
   const outgoing = edges.filter(e => e.src_host_id === node.host_id)
   const incoming = edges.filter(e => e.dst_host_id === node.host_id)
 
@@ -109,6 +167,12 @@ export default function HostDetailSidebar({ node, edges, host, onClose }: Props)
             onClick={() => setTab('sudo')}
           >
             Sudo Rules
+          </button>
+          <button
+            className={`${styles.tabBtn} ${tab === 'notes' ? styles.tabActive : ''}`}
+            onClick={() => setTab('notes')}
+          >
+            Notes
           </button>
         </div>
       )}
@@ -233,6 +297,56 @@ export default function HostDetailSidebar({ node, edges, host, onClose }: Props)
                 <div className={styles.sudoCommands}>{rule.commands}</div>
               </div>
             ))}
+          </div>
+        )}
+
+        {host && tab === 'notes' && (
+          <div className={styles.section}>
+            {notesLoading && <p className={styles.empty}>Loading…</p>}
+            {notesError && <p className={styles.sudoError}>{notesError}</p>}
+            {!notesLoading && notes.length > 0 && (
+              <div className={styles.noteList}>
+                {notes.map(note => (
+                  <div key={note.id} className={styles.noteItem}>
+                    <div className={styles.noteHeader}>
+                      <span className={styles.noteTimestamp}>
+                        {formatNoteTimestamp(note.created_at)}
+                      </span>
+                      <button
+                        className={styles.deleteNoteBtn}
+                        onClick={() => handleDeleteNote(note.id)}
+                        aria-label="Delete note"
+                        title="Delete note"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div className={styles.noteContent}>{note.content}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {!notesLoading && notes.length === 0 && !notesError && (
+              <p className={styles.empty}>No notes yet.</p>
+            )}
+            <div className={styles.noteForm}>
+              <textarea
+                className={styles.noteTextarea}
+                placeholder="Add a note…"
+                value={noteText}
+                onChange={e => setNoteText(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleAddNote()
+                }}
+              />
+              <button
+                className={styles.noteAddBtn}
+                onClick={handleAddNote}
+                disabled={noteAdding || !noteText.trim()}
+              >
+                {noteAdding ? 'Adding…' : 'Add Note'}
+              </button>
+            </div>
           </div>
         )}
       </div>

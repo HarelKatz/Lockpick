@@ -5,6 +5,7 @@ import { api } from './client'
 import type {
   Host,
   HostIP,
+  HostNote,
   HostUser,
   SudoRule,
   CreateHostRequest,
@@ -51,4 +52,16 @@ export async function getSudoRules(hostId: string): Promise<SudoRule[]> {
 
 export async function deleteSudoRule(hostId: string, ruleId: string): Promise<void> {
   return api.delete(`/hosts/${hostId}/sudo-rules/${ruleId}`)
+}
+
+export async function getHostNotes(hostId: string): Promise<HostNote[]> {
+  return api.get<HostNote[]>(`/hosts/${hostId}/notes`)
+}
+
+export async function createHostNote(hostId: string, content: string): Promise<HostNote> {
+  return api.post<HostNote>(`/hosts/${hostId}/notes`, { content })
+}
+
+export async function deleteHostNote(hostId: string, noteId: string): Promise<void> {
+  return api.delete(`/hosts/${hostId}/notes/${noteId}`)
 }
