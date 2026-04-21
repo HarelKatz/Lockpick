@@ -1,4 +1,5 @@
 """FastAPI application entry point."""
+import asyncio
 import os
 from contextlib import asynccontextmanager
 
@@ -10,6 +11,7 @@ from database import engine
 import models  # noqa: F401 — ensures models are registered before migrations
 
 from routers import activity, connections, credentials, export_import, graph, hosts, operations, search, stats, upload, ws
+from ws_manager import set_main_loop
 
 
 @asynccontextmanager
@@ -17,6 +19,8 @@ async def lifespan(app: FastAPI):
     """Run Alembic migrations on startup to ensure DB is up to date."""
     import subprocess
     import sys
+
+    set_main_loop(asyncio.get_event_loop())
 
     os.makedirs(os.path.dirname(os.path.abspath(settings.db_path)), exist_ok=True)
     os.makedirs(settings.upload_path, exist_ok=True)

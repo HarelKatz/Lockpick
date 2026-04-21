@@ -190,6 +190,15 @@
   flex: 1;
 }
 
+.ipRow select {
+  width: auto;
+  flex-shrink: 0;
+}
+
+.ipRow input {
+  min-width: 0;
+}
+
 .removeBtn {
   background: transparent;
   border: 1px solid var(--border);

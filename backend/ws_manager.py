@@ -1,6 +1,6 @@
 """WebSocket connection manager for live push events."""
 import asyncio
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from fastapi import WebSocket
 
@@ -32,12 +32,15 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
+_main_loop: Optional[asyncio.AbstractEventLoop] = None
+
+
+def set_main_loop(loop: asyncio.AbstractEventLoop) -> None:
+    global _main_loop
+    _main_loop = loop
+
 
 def broadcast_sync(op_id: str, event: dict) -> None:
-    """Fire-and-forget broadcast from sync route handlers."""
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            loop.create_task(manager.broadcast(op_id, event))
-    except RuntimeError:
-        pass  # no event loop — test environment
+    """Fire-and-forget broadcast from sync route handlers (thread-safe)."""
+    if _main_loop and _main_loop.is_running():
+        asyncio.run_coroutine_threadsafe(manager.broadcast(op_id, event), _main_loop)
