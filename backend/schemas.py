@@ -142,10 +142,15 @@ class HostCreate(BaseModel):
     comment: Optional[str] = None
 
 
+_HOST_STATUS = Literal[
+    "entry_point", "compromised", "pivot", "target", "scoped_out", "unreachable"
+]
+
+
 class HostUpdate(BaseModel):
     nickname: Optional[str] = None
     comment: Optional[str] = None
-    status: Optional[str] = None
+    status: Optional[_HOST_STATUS] = None
 
 
 class HostRead(BaseModel):
