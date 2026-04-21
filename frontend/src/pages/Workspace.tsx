@@ -3,7 +3,7 @@
  * Shows hosts, credentials, and connections with edit/delete controls,
  * plus an interactive graph visualization tab.
  */
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type {
   Operation, Host, Credential, CredentialLink, ConnectionRecord, UploadFile, ActivityLog,
   SearchResult,
@@ -402,6 +402,10 @@ export default function Workspace({ op, onBack }: Props) {
   const [baselineTotal, setBaselineTotal] = useState<number | null>(null)
   const [currentTotal, setCurrentTotal] = useState<number | null>(null)
 
+  // Callback registered by GraphView so Workspace can trigger a graph reload
+  // (used by WS event handler when host entity changes)
+  const graphReloadRef = useRef<(() => void) | null>(null)
+
   // Edit state
   const [editHost, setEditHost] = useState<Host | null>(null)
   const [editCred, setEditCred] = useState<Credential | null>(null)
@@ -651,7 +655,13 @@ export default function Workspace({ op, onBack }: Props) {
           visibility: tab === 'graph' ? 'visible' : 'hidden',
           pointerEvents: tab === 'graph' ? 'auto' : 'none',
         }}>
-          <GraphView op={op} allHosts={hosts} credentials={credentials} focusHostId={focusEntityId} />
+          <GraphView
+            op={op}
+            allHosts={hosts}
+            credentials={credentials}
+            focusHostId={focusEntityId}
+            onRegisterReload={reload => { graphReloadRef.current = reload }}
+          />
         </div>
 
         {/* Data panel */}

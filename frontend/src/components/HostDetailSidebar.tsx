@@ -14,6 +14,7 @@ interface Props {
   node: GraphNode
   edges: GraphEdge[]
   onClose: () => void
+  onHostUpdated?: () => void
 }
 
 export default function HostDetailSidebar({ node, edges, onClose }: Props) {
