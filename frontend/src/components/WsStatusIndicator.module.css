@@ -1,0 +1,77 @@
+/* WsStatusIndicator — live connection status pill */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.label {
+  color: var(--text-muted);
+}
+
+/* Connected — green */
+.connected {
+  border-color: color-mix(in srgb, var(--success) 30%, transparent);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+}
+.connected .dot {
+  background: var(--success);
+  box-shadow: 0 0 4px var(--success);
+}
+.connected .label {
+  color: var(--success);
+}
+
+/* Connecting — yellow/warning */
+.connecting {
+  border-color: color-mix(in srgb, var(--warning) 30%, transparent);
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+}
+.connecting .dot {
+  background: var(--warning);
+}
+.connecting .label {
+  color: var(--warning);
+}
+
+/* Disconnected — red */
+.disconnected {
+  border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+.disconnected .dot {
+  background: var(--danger);
+}
+.disconnected .label {
+  color: var(--danger);
+}
+
+.reconnectBtn {
+  background: transparent;
+  border: 1px solid var(--danger);
+  border-radius: 4px;
+  color: var(--danger);
+  font-size: 0.68rem;
+  padding: 1px 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+.reconnectBtn:hover {
+  background: color-mix(in srgb, var(--danger) 15%, transparent);
+}
