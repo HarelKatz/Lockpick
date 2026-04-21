@@ -129,6 +129,7 @@ class HostCreate(BaseModel):
 class HostUpdate(BaseModel):
     nickname: Optional[str] = None
     comment: Optional[str] = None
+    status: Optional[str] = None
 
 
 class HostRead(BaseModel):
@@ -138,6 +139,7 @@ class HostRead(BaseModel):
     op_id: str
     nickname: str
     comment: Optional[str]
+    status: Optional[str] = None
     created_at: datetime
     ips: list[HostIPRead] = []
     users: list[HostUserRead] = []
@@ -304,6 +306,7 @@ class GraphNode(BaseModel):
     ips: list[str]
     user_count: int
     credential_count: int
+    status: Optional[str] = None
 
 
 class GraphEdge(BaseModel):

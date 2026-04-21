@@ -100,6 +100,7 @@ def build_graph(
             ips=[ip.ip_address for ip in h.ips],
             user_count=len(h.users),
             credential_count=len({link.credential_id for link in h.credential_links}),
+            status=h.status,
         )
         for h in hosts
     ]

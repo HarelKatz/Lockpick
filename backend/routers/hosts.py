@@ -7,6 +7,7 @@ from models import Host, HostIP, HostUser, SudoRule
 from routers.deps import get_host_or_404, get_op_or_404
 from services.activity import log_activity
 from services.ssh_pattern import apply_patterns_to_host
+from ws_manager import broadcast_sync
 from schemas import (
     HostCreate,
     HostIPCreate,
@@ -33,6 +34,7 @@ def create_host(op_id: str, body: HostCreate, db: Session = Depends(get_db)):
     apply_patterns_to_host(db, host)
     db.commit()
     db.refresh(host)
+    broadcast_sync(op_id, {"type": "update", "entity_type": "host", "entity_id": host.id, "op_id": op_id})
     return host
 
 
@@ -59,18 +61,23 @@ def update_host(host_id: str, body: HostUpdate, db: Session = Depends(get_db)):
         host.nickname = body.nickname
     if body.comment is not None:
         host.comment = body.comment
+    if "status" in body.model_fields_set:
+        host.status = body.status  # None clears it; a valid string sets it
     log_activity(db, host.op_id, "host.update", "host", entity_id=host_id, detail=f"Updated host '{host.nickname}'")
     db.commit()
     db.refresh(host)
+    broadcast_sync(host.op_id, {"type": "update", "entity_type": "host", "entity_id": host_id, "op_id": host.op_id})
     return host
 
 
 @router.delete("/hosts/{host_id}", status_code=204)
 def delete_host(host_id: str, db: Session = Depends(get_db)):
     host = get_host_or_404(host_id, db)
-    log_activity(db, host.op_id, "host.delete", "host", entity_id=host_id, detail=f"Deleted host '{host.nickname}'")
+    op_id = host.op_id
+    log_activity(db, op_id, "host.delete", "host", entity_id=host_id, detail=f"Deleted host '{host.nickname}'")
     db.delete(host)
     db.commit()
+    broadcast_sync(op_id, {"type": "update", "entity_type": "host", "entity_id": host_id, "op_id": op_id})
 
 
 # ─── HostIPs ──────────────────────────────────────────────────────────────────
