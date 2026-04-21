@@ -187,3 +187,35 @@
   margin: 0;
   opacity: 0.7;
 }
+
+/* ─── Status filter pills ─────────────────────────────────────────────────── */
+
+.statusPill {
+  align-items: center;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  font-size: 11px;
+  gap: 4px;
+  padding: 2px 8px;
+  transition: color 0.1s, border-color 0.1s;
+  white-space: nowrap;
+}
+
+.statusPill:hover {
+  color: var(--text-primary);
+}
+
+.statusPillActive {
+  background: var(--bg-surface-2);
+}
+
+.statusDot {
+  border-radius: 50%;
+  flex-shrink: 0;
+  height: 6px;
+  width: 6px;
+}

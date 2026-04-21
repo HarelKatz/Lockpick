@@ -21,6 +21,7 @@ import PathDetailPanel from '../components/PathDetailPanel'
 import NodeContextMenu from '../components/NodeContextMenu'
 import EdgeContextMenu from '../components/EdgeContextMenu'
 import PathFinder from '../components/PathFinder'
+import { statusColors, STATUS_LABELS } from '../theme'
 import styles from './GraphView.module.css'
 
 interface Props {
@@ -73,6 +74,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
   const [selectedPath, setSelectedPath] = useState<PathResult | null>(null)
   const [layout, setLayout] = useState<LayoutName>('cola')
   const [lockedIds, setLockedIds] = useState<Set<string>>(new Set())
+  const [statusFilters, setStatusFilters] = useState<Set<string>>(new Set())
   const [panelMode, setPanelMode] = useState<'push' | 'overlay'>('overlay')
   const canvasAreaRef = useRef<HTMLDivElement>(null)
 
@@ -274,6 +276,15 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
     setCredFilter(prev => prev ? { ...prev, mode } : null)
   }
 
+  function handleToggleStatusFilter(status: string) {
+    setStatusFilters(prev => {
+      const next = new Set(prev)
+      if (next.has(status)) next.delete(status)
+      else next.add(status)
+      return next
+    })
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   const rightPanel = selectedPath
@@ -329,7 +340,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
       />
 
       <div ref={canvasAreaRef} className={styles.canvasArea}>
-        {/* Toolbar: layout + credential filter */}
+        {/* Toolbar: layout + credential filter + status filter */}
         <div className={styles.graphToolbar}>
           <label className={styles.toolbarLabel}>Layout:</label>
           <select
@@ -384,6 +395,31 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
               })()}
             </>
           )}
+          <span className={styles.toolbarDivider} />
+          <label className={styles.toolbarLabel}>Status:</label>
+          {Object.entries(STATUS_LABELS).map(([value, label]) => (
+            <button
+              key={value}
+              className={`${styles.statusPill} ${statusFilters.has(value) ? styles.statusPillActive : ''}`}
+              style={statusFilters.has(value) ? { borderColor: statusColors[value], color: statusColors[value] } : undefined}
+              onClick={() => handleToggleStatusFilter(value)}
+              title={label}
+            >
+              <span
+                className={styles.statusDot}
+                style={{ background: statusColors[value] }}
+              />
+              {label}
+            </button>
+          ))}
+          {statusFilters.size > 0 && (
+            <button
+              className={styles.clearFilterBtn}
+              onClick={() => setStatusFilters(new Set())}
+            >
+              Clear
+            </button>
+          )}
         </div>
 
         <div className={styles.canvasWrapper}>
@@ -407,6 +443,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
             hiddenIds={hiddenIds}
             pathFilter={pathFilter}
             credFilter={credFilter}
+            statusFilters={statusFilters}
             layout={layout}
             lockedIds={lockedIds}
             focusHostId={focusHostId}
