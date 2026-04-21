@@ -298,6 +298,12 @@
   gap: 4px;
 }
 
+.ipChipRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
 .ipChip {
   background: var(--bg-surface-2);
   border-radius: var(--radius-sm);
@@ -305,6 +311,11 @@
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
   padding: 2px 7px;
+}
+
+.ipAddrType {
+  color: var(--text-muted);
+  font-size: 10px;
 }
 
 .hostUsers {

@@ -122,7 +122,10 @@ function HostCard({ id, host, highlighted, onEdit, onDelete }: HostCardProps) {
       {host.ips.length > 0 && (
         <div className={styles.hostIPs}>
           {host.ips.map(ip => (
-            <span key={ip.id} className={styles.ipChip}>{ip.ip_address}</span>
+            <span key={ip.id} className={styles.ipChipRow}>
+              <span className={styles.ipChip}>{ip.ip_address}</span>
+              <span className={styles.ipAddrType}>{ip.addr_type}</span>
+            </span>
           ))}
         </div>
       )}
