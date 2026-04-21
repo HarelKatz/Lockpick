@@ -20,6 +20,8 @@ const FILE_TYPES: { value: UploadFileType; label: string; needsUser: boolean }[]
   { value: 'passwd',          label: '/etc/passwd',          needsUser: false },
   { value: 'shadow',          label: '/etc/shadow',          needsUser: false },
   { value: 'sshd_config',     label: '/etc/ssh/sshd_config', needsUser: false },
+  { value: 'etc_hosts',       label: '/etc/hosts',           needsUser: false },
+  { value: 'sudoers',         label: '/etc/sudoers',         needsUser: false },
   { value: 'nmap_xml',        label: 'nmap XML scan',        needsUser: false },
 ]
 

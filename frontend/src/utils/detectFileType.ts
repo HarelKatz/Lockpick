@@ -11,6 +11,8 @@ export function detectFileType(filename: string): UploadFileType | null {
   if (base === 'known_hosts') return 'known_hosts'
   if (base === 'passwd') return 'passwd'
   if (base === 'shadow') return 'shadow'
+  if (base === 'hosts') return 'etc_hosts'
+  if (base === 'sudoers') return 'sudoers'
   if (base === 'sshd_config') return 'sshd_config'
   if (base === 'wtmp' || base === 'btmp') return 'wtmp'
   if (base === '.bash_history' || base === 'bash_history') return 'bash_history'

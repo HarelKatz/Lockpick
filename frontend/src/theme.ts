@@ -47,6 +47,7 @@ export const statusColors: Record<string, string> = {
   unreachable:  '#8b949e',  // lighter gray
 }
 
+
 export const STATUS_LABELS: Record<string, string> = {
   entry_point:  'Entry Point',
   compromised:  'Compromised',

@@ -29,6 +29,7 @@ interface Props {
   allHosts: Host[]
   credentials: Credential[]
   focusHostId?: string | null
+  onRegisterReload?: (reload: () => void) => void
 }
 
 /** Human-readable label for a credential, used in sidebar and panel displays. */
@@ -59,7 +60,7 @@ function mergeGraphResponses(existing: GraphResponse, incoming: GraphResponse): 
   }
 }
 
-export default function GraphView({ op, allHosts, credentials, focusHostId }: Props) {
+export default function GraphView({ op, allHosts, credentials, focusHostId, onRegisterReload }: Props) {
   const [graphData, setGraphData] = useState<GraphResponse>({ nodes: [], edges: [] })
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set())
@@ -95,6 +96,9 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
   }, [op.id])
 
   useEffect(() => { loadFullGraph() }, [loadFullGraph])
+
+  // Expose loadFullGraph to parent (for WS-driven refresh from Workspace)
+  useEffect(() => { onRegisterReload?.(loadFullGraph) }, [loadFullGraph, onRegisterReload])
 
   // Reload when selected host set changes (unless it's the initial load)
   const [isInitialized, setIsInitialized] = useState(false)
@@ -304,6 +308,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId }: Pr
         )}
         host={allHosts.find(h => h.id === selectedNode.host_id) ?? null}
         onClose={() => setSelectedNode(null)}
+        onHostUpdated={loadFullGraph}
       />
     )
     : selectedEdge

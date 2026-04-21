@@ -10,7 +10,7 @@ import ForceGraph2D from 'react-force-graph-2d'
 import * as d3Force from 'd3-force'
 import dagre from '@dagrejs/dagre'
 import type { GraphEdge, GraphNode, GraphResponse } from '../types'
-import { statusColors } from '../theme'
+import { theme, statusColors } from '../theme'
 import styles from './GraphCanvas.module.css'
 
 // ── Exported types (consumed by GraphView) ─────────────────────────────────────
@@ -411,13 +411,13 @@ export default function GraphCanvas({
     }
     ctx.fill()
 
-    // Circle border — status color takes priority over credential/default colors
+    // Circle border — status color takes priority over credential/default fallback
     const borderColor = pathHighlight ? '#f78166'
       : isLocked     ? '#d97706'
-      : isSelected   ? '#58a6ff'
+      : isSelected   ? theme.accent
       : status && statusColors[status] ? statusColors[status]
-      : hasCredentials ? '#d29922'
-      : '#3d8bcd'
+      : hasCredentials ? theme.warning
+      : theme.border
     ctx.lineWidth = (pathHighlight || isSelected || isLocked ? 3 : 2) / globalScale
     ctx.strokeStyle = borderColor
     ctx.stroke()
