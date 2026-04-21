@@ -6,12 +6,24 @@ new placeholder Host with just that IP and returns its id.
 """
 from __future__ import annotations
 
+import ipaddress
 import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
 from models import Host, HostIP
+
+
+def _infer_addr_type(addr: str) -> str:
+    """Infer the addr_type for a given IP address or hostname string."""
+    if ":" in addr:
+        return "ipv6"
+    try:
+        ipaddress.IPv4Address(addr)
+        return "ipv4"
+    except ValueError:
+        return "hostname"
 
 
 def resolve_ip(
@@ -32,13 +44,28 @@ def resolve_ip(
     if not ip:
         return None
 
+    addr_type = _infer_addr_type(ip)
+
     # 1. Look for an exact HostIP match inside this op.
-    existing_ip = (
-        db.query(HostIP)
-        .join(Host, Host.id == HostIP.host_id)
-        .filter(Host.op_id == op_id, HostIP.ip_address == ip)
-        .first()
-    )
+    #    For hostnames, match case-insensitively.
+    if addr_type == "hostname":
+        existing_ip = (
+            db.query(HostIP)
+            .join(Host, Host.id == HostIP.host_id)
+            .filter(
+                Host.op_id == op_id,
+                HostIP.addr_type == "hostname",
+                HostIP.ip_address.ilike(ip),
+            )
+            .first()
+        )
+    else:
+        existing_ip = (
+            db.query(HostIP)
+            .join(Host, Host.id == HostIP.host_id)
+            .filter(Host.op_id == op_id, HostIP.ip_address == ip)
+            .first()
+        )
     if existing_ip:
         return existing_ip.host_id
 
@@ -70,6 +97,7 @@ def resolve_ip(
         host_id=host_id,
         ip_address=ip,
         source="parsed",
+        addr_type=addr_type,
         first_seen_at=datetime.now(timezone.utc),
     )
     db.add(host_ip)
