@@ -5,13 +5,14 @@ from datetime import datetime, timezone
 from sqlalchemy import (
     Boolean,
     Column,
-    DateTime,
     Enum,
     ForeignKey,
     String,
     Text,
 )
 from sqlalchemy.orm import relationship
+
+from database import TZDateTime
 
 from database import Base
 
@@ -30,7 +31,7 @@ class Operation(Base):
     id = Column(String(36), primary_key=True, default=_uuid)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+    created_at = Column(TZDateTime, nullable=False, default=_now)
 
     hosts = relationship("Host", back_populates="operation", cascade="all, delete-orphan")
     credentials = relationship("Credential", back_populates="operation", cascade="all, delete-orphan")
@@ -51,7 +52,7 @@ class Host(Base):
         ),
         nullable=True,
     )
-    created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+    created_at = Column(TZDateTime, nullable=False, default=_now)
 
     operation = relationship("Operation", back_populates="hosts")
     ips = relationship("HostIP", back_populates="host", cascade="all, delete-orphan")
@@ -87,7 +88,7 @@ class HostIP(Base):
         nullable=False,
         default="ipv4",
     )
-    first_seen_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+    first_seen_at = Column(TZDateTime, nullable=False, default=_now)
 
     host = relationship("Host", back_populates="ips")
 
@@ -105,7 +106,7 @@ class HostUser(Base):
         nullable=False,
         default="manual",
     )
-    created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+    created_at = Column(TZDateTime, nullable=False, default=_now)
 
     host = relationship("Host", back_populates="users")
 
@@ -125,7 +126,7 @@ class Credential(Base):
     key_type = Column(String(64), nullable=True)  # inferred: rsa, ed25519, ecdsa, etc.
     passphrase = Column(String(1024), nullable=True)  # for encrypted private keys
     comment = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+    created_at = Column(TZDateTime, nullable=False, default=_now)
 
     operation = relationship("Operation", back_populates="credentials")
     links = relationship("CredentialLink", back_populates="credential", cascade="all, delete-orphan")
@@ -182,10 +183,10 @@ class ConnectionRecord(Base):
         nullable=True,
     )
     credential_id = Column(String(36), ForeignKey("credentials.id", ondelete="SET NULL"), nullable=True)
-    timestamp = Column(DateTime(timezone=True), nullable=True)
+    timestamp = Column(TZDateTime, nullable=True)
     raw_line = Column(Text, nullable=True)
     source_file = Column(String(512), nullable=False)
-    created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+    created_at = Column(TZDateTime, nullable=False, default=_now)
 
     operation = relationship("Operation", back_populates="connection_records")
     src_host = relationship(
@@ -210,7 +211,7 @@ class SshConfigPattern(Base):
     source_host_id = Column(String(36), ForeignKey("hosts.id", ondelete="CASCADE"), nullable=False)
     pattern = Column(String(512), nullable=False)   # space-joined alias list, e.g. "jb.*" or "box? !box0"
     username = Column(String(255), nullable=True)
-    created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+    created_at = Column(TZDateTime, nullable=False, default=_now)
 
 
 class SudoRule(Base):
@@ -230,7 +231,7 @@ class SudoRule(Base):
     commands = Column(Text, nullable=False)
     nopasswd = Column(Boolean, nullable=False, default=False)
     raw_line = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+    created_at = Column(TZDateTime, nullable=False, default=_now)
 
     host = relationship("Host", back_populates="sudo_rules")
 
@@ -243,7 +244,7 @@ class HostNote(Base):
     op_id = Column(String(36), ForeignKey("operations.id", ondelete="CASCADE"), nullable=False)
     host_id = Column(String(36), ForeignKey("hosts.id", ondelete="CASCADE"), nullable=False)
     content = Column(Text, nullable=False)
-    created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+    created_at = Column(TZDateTime, nullable=False, default=_now)
 
     host = relationship("Host", back_populates="notes")
 
@@ -257,4 +258,4 @@ class ActivityLog(Base):
     entity_type = Column(String(64), nullable=False)  # "host" | "credential" | "connection" | "upload"
     entity_id = Column(String(36), nullable=True)
     detail = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+    created_at = Column(TZDateTime, nullable=False, default=_now)

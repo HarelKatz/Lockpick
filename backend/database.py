@@ -1,10 +1,29 @@
 """SQLAlchemy engine, session, and declarative base."""
 import os
+from datetime import datetime, timezone
 
-from sqlalchemy import create_engine
+from sqlalchemy import DateTime, create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.types import TypeDecorator
 
 from config import settings
+
+
+class TZDateTime(TypeDecorator):
+    """Stores datetimes as UTC; attaches UTC tzinfo on read so JS sees a Z suffix."""
+
+    impl = DateTime
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if isinstance(value, datetime) and value.tzinfo is not None:
+            return value.astimezone(timezone.utc).replace(tzinfo=None)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            return value.replace(tzinfo=timezone.utc)
+        return value
 
 
 def get_db_url() -> str:
