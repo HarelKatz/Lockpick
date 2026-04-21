@@ -27,6 +27,7 @@ from models import (
     HostIP,
     HostUser,
     Operation,
+    SshConfigPattern,
 )
 from parsers import UploadMetadata
 from parsers.registry import PARSER_REGISTRY
@@ -34,6 +35,7 @@ from schemas import UploadFileInfo
 from services.activity import log_activity
 from services.ip_resolver import resolve_ip
 from services.key_utils import infer_key_info
+from services.ssh_pattern import ssh_match
 
 log = logging.getLogger(__name__)
 
@@ -78,6 +80,13 @@ def _get_or_create_host_user(
     return hu
 
 
+_LOOPBACK_EXACT = {"127.0.0.1", "::1", "localhost"}
+
+
+def _is_loopback(ip: str) -> bool:
+    return ip in _LOOPBACK_EXACT or ip.startswith("127.")
+
+
 def _resolve_ip_side(
     db: Session,
     op_id: str,
@@ -87,11 +96,12 @@ def _resolve_ip_side(
 ) -> tuple[str, Optional[str], bool]:
     """Resolve one ConnectionData IP to (resolved_ip, host_id, is_new_auto_host).
 
-    The ``__upload_host__`` sentinel is replaced with the known upload-host IP.
+    The ``__upload_host__`` sentinel and loopback addresses are both mapped to
+    the upload host (loopback = "this machine" = the file's source host).
     For any other IP, resolve_ip is called with create_if_missing=True and the
     returned boolean indicates whether a *new* auto-created host was added.
     """
-    if raw_ip == "__upload_host__":
+    if raw_ip == "__upload_host__" or _is_loopback(raw_ip):
         return upload_host_ip, upload_host_id, False
     resolved_host_id = resolve_ip(db, op_id, raw_ip, create_if_missing=True)
     is_new = False
@@ -328,6 +338,42 @@ async def upload_file(
         )
         db.add(conn_rec)
         new_connections += 1
+
+    # ── 4. Process SSH config patterns ──────────────────────────────────────────
+    for pat_data in result.patterns_found:
+        pattern_str = " ".join(pat_data.aliases)
+
+        # Match against all existing hosts in this op (excluding the upload host)
+        for candidate in db.query(Host).filter(Host.op_id == op_id, Host.id != host_id).all():
+            names = [candidate.nickname] + [ip.ip_address for ip in candidate.ips]
+            if not any(ssh_match(n, pat_data.aliases) for n in names):
+                continue
+            dst_ip = candidate.ips[0].ip_address if candidate.ips else candidate.nickname
+            db.add(ConnectionRecord(
+                id=_uuid(),
+                op_id=op_id,
+                src_host_id=host_id,
+                src_ip=upload_host_ip,
+                src_user=pat_data.username,
+                dst_host_id=candidate.id,
+                dst_ip=dst_ip,
+                connection_type="ssh",
+                direction_context="from_src_logs",
+                raw_line=f"ssh_config pattern match: Host {pattern_str}",
+                source_file=safe_name,
+                created_at=_now(),
+            ))
+            new_connections += 1
+
+        # Store for future hosts that match this pattern
+        db.add(SshConfigPattern(
+            id=_uuid(),
+            op_id=op_id,
+            source_host_id=host_id,
+            pattern=pattern_str,
+            username=pat_data.username,
+            created_at=_now(),
+        ))
 
     log_activity(db, op_id, "upload.parse", "upload",
                  detail=f"Parsed {file_type} file '{filename}': "

@@ -1,7 +1,18 @@
 """Parser for .ssh/config files."""
 from __future__ import annotations
 
-from parsers import BaseParser, ConnectionData, ParseResult, UploadMetadata
+from parsers import (
+    BaseParser,
+    ConnectionData,
+    ParseResult,
+    SshConfigPatternData,
+    UploadMetadata,
+)
+
+
+def _is_pattern(s: str) -> bool:
+    """Return True if the string is an SSH glob/token rather than a literal hostname."""
+    return any(c in s for c in ("*", "?", "%"))
 
 
 class SshConfigParser(BaseParser):
@@ -9,7 +20,6 @@ class SshConfigParser(BaseParser):
 
     def parse(self, content: bytes, metadata: UploadMetadata) -> ParseResult:
         result = ParseResult()
-        filename = metadata.filename or "ssh_config"
         src_user = metadata.username
 
         try:
@@ -20,47 +30,62 @@ class SshConfigParser(BaseParser):
 
         blocks_found = 0
 
-        # Parse into blocks keyed by Host pattern
         current_aliases: list[str] = []
         current_props: dict[str, str] = {}
 
-        def flush_block():
+        def flush_block() -> None:
             nonlocal blocks_found
             if not current_aliases:
                 return
+
+            # Skip Match directive blocks — conditional, not hostname patterns
+            if current_aliases[0].startswith("Match "):
+                return
+
             hostname = current_props.get("hostname")
-            user = current_props.get("user", src_user)
-            # Skip wildcard-only blocks with no real hostname
-            if not hostname:
-                # use the alias as destination if it looks like an IP/hostname
-                for alias in current_aliases:
-                    if alias != "*" and "?" not in alias and "!" not in alias:
-                        conn = ConnectionData(
+            user = current_props.get("user") or src_user
+
+            positive_aliases = [a for a in current_aliases if not a.startswith("!")]
+            has_pattern_alias = any(_is_pattern(a) for a in positive_aliases)
+            has_pattern_hostname = bool(hostname and _is_pattern(hostname))
+
+            # Pattern block: alias uses glob/token AND no concrete HostName
+            if has_pattern_alias and (not hostname or has_pattern_hostname):
+                result.patterns_found.append(
+                    SshConfigPatternData(aliases=current_aliases[:], username=user)
+                )
+                blocks_found += 1
+                return
+
+            # Concrete destination available
+            dst = hostname if hostname and not has_pattern_hostname else None
+
+            if dst:
+                result.connections_found.append(ConnectionData(
+                    src_ip="__upload_host__",
+                    dst_ip=dst,
+                    connection_type="ssh",
+                    direction_context="from_src_logs",
+                    src_user=src_user,
+                    dst_user=user if user and user != src_user else None,
+                    raw_line=f"Host {' '.join(current_aliases)} → {dst}",
+                ))
+                blocks_found += 1
+            else:
+                for alias in positive_aliases:
+                    if not _is_pattern(alias):
+                        result.connections_found.append(ConnectionData(
                             src_ip="__upload_host__",
                             dst_ip=alias,
                             connection_type="ssh",
                             direction_context="from_src_logs",
                             src_user=src_user,
-                            dst_user=user if user != src_user else None,
+                            dst_user=user if user and user != src_user else None,
                             raw_line=f"Host {' '.join(current_aliases)}",
-                        )
-                        result.connections_found.append(conn)
+                        ))
                         blocks_found += 1
-                return
 
-            conn = ConnectionData(
-                src_ip="__upload_host__",
-                dst_ip=hostname,
-                connection_type="ssh",
-                direction_context="from_src_logs",
-                src_user=src_user,
-                dst_user=user if user and user != src_user else None,
-                raw_line=f"Host {' '.join(current_aliases)} → {hostname}",
-            )
-            result.connections_found.append(conn)
-            blocks_found += 1
-
-        for lineno, raw_line in enumerate(text.splitlines(), 1):
+        for _lineno, raw_line in enumerate(text.splitlines(), 1):
             line = raw_line.strip()
             if not line or line.startswith("#"):
                 continue

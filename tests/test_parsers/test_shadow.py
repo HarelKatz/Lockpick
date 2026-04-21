@@ -57,8 +57,9 @@ def test_bare_locked_markers_no_credential(metadata):
     content = b"daemon:*:19000:0:99999:7:::\nnobody:!:19000:0:99999:7:::\n"
     result = ShadowParser().parse(content, metadata)
 
+    # No credential and no HostUser — service accounts with bare lock markers
     assert result.credentials_found == []
-    assert len(result.host_users_found) == 2
+    assert result.host_users_found == []
     assert any("daemon" in w for w in result.warnings)
     assert any("nobody" in w for w in result.warnings)
 
@@ -67,9 +68,9 @@ def test_shadowless_x(metadata):
     content = b"nologin:x:19000:0:99999:7:::\n"
     result = ShadowParser().parse(content, metadata)
 
+    # x placeholder means password is in /etc/shadow but not here — skip HostUser
     assert result.credentials_found == []
-    assert len(result.host_users_found) == 1
-    assert result.host_users_found[0][0] == "nologin"
+    assert result.host_users_found == []
     assert any("x placeholder" in w or "no hash" in w for w in result.warnings)
 
 
@@ -77,8 +78,9 @@ def test_empty_password_no_credential(metadata):
     content = b"nopass::19000:0:99999:7:::\n"
     result = ShadowParser().parse(content, metadata)
 
+    # Empty password sentinel — no HostUser created
     assert result.credentials_found == []
-    assert len(result.host_users_found) == 1
+    assert result.host_users_found == []
 
 
 def test_empty_file(metadata):
@@ -109,4 +111,4 @@ def test_stats(metadata):
     content = (FIXTURES / "shadow").read_bytes()
     result = ShadowParser().parse(content, metadata)
     assert result.stats["hashes_found"] == 3  # root, alice, bob (locked but recoverable)
-    assert result.stats["users_found"] == 5   # all 5 entries get a HostUser
+    assert result.stats["users_found"] == 3   # only users with actual hashes get HostUser
