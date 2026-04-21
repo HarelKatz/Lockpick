@@ -43,20 +43,16 @@ class ShadowParser(BaseParser):
                 result.warnings.append(f"Line {lineno}: empty username, skipping")
                 continue
 
-            # No usable hash — create HostUser only
+            # No usable hash — service/system account, skip HostUser
             if hash_val in _NO_HASH_SENTINELS:
-                result.host_users_found.append((username, None, None))
-                users_found += 1
                 if hash_val == "x":
                     result.warnings.append(
                         f"User '{username}': password shadowed (x placeholder) — no hash available"
                     )
                 continue
 
-            # Bare locked marker with no recoverable hash
+            # Bare locked marker with no recoverable hash — skip HostUser
             if hash_val in _BARE_LOCKED:
-                result.host_users_found.append((username, None, None))
-                users_found += 1
                 result.warnings.append(f"User '{username}': account is locked ({hash_val}) — no hash")
                 continue
 

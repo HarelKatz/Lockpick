@@ -39,6 +39,13 @@ class ConnectionData:
 
 
 @dataclass
+class SshConfigPatternData:
+    """An SSH config Host block whose alias(es) are patterns, not literal hostnames."""
+    aliases: list[str]          # raw alias list including ! negations, e.g. ["jb.*"] or ["box?", "!box0"]
+    username: Optional[str]     # User directive value (who connects)
+
+
+@dataclass
 class ParseResult:
     """Aggregate output from a parser."""
     hosts_found: list[HostData] = field(default_factory=list)
@@ -46,6 +53,7 @@ class ParseResult:
     connections_found: list[ConnectionData] = field(default_factory=list)
     # (username, host label) pairs for HostUser records to create
     host_users_found: list[tuple[str, Optional[str], Optional[str]]] = field(default_factory=list)
+    patterns_found: list[SshConfigPatternData] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     stats: dict = field(default_factory=dict)
 

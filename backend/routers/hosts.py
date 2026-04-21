@@ -6,6 +6,7 @@ from database import get_db
 from models import Host, HostIP, HostUser
 from routers.deps import get_host_or_404, get_op_or_404
 from services.activity import log_activity
+from services.ssh_pattern import apply_patterns_to_host
 from schemas import (
     HostCreate,
     HostIPCreate,
@@ -26,7 +27,9 @@ def create_host(op_id: str, body: HostCreate, db: Session = Depends(get_db)):
     get_op_or_404(op_id, db)
     host = Host(op_id=op_id, nickname=body.nickname, comment=body.comment)
     db.add(host)
+    db.flush()
     log_activity(db, op_id, "host.create", "host", detail=f"Added host '{body.nickname}'")
+    apply_patterns_to_host(db, host)
     db.commit()
     db.refresh(host)
     return host
@@ -80,7 +83,10 @@ def add_host_ip(host_id: str, body: HostIPCreate, db: Session = Depends(get_db))
         source=body.source,
     )
     db.add(ip)
+    db.flush()
+    db.refresh(host)  # pick up the new IP for pattern matching
     log_activity(db, host.op_id, "host_ip.add", "host", entity_id=host_id, detail=f"Added IP {body.ip_address} to '{host.nickname}'")
+    apply_patterns_to_host(db, host)
     db.commit()
     db.refresh(ip)
     return ip

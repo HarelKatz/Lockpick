@@ -146,9 +146,9 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed: Phase 12 — Parser Suite (nmap XML, /etc/shadow, /etc/ssh/sshd_config)**
+**Last completed: Parser data-quality fixes — SSH config pattern handling, loopback routing, shadow user filtering**
 
-Three new parsers added (`nmap_xml`, `shadow`, `sshd_config`), registered in registry, with fixture files and full unit test coverage (26 new tests). Phases 10 and 11 remain unimplemented.
+SSH config wildcards/tokens (`jb.*`, `%h`, `*.example.com`) no longer create junk hosts; instead, matched existing hosts get indicator edges and unmatched patterns are stored in `SshConfigPattern` for retroactive resolution when new hosts are added. `127.0.0.1`/loopback is now mapped to the upload host. Shadow parser no longer creates HostUser records for service accounts with no usable password hash.
 
 **Next phase: Phase 10 — WebSocket Live Push + Per-Host Notes**
 

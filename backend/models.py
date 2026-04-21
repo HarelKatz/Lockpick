@@ -186,6 +186,18 @@ class ConnectionRecord(Base):
     credential = relationship("Credential")
 
 
+class SshConfigPattern(Base):
+    """Stored SSH config Host pattern for retroactive edge creation when hosts are added."""
+    __tablename__ = "ssh_config_patterns"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    op_id = Column(String(36), ForeignKey("operations.id", ondelete="CASCADE"), nullable=False)
+    source_host_id = Column(String(36), ForeignKey("hosts.id", ondelete="CASCADE"), nullable=False)
+    pattern = Column(String(512), nullable=False)   # space-joined alias list, e.g. "jb.*" or "box? !box0"
+    username = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+
+
 class ActivityLog(Base):
     __tablename__ = "activity_log"
 
