@@ -11,6 +11,59 @@ SSH pivot tracker for red teams. Ingests raw evidence (private keys, `authorized
 - **Do not survey the codebase before starting.** Do not open files to "understand the project" — AGENT.md describes everything you need to know upfront.
 - **Read files on-demand only.** Open a source file only when you are about to edit it or need to understand a specific function/interface it provides. Never read a file "just in case."
 
+## Git Commits
+
+**Committing is not optional and does not require the user to ask.** Every unit of work ends with a commit. If you changed files and did not commit, the task is not done.
+
+### What requires a commit
+
+Commit after completing **any** of these:
+- A feature, bug fix, or refactor (backend or frontend)
+- A new or updated parser
+- A schema change + Alembic migration
+- A new or updated test file
+- An edit to `CLAUDE.md` or `AGENT.md`
+
+Skip only for: isolated typo fixes, single-line CSS tweaks, comment-only edits to non-guide files.
+
+### Pre-commit gate (code changes)
+
+```bash
+make test                       # must pass — fix failures before committing
+cd frontend && npm run build    # must succeed — fix build errors before committing
+```
+
+For documentation-only changes (`.md` files only), skip the build gate and commit directly.
+
+### Commit format
+
+```
+type(scope): short description
+
+types: feat, fix, refactor, test, docs, chore
+scopes: backend, frontend, parsers, docker, schema
+```
+
+Stage specific files — never `git add .` (risks staging `.env`, keys, or build artifacts).
+
+### The rule
+
+**Commit as part of completing the work, not after.** Do not batch multiple unrelated changes into one commit. Do not defer committing to the end of a session. The user must never have to prompt a commit — if they do, you failed this instruction.
+
+## AGENT.md Maintenance
+
+AGENT.md is the single source of truth for architecture and project status. Update it as part of the work, not after being asked.
+
+**When to update:**
+- **Current Status**: every time a phase or significant sub-feature is completed
+- **Phase checklist**: check off `[ ]` items as you complete them
+- **Completed phase sections**: once a phase is 100% done, collapse its detail to the invariants future phases need (not a feature list — git history has that)
+
+**How to update well:**
+- Completed phase notes must state *invariants* (contracts other code depends on), not retrospectives
+- Never leave stale unchecked items for work that's already done
+- Never add file trees, line numbers, CSS snippets, or diff hunks to AGENT.md
+
 ## Tech Stack
 
 - **Backend**: Python 3.12, FastAPI, SQLAlchemy ORM, Alembic, uv
@@ -35,43 +88,6 @@ make test           # cd backend && uv run pytest ../tests/ -v
 ```
 
 **Always use `uv run` for Python — never `python` directly.**
-
-## Repository Layout
-
-```
-backend/
-├── main.py          # App entry point, CORS, lifespan (runs Alembic on startup)
-├── config.py        # Settings via env vars (pydantic-settings)
-├── database.py      # SQLAlchemy engine, session factory, Base
-├── models.py        # ORM models
-├── schemas.py       # Pydantic request/response models
-├── routers/         # One file per resource group (operations, hosts, credentials, connections, graph, upload, search, stats, export_import, activity)
-├── parsers/         # File parsers implementing BaseParser; registry.py maps file_type → class
-├── services/        # Graph builder, IP resolver, pivot analysis
-│   ├── graph_builder.py   # Aggregate CredentialLinks + ConnectionRecords → edge objects
-│   ├── ip_resolver.py     # Match IPs/hostnames to known hosts (best-effort)
-│   ├── key_utils.py       # Cross-reference fingerprints across an op
-│   ├── pivot_analysis.py  # BFS path finding between hosts
-│   └── activity.py        # log_activity() — call before db.commit() in all write endpoints
-└── alembic/         # Migrations
-
-frontend/src/
-├── App.tsx          # Root component + page routing
-├── theme.ts         # Dark theme color constants (source of truth)
-├── index.css        # Global styles + CSS custom properties
-├── types/           # TypeScript interfaces matching backend schemas
-├── api/             # Typed API client functions
-├── components/      # Shared UI components
-├── utils/           # Shared utility functions
-└── pages/           # Top-level page components
-
-tests/
-├── conftest.py      # Shared fixtures (in-memory DB, TestClient)
-├── fixtures/        # Sample files for parser tests
-├── test_api/        # API integration tests
-├── test_parsers/    # Parser unit tests
-└── test_services/   # Service layer tests
-```
 
 ## Adding a New Endpoint
 
@@ -149,59 +165,43 @@ Key variables: `--text-primary`, `--text-muted`, `--bg-surface`, `--bg-surface-2
 
 Use CSS modules (`.module.css` alongside the component) — not global styles.
 
-## Git Commits
-
-**Committing is not optional and does not require the user to ask.** Every unit of work ends with a commit. If you changed files and did not commit, the task is not done.
-
-### What requires a commit
-
-Commit after completing **any** of these:
-- A feature, bug fix, or refactor (backend or frontend)
-- A new or updated parser
-- A schema change + Alembic migration
-- A new or updated test file
-- An edit to `CLAUDE.md` or `AGENT.md`
-
-Skip only for: isolated typo fixes, single-line CSS tweaks, comment-only edits to non-guide files.
-
-### Pre-commit gate (code changes)
-
-```bash
-make test                       # must pass — fix failures before committing
-cd frontend && npm run build    # must succeed — fix build errors before committing
-```
-
-For documentation-only changes (`.md` files only), skip the build gate and commit directly.
-
-### Commit format
+## Repository Layout
 
 ```
-type(scope): short description
+backend/
+├── main.py          # App entry point, CORS, lifespan (runs Alembic on startup)
+├── config.py        # Settings via env vars (pydantic-settings)
+├── database.py      # SQLAlchemy engine, session factory, Base
+├── models.py        # ORM models
+├── schemas.py       # Pydantic request/response models
+├── routers/         # One file per resource group (operations, hosts, credentials, connections, graph, upload, search, stats, export_import, activity)
+├── parsers/         # File parsers implementing BaseParser; registry.py maps file_type → class
+├── services/        # Graph builder, IP resolver, pivot analysis
+│   ├── graph_builder.py   # Aggregate CredentialLinks + ConnectionRecords → edge objects
+│   ├── ip_resolver.py     # Match IPs/hostnames to known hosts (best-effort)
+│   ├── key_utils.py       # Cross-reference fingerprints across an op
+│   ├── pivot_analysis.py  # BFS path finding between hosts
+│   ├── ssh_pattern.py     # ssh_match() SSH glob semantics; apply_patterns_to_host()
+│   └── activity.py        # log_activity() — call before db.commit() in all write endpoints
+└── alembic/         # Migrations
 
-types: feat, fix, refactor, test, docs, chore
-scopes: backend, frontend, parsers, docker, schema
+frontend/src/
+├── App.tsx          # Root component + page routing
+├── theme.ts         # Dark theme color constants (source of truth)
+├── index.css        # Global styles + CSS custom properties
+├── types/           # TypeScript interfaces matching backend schemas
+├── api/             # Typed API client functions
+├── components/      # Shared UI components
+├── utils/           # Shared utility functions
+└── pages/           # Top-level page components
+
+tests/
+├── conftest.py      # Shared fixtures (in-memory DB, TestClient)
+├── fixtures/        # Sample files for parser tests
+├── test_api/        # API integration tests
+├── test_parsers/    # Parser unit tests
+└── test_services/   # Service layer tests
 ```
-
-Stage specific files — never `git add .` (risks staging `.env`, keys, or build artifacts).
-
-### The rule
-
-**Commit as part of completing the work, not after.** Do not batch multiple unrelated changes into one commit. Do not defer committing to the end of a session. The user must never have to prompt a commit — if they do, you failed this instruction.
-
-## AGENT.md Maintenance
-
-AGENT.md is the single source of truth for architecture and project status. Update it as part of the work, not after being asked.
-
-**When to update:**
-- **Current Status**: every time a phase or significant sub-feature is completed
-- **Phase checklist**: check off `[ ]` items as you complete them
-- **Completed phase sections**: once a phase is 100% done, collapse its detail to the invariants future phases need (not a feature list — git history has that)
-
-**How to update well:**
-- Current Status must stay ≤5 lines: last completed thing, next thing, any blocker
-- Completed phase notes must state *invariants* (contracts other code depends on), not retrospectives
-- Never leave stale unchecked items for work that's already done
-- Never add file trees, line numbers, CSS snippets, or diff hunks to AGENT.md
 
 ## Environment Variables (backend)
 
