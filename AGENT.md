@@ -146,9 +146,11 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed: Phases 10, 11, 13 + post-release bug fixes**
+**Last completed: Phases 10, 11, 13 + post-release bug fixes (rounds 1–3)**
 
-Phases 10/11/13 are complete. Bug fixes (rounds 1–2): nginx WS proxy headers, graph node border color, sudoers parser rewrite, datetime TZDateTime, EditHostForm create mode, WS callback graph reload, IP row CSS overflow, WS broadcast thread safety (run_coroutine_threadsafe), ManualEntryForm hostname/addr_type support, add_host_ip now saves addr_type, silent fetchAll prevents blank tab on add.
+Bug fixes round 3: CSS specificity fix for IP row layout (`.ipRow select/input` beats `.field select { width: 100% }`), ErrorBoundary on graph and data panel (blank screen on render crash), WS callback changed to `fetchAll(true)` so all sections refresh cross-tab, all write endpoints now broadcast.
+
+**Next: Phase 14 — Engagement Report Export**
 
 **Next: Phase 14 — Engagement Report Export**
 
