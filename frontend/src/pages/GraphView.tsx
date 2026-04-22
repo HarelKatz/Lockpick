@@ -79,6 +79,10 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
   const [panelMode, setPanelMode] = useState<'push' | 'overlay'>('overlay')
   const canvasAreaRef = useRef<HTMLDivElement>(null)
 
+  // Set by loadFullGraph before it updates selectedIds to prevent the selectedIds
+  // useEffect from firing a redundant second fetchGraph call (double-fetch race).
+  const skipSelectedEffect = useRef(false)
+
   // Load full graph on mount
   const loadFullGraph = useCallback(async () => {
     setLoading(true)
@@ -86,6 +90,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
     try {
       const data = await fetchGraph(op.id)
       setGraphData(data)
+      skipSelectedEffect.current = true
       setSelectedIds(new Set(data.nodes.map(n => n.host_id)))
       setHiddenIds(new Set())
     } catch {
@@ -105,6 +110,10 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
   useEffect(() => {
     if (!isInitialized) {
       setIsInitialized(true)
+      return
+    }
+    if (skipSelectedEffect.current) {
+      skipSelectedEffect.current = false
       return
     }
     if (selectedIds.size === 0) {
