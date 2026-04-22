@@ -146,9 +146,7 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed: Phases 10, 11, 13 + post-release bug fixes + WS broadcast wiring + test suite expansion**
-
-Added `broadcast_sync` to 7 mutation endpoints that were missing it (host IPs/users, credential CRUD, connection update, file upload). Test suite grew from 508 → 551: WS `ConnectionManager` unit tests, `ssh_match()` glob semantics, `AuthLogParser` no-sshd behaviour, random-network scenario with confidence/isolation/pivotable-users assertions. All previously untracked fixture files committed.
+**Last completed: Phases 10, 11, 13 + post-release bug fixes + WS broadcast wiring + test suite expansion (508 → 551)**
 
 **Next: Phase 14 — Engagement Report Export**
 
@@ -386,5 +384,6 @@ A standalone MCP (Model Context Protocol) server that lets an AI agent (e.g. Cla
 15. **Loopback routing** — `127.x.x.x`, `::1`, and `localhost` in connection records always resolve to the upload host, never create new host records. Handled in `_resolve_ip_side()` (`routers/upload.py`).
 16. **HostIP addr_type** — `HostIP.ip_address` holds either a numeric IP or FQDN; `addr_type` (ipv4|ipv6|hostname) disambiguates. IP resolver infers addr_type via `_infer_addr_type()` and sets it on new records. Hostname lookups are case-insensitive.
 17. **SudoRule** — read-only from the upload pipeline; no manual create endpoint. `SudoRule.op_id` stored for bulk queries. Sudo rules do not affect BFS pivot path confidence — informational context only.
+18. **WS live push** — `broadcast_sync(op_id, event)` (`ws_manager.py`) must be called after `db.commit()` in every write endpoint. Event shape: `{"type": "update", "entity_type": "<host|credential|connection|...>", "op_id": op_id}`. It is fire-and-forget and safe to call even when no clients are connected.
 
 ---

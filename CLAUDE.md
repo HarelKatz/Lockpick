@@ -81,9 +81,10 @@ tests/
 4. Register router in `backend/main.py`
 5. Alembic migration if schema changed: `cd backend && uv run alembic revision --autogenerate -m "describe"`
 6. Call `log_activity()` before `db.commit()` in every write endpoint (Architecture Rule #7)
-7. Tests in `tests/test_api/`
-8. TypeScript types in `frontend/src/types/index.ts`
-9. API client functions in `frontend/src/api/`
+7. Call `broadcast_sync(op_id, event)` after `db.commit()` in every write endpoint (Architecture Rule #18)
+8. Tests in `tests/test_api/`
+9. TypeScript types in `frontend/src/types/index.ts`
+10. API client functions in `frontend/src/api/`
 
 ## Adding a New Parser
 
