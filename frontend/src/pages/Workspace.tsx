@@ -28,6 +28,7 @@ import EditCredentialForm from '../components/EditCredentialForm'
 import EditCredentialLinkForm from '../components/EditCredentialLinkForm'
 import EditConnectionForm from '../components/EditConnectionForm'
 import GraphView from './GraphView'
+import { ErrorBoundary } from '../components/ErrorBoundary'
 import styles from './Workspace.module.css'
 
 type WorkspaceTab = 'data' | 'graph'
@@ -479,10 +480,10 @@ export default function Workspace({ op, onBack }: Props) {
       }
       const ev = event as { entity_type?: string }
       if (ev?.entity_type === 'host' || ev?.entity_type === 'credential' || ev?.entity_type === 'connection') {
-        listHosts(op.id).then(setHosts).catch(() => {})
+        fetchAll(true)
         graphReloadRef.current?.()
       }
-    }, [op.id]),
+    }, [op.id, fetchAll]),
   )
 
   // Fallback: poll every 30s when WS is disconnected
@@ -684,13 +685,15 @@ export default function Workspace({ op, onBack }: Props) {
           visibility: tab === 'graph' ? 'visible' : 'hidden',
           pointerEvents: tab === 'graph' ? 'auto' : 'none',
         }}>
-          <GraphView
-            op={op}
-            allHosts={hosts}
-            credentials={credentials}
-            focusHostId={focusEntityId}
-            onRegisterReload={reload => { graphReloadRef.current = reload }}
-          />
+          <ErrorBoundary label="graph">
+            <GraphView
+              op={op}
+              allHosts={hosts}
+              credentials={credentials}
+              focusHostId={focusEntityId}
+              onRegisterReload={reload => { graphReloadRef.current = reload }}
+            />
+          </ErrorBoundary>
         </div>
 
         {/* Data panel */}
@@ -699,6 +702,7 @@ export default function Workspace({ op, onBack }: Props) {
           visibility: tab === 'data' ? 'visible' : 'hidden',
           pointerEvents: tab === 'data' ? 'auto' : 'none',
         }}>
+        <ErrorBoundary label="data-panel">
         {loading && (
           <div className={styles.state}>
             <p className={styles.stateText}>Loading…</p>
@@ -836,6 +840,7 @@ export default function Workspace({ op, onBack }: Props) {
             )}
           </div>
         )}
+        </ErrorBoundary>
       </main>
       </div>{/* end overlay container */}
 

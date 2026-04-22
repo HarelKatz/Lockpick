@@ -117,6 +117,17 @@
   align-items: center;
 }
 
+.ipRow select {
+  width: auto;
+  flex-shrink: 0;
+}
+
+.ipRow input {
+  width: auto;
+  flex: 1;
+  min-width: 0;
+}
+
 .ipMain {
   flex: 1;
   min-width: 0;
