@@ -148,7 +148,7 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 **Last completed: Phases 10, 11, 13 + post-release bug fixes (rounds 1–3)**
 
-Bug fixes round 3: CSS specificity fix for IP row layout (`.ipRow select/input` beats `.field select { width: 100% }`), ErrorBoundary on graph and data panel (blank screen on render crash), WS callback changed to `fetchAll(true)` so all sections refresh cross-tab, all write endpoints now broadcast.
+Bug fixes round 3: CSS specificity fix for IP row layout, ErrorBoundary on graph/data panel, WS callback changed to `fetchAll(true)` for full cross-tab refresh, all write endpoints now broadcast, d3 `forceLink` link list cleared before `setFgData` to prevent stale node refs, `skipSelectedEffect` ref in GraphView prevents double-fetch race that caused "node not found" on WS-driven graph reload.
 
 **Next: Phase 14 — Engagement Report Export**
 
