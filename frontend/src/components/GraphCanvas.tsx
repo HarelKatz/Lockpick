@@ -306,6 +306,11 @@ export default function GraphCanvas({
       fitNeededRef.current = true
     }
 
+    // Clear d3's internal link list before updating nodes. d3 mutates link objects
+    // (source/target become node refs). If nodes shrink, forceLink.initialize() on
+    // the old mutated list throws "node not found". Clearing first prevents this.
+    graphRef.current?.d3Force('link')?.links([])
+
     setFgData({ nodes, links })
 
     // Static layouts: pause simulation immediately after data is set

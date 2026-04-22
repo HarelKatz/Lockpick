@@ -480,7 +480,7 @@ export default function Workspace({ op, onBack }: Props) {
       }
       const ev = event as { entity_type?: string }
       if (ev?.entity_type === 'host' || ev?.entity_type === 'credential' || ev?.entity_type === 'connection') {
-        fetchAll(true)
+        await fetchAll(true)
         graphReloadRef.current?.()
       }
     }, [op.id, fetchAll]),
