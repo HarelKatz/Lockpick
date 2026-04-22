@@ -51,7 +51,7 @@ backend/
 │   ├── graph_builder.py   # Aggregate CredentialLinks + ConnectionRecords → edge objects
 │   ├── ip_resolver.py     # Match IPs/hostnames to known hosts (best-effort)
 │   ├── key_utils.py       # Cross-reference fingerprints across an op
-│   ├── pivot_analysis.py  # BFS path finding between hosts (Phase 7)
+│   ├── pivot_analysis.py  # BFS path finding between hosts
 │   └── activity.py        # log_activity() — call before db.commit() in all write endpoints
 └── alembic/         # Migrations
 
@@ -80,9 +80,17 @@ tests/
 3. Router function in `backend/routers/` (or new file)
 4. Register router in `backend/main.py`
 5. Alembic migration if schema changed: `cd backend && uv run alembic revision --autogenerate -m "describe"`
-6. Tests in `tests/test_api/`
-7. TypeScript types in `frontend/src/types/index.ts`
-8. API client functions in `frontend/src/api/`
+6. Call `log_activity()` before `db.commit()` in every write endpoint (Architecture Rule #7)
+7. Tests in `tests/test_api/`
+8. TypeScript types in `frontend/src/types/index.ts`
+9. API client functions in `frontend/src/api/`
+
+## Adding a New Parser
+
+1. Create `backend/parsers/<name>.py` implementing `BaseParser`
+2. Register in `backend/parsers/registry.py`: `"file_type": ParserClass`
+3. Add fixture file(s) in `tests/fixtures/`
+4. Add parser tests in `tests/test_parsers/test_<name>.py`
 
 ## SQLite Migration Rules
 
