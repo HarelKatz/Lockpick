@@ -134,6 +134,50 @@ def test_all_password_connections_produce_edges(loaded_op):
     assert not missing, "Missing password connection edges:\n" + "\n".join(missing)
 
 
+
+def test_key_pivots_are_confirmed(loaded_op):
+    """All key pivot edges should have confidence 'confirmed'."""
+    host_ids = loaded_op["host_ids"]
+    edges_by_pair = {(e["src_host_id"], e["dst_host_id"]): e for e in loaded_op["graph"]["edges"]}
+    for pivot in loaded_op["topology"]["expected_key_pivots"]:
+        src_id = host_ids[pivot["src"]]
+        dst_id = host_ids[pivot["dst"]]
+        edge = edges_by_pair.get((src_id, dst_id))
+        if edge is None:
+            continue
+        assert edge["confidence"] == "confirmed", (
+            f"{pivot['src']} → {pivot['dst']} has confidence {edge['confidence']}"
+        )
+
+
+def test_no_file_host_is_isolated(loaded_op):
+    """Hosts with no files should appear as nodes but have no edges."""
+    host_ids = loaded_op["host_ids"]
+    no_file_hosts = [h["nickname"] for h in loaded_op["topology"]["hosts"] if not h["files"]]
+    for nickname in no_file_hosts:
+        h_id = host_ids[nickname]
+        connected = [
+            e for e in loaded_op["graph"]["edges"]
+            if e["src_host_id"] == h_id or e["dst_host_id"] == h_id
+        ]
+        assert connected == [], f"{nickname} (no files) has unexpected edges: {connected}"
+
+
+def test_pivotable_users_populated(loaded_op):
+    """Key pivot edges should have pivotable_users entries."""
+    host_ids = loaded_op["host_ids"]
+    edges_by_pair = {(e["src_host_id"], e["dst_host_id"]): e for e in loaded_op["graph"]["edges"]}
+    for pivot in loaded_op["topology"]["expected_key_pivots"]:
+        src_id = host_ids[pivot["src"]]
+        dst_id = host_ids[pivot["dst"]]
+        edge = edges_by_pair.get((src_id, dst_id))
+        if edge is None:
+            continue
+        assert edge.get("pivotable_users"), (
+            f"No pivotable_users on {pivot['src']} → {pivot['dst']}"
+        )
+
+
 def test_all_uploads_return_ok(client):
     """Every file in the random topology manifest must upload without error."""
     topology = json.loads(TOPOLOGY.read_text())

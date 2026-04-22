@@ -1,0 +1,8 @@
+Mar 15 14:20:01 host1 sshd[100]: Accepted publickey for root from 10.0.0.1 port 52341 ssh2: RSA SHA256:aaa111
+2024-03-15T14:21:00 host1 sshd[101]: Accepted password for alice from 10.0.0.2 port 41200 ssh2
+Mar 15 14:22:00 host1 sshd[102]: Failed publickey for invalid user badguy from 10.0.0.3 port 22
+Mar  5 09:15:00 host1 sshd[103]: Accepted publickey for deploy from 10.0.0.4 port 44100 ssh2: RSA SHA256:bbb222
+# This line has no timestamp at all:
+host1 sshd[104]: Accepted password for ops from 10.0.0.5 port 52342 ssh2
+# Non-sshd line that should be skipped:
+Mar 15 14:25:00 host1 sudo[200]: alice : TTY=pts/0 ; COMMAND=/bin/bash

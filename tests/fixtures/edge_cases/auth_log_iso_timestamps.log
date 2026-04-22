@@ -1,0 +1,5 @@
+2024-03-15T14:20:01 webserver sshd[1001]: Accepted publickey for root from 10.0.0.5 port 52341 ssh2: RSA SHA256:abc123def456
+2024-03-15T14:21:00 webserver sshd[1002]: Failed password for admin from 10.0.0.8 port 33211 ssh2
+2024-03-15T14:22:30 webserver sshd[1003]: Accepted password for alice from 10.0.0.9 port 41200 ssh2
+2024-03-15T14:23:00 webserver sshd[1004]: Accepted publickey for deploy from 10.0.0.10 port 44100 ssh2: RSA SHA256:xyz789
+2024-03-15T14:24:00 webserver kernel: random: crng init done

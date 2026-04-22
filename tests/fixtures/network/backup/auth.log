@@ -1,0 +1,2 @@
+Mar 15 14:20:00 backup sshd[1000]: Accepted publickey for backup from 10.10.0.10 port 52341 ssh2: RSA SHA256:phekbRLj/lCIM4eVRHeKC08Zi3nlxpRC/bSlVpyXiLc
+Mar 15 14:20:00 backup sshd[1001]: Accepted publickey for backup from 10.10.0.1 port 52341 ssh2: RSA SHA256:i94wzKsNIamQfEEB6oo3PoPasASDxvWaY7QBiR0X1pY

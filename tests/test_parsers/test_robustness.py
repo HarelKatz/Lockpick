@@ -89,3 +89,17 @@ def test_parser_never_raises(file_type, parser_cls, username, bad_file):
     assert isinstance(result.credentials_found, list)
     assert isinstance(result.connections_found, list)
     assert isinstance(result.hosts_found, list)
+
+
+# ─── Targeted behaviour tests for specific bad fixtures ───────────────────────
+
+def test_auth_log_no_sshd_lines_produces_zero_connections():
+    """no_sshd.log has kernel/cron lines but no sshd entries — zero connections expected."""
+    path = BAD / "no_sshd.log"
+    if not path.exists():
+        pytest.skip("no_sshd.log fixture not present")
+    meta = _metadata("auth_log", None)
+    result = AuthLogParser().parse(path.read_bytes(), meta)
+    assert result.connections_found == [], (
+        f"Expected 0 connections from non-sshd log, got {len(result.connections_found)}"
+    )
