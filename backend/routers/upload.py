@@ -37,6 +37,7 @@ from services.activity import log_activity
 from services.ip_resolver import resolve_ip
 from services.key_utils import infer_key_info
 from services.ssh_pattern import ssh_match
+from ws_manager import broadcast_sync
 
 log = logging.getLogger(__name__)
 
@@ -396,6 +397,7 @@ async def upload_file(
                         f"{new_creds} creds, {new_links} links, {new_connections} connections, "
                         f"{new_hosts} hosts, {new_sudo_rules} sudo rules")
     db.commit()
+    broadcast_sync(op_id, {"type": "update", "entity_type": "host", "op_id": op_id})
 
     # ── 4. Check for new pivot opportunities ─────────────────────────────────
     pivot_messages = _find_pivot_opportunities(db, op_id, all_upload_fingerprints)

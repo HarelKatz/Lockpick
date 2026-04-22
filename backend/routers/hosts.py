@@ -100,6 +100,7 @@ def add_host_ip(host_id: str, body: HostIPCreate, db: Session = Depends(get_db))
     apply_patterns_to_host(db, host)
     db.commit()
     db.refresh(ip)
+    broadcast_sync(host.op_id, {"type": "update", "entity_type": "host", "entity_id": host_id, "op_id": host.op_id})
     return ip
 
 
@@ -111,19 +112,20 @@ def list_host_ips(host_id: str, db: Session = Depends(get_db)):
 
 @router.delete("/hosts/{host_id}/ips/{ip_id}", status_code=204)
 def delete_host_ip(host_id: str, ip_id: str, db: Session = Depends(get_db)):
-    get_host_or_404(host_id, db)
+    host = get_host_or_404(host_id, db)
     ip = db.query(HostIP).filter(HostIP.id == ip_id, HostIP.host_id == host_id).first()
     if not ip:
         raise HTTPException(status_code=404, detail="IP not found")
     db.delete(ip)
     db.commit()
+    broadcast_sync(host.op_id, {"type": "update", "entity_type": "host", "entity_id": host_id, "op_id": host.op_id})
 
 
 # ─── HostUsers ────────────────────────────────────────────────────────────────
 
 @router.post("/hosts/{host_id}/users", response_model=HostUserRead, status_code=201)
 def create_host_user(host_id: str, body: HostUserCreate, db: Session = Depends(get_db)):
-    get_host_or_404(host_id, db)
+    host = get_host_or_404(host_id, db)
     user = HostUser(
         host_id=host_id,
         username=body.username,
@@ -134,6 +136,7 @@ def create_host_user(host_id: str, body: HostUserCreate, db: Session = Depends(g
     db.add(user)
     db.commit()
     db.refresh(user)
+    broadcast_sync(host.op_id, {"type": "update", "entity_type": "host", "entity_id": host_id, "op_id": host.op_id})
     return user
 
 
@@ -145,12 +148,13 @@ def list_host_users(host_id: str, db: Session = Depends(get_db)):
 
 @router.delete("/hosts/{host_id}/users/{user_id}", status_code=204)
 def delete_host_user(host_id: str, user_id: str, db: Session = Depends(get_db)):
-    get_host_or_404(host_id, db)
+    host = get_host_or_404(host_id, db)
     user = db.query(HostUser).filter(HostUser.id == user_id, HostUser.host_id == host_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     db.delete(user)
     db.commit()
+    broadcast_sync(host.op_id, {"type": "update", "entity_type": "host", "entity_id": host_id, "op_id": host.op_id})
 
 
 # ─── SudoRules ────────────────────────────────────────────────────────────────
@@ -176,6 +180,7 @@ def delete_sudo_rule(host_id: str, rule_id: str, db: Session = Depends(get_db)):
                  detail=f"Deleted sudo rule for subject '{rule.subject}' on host '{host.nickname}'")
     db.delete(rule)
     db.commit()
+    broadcast_sync(host.op_id, {"type": "update", "entity_type": "host", "entity_id": host_id, "op_id": host.op_id})
 
 
 # ─── HostNotes ────────────────────────────────────────────────────────────────

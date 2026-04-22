@@ -85,6 +85,7 @@ def update_credential(cred_id: str, body: CredentialUpdate, db: Session = Depend
         cred.comment = body.comment
     db.commit()
     db.refresh(cred)
+    broadcast_sync(cred.op_id, {"type": "update", "entity_type": "credential", "entity_id": cred_id, "op_id": cred.op_id})
     return cred
 
 
@@ -103,7 +104,7 @@ def delete_credential(cred_id: str, db: Session = Depends(get_db)):
 
 @router.post("/credential-links", response_model=CredentialLinkRead, status_code=201)
 def create_credential_link(body: CredentialLinkCreate, db: Session = Depends(get_db)):
-    get_cred_or_404(body.credential_id, db)
+    cred = get_cred_or_404(body.credential_id, db)
     host = db.query(Host).filter(Host.id == body.host_id).first()
     if not host:
         raise HTTPException(status_code=404, detail="Host not found")
@@ -122,6 +123,7 @@ def create_credential_link(body: CredentialLinkCreate, db: Session = Depends(get
                  detail=f"Linked credential to '{host.nickname}'" + (f" @{body.username}" if body.username else ""))
     db.commit()
     db.refresh(link)
+    broadcast_sync(cred.op_id, {"type": "update", "entity_type": "credential", "entity_id": body.credential_id, "op_id": cred.op_id})
     return link
 
 
@@ -151,6 +153,9 @@ def update_credential_link(link_id: str, body: CredentialLinkUpdate, db: Session
         link.file_source = body.file_source
     db.commit()
     db.refresh(link)
+    cred = db.get(Credential, link.credential_id)
+    if cred:
+        broadcast_sync(cred.op_id, {"type": "update", "entity_type": "credential", "entity_id": link.credential_id, "op_id": cred.op_id})
     return link
 
 
@@ -161,8 +166,11 @@ def delete_credential_link(link_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Credential link not found")
     cred = db.get(Credential, link.credential_id)
     op_id = cred.op_id if cred else None
+    cred_id = link.credential_id
     if op_id:
         log_activity(db, op_id, "credential_link.delete", "credential",
-                     entity_id=link.credential_id, detail="Removed credential link")
+                     entity_id=cred_id, detail="Removed credential link")
     db.delete(link)
     db.commit()
+    if op_id:
+        broadcast_sync(op_id, {"type": "update", "entity_type": "credential", "entity_id": cred_id, "op_id": op_id})

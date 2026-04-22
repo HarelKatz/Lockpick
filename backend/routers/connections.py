@@ -94,6 +94,7 @@ def update_connection(connection_id: str, body: ConnectionRecordUpdate, db: Sess
             setattr(record, field, getattr(body, field))
     db.commit()
     db.refresh(record)
+    broadcast_sync(record.op_id, {"type": "update", "entity_type": "connection", "entity_id": connection_id, "op_id": record.op_id})
     return record
 
 
