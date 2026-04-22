@@ -146,7 +146,9 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ## Current Status
 
-**Last completed: Phases 10, 11, 13 + post-release bug fixes (rounds 1–3)**
+**Last completed: Phases 10, 11, 13 + post-release bug fixes + WS broadcast wiring + test suite expansion**
+
+Added `broadcast_sync` to 7 mutation endpoints that were missing it (host IPs/users, credential CRUD, connection update, file upload). Test suite grew from 508 → 551: WS `ConnectionManager` unit tests, `ssh_match()` glob semantics, `AuthLogParser` no-sshd behaviour, random-network scenario with confidence/isolation/pivotable-users assertions. All previously untracked fixture files committed.
 
 **Next: Phase 14 — Engagement Report Export**
 
