@@ -34,4 +34,4 @@ test-services:
 	cd backend && uv run pytest ../tests/test_services/ -q --tb=short
 
 test-scenarios:
-	cd backend && uv run pytest ../tests/test_scenario_network.py ../tests/test_scenario_random_network.py -q --tb=short
+	cd backend && uv run pytest ../tests/test_scenario_network.py ../tests/test_scenario_random_network.py -n auto -q --tb=short
