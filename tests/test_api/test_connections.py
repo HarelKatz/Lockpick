@@ -278,3 +278,60 @@ def test_update_connection_credential_id(client, op, conn, cred):
     )
     assert resp.status_code == 200
     assert resp.json()["credential_id"] == cred["id"]
+
+
+# ─── Priority 20: Connection list with both src_host_id AND dst_host_id ───────
+
+def test_list_connections_filter_both_src_and_dst(client, op, host_a, host_b):
+    """Filtering by both src_host_id and dst_host_id simultaneously is an AND filter."""
+    resp_c = client.post(f"/api/ops/{op['id']}/hosts", json={"nickname": "hostC"})
+    host_c = resp_c.json()
+
+    # Create: A→B and A→C
+    client.post(
+        f"/api/ops/{op['id']}/connections",
+        json={
+            "src_host_id": host_a["id"], "src_ip": "10.0.0.1",
+            "dst_host_id": host_b["id"], "dst_ip": "10.0.0.2",
+            "connection_type": "ssh", "direction_context": "from_dst_logs",
+            "source_file": "auth.log",
+        },
+    )
+    client.post(
+        f"/api/ops/{op['id']}/connections",
+        json={
+            "src_host_id": host_a["id"], "src_ip": "10.0.0.1",
+            "dst_host_id": host_c["id"], "dst_ip": "10.0.0.3",
+            "connection_type": "ssh", "direction_context": "from_dst_logs",
+            "source_file": "auth.log",
+        },
+    )
+
+    # Filter src=A AND dst=B → should return exactly 1 record (A→B)
+    resp = client.get(
+        f"/api/ops/{op['id']}/connections"
+        f"?src_host_id={host_a['id']}&dst_host_id={host_b['id']}"
+    )
+    assert resp.status_code == 200
+    results = resp.json()
+    assert len(results) == 1
+    assert results[0]["src_host_id"] == host_a["id"]
+    assert results[0]["dst_host_id"] == host_b["id"]
+
+    # Filter src=A AND dst=C → should return exactly 1 record (A→C)
+    resp2 = client.get(
+        f"/api/ops/{op['id']}/connections"
+        f"?src_host_id={host_a['id']}&dst_host_id={host_c['id']}"
+    )
+    assert resp2.status_code == 200
+    results2 = resp2.json()
+    assert len(results2) == 1
+    assert results2[0]["dst_host_id"] == host_c["id"]
+
+    # Filter src=B AND dst=A → no matching record → empty result
+    resp3 = client.get(
+        f"/api/ops/{op['id']}/connections"
+        f"?src_host_id={host_b['id']}&dst_host_id={host_a['id']}"
+    )
+    assert resp3.status_code == 200
+    assert resp3.json() == []
