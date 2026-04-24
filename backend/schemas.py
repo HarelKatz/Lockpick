@@ -389,7 +389,7 @@ class ExportHostIP(BaseModel):
     id: str
     ip_address: str
     source: str
-    addr_type: str
+    addr_type: str = "ipv4"
     first_seen_at: datetime
 
 

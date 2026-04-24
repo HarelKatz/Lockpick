@@ -222,5 +222,5 @@ def import_op(body: ImportRequest, db: Session = Depends(get_db)):
 
     log_activity(db, new_op_id, "op.import", "operation", entity_id=new_op_id)
     db.commit()
-    broadcast_sync(new_op_id, {"type": "update", "entity_type": "operation", "op_id": new_op_id})
+    broadcast_sync(new_op_id, {"type": "update", "entity_type": "op", "op_id": new_op_id})
     return ImportResponse(op_id=new_op_id, op_name=new_op_name)
