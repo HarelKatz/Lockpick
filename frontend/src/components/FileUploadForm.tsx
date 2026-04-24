@@ -310,6 +310,7 @@ function QueueItem({ item, onRemove, onTypeChange, onUsernameChange, onRetry }: 
             s.new_credentials > 0 && `${s.new_credentials} cred${s.new_credentials !== 1 ? 's' : ''}`,
             s.new_connections > 0 && `${s.new_connections} conn${s.new_connections !== 1 ? 's' : ''}`,
             s.new_hosts > 0 && `${s.new_hosts} host${s.new_hosts !== 1 ? 's' : ''}`,
+            s.new_sudo_rules > 0 && `${s.new_sudo_rules} sudo rule${s.new_sudo_rules !== 1 ? 's' : ''}`,
           ].filter(Boolean).join(' · ') || 'No new data'}
         </p>
       )}

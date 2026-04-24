@@ -109,6 +109,7 @@ async def upload_file(
             "new_credential_links": result["new_credential_links"],
             "new_connections": result["new_connections"],
             "new_hosts": result["new_hosts"],
+            "new_sudo_rules": result["new_sudo_rules"],
             "warnings": result["warnings"],
         },
         "pivot_opportunities": pivot_messages,

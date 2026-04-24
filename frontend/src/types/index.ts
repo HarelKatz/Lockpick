@@ -333,6 +333,7 @@ export interface UploadSummary {
   new_credential_links: number
   new_connections: number
   new_hosts: number
+  new_sudo_rules: number
   warnings: string[]
 }
 

@@ -123,6 +123,7 @@ function ImportResultView({ result }: { result: ArchiveImportResult }) {
         <span>{result.totals.new_credential_links} links</span>
         <span>{result.totals.new_connections} connections</span>
         <span>{result.totals.new_hosts} hosts</span>
+        <span>{result.totals.new_sudo_rules} sudo rules</span>
       </div>
       {result.pivot_opportunities.length > 0 && (
         <div className={styles.archivePivots}>

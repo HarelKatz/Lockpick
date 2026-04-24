@@ -314,6 +314,45 @@ def test_import_archive_oversized_rejected(client, monkeypatch):
     assert r.status_code == 413
 
 
+def test_import_archive_uncompressed_cap_boundary(client, monkeypatch):
+    """Exactly-at-cap is allowed; one-byte-over is rejected. Single-file case."""
+    # 512-byte file is exactly at cap → must pass
+    monkeypatch.setattr("config.settings.archive_import_max_uncompressed_bytes", 512)
+    op_id = _create_op(client)
+    host_id = _create_host(client, op_id)
+    tarball = _build_tarball(
+        {"etc_hosts__.txt": b"x" * 512},
+        include_manifest=False,
+    )
+    r = client.post(
+        f"/api/ops/{op_id}/hosts/{host_id}/import-archive",
+        files={"file": ("t.tar.gz", tarball, "application/gzip")},
+    )
+    assert r.status_code == 200, r.text
+
+
+def test_import_archive_uncompressed_cap_sums_across_members(client, monkeypatch):
+    """Individual members under cap but sum trips it → rejected."""
+    monkeypatch.setattr("config.settings.archive_import_max_uncompressed_bytes", 1024)
+    op_id = _create_op(client)
+    host_id = _create_host(client, op_id)
+    # Three 512-byte members → total 1536, exceeds 1024
+    tarball = _build_tarball(
+        {
+            "etc_hosts__.txt": b"a" * 512,
+            "auth_log__.txt": b"b" * 512,
+            "passwd__.txt": b"c" * 512,
+        },
+        include_manifest=False,
+    )
+    r = client.post(
+        f"/api/ops/{op_id}/hosts/{host_id}/import-archive",
+        files={"file": ("t.tar.gz", tarball, "application/gzip")},
+    )
+    assert r.status_code == 413
+    assert "uncompressed" in r.json()["detail"].lower()
+
+
 def test_import_archive_gzip_bomb_rejected(client, monkeypatch):
     """A tarball whose compressed size fits under the limit but whose
     uncompressed members would blow past the uncompressed cap must be
@@ -362,6 +401,31 @@ def test_import_archive_unknown_op_returns_404(client):
 
 
 # ─── Activity log + pivot ────────────────────────────────────────────────────
+
+def test_import_archive_alias_same_host_no_warning(client):
+    """Re-importing an /etc/hosts line whose alias already points to the
+    SAME host (idempotent round-trip) must NOT produce a conflict warning."""
+    op_id = _create_op(client)
+    host_id = _create_host(client, op_id)
+    # Seed with 10.0.0.7 + alias realbox
+    seed = b"10.0.0.7 realbox\n"
+    r0 = client.post(
+        f"/api/ops/{op_id}/upload",
+        data={"file_type": "etc_hosts", "host_id": host_id},
+        files={"file": ("etc_hosts", seed, "text/plain")},
+    )
+    assert r0.status_code == 200
+    # Re-upload the identical line via archive
+    tarball = _build_tarball({"etc_hosts__.txt": seed})
+    r1 = client.post(
+        f"/api/ops/{op_id}/hosts/{host_id}/import-archive",
+        files={"file": ("t.tar.gz", tarball, "application/gzip")},
+    )
+    assert r1.status_code == 200
+    entry = next(e for e in r1.json()["per_file"] if e["filename"] == "etc_hosts__.txt")
+    assert not any("already bound to another host" in w for w in entry["summary"]["warnings"]), \
+        f"unexpected alias-conflict warning: {entry['summary']['warnings']}"
+
 
 def test_import_archive_alias_conflict_surfaces_warning(client):
     """When an /etc/hosts line's hostname already belongs to a DIFFERENT

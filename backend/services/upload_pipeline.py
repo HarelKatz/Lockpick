@@ -176,6 +176,12 @@ def process_single_file(
     the host exists in the given op).
 
     Raises `ParserCrashError` if the parser itself throws an exception.
+
+    Returns a dict with per-file counters and a `warnings` list. The
+    `warnings` list carries BOTH parser-generated entries (`ParseResult.
+    warnings`) AND pipeline-generated entries (e.g. alias-conflict skips
+    from 1b). Callers should not assume a particular source — these are
+    all operator-visible messages.
     """
     if file_type not in PARSER_REGISTRY:
         return {
