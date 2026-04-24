@@ -888,11 +888,14 @@ export default function Workspace({ op, onBack }: Props) {
         </EditModal>
       )}
 
-      {editLink && (
+      {editLink && (() => {
+        const editLinkCred = credentials.find(c => c.id === editLink.credential_id)
+        if (!editLinkCred) { setEditLink(null); return null }
+        return (
         <EditModal title="Edit Credential Link" onClose={() => setEditLink(null)}>
           <EditCredentialLinkForm
             link={editLink}
-            credential={credentials.find(c => c.id === editLink.credential_id)!}
+            credential={editLinkCred}
             host={hosts.find(h => h.id === editLink.host_id)}
             onSaved={updated => {
               setLinks(prev => prev.map(l => l.id === updated.id ? updated : l))
@@ -901,7 +904,8 @@ export default function Workspace({ op, onBack }: Props) {
             onClose={() => setEditLink(null)}
           />
         </EditModal>
-      )}
+        )
+      })()}
 
       {editConn && (
         <EditModal title="Edit Connection" onClose={() => setEditConn(null)}>

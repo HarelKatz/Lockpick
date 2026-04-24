@@ -48,6 +48,19 @@ export const statusColors: Record<string, string> = {
 }
 
 
+// ── Graph canvas constants (Canvas API cannot read CSS variables) ──────────────
+// Confidence edge colors — must match theme.confirmed / observed / indicator
+export const CONFIDENCE_CONFIRMED = '#3fb950'  // = theme.confirmed
+export const CONFIDENCE_OBSERVED  = '#d29922'  // = theme.observed
+export const CONFIDENCE_MUTED     = '#6e7681'  // = theme.indicator / textMuted
+
+// Node fill colors for special states
+export const NODE_FILL_HOSTILE  = '#2d1f1f'    // path-highlighted node fill (warm dark)
+export const NODE_FILL_FRIENDLY = '#1a2332'    // default node fill (cool dark)
+
+// Node label color
+export const NODE_LABEL_COLOR = '#e6edf3'      // slightly brighter than textPrimary for canvas legibility
+
 export const STATUS_LABELS: Record<string, string> = {
   entry_point:  'Entry Point',
   compromised:  'Compromised',

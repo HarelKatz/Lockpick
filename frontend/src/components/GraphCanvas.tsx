@@ -7,10 +7,15 @@
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
 import ForceGraph2D from 'react-force-graph-2d'
+import type { ForceGraphMethods, GraphData } from 'react-force-graph-2d'
 import * as d3Force from 'd3-force'
 import dagre from '@dagrejs/dagre'
 import type { GraphEdge, GraphNode, GraphResponse } from '../types'
-import { theme, statusColors } from '../theme'
+import {
+  theme, statusColors,
+  CONFIDENCE_CONFIRMED, CONFIDENCE_OBSERVED, CONFIDENCE_MUTED,
+  NODE_FILL_HOSTILE, NODE_FILL_FRIENDLY, NODE_LABEL_COLOR,
+} from '../theme'
 import styles from './GraphCanvas.module.css'
 
 // ── Exported types (consumed by GraphView) ─────────────────────────────────────
@@ -57,9 +62,9 @@ function computeEdgeLabel(e: GraphEdge): string {
 }
 
 function confidenceColor(conf: string): string {
-  if (conf === 'confirmed') return '#3fb950'
-  if (conf === 'observed')  return '#d29922'
-  return '#6e7681'
+  if (conf === 'confirmed') return CONFIDENCE_CONFIRMED
+  if (conf === 'observed')  return CONFIDENCE_OBSERVED
+  return CONFIDENCE_MUTED
 }
 
 // ── Layout algorithms ───────────────────────────────────────────────────────────
@@ -186,8 +191,7 @@ export default function GraphCanvas({
     return () => ro.disconnect()
   }, [])
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const graphRef = useRef<any>(null)
+  const graphRef = useRef<ForceGraphMethods | undefined>(undefined)
   const fitNeededRef = useRef(false)
 
   // Saved node positions (top-left coords, compatible with layout algorithms)
@@ -407,12 +411,12 @@ export default function GraphCanvas({
     ctx.beginPath()
     ctx.arc(x, y, r, 0, 2 * Math.PI)
     if (pathHighlight) {
-      ctx.fillStyle = '#2d1f1f'
+      ctx.fillStyle = NODE_FILL_HOSTILE
     } else if (status && statusColors[status]) {
       // Use a darkened tint of the status color as fill
-      ctx.fillStyle = '#1a2332'
+      ctx.fillStyle = NODE_FILL_FRIENDLY
     } else {
-      ctx.fillStyle = isSelected ? '#1f2d3d' : '#1a2332'
+      ctx.fillStyle = isSelected ? '#1f2d3d' : NODE_FILL_FRIENDLY
     }
     ctx.fill()
 
@@ -432,7 +436,7 @@ export default function GraphCanvas({
     ctx.font = `${fontSize}px sans-serif`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'top'
-    ctx.fillStyle = '#e6edf3'
+    ctx.fillStyle = NODE_LABEL_COLOR
     ctx.fillText(label, x, y + r + 5 / globalScale)
 
     ctx.globalAlpha = 1
@@ -587,7 +591,7 @@ export default function GraphCanvas({
           width={dims.w}
           height={dims.h}
           backgroundColor="#0d1117"
-          graphData={fgData as any}
+          graphData={fgData as GraphData<FGNode, FGLink>}
           nodeCanvasObject={drawNode}
           nodeCanvasObjectMode={() => 'replace'}
           nodePointerAreaPaint={drawNodeHitArea}

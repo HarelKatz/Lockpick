@@ -101,7 +101,7 @@ export interface Host {
   op_id: string
   nickname: string
   comment: string | null
-  status: string | null
+  status: HostStatus | null
   created_at: string
   ips: HostIP[]
   users: HostUser[]
