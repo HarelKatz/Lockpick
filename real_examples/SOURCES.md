@@ -22,9 +22,16 @@ Organized by `file_type` (matching `backend/parsers/registry.py` keys).
 - `saltstack_integration_command_prefix` — saltstack/salt `tests/integration/files/ssh/authorized_keys` (single entry with `command="..."` option prefix — important edge case)
 - `saltstack_git_pillar_user` — saltstack/salt `tests/integration/files/file/base/git_pillar/ssh/user/files/authorized_keys`
 
-### `bash_history/` — 2 files
+### `bash_history/` — 8 files
+
+Benign / numbered-history variant (2):
 - `jc_ubuntu_18_04_history`, `jc_centos_7_7_history` — kellyjonbrazil/jc `tests/fixtures/{ubuntu-18.04,centos-7.7}/history.out`
-  > **Note:** these are the OUTPUT of the `history` shell builtin (numbered lines), not raw `~/.bash_history` files. The parser's regex tolerates both formats. Real `.bash_history` files are private by convention and rarely committed publicly.
+  > These are the OUTPUT of the `history` shell builtin (numbered lines), not raw `~/.bash_history` files. The parser's regex tolerates both formats.
+
+Real attacker sessions from Cowrie honeypots (6):
+- `cowrie_2020_03_cc95d998`, `cowrie_2020_03_25938f9d` — extracted from jasonmpittman/cowrie-log-analyzer `import/cowrie.json.2020-03-19` (Mirai-style payload delivery)
+- `cowrie_2024_za_sensor_0bb8edce`, `cowrie_2024_za_sensor_491748bb`, `cowrie_2024_za_sensor_40308dc3`, `cowrie_2024_za_sensor_c6f9f3c5` — extracted from EfeEmirYuce/Cowrie-Honeypot-Log-Analysis-Engine `logs/cowrie_[1,3].json` (2024 South Africa sensor; busybox-recon + tftp/wget fetch patterns)
+  > Extracted, not synthesized: each file is the verbatim `input` fields from every `cowrie.command.input` event in a single attacker session, one command per line. This is the canonical `.bash_history` representation of what that attacker actually typed.
 
 ### `etc_hosts/` — 5 files
 - `centos_hosts` — original (pre-existing)
@@ -126,18 +133,19 @@ All from dotfile repos: helmuthdu, tanghaibao, sporkmonger, miguelmota, gist/rch
 ### `zshrc/` — 4 files
 From dotfile repos: driesvints, wookayin, olivernn, ryanb.
 
-### `network_interfaces/` — 3 files
-- `fullmetalbrackets_static` — gist/fullmetalbrackets/4cc132571a2663c481b7c197d3681c78
-- `sebw_debian_example` — gist/sebw/6018342
-- `und3fined_sample` — gist/und3fined/e3b7eb511703ab7788dc15ae08254a7c
+### `network_interfaces/` — 5 files
+- `sebw_debian_example` — gist/sebw/6018342 (original)
+- `ifupdown_examples_network_interfaces` — Debian ifupdown `examples/network-interfaces` (canonical annotated template)
+- `ifupdown_testcase_multi_iface`, `ifupdown_testcase_allow_hotplug`, `ifupdown_testcase_hwaddress` — Debian ifupdown `tests/linux/testcase.*` (multi-interface test fixtures)
+  > Round 3 audit removed `fullmetalbrackets_static` (markdown tutorial) and `und3fined_sample` (363-line markdown guide).
 
 ### `netplan/` — 8 files
 All from canonical/netplan upstream `examples/`: `bridge`, `vlan`, `bonding`, `static`, `dhcp`, `wireless`, `modem`, `vrf`.
 
-### `ifcfg/` — 3 files
-- `coffman21_eth0` — gist/coffman21/a8df8d4667de3cb91d5cd86ce3ee0c52
-- `rafaeltuelho_rhel7_static` — gist/rafaeltuelho/791d7838a9ccca8541d2
-- `mjf_rhel_memos` — gist/mjf/8f6cdb6113316280e01c2b44ea8a80d0
+### `ifcfg/` — 9 files
+- `coffman21_eth0` — gist/coffman21/a8df8d4667de3cb91d5cd86ce3ee0c52 (original)
+- 8 fixtures from NetworkManager/NetworkManager `src/core/settings/plugins/ifcfg-rh/tests/network-scripts/`: `nm_test_wired_static`, `nm_test_wired_ipv4_manual`, `nm_test_onboot_no`, `nm_test_bond_main`, `nm_test_bridge_main`, `nm_test_dns_options`, `nm_aliasem1`, `nm_netmask_1`
+  > Round 3 audit removed `rafaeltuelho_rhel7_static` (markdown snippet) and `mjf_rhel_memos` (.rst memo).
 
 ---
 
@@ -153,10 +161,10 @@ parser library that maintains clean real-command-output fixtures per distro.
 - `jc_osx_1014_ifconfig`, `jc_osx_1014_ifconfig2`, `jc_osx_1011_ifconfig`, `jc_osx_1011_ifconfig2` — jc macOS variants
 - `jc_freebsd12_ifconfig`, `jc_freebsd12_ifconfig2`, `jc_freebsd12_ifconfig3`, `jc_freebsd12_ifconfig4` — jc FreeBSD 12 (tests extra-field handling)
 
-### `ip_route/` — 8 files (jc)
+### `ip_route/` — 7 files (jc)
 `jc_ubuntu_ip_route`, `jc_centos_ip_route`, `jc_ubuntu_route`, `jc_ubuntu_route_vn`,
-`yuriskinfo_cheatsheet`, `jc_route_6_ipv6`, `jc_route_6_n_ipv6`, `jc_nixos_route_ee`
-(IPv6 + `route -ee` variants).
+`jc_route_6_ipv6`, `jc_route_6_n_ipv6`, `jc_nixos_route_ee` (IPv6 + `route -ee` variants).
+  > Round 3 audit removed `yuriskinfo_cheatsheet` — 285-line "Linux ip route command reference" documentation.
 
 ### `ip_neigh/` — 0 files
 jc doesn't have `ip_neigh` fixtures; couldn't find raw samples publicly.
@@ -167,12 +175,13 @@ Original 5 (`jc_ubuntu_arp*`, `jc_centos_arp*`) plus:
 - `jc_osx_1014_arp_a`, `jc_osx_1014_arp_a2`, `jc_osx_1011_arp_a` — macOS format variants
 - `jc_linux_proc_net_arp` — `/proc/net/arp` raw format
 
-### `netstat/` — 24 files
+### `netstat/` — 21 files
 Original 11 (ubuntu + generic) plus:
 - `jc_centos_netstat`, `jc_centos_netstat_l`, `jc_centos_netstat_p` — CentOS 7.7 variants
 - `jc_ubuntu_netstat_r`, `jc_ubuntu_netstat_rnee`, `jc_ubuntu_netstat_i` — more ubuntu flag variants
 - `jc_osx_netstat`, `jc_osx_netstat_An`, `jc_osx_netstat_Abn`, `jc_osx_netstat_r`, `jc_osx_netstat_rnl`, `jc_osx_netstat_i` — macOS format variants (different column layout)
 - `jc_fedora32_netstat` — Fedora 32 variant
+  > Round 3 audit removed 3 gist-sourced entries: `sdwheeler_parse_sample` (PowerShell function), `jcohen66_examples` ("here are several examples..." narrative), `ruichen0101_sample` (single Python `sconn()` representation, not netstat output).
 
 ### `ss_output/` — 4 files (jc)
 `jc_ubuntu_ss_a`, `jc_ubuntu_ss_tulpen`, `jc_generic_ss_wide`, `jc_centos_ss_a`.
@@ -189,16 +198,17 @@ Original 11 (ubuntu + generic) plus:
 - `yoramvandevelde_init_rules` — yoramvandevelde/nftables-example
 - `aborrero_ruleset`, `aborrero_filter_forward`, `aborrero_filter_input`, `aborrero_filter_output`, `aborrero_filter_sets` — aborrero/nftables-managed-with-git `nft_ruleset/` (split-file production-style ruleset)
 
-### `ps_output/` — 9 files
+### `ps_output/` — 8 files
 - `jc_ubuntu_ps_axu`, `jc_ubuntu_ps_ef`, `jc_centos_ps_axu`, `jc_centos_ps_ef`
 - `jc_osx_1014_ps_axu`, `jc_osx_1014_ps_ef`, `jc_osx_1011_ps_axu`, `jc_osx_1011_ps_ef` — macOS format variants
-- `cahna_ps_aux_parse` — gist/cahna/43a1a3ff4d075bcd71f9d7120037a501 (short)
+  > Round 3 audit removed `cahna_ps_aux_parse` — 24-line Python script, not `ps aux` output.
 
 ### `env_output/` — 3 files (jc)
 `jc_centos_env`, `jc_ubuntu_env`, `jc_generic_multiline`.
 
-### `docker_ps/` — 4 files
-All from gists: jimklo, sudo-bmitch, deanpeterson, ipedrazas.
+### `docker_ps/` — 1 file
+- `deanpeterson_ps_a_output` — 97-line real `docker ps -a` output (with `[root@host ~]#` prompt prefix) from an openshift host
+  > Round 3 audit removed 3 gist entries: `ipedrazas_names_ips` (2-line bash function), `jimklo_output` (9-line "Started with command" preamble), `sudo_bmitch_formatting` (84-line markdown tutorial with docker ps in fenced blocks).
 
 ### `docker_network/` — 0 files (pending)
 All entries from round 1/2 were removed: the docker CLI docs `.md` file was tutorial, and the `docker inspect CONTAINER` gists produced a different JSON shape than `docker network inspect NETWORK` (no `IPAM.Config`/`Containers` at the top level). No canonical `docker network inspect` fixtures located in public repos; Phase 18 parser will need custom samples.
@@ -222,10 +232,9 @@ Both round-1 gist entries (`devops_school_kubectl_ref`, `so0k_kubectl_output`) w
 - `technoweenie_github` — gist/technoweenie/1072829
 - `sahilsk_git` — gist/sahilsk/ce21c39a6c2dbc2cd984
 
-### `pgpass/` — 2 files
-- `sabman_sample` — gist/sabman/978352
-- `Fmstrat_aliased` — gist/Fmstrat/ea6287a6d60e3e5f6c73e3bdd2f62331
-  > Round 2 audit removed `vielhuber_sample` — "best practice linux" tutorial with snippets, not a raw `.pgpass` file.
+### `pgpass/` — 1 file
+- `Fmstrat_aliased` — gist/Fmstrat/ea6287a6d60e3e5f6c73e3bdd2f62331 (uses non-standard `alias:host:port:db:user:pass` prefix but parseable as `host:port:db:user:pass` after prefix strip)
+  > Round 2 removed `vielhuber_sample` (tutorial). Round 3 removed `sabman_sample` (blog post intro).
 
 ### `mysql_config/` — 5 files
 - `oinume_mycnf` — gist/oinume/fc9b72bd8b14ab07e94c
@@ -263,9 +272,9 @@ Both round-1 gist entries (`devops_school_kubectl_ref`, `so0k_kubectl_output`) w
 - `rapidpages_env_example` — rapidpages/rapidpages `.env.example`
 - `ansible_types_env` — ansible/ansible `test/integration/targets/config/files/types.env`
 
-### `docker_config/` — 2 files
-- `piersharding_auth` — gist/piersharding/44cbd66f8aeebfd5abd02fb9c8f753d7
-- `browol_manual_gen` — gist/browol/6f256b4d1e880cb5692f16acab0e870f
+### `docker_config/` — 1 file
+- `docker_cli_e2e_test_config.json` — docker/cli `e2e/context/testdata/test-dockerconfig/config.json` (canonical `.docker/config.json` with `auths`, `HttpHeaders`, `credsStore`)
+  > Round 3 audit removed both gist entries: `piersharding_auth` (bash script that generates config.json) and `browol_manual_gen` ("Using the commands below..." markdown tutorial).
 
 ### `git_credentials/` — 2 files
 - `git_upstream_test_format_basic`, `git_upstream_test_format_store` — canonical `https://user:pass@host` format extracted from git/git `t/t0302-credential-store.sh` test suite.
@@ -287,9 +296,12 @@ Both round-1 gist entries (`devops_school_kubectl_ref`, `so0k_kubectl_output`) w
 | `wtmp` | 1 | binary format; only LastLog-Audit publishes raw `.wtmp` files publicly |
 | `messages` | 1 | RHEL/CentOS variant of auth log; the `auth_log/` corpus transfers |
 | `rclone_config` | 1 | canonical `rclone.conf` is rare publicly; only one clean sample located |
-| `aws_config` | 1 | see above |
-| `aws_credentials` | 1 | see above |
+| `aws_config` | 1 | only one canonical sample located |
+| `aws_credentials` | 1 | only one canonical sample located |
 | `kubeconfig` | 1 | public kubeconfigs nearly always redacted or embedded in tutorials |
+| `pgpass` | 1 | most public "samples" are tutorial prose |
+| `docker_config` | 1 | only one canonical sample (docker/cli e2e test); gists tend to be generator scripts |
+| `docker_ps` | 1 | most "docker ps sample output" gists are markdown tutorials |
 | `docker_network` | 0 | canonical `docker network inspect NETWORK` JSON not located in public repos |
 | `kubectl_pods` | 0 | canonical `kubectl get pods` output not located in public repos |
 
@@ -300,6 +312,9 @@ These gaps are genuine — either the file is private by convention (history fil
 ## Primary upstream sources (attribution)
 
 - [kellyjonbrazil/jc](https://github.com/kellyjonbrazil/jc) — MIT — ~110 test fixtures across distros (Ubuntu 16/18/20, CentOS 7/8, macOS 10.11/10.14, FreeBSD 12, AIX 7.1, Fedora 32, NixOS)
+- [NetworkManager/NetworkManager](https://gitlab.freedesktop.org/NetworkManager/NetworkManager) — GPL-2.0 — RHEL ifcfg test fixtures (`plugins/ifcfg-rh/tests/network-scripts/`)
+- [Debian ifupdown](https://salsa.debian.org/debian/ifupdown) — GPL-2.0 — `/etc/network/interfaces` canonical examples and testcases
+- [docker/cli](https://github.com/docker/cli) — Apache-2.0 — e2e test `.docker/config.json`
 - [logpai/loghub](https://github.com/logpai/loghub) — CC-BY-NC-SA-2.0 — anonymized log corpus
 - [franckferman/LastLog-Audit](https://github.com/franckferman/LastLog-Audit) — binary lastlog + wtmp samples
 - [securityjoes/MasterParser](https://github.com/securityjoes/MasterParser) — DFIR auth.log sample
@@ -308,6 +323,8 @@ These gaps are genuine — either the file is private by convention (history fil
 - [ansible/ansible](https://github.com/ansible/ansible) — GPL-3.0 — `existing_known_hosts` (hashed + cert-authority entries), OpenBSD sshd_config, types.env
 - [saltstack/salt](https://github.com/saltstack/salt) — Apache-2.0 — authorized_keys (with `command="..."` prefix), sshd_config (Debian pkg variant), known_hosts, hosts
 - [cowrie/cowrie](https://github.com/cowrie/cowrie) — BSD — honeypot `honeyfs/etc/passwd` + `shadow` (fake but realistic)
+- [jasonmpittman/cowrie-log-analyzer](https://github.com/jasonmpittman/cowrie-log-analyzer) — real March 2020 Cowrie attacker session JSON (extracted to `bash_history/cowrie_2020_*`)
+- [EfeEmirYuce/Cowrie-Honeypot-Log-Analysis-Engine](https://github.com/EfeEmirYuce/Cowrie-Honeypot-Log-Analysis-Engine) — ~130 MB of 2024 Cowrie JSON logs from a South Africa sensor (selected sessions extracted to `bash_history/cowrie_2024_*`)
 - [canonical/netplan](https://github.com/canonical/netplan) — GPL-3.0 — network YAML examples
 - [sudo-project/sudo](https://github.com/sudo-project/sudo) — ISC — upstream sudoers example
 - [endlessm/base-passwd](https://github.com/endlessm/base-passwd) — GPL-2.0 — Debian passwd.master

