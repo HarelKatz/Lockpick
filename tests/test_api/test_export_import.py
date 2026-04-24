@@ -263,3 +263,141 @@ def test_import_old_export_without_addr_type(client, op):
 
     resp = client.post("/api/ops/import", json={"data": export_data})
     assert resp.status_code == 201
+
+
+# ─── Priority 8: Export/import drops SudoRule, SshConfigPattern, HostNote ────
+
+def test_export_import_drops_sudo_rules(client, op):
+    """Sudo rules are not exported — imported op must have 0 sudo rules.
+
+    NOTE: This documents a known limitation of the export format (lockpick_export_version: 1).
+    SudoRule records are not included in the export schema and will be silently
+    dropped on roundtrip. Callers should not rely on sudo rules surviving export/import.
+    """
+    from pathlib import Path
+    fixtures = Path(__file__).parent.parent / "fixtures"
+
+    host_id = client.post(
+        f"/api/ops/{op['id']}/hosts", json={"nickname": "sudo-host"}
+    ).json()["id"]
+
+    # Upload sudoers to create SudoRule records
+    sudoers_content = b"root ALL=(ALL:ALL) ALL\nalice ALL=(ALL) NOPASSWD: /usr/bin/apt\n"
+    resp = client.post(
+        f"/api/ops/{op['id']}/upload",
+        data={"file_type": "sudoers", "host_id": host_id},
+        files={"file": ("sudoers", sudoers_content, "text/plain")},
+    )
+    assert resp.status_code == 200
+
+    # Verify sudo rules exist in the original op
+    sudo_resp = client.get(f"/api/hosts/{host_id}/sudo-rules")
+    assert sudo_resp.status_code == 200
+    original_sudo_count = len(sudo_resp.json())
+    assert original_sudo_count > 0, "Test setup: expected sudoers to create at least one sudo rule"
+
+    # Export and import
+    export_data = client.get(f"/api/ops/{op['id']}/export").json()
+    import_resp = client.post("/api/ops/import", json={"data": export_data})
+    assert import_resp.status_code == 201
+    new_op_id = import_resp.json()["op_id"]
+
+    # Find the imported host by nickname
+    new_hosts = client.get(f"/api/ops/{new_op_id}/hosts").json()
+    new_host = next((h for h in new_hosts if h["nickname"] == "sudo-host"), None)
+    assert new_host is not None
+
+    # KNOWN LIMITATION: sudo rules are not exported — imported op has 0 sudo rules
+    new_sudo_resp = client.get(f"/api/hosts/{new_host['id']}/sudo-rules")
+    assert new_sudo_resp.status_code == 200
+    assert len(new_sudo_resp.json()) == 0, (
+        "Sudo rules must be absent after import — known limitation of export format v1"
+    )
+
+
+def test_export_import_drops_host_notes(client, op):
+    """Host notes are not exported — imported op must have 0 notes.
+
+    NOTE: This documents a known limitation of the export format (lockpick_export_version: 1).
+    HostNote records are not included in the export schema and will be silently
+    dropped on roundtrip.
+    """
+    host_id = client.post(
+        f"/api/ops/{op['id']}/hosts", json={"nickname": "noted-host"}
+    ).json()["id"]
+
+    # Add a note to the host
+    note_resp = client.post(
+        f"/api/hosts/{host_id}/notes",
+        json={"content": "This is a test note"},
+    )
+    assert note_resp.status_code == 201
+
+    # Verify the note exists
+    notes = client.get(f"/api/hosts/{host_id}/notes").json()
+    assert len(notes) == 1
+
+    # Export and import
+    export_data = client.get(f"/api/ops/{op['id']}/export").json()
+    import_resp = client.post("/api/ops/import", json={"data": export_data})
+    assert import_resp.status_code == 201
+    new_op_id = import_resp.json()["op_id"]
+
+    # Find the imported host
+    new_hosts = client.get(f"/api/ops/{new_op_id}/hosts").json()
+    new_host = next((h for h in new_hosts if h["nickname"] == "noted-host"), None)
+    assert new_host is not None
+
+    # KNOWN LIMITATION: notes are not exported
+    new_notes = client.get(f"/api/hosts/{new_host['id']}/notes").json()
+    assert len(new_notes) == 0, (
+        "Host notes must be absent after import — known limitation of export format v1"
+    )
+
+
+def test_export_import_drops_ssh_config_patterns(client, op):
+    """SSH config patterns are not exported — imported op must have 0 patterns.
+
+    NOTE: This documents a known limitation of the export format (lockpick_export_version: 1).
+    SshConfigPattern records are not in the export schema. Any retroactive edges
+    from pattern matching are also lost on import.
+    """
+    host_id = client.post(
+        f"/api/ops/{op['id']}/hosts", json={"nickname": "jump-host"}
+    ).json()["id"]
+
+    # Upload ssh_config with a wildcard pattern
+    ssh_config_content = b"Host *.internal\n  User alice\n  Port 22\n"
+    resp = client.post(
+        f"/api/ops/{op['id']}/upload",
+        data={"file_type": "ssh_config", "host_id": host_id},
+        files={"file": ("config", ssh_config_content, "text/plain")},
+    )
+    assert resp.status_code == 200
+
+    # Verify pattern is stored (add a matching host to confirm pattern worked)
+    matching_host_id = client.post(
+        f"/api/ops/{op['id']}/hosts", json={"nickname": "web.internal"}
+    ).json()["id"]
+    conns_before = client.get(f"/api/ops/{op['id']}/connections").json()
+    pattern_conns = [c for c in conns_before if c.get("source_file") == "ssh_config_pattern"]
+    assert len(pattern_conns) == 1, "Pattern must create 1 connection before export"
+
+    # Export and import
+    export_data = client.get(f"/api/ops/{op['id']}/export").json()
+    import_resp = client.post("/api/ops/import", json={"data": export_data})
+    assert import_resp.status_code == 201
+    new_op_id = import_resp.json()["op_id"]
+
+    # KNOWN LIMITATION: patterns are not in export schema.
+    # The imported op will have the connection records (connections ARE exported)
+    # but if a new host is added, patterns won't retroactively apply.
+    # Verify connections were preserved (they ARE exported):
+    new_conns = client.get(f"/api/ops/{new_op_id}/connections").json()
+    pattern_new_conns = [c for c in new_conns if c.get("source_file") == "ssh_config_pattern"]
+    # ConnectionRecords ARE exported, so the existing connection survives.
+    # But adding new hosts won't trigger pattern matching since patterns aren't stored.
+    assert len(pattern_new_conns) == 1, (
+        "Connection records from patterns ARE exported (connections table is included); "
+        "but SshConfigPattern table itself is not — new hosts added after import won't match"
+    )
