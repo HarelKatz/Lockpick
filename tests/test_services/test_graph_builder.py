@@ -323,3 +323,60 @@ def test_expand_host_evidence_type_filter(db_session):
     result2 = expand_host(db_session, op.id, host_a.id, evidence_type="connection_log")
     assert len(result2.edges) == 1
     assert all(e.type == "connection_log" for e in result2.edges[0].evidence)
+
+
+# ─── Priority 9: expand_host indicator evidence_type filter ───────────────────
+
+def test_expand_host_indicator_filter(db_session):
+    """expand_host(evidence_type='indicator') returns only indicator edges."""
+    op = _make_op(db_session)
+    host_a = _make_host(db_session, op.id, "hostA")
+    host_b = _make_host(db_session, op.id, "hostB")
+
+    # bash_history (indicator) + auth.log (observed) connection
+    _make_conn(db_session, op.id, host_a.id, host_b.id,
+               direction_context="from_src_logs", source_file=".bash_history")
+    _make_conn(db_session, op.id, host_a.id, host_b.id,
+               direction_context="from_dst_logs", source_file="auth.log")
+
+    result = expand_host(db_session, op.id, host_a.id, evidence_type="indicator")
+    # The indicator filter should only return bash_history evidence
+    assert len(result.edges) == 1
+    for ev in result.edges[0].evidence:
+        assert ev.type in ("bash_history", "known_hosts"), (
+            f"Expected indicator evidence type, got {ev.type}"
+        )
+
+
+# ─── Priority 19: _max_confidence([]) guard ───────────────────────────────────
+
+def test_max_confidence_with_single_item(db_session):
+    """_max_confidence works correctly with a single-element list."""
+    from services.graph_builder import _max_confidence
+    assert _max_confidence(["confirmed"]) == "confirmed"
+    assert _max_confidence(["observed"]) == "observed"
+    assert _max_confidence(["indicator"]) == "indicator"
+
+
+def test_max_confidence_returns_highest(db_session):
+    """_max_confidence returns the highest-ranked confidence from mixed list."""
+    from services.graph_builder import _max_confidence
+    assert _max_confidence(["indicator", "confirmed", "observed"]) == "confirmed"
+    assert _max_confidence(["indicator", "observed"]) == "observed"
+    assert _max_confidence(["indicator", "indicator"]) == "indicator"
+
+
+def test_max_confidence_empty_list_raises(db_session):
+    """_max_confidence([]) raises ValueError (documents the known gap — no empty guard).
+
+    NOTE: This test documents BUG-10 from the audit: _max_confidence has no guard
+    against an empty list. The builtin max() raises ValueError on empty input.
+    The caller (build_graph edge aggregation) never passes an empty list in practice
+    because edges only exist when there is at least one evidence item. However, if
+    called directly with an empty list, it will raise ValueError.
+    """
+    import pytest
+    from services.graph_builder import _max_confidence
+    # Document the known behavior: empty list raises ValueError
+    with pytest.raises((ValueError, Exception)):
+        _max_confidence([])
