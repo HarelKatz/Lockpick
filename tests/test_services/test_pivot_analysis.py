@@ -299,3 +299,104 @@ def test_waypoint_filters_all_paths(db_session):
     )
     resp = find_paths(db_session, op.id, req)
     assert resp.paths == []
+
+
+# ─── Priority 7: Waypoint after/before with relative_to ──────────────────────
+
+def test_waypoint_after_with_relative_to_included(db_session):
+    """position='after' with relative_to=A: waypoint must appear immediately after A.
+
+    Path: src → A → B → dst
+    Waypoint: B after A → path included.
+    """
+    op = _make_op(db_session)
+    src = _make_host(db_session, op.id, "src")
+    hop_a = _make_host(db_session, op.id, "A")
+    hop_b = _make_host(db_session, op.id, "B")
+    dst = _make_host(db_session, op.id, "dst")
+
+    _make_conn(db_session, op.id, src.id, hop_a.id, src_ip="10.7.0.0", dst_ip="10.7.0.1")
+    _make_conn(db_session, op.id, hop_a.id, hop_b.id, src_ip="10.7.0.1", dst_ip="10.7.0.2")
+    _make_conn(db_session, op.id, hop_b.id, dst.id, src_ip="10.7.0.2", dst_ip="10.7.0.3")
+
+    req = PathFinderRequest(
+        src_host_id=src.id,
+        dst_host_id=dst.id,
+        mode="all",
+        waypoints=[WaypointConstraint(host_id=hop_b.id, position="after", relative_to=hop_a.id)],
+    )
+    resp = find_paths(db_session, op.id, req)
+    assert len(resp.paths) == 1
+    path_ids = resp.paths[0].host_ids
+    assert path_ids == [src.id, hop_a.id, hop_b.id, dst.id]
+
+
+def test_waypoint_after_with_relative_to_excluded(db_session):
+    """position='after' with relative_to not in path → all paths excluded."""
+    op = _make_op(db_session)
+    src = _make_host(db_session, op.id, "src")
+    hop = _make_host(db_session, op.id, "hop")
+    dst = _make_host(db_session, op.id, "dst")
+    absent = _make_host(db_session, op.id, "absent")  # not in any path
+
+    _make_conn(db_session, op.id, src.id, hop.id, src_ip="10.8.0.0", dst_ip="10.8.0.1")
+    _make_conn(db_session, op.id, hop.id, dst.id, src_ip="10.8.0.1", dst_ip="10.8.0.2")
+
+    req = PathFinderRequest(
+        src_host_id=src.id,
+        dst_host_id=dst.id,
+        mode="all",
+        # hop must come after absent — but absent isn't in the path
+        waypoints=[WaypointConstraint(host_id=hop.id, position="after", relative_to=absent.id)],
+    )
+    resp = find_paths(db_session, op.id, req)
+    assert resp.paths == []
+
+
+def test_waypoint_before_with_relative_to_included(db_session):
+    """position='before' with relative_to=B: waypoint must appear immediately before B.
+
+    Path: src → A → B → dst
+    Waypoint: A before B → path included.
+    """
+    op = _make_op(db_session)
+    src = _make_host(db_session, op.id, "src")
+    hop_a = _make_host(db_session, op.id, "A")
+    hop_b = _make_host(db_session, op.id, "B")
+    dst = _make_host(db_session, op.id, "dst")
+
+    _make_conn(db_session, op.id, src.id, hop_a.id, src_ip="10.9.0.0", dst_ip="10.9.0.1")
+    _make_conn(db_session, op.id, hop_a.id, hop_b.id, src_ip="10.9.0.1", dst_ip="10.9.0.2")
+    _make_conn(db_session, op.id, hop_b.id, dst.id, src_ip="10.9.0.2", dst_ip="10.9.0.3")
+
+    req = PathFinderRequest(
+        src_host_id=src.id,
+        dst_host_id=dst.id,
+        mode="all",
+        waypoints=[WaypointConstraint(host_id=hop_a.id, position="before", relative_to=hop_b.id)],
+    )
+    resp = find_paths(db_session, op.id, req)
+    assert len(resp.paths) == 1
+    path_ids = resp.paths[0].host_ids
+    assert path_ids == [src.id, hop_a.id, hop_b.id, dst.id]
+
+
+def test_waypoint_before_with_relative_to_excluded(db_session):
+    """position='before' with relative_to not in path → all paths excluded."""
+    op = _make_op(db_session)
+    src = _make_host(db_session, op.id, "src")
+    hop = _make_host(db_session, op.id, "hop")
+    dst = _make_host(db_session, op.id, "dst")
+    absent = _make_host(db_session, op.id, "absent")
+
+    _make_conn(db_session, op.id, src.id, hop.id, src_ip="10.10.0.0", dst_ip="10.10.0.1")
+    _make_conn(db_session, op.id, hop.id, dst.id, src_ip="10.10.0.1", dst_ip="10.10.0.2")
+
+    req = PathFinderRequest(
+        src_host_id=src.id,
+        dst_host_id=dst.id,
+        mode="all",
+        waypoints=[WaypointConstraint(host_id=hop.id, position="before", relative_to=absent.id)],
+    )
+    resp = find_paths(db_session, op.id, req)
+    assert resp.paths == []
