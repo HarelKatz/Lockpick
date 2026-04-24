@@ -7,6 +7,7 @@ import type { GraphEdge, GraphNode, Host, HostNote, SudoRule } from '../types'
 import { getSudoRules, deleteSudoRule, getHostNotes, createHostNote, deleteHostNote } from '../api/hosts'
 import { updateHost } from '../api/hosts'
 import { statusColors, STATUS_LABELS } from '../theme'
+import CollectionPanel from './CollectionPanel'
 import styles from './HostDetailSidebar.module.css'
 
 const CONFIDENCE_LABEL: Record<string, string> = {
@@ -21,7 +22,7 @@ const ADDR_TYPE_LABEL: Record<string, string> = {
   hostname: 'hostname',
 }
 
-type Tab = 'info' | 'sudo' | 'notes'
+type Tab = 'info' | 'sudo' | 'notes' | 'collection'
 
 interface Props {
   node: GraphNode
@@ -176,6 +177,12 @@ export default function HostDetailSidebar({ node, edges, host, onClose, onHostUp
           >
             Notes
           </button>
+          <button
+            className={`${styles.tabBtn} ${tab === 'collection' ? styles.tabActive : ''}`}
+            onClick={() => setTab('collection')}
+          >
+            Collection
+          </button>
         </div>
       )}
 
@@ -300,6 +307,10 @@ export default function HostDetailSidebar({ node, edges, host, onClose, onHostUp
               </div>
             ))}
           </div>
+        )}
+
+        {host && tab === 'collection' && (
+          <CollectionPanel opId={host.op_id} hostId={host.id} onImported={onHostUpdated} />
         )}
 
         {host && tab === 'notes' && (

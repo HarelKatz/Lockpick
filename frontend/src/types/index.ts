@@ -345,6 +345,25 @@ export interface UploadResult {
   pivot_opportunities: string[]
 }
 
+// ─── Archive Import ───────────────────────────────────────────────────────────
+
+export interface ArchiveFileResult {
+  filename: string
+  file_type: string
+  username: string | null
+  ok: boolean
+  summary: UploadSummary
+}
+
+export interface ArchiveImportResult {
+  ok: boolean
+  files_processed: number
+  files_skipped: number
+  totals: UploadSummary
+  per_file: ArchiveFileResult[]
+  pivot_opportunities: string[]
+}
+
 // ── Path Finding ──────────────────────────────────────────────────────────────
 
 export type WaypointPosition = 'anywhere' | 'after' | 'before'
