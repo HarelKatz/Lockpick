@@ -14,7 +14,7 @@ A web-based tool for red teams to collaboratively organize SSH credentials, host
 
 > **Edit rules:** ≤5 lines. Last completed · Next · Any blocker. Nothing else — detail belongs in commit messages.
 
-**Last completed: Phases 10, 11, 13 + post-release bug fixes + WS broadcast wiring + test suite expansion (508 → 551)**
+**Last completed: Phases 1–13 — full stack, 14 parsers, WS live push, host notes, status enum, addr_type, SudoRule (652 tests)**
 
 **Next: Phase 14 — Engagement Report Export**
 
@@ -45,44 +45,26 @@ A web-based tool for red teams to collaboratively organize SSH credentials, host
 
 ## Document Maintenance Rules
 
-AGENT.md is both architecture documentation and the project roadmap.
+AGENT.md is the project roadmap and architecture reference — the current source of truth. Git history is the audit log.
 
 **After completing a phase:**
-1. Update Current Status to the new phase
-2. Delete any "Pending Fixes" subsection for the completed phase
-3. If the phase built something a future phase also describes, update the future phase to note what already exists
+1. Update Current Status (phase range + one-line summary of what was built)
+2. Collapse the phase entry to one sentence and merge it into the "Phases X–Y — Complete" block
+3. Move any constraints future phases must respect into **Architecture Rules** — never leave invariants inside a phase entry
 
 **What does NOT belong here:**
-- Line numbers, CSS snippets, diff hunks, or "what's in the working tree"
-- Per-fix `Status: ✅/❌` prose or implementation retrospectives
+- Line numbers, CSS snippets, diff hunks, file trees, or "what's in the working tree"
+- Per-fix status markers or implementation retrospectives
+- Feature lists for completed phases — git history has that
 - Anything that will be wrong the moment the next commit lands
-
-Those things belong in commit messages and GitHub issues.
-
-**Completed phases:**
-- Once a phase is done, collapse its entry to ONE sentence describing what was added — no feature lists, no invariants.
-- Any constraint future phases must respect goes into **Architecture Rules** — never inline in a phase entry. Phase entries are temporary scaffolding; Architecture Rules are permanent.
-- Merge consecutive completed phases into a single "Phases X–Y — Complete" block.
-- Do NOT preserve a "What was built" component list — git history has that.
-- The "Phases 1–9 — Complete" entry below is the model: one line, nothing else.
-
-**Planned File Structure:**
-- Do NOT maintain a file tree in this document. The codebase is the source of truth.
-- File trees drift with every phase and add pure noise. Omit entirely.
 
 ---
 
 ## Implementation Phases
 
-### Phases 1–9 — Complete
+### Phases 1–13 — Complete
 
-Full stack built and tested: CRUD APIs, graph visualization, file upload + 8 parsers, BFS pivot analysis, global search, export/import, activity log, and operational command generation. (Parser count is now 11 — see Phase 12.)
-
----
-
-### Phases 10–13 — Complete
-
-Phase 10: WS live push, `HostNote` table + Notes tab. Phase 11: `Host.status` nullable enum, graph colors/filter, status picker. Phase 12: `nmap_xml`, `shadow`, `sshd_config` parsers. Phase 13: `addr_type` on `HostIP`, `SudoRule` table, `etc_hosts`/`sudoers` parsers, sudo rules CRUD, Sudo Rules tab.
+Full stack built and tested: CRUD APIs, graph visualization, file upload + 14 parsers (8 original + nmap_xml, shadow, sshd_config, etc_hosts, sudoers, public_key alias), BFS pivot analysis, global search, export/import, activity log, operational command generation, WS live push, host notes, Host.status enum, HostIP addr_type, SudoRule table with sudoers CRUD.
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## What this project is
 
-SSH pivot tracker for red teams. Ingests raw evidence (private keys, `authorized_keys`, `auth.log`, `known_hosts`, bash history, `/etc/passwd`, `/etc/shadow`, `/etc/ssh/sshd_config`, nmap XML) and builds a relationship graph showing lateral movement paths across an engagement. Runs as a shared web server — single `docker compose up -d`, no external dependencies.
+SSH pivot tracker for red teams. Ingests raw evidence (private keys, `authorized_keys`, `auth.log`, `known_hosts`, bash history, `/etc/passwd`, `/etc/shadow`, `/etc/ssh/sshd_config`, nmap XML, `/etc/hosts`, sudoers) and builds a relationship graph showing lateral movement paths across an engagement. Runs as a shared web server — single `docker compose up -d`, no external dependencies.
 
 @AGENT.md
 
@@ -131,6 +131,7 @@ class ParseResult:
     connections_found: list[ConnectionData]
     host_users_found: list[tuple[str, Optional[str], Optional[str]]]  # (username, shell, home_dir)
     patterns_found: list[SshConfigPatternData]   # SSH Host wildcard/token blocks
+    sudo_rules_found: list[SudoRuleData]          # sudo rules (sudoers parser only)
     warnings: list[str]
     stats: dict
 
@@ -180,7 +181,8 @@ backend/
 ├── database.py      # SQLAlchemy engine, session factory, Base
 ├── models.py        # ORM models
 ├── schemas.py       # Pydantic request/response models
-├── routers/         # One file per resource group (operations, hosts, credentials, connections, graph, upload, search, stats, export_import, activity)
+├── ws_manager.py    # WebSocket connection manager; broadcast_sync() called after db.commit()
+├── routers/         # One file per resource group (operations, hosts, credentials, connections, graph, upload, search, stats, export_import, activity, ws)
 ├── parsers/         # File parsers implementing BaseParser; registry.py maps file_type → class
 ├── services/        # Graph builder, IP resolver, pivot analysis
 │   ├── graph_builder.py   # Aggregate CredentialLinks + ConnectionRecords → edge objects
