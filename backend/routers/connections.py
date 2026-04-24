@@ -79,6 +79,8 @@ def get_connection(connection_id: str, db: Session = Depends(get_db)):
 @router.patch("/connections/{connection_id}", response_model=ConnectionRecordRead)
 def update_connection(connection_id: str, body: ConnectionRecordUpdate, db: Session = Depends(get_db)):
     record = get_connection_or_404(connection_id, db)
+    old_src = record.src_ip
+    old_dst = record.dst_ip
     for field in (
         "src_host_id", "src_ip", "src_user",
         "dst_host_id", "dst_ip", "dst_user",
@@ -93,7 +95,7 @@ def update_connection(connection_id: str, body: ConnectionRecordUpdate, db: Sess
         if field in body.model_fields_set:
             setattr(record, field, getattr(body, field))
     log_activity(db, record.op_id, "connection.update", "connection", entity_id=connection_id,
-                 detail=f"Updated {record.connection_type} connection: {record.src_ip} → {record.dst_ip}")
+                 detail=f"Updated {record.connection_type} connection: {old_src} → {old_dst}")
     db.commit()
     db.refresh(record)
     broadcast_sync(record.op_id, {"type": "update", "entity_type": "connection", "entity_id": connection_id, "op_id": record.op_id})
