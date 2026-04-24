@@ -14,7 +14,7 @@ A web-based tool for red teams to collaboratively organize SSH credentials, host
 
 > **Edit rules:** ≤5 lines. Last completed · Next · Any blocker. Nothing else — detail belongs in commit messages.
 
-**Last completed: Phases 1–13 — full stack, 14 parsers, WS live push, host notes, status enum, addr_type, SudoRule (652 tests)**
+**Last completed: Phases 1–13 — full stack, 14 parsers, WS live push, host notes, status enum, addr_type, SudoRule**
 
 **Next: Phase 14 — Engagement Report Export**
 
@@ -62,6 +62,8 @@ AGENT.md is the project roadmap and architecture reference — the current sourc
 
 ## Implementation Phases
 
+> Detail tracks imminence: the next phase gets a full spec, 1–2 phases out get a short summary + invariants, and anything further is a one-liner heading. Expand a phase when it becomes next.
+
 ### Phases 1–13 — Complete
 
 Full stack built and tested: CRUD APIs, graph visualization, file upload + 14 parsers (8 original + nmap_xml, shadow, sshd_config, etc_hosts, sudoers, public_key alias), BFS pivot analysis, global search, export/import, activity log, operational command generation, WS live push, host notes, Host.status enum, HostIP addr_type, SudoRule table with sudoers CRUD.
@@ -81,164 +83,45 @@ New endpoint: `GET /ops/{op_id}/report?format=markdown|html`
 
 ### Phase 15 — Graph Path Highlight + Time Slider
 
-**Path Highlight Mode:** Shift+click a second node → graph dims all nodes/edges not on any BFS path between the two selected hosts. Calls existing `POST /ops/{op_id}/graph/paths`. Highlighted path edges shown in accent color with increased stroke width. Esc clears selection.
+Shift+click a second node dims everything not on any BFS path between the two selected hosts (uses existing `POST /ops/{op_id}/graph/paths`). Time slider at the bottom of GraphView filters edges by `ConnectionRecord.timestamp` when any op has timestamped connections; key-match edges always shown.
 
-**Time Slider:** Appears at the bottom of GraphView when at least one `ConnectionRecord` in the op has a non-null timestamp. Range: min → max timestamp. Dragging filters edges: only show ConnectionRecords with `timestamp ≤ slider_value`. Key-match edges (no timestamp) always shown. Slider state is local — no DB writes, no API calls.
-
-**Invariants:** Path highlight and time slider are independent features that can be active simultaneously. Neither modifies graph data — both are pure frontend filter/render state.
+**Invariants:** Pure frontend filter state — no DB writes, no API changes. Path highlight and time slider can be active simultaneously.
 
 ---
 
 ### Phase 17 — System File Parsers
 
-Static files found on disk. No schema changes.
-
-**Log file aliases** (zero new code — one registry line each):
-
-| `file_type` | Source | Parser |
-|---|---|---|
-| `secure` | `/var/log/secure` | `AuthLogParser` alias — RHEL/CentOS auth.log equivalent |
-| `syslog` | `/var/log/syslog` | `AuthLogParser` alias — already filters for `sshd` lines |
-| `messages` | `/var/log/messages` | `AuthLogParser` alias — RHEL syslog equivalent |
-
-**Binary login records:**
-- `lastlog` (`/var/log/lastlog`) — binary struct, UID-indexed fixed records (4-byte tv_sec + 32-byte tty + 256-byte src_host); emit `ConnectionData` (last login per user + source IP) + `host_users_found`; emit raw UID as username fallback when passwd unavailable
-
-**Text login records:**
-- `last_output` (`last` command output) — whitespace-delimited: username, tty, src_host, date range; emit `ConnectionData` per login session
-
-**Shell history:**
-- `zsh_history` (`~/.zsh_history`) — `BashHistoryParser` with EXTENDED_HISTORY prefix stripping (`: <ts>:<elapsed>;<cmd>`)
-- `fish_history` (`~/.local/share/fish/fish_history`) — YAML-like: extract `cmd:` values, apply SSH regex; `when:` used as timestamp
-
-**Shell config files:**
-- `bashrc` (`~/.bashrc`, `~/.bash_profile`, `~/.profile`) — strip `alias name='...'` wrappers and `function name() {...}` bodies; apply BashHistoryParser SSH regex; `ssh-add <path>` emitted as warning
-- `zshrc` (`~/.zshrc`, `~/.zprofile`) — alias to `BashrcParser`
-
-**Network configuration files:**
-- `network_interfaces` (`/etc/network/interfaces`) — `address`/`iface` stanzas → `HostData` (upload host IPs); `gateway` → `HostData`
-- `netplan` (`/etc/netplan/*.yaml`) — YAML: `addresses:` → `HostData`; `gateway4`/`routes` → `HostData`
-- `ifcfg` (`/etc/sysconfig/network-scripts/ifcfg-*`) — `IPADDR=`, `GATEWAY=` → `HostData` — RHEL/CentOS equivalent
-
-**Invariants:** `secure`/`syslog`/`messages` are pure registry aliases. `network_interfaces`/`netplan`/`ifcfg` emit `HostData` only (host's own IPs + gateways, no connection records).
+Static files from disk — RHEL/CentOS log aliases (`secure`/`syslog`/`messages` → `AuthLogParser`), binary login records (`lastlog`, `last`), shell histories and configs (`zsh_history`, `fish_history`, `bashrc`, `zshrc`), and network configs (`/etc/network/interfaces`, netplan, ifcfg). No schema changes. Network config parsers emit only the upload host's own IPs and gateways — no connection records.
 
 ---
 
 ### Phase 18 — Command Output Parsers
 
-Output captured from executing commands on the target. No schema changes.
-
-**Network interface & routing:**
-- `ip_addr` (`ip addr show` / `ifconfig -a`) — interface IPs → `HostData` (upload host's own IPs)
-- `ip_route` (`ip route show` / `route -n`) — `default via` + non-local routes → `HostData` per gateway (RFC1918 only)
-- `ip_neigh` (`ip neigh show`) — neighbor IPs + state (REACHABLE/STALE) → `HostData`
-- `arp` (`arp -a`) — `hostname (ip)` pairs → `HostData`
-
-**Active connections & listening ports:**
-- `netstat` (`netstat -an`) — ESTABLISHED rows → `ConnectionData`; remote IPs → `HostData`
-- `ss_output` (`ss -anp`) — ESTAB rows → `ConnectionData`; LISTEN rows → stats only
-
-**Firewall rules:**
-- `iptables` (`iptables -L -n -v` / `iptables-legacy`) — IPs in ACCEPT rules → `HostData`; FORWARD + `dpt:22` ACCEPT → `ConnectionData` (indicator)
-- `nftables` (`nft list ruleset`) — same extraction; parse `table/chain/rule` structure; `tcp dport 22` accept rules → `ConnectionData` (indicator)
-
-**Process & environment state:**
-- `ps_output` (`ps aux`) — SSH tunnel args (`-L`/`-R`/`-D`) in COMMAND → `ConnectionData` (indicator); `user@host` patterns → `ConnectionData`; `-i <keyfile>` → warnings
-- `env_output` (`env` / `printenv`) — variables matching `*PASSWORD*`, `*SECRET*`, `*TOKEN*`, `*KEY*`, `*PASS*` → `CredentialData`; PEM blocks → `CredentialData` (private_key)
-
-**Container & orchestration state:**
-- `docker_ps` (`docker ps`) — exposed `0.0.0.0:<port>` bindings → `HostData` + stats
-- `docker_network` (`docker network inspect`) — JSON container IPs + gateway → `HostData`
-- `kubectl_pods` (`kubectl get pods -o wide`) — pod IPs + node names → `HostData`
-
-**Invariants:** `iptables`/`nftables` skip 0.0.0.0, broadcast, multicast, loopback; only emit `ConnectionData` for `dport 22` rules. `ip_addr`/`ip_route`/`ip_neigh`/`arp` skip all non-RFC1918 IPs — internet-facing gateways would create graph noise with no pivot value. `docker_ps`/`docker_network`/`kubectl_pods` emit `HostData` only. `env_output` and `env_file` (Phase 19) share keyword-matching logic — extract to a shared utility when implemented together.
-
-**Graph rule:** parsers that emit `ConnectionData` create indicator-confidence edges. Parsers that emit only `HostData`/`CredentialData` surface in the host detail panel only — never as graph edges.
+Output captured from commands run on the target — network state (`ip addr`, `ip route`, `ip neigh`, `arp`), active connections (`netstat`, `ss`), firewall rules (`iptables`, `nftables`), process/env state (`ps aux`, `env`), and container state (`docker ps`, `docker network`, `kubectl get pods`). No schema changes. Parsers emitting only `HostData`/`CredentialData` surface in the host detail panel only; firewall and tunnel parsers emit indicator-confidence edges at best.
 
 ---
 
 ### Phase 19 — Secret & Credential File Parsers
 
-Files storing credentials for non-SSH services. No schema changes — use `cred_type: password` with descriptive `name` for non-key secrets (avoids migration; revisit if Phase 16 MCP needs type filtering).
-
-**Direct host-credential mappings:**
-- `netrc` (`~/.netrc`) — `machine <host> login <user> password <pass>` → `CredentialData` + `HostData`; `default` stanza → warning
-- `pgpass` (`~/.pgpass`) — `hostname:port:db:user:pass` → `CredentialData` + `HostData`; wildcard `*` fields → warnings
-- `mysql_config` (`~/.my.cnf`) — `[client]` section `password=`, `user=`, `host=` → `CredentialData` + `HostData`
-
-**Cloud credentials:**
-- `aws_credentials` (`~/.aws/credentials`) — INI: `aws_access_key_id` + `aws_secret_access_key` per profile → `CredentialData` (name: `AWS:<profile>`)
-- `aws_config` (`~/.aws/config`) — `role_arn` → `CredentialData` (name: `AWS role:<arn>`); emitted only when `role_arn` present
-- `gcloud_credentials` (`~/.config/gcloud/application_default_credentials.json`) — `access_token`, `refresh_token`, `client_secret` → `CredentialData` (name: `GCP ADC`)
-- `kubeconfig` (`~/.kube/config`) — cluster `server` URLs → `HostData`; user `token` → `CredentialData`; client-cert + client-key PEM blocks → `CredentialData` (private_key / public_key)
-- `boto` (`~/.boto` / `~/.s3cfg`) — `aws_access_key_id`, `aws_secret_access_key`, `s3_host` → `CredentialData` + `HostData`
-
-**Application & service credentials:**
-- `env_file` (`.env`) — variables matching `*PASSWORD*`, `*SECRET*`, `*TOKEN*`, `*KEY*`, `*PASS*` → `CredentialData`; PEM blocks → `CredentialData` (private_key)
-- `docker_config` (`~/.docker/config.json`) — `auths`: base64-decode `auth` → `user:pass` → `CredentialData`; registry hostname → `HostData`
-- `git_credentials` (`~/.git-credentials`) — `https://user:pass@hostname` → `CredentialData` + `HostData`
-- `rclone_config` (`~/.config/rclone/rclone.conf`) — `pass`/`token`/`secret`/`access_key_id` keys per remote → `CredentialData`; `host`/`endpoint` → `HostData`
-
-**Invariants:** `kubeconfig` requires PyYAML — verify transitive dep. `docker_config` auth is base64(`user:password`) — store decoded password as `Credential.value`. `rclone_config` parsed generically across all providers (40+). All secret values stored verbatim; Phase 14 export redacts to first 8 chars + `...`. Phase 19 parsers emit no `ConnectionData` — credentials and discovered hosts surface in host detail panel only.
+Files storing non-SSH credentials — `netrc`, `pgpass`, `~/.my.cnf`, cloud credentials (AWS / GCP ADC / kubeconfig / boto), `.env`, `~/.docker/config.json`, `~/.git-credentials`, and rclone. No schema changes — non-key secrets use `cred_type: password` with a descriptive `name`. Export redaction (Phase 14) applies to all secret values.
 
 ---
 
 ### Phase 20 — Collection Script + Bulk Archive Import
 
-Mirrors the operational command generation from Phase 9: "here's what to run on a compromised host to feed Lockpick evidence automatically."
-
-**Collection script** — `GET /ops/{op_id}/collection-script` returns a bash script that:
-- Collects all parseable files + command outputs from the current host
-- Names output files with the convention `<file_type>__<username>.<ext>` (e.g. `bash_history__root.txt`, `ip_addr.txt`)
-- Handles Debian/RHEL distros: tries `ip addr` then falls back to `ifconfig`; tries `auth.log` then `secure`; etc.
-- Silently skips missing files/commands (no root required for non-privileged files)
-- Packages everything into `lockpick_<hostname>_<ts>.tar.gz` with a `manifest.json` at the root
-- `manifest.json` format: `[{"filename": "...", "file_type": "...", "username": "..."}]`
-- Never exfiltrates automatically — writes to `/tmp` only; upload is a separate manual step
-
-**Bulk import endpoint** — `POST /ops/{op_id}/hosts/{host_id}/import-archive`:
-- Accepts a `multipart/form-data` tarball
-- Reads `manifest.json` for `file_type` + `username` per file; falls back to filename convention if absent
-- Dispatches each file through the normal upload pipeline (same parser registry, same `log_activity()` flow)
-- Returns `{"processed": N, "warnings": [...], "stats": {...}}`
-- No new tables; no Alembic migration required
-
-**Invariants:** Naming convention is `<file_type>__<username>.<ext>` (double underscore); files without a username use `<file_type>.<ext>`. Manifest is authoritative when present.
+`GET /ops/{op_id}/collection-script` returns a bash script that snapshots parseable files and command outputs on a compromised host into `lockpick_<hostname>_<ts>.tar.gz`, using filename convention `<file_type>__<username>.<ext>` plus a `manifest.json`. `POST /ops/{op_id}/hosts/{host_id}/import-archive` accepts that tarball and dispatches each file through the normal upload pipeline. No schema changes.
 
 ---
 
 ### Phase 16 — MCP Server
 
-A standalone MCP (Model Context Protocol) server that lets an AI agent (e.g. Claude Desktop) help a red teamer navigate the operation data and find pivot paths using natural language. This phase is last — implement only when all other phases are complete and stable.
-
-#### Architecture
-
-- Standalone Python package in `mcp/` — does **not** import from `backend/`, calls the Lockpick REST API over HTTP
-- Uses the `mcp` Python package (FastMCP high-level API)
-- Configurable backend URL via `LOCKPICK_URL` environment variable (default: `http://localhost:8000`)
-- stdio transport — Claude Desktop connects by running the server process directly
-- Docker service with no exposed ports; Claude Desktop connects via `docker exec -i`
-
-#### MCP Tools
-
-| Tool | Backend calls | Purpose |
-|------|--------------|---------|
-| `list_operations()` | `GET /ops` | List all ops |
-| `list_hosts(op_id)` | hosts + credential-links | Hosts with IPs and credential count |
-| `get_host(host_id)` | `GET /hosts/{id}` | Full host detail |
-| `expand_host(host_id, evidence_type?)` | connections + credential-links | Related hosts, optionally filtered by evidence type |
-| `list_credentials(op_id)` | credentials + credential-links | Creds with fingerprints and host count |
-| `list_connections(op_id)` | `GET /ops/{id}/connections` | Raw connection records |
-| `find_pivot_paths(op_id, src_host_id, dst_host_id)` | connections + credential-links | BFS pivot paths with evidence and confidence |
-| `search(op_id, query)` | Phase 8 search endpoint (client-side fallback if unavailable) | Global search |
-
-`find_pivot_paths` performs BFS in the MCP layer: builds an adjacency graph from connection records and credential key matches (same fingerprint: `found_on_disk` on A + `authorized_key` on B), caps at depth 6 and 50 paths, annotates each edge with confidence (`confirmed` = key match, `observed` = connection log).
+Standalone `mcp/` package (does **not** import from `backend/`) exposing op data over MCP/stdio so an AI agent like Claude Desktop can help navigate pivots. Talks to the Lockpick REST API over HTTP; configurable via `LOCKPICK_URL`. Last phase — implement only when all others are stable.
 
 ---
 
 ## Data Model
 
-> Reference — stable schema. Read on demand; do not update unless the schema changes.
+> `backend/models.py` is authoritative for exact fields and types. This section documents *relationships* and *pivot semantics* — the "why" that isn't in the ORM. Read on demand; update only when relationship semantics change.
 
 ### Core Entities
 

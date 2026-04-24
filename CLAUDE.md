@@ -13,29 +13,18 @@ SSH pivot tracker for red teams. Ingests raw evidence (private keys, `authorized
 
 ## Git Commits
 
-**Committing is not optional and does not require the user to ask.** Every unit of work ends with a commit. If you changed files and did not commit, the task is not done.
+Commit after every unit of completed work: feature, bug fix, refactor, parser, schema change + migration, test file, or edit to `CLAUDE.md` / `AGENT.md`. Skip only for isolated typos and single-line CSS tweaks. One commit per unit, not batched at end of session — the user should never have to prompt a commit.
 
-### What requires a commit
-
-Commit after completing **any** of these:
-- A feature, bug fix, or refactor (backend or frontend)
-- A new or updated parser
-- A schema change + Alembic migration
-- A new or updated test file
-- An edit to `CLAUDE.md` or `AGENT.md`
-
-Skip only for: isolated typo fixes, single-line CSS tweaks, comment-only edits to non-guide files.
-
-### Pre-commit gate (code changes)
+**Pre-commit gate (code changes):**
 
 ```bash
-make test                       # must pass — fix failures before committing
-cd frontend && npm run build    # must succeed — fix build errors before committing
+make test                       # must pass
+cd frontend && npm run build    # must succeed
 ```
 
-For documentation-only changes (`.md` files only), skip the build gate and commit directly.
+Doc-only changes (`.md`) can skip the build gate.
 
-### Commit format
+**Format:**
 
 ```
 type(scope): short description
@@ -46,23 +35,7 @@ scopes: backend, frontend, parsers, docker, schema
 
 Stage specific files — never `git add .` (risks staging `.env`, keys, or build artifacts).
 
-### The rule
-
-**Commit as part of completing the work, not after.** Do not batch multiple unrelated changes into one commit. Do not defer committing to the end of a session. The user must never have to prompt a commit — if they do, you failed this instruction.
-
-## AGENT.md Maintenance
-
-AGENT.md is the single source of truth for architecture and project status. Update it as part of the work, not after being asked.
-
-**When to update:**
-- **Current Status**: every time a phase or significant sub-feature is completed
-- **Phase checklist**: check off `[ ]` items as you complete them
-- **Completed phase sections**: once a phase is 100% done, collapse its detail to the invariants future phases need (not a feature list — git history has that)
-
-**How to update well:**
-- Completed phase notes must state *invariants* (contracts other code depends on), not retrospectives
-- Never leave stale unchecked items for work that's already done
-- Never add file trees, line numbers, CSS snippets, or diff hunks to AGENT.md
+> AGENT.md maintenance rules live in AGENT.md itself.
 
 ## Tech Stack
 
@@ -84,7 +57,7 @@ make dev-backend    # uv run uvicorn main:app --reload --host 0.0.0.0 --port 800
 make dev-frontend   # npm run dev  (dev server: http://localhost:5173)
 
 # Tests (full suite — required before every commit)
-make test           # all 652 tests, parallel, quiet — failures only
+make test           # full suite, parallel, quiet — failures only
 
 # Tests (by group — for fast iteration while working in a specific area)
 make test-api       # API integration tests (~14s)
@@ -122,22 +95,7 @@ make test-scenarios # scenario tests (~4.5s)
 
 ## Parser Pattern
 
-All parsers in `backend/parsers/` implement `BaseParser` (defined in `parsers/__init__.py`):
-
-```python
-class ParseResult:
-    hosts_found: list[HostData]
-    credentials_found: list[CredentialData]
-    connections_found: list[ConnectionData]
-    host_users_found: list[tuple[str, Optional[str], Optional[str]]]  # (username, shell, home_dir)
-    patterns_found: list[SshConfigPatternData]   # SSH Host wildcard/token blocks
-    sudo_rules_found: list[SudoRuleData]          # sudo rules (sudoers parser only)
-    warnings: list[str]
-    stats: dict
-
-class BaseParser:
-    def parse(self, content: bytes, metadata: UploadMetadata) -> ParseResult: ...
-```
+Parsers in `backend/parsers/` implement `BaseParser` — see `parsers/__init__.py` for the authoritative `ParseResult` / `BaseParser` signatures. Register in `parsers/registry.py` (`"file_type": ParserClass`).
 
 **Parser guidelines (must follow):**
 - Never crash on bad input — catch exceptions, append to `warnings`, and continue
