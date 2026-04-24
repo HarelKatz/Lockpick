@@ -53,6 +53,9 @@ frontend/.vite/
 *.swo
 *~
 
+# Claude Code (machine-specific settings and transient agent worktrees)
+.claude/
+
 # OS
 .DS_Store
 Thumbs.db
