@@ -302,6 +302,32 @@ def test_etc_hosts_upload_loopback_skipped(client):
     assert resp.json()["summary"]["new_hosts"] == 1
 
 
+def test_new_hosts_counter_reflects_actual_new_hosts(client):
+    """Re-uploading an etc_hosts file with already-known IPs must report 0
+    new_hosts — the counter counts NEW hosts, not processed HostData records."""
+    op_id = _create_op(client)
+    host_id = _create_host(client, op_id)
+
+    content = b"10.10.0.1  web\n10.10.0.2  db\n"
+    # First upload creates 2 hosts
+    r1 = client.post(
+        f"/api/ops/{op_id}/upload",
+        data={"file_type": "etc_hosts", "host_id": host_id},
+        files={"file": ("etc_hosts", content, "text/plain")},
+    )
+    assert r1.status_code == 200
+    assert r1.json()["summary"]["new_hosts"] == 2
+
+    # Re-upload: both IPs already resolve; zero new
+    r2 = client.post(
+        f"/api/ops/{op_id}/upload",
+        data={"file_type": "etc_hosts", "host_id": host_id},
+        files={"file": ("etc_hosts", content, "text/plain")},
+    )
+    assert r2.status_code == 200
+    assert r2.json()["summary"]["new_hosts"] == 0
+
+
 # ─── Priority 2: Re-upload dedup: same key in two files → 1 cred, 2 links ────
 
 def test_reupload_same_key_to_two_hosts_deduplicates_credential(client):

@@ -106,21 +106,18 @@ def _resolve_ip_side(
     raw_ip: str,
     upload_host_ip: str,
     upload_host_id: str,
-) -> tuple[str, Optional[str], bool]:
-    """Resolve one ConnectionData IP to (resolved_ip, host_id, is_new_auto_host).
+) -> tuple[str, Optional[str]]:
+    """Resolve one ConnectionData IP to (resolved_ip, host_id).
 
     The ``__upload_host__`` sentinel and loopback addresses are both mapped
     to the upload host (loopback = "this machine" = the file's source host).
+    The caller is responsible for deciding whether the resolved host is new
+    (see `process_single_file`'s existing-id set).
     """
     if raw_ip == "__upload_host__" or _is_loopback(raw_ip):
-        return upload_host_ip, upload_host_id, False
+        return upload_host_ip, upload_host_id
     resolved_host_id = resolve_ip(db, op_id, raw_ip, create_if_missing=True)
-    is_new = False
-    if resolved_host_id and resolved_host_id != upload_host_id:
-        h = db.query(Host).filter(Host.id == resolved_host_id).first()
-        if h and h.comment and "Auto-created" in h.comment:
-            is_new = True
-    return raw_ip, resolved_host_id, is_new
+    return raw_ip, resolved_host_id
 
 
 def find_pivot_opportunities(
@@ -246,16 +243,25 @@ def process_single_file(
         _get_or_create_host_user(db, host_id, uname, shell, home_dir, user_source)
 
     # ── 1b. Discovered hosts (nmap, etc_hosts, …) ────────────────────────
+    # Snapshot existing host ids so we can tell "new vs resolved-to-existing"
+    # for the new_hosts counter. Every time resolve_ip creates a new host
+    # we add its id to this set so subsequent iterations within the same
+    # file don't double-count.
+    existing_host_ids: set[str] = {
+        hid for (hid,) in db.query(Host.id).filter(Host.op_id == op_id).all()
+    }
     new_hosts = 0
     for hd in result.hosts_found:
         resolved_id = resolve_ip(db, op_id, hd.ip_address, create_if_missing=True)
         if not resolved_id:
             continue
+        if resolved_id not in existing_host_ids:
+            new_hosts += 1
+            existing_host_ids.add(resolved_id)
         if hd.nickname:
             resolved_host = db.query(Host).filter(Host.id == resolved_id).first()
             if resolved_host and resolved_host.comment and "Auto-created" in resolved_host.comment:
                 resolved_host.nickname = hd.nickname
-        new_hosts += 1
 
         # Aliases: additional identifiers (IPs / hostnames) for the same
         # host. Add each as a HostIP on the resolved host, unless it:
@@ -350,13 +356,16 @@ def process_single_file(
     new_connections = 0
 
     for conn_data in result.connections_found:
-        src_ip, src_host_id, src_new = _resolve_ip_side(
+        src_ip, src_host_id = _resolve_ip_side(
             db, op_id, conn_data.src_ip, upload_host_ip, host_id
         )
-        dst_ip, dst_host_id, dst_new = _resolve_ip_side(
+        dst_ip, dst_host_id = _resolve_ip_side(
             db, op_id, conn_data.dst_ip, upload_host_ip, host_id
         )
-        new_hosts += src_new + dst_new
+        for hid in (src_host_id, dst_host_id):
+            if hid and hid not in existing_host_ids:
+                new_hosts += 1
+                existing_host_ids.add(hid)
 
         cred_id = None
         if conn_data.credential_fingerprint:
