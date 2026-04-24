@@ -122,8 +122,6 @@ def test_empty_candidate_exact_no_match():
 
 # ─── Priority 4: apply_patterns_to_host unit tests ───────────────────────────
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
-
 from models import ConnectionRecord, Host, HostIP, Operation, SshConfigPattern
 from services.ssh_pattern import apply_patterns_to_host
 

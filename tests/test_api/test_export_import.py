@@ -1,4 +1,6 @@
 """API tests for export and import endpoints."""
+import pathlib
+
 import pytest
 
 
@@ -274,8 +276,7 @@ def test_export_import_drops_sudo_rules(client, op):
     SudoRule records are not included in the export schema and will be silently
     dropped on roundtrip. Callers should not rely on sudo rules surviving export/import.
     """
-    from pathlib import Path
-    fixtures = Path(__file__).parent.parent / "fixtures"
+    fixtures = pathlib.Path(__file__).parent.parent / "fixtures"
 
     host_id = client.post(
         f"/api/ops/{op['id']}/hosts", json={"nickname": "sudo-host"}
@@ -355,8 +356,8 @@ def test_export_import_drops_host_notes(client, op):
     )
 
 
-def test_export_import_drops_ssh_config_pattern_table(client, op):
-    """SshConfigPattern table is not exported — imported op must have 0 patterns.
+def test_export_import_preserves_pattern_connection_records(client, op):
+    """ConnectionRecords from SSH config patterns ARE exported; SshConfigPattern table is not.
 
     NOTE: This documents a known limitation of the export format (lockpick_export_version: 1).
     SshConfigPattern records are not in the export schema. Any retroactive edges

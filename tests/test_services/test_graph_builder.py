@@ -375,8 +375,7 @@ def test_max_confidence_empty_list_raises():
     because edges only exist when there is at least one evidence item. However, if
     called directly with an empty list, it will raise ValueError.
     """
-    import pytest
     from services.graph_builder import _max_confidence
     # Document the known behavior: empty list raises ValueError
-    with pytest.raises((ValueError, Exception)):
+    with pytest.raises(ValueError):
         _max_confidence([])
