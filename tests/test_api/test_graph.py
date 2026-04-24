@@ -410,16 +410,6 @@ def test_paths_single_hop_connection(client, op, host_a, host_b):
 
 def test_paths_key_match_edge(client, op, host_a, host_b):
     """Key-match edge (found_on_disk + authorized_key) must produce a path."""
-    # Seed via API: upload real key files so fingerprints are computed and matched
-    cred_resp = client.post(
-        f"/api/ops/{op['id']}/credentials",
-        json={"cred_type": "private_key", "value": "placeholder"},
-    )
-    cred_id = cred_resp.json()["id"]
-
-    # We need to update the fingerprint directly since the placeholder value won't parse
-    # Instead, use the DB session from the test client to seed a proper fingerprint
-    # Use a workaround: upload the real private key to hostA
     fixtures = pathlib.Path(__file__).parent.parent / "fixtures"
     priv = (fixtures / "id_rsa").read_bytes()
     pub = (fixtures / "id_rsa.pub").read_text().strip()
@@ -496,19 +486,8 @@ def test_cred_label_no_double_sha256_prefix(client, op, host_a, host_b):
     fixtures = pathlib.Path(__file__).parent.parent / "fixtures"
 
     # Use the RSA pub key to create a public_key credential — no name, gets fingerprint
-    # NOTE: private_key parser always sets name="{filename} ({username})", so we use
-    # the API to create a nameless credential manually and inject a realistic fingerprint.
-    # Create a password credential, then update it to a realistic-looking fingerprint.
-    cred_resp = client.post(
-        f"/api/ops/{op['id']}/credentials",
-        json={"cred_type": "private_key", "value": "placeholder-no-name"},
-    )
-    assert cred_resp.status_code == 201
-    cred_id = cred_resp.json()["id"]
-
-    # Patch the credential to set a realistic fingerprint without a name
-    # (direct API doesn't allow setting fingerprint — use PATCH to set name to None is not meaningful)
-    # Instead: use the known RSA public key (from fixture) to create a public_key cred with fingerprint
+    # NOTE: private_key parser sets name="{filename} ({username})"; use the API directly
+    # to create a nameless credential
     pub_key = (fixtures / "id_rsa.pub").read_text().strip()
     cred_pk_resp = client.post(
         f"/api/ops/{op['id']}/credentials",

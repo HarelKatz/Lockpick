@@ -4,11 +4,10 @@ from __future__ import annotations
 import os
 import sys
 
-import pytest
-
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
 
-from services.ssh_pattern import ssh_match
+from models import ConnectionRecord, Host, HostIP, Operation, SshConfigPattern
+from services.ssh_pattern import apply_patterns_to_host, ssh_match
 
 
 # ─── Exact matches ────────────────────────────────────────────────────────────
@@ -121,9 +120,6 @@ def test_empty_candidate_exact_no_match():
 
 
 # ─── Priority 4: apply_patterns_to_host unit tests ───────────────────────────
-
-from models import ConnectionRecord, Host, HostIP, Operation, SshConfigPattern
-from services.ssh_pattern import apply_patterns_to_host
 
 
 def _mk_op(db):
