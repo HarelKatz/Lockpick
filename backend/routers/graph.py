@@ -43,7 +43,7 @@ def _cred_label(cred: Optional[Credential]) -> Optional[str]:
     if cred.name:
         return cred.name
     if cred.fingerprint:
-        return f"SHA256:{cred.fingerprint}"
+        return cred.fingerprint   # already includes "SHA256:" prefix
     return None
 
 

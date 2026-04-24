@@ -389,6 +389,7 @@ class ExportHostIP(BaseModel):
     id: str
     ip_address: str
     source: str
+    addr_type: str
     first_seen_at: datetime
 
 
@@ -407,6 +408,7 @@ class ExportHost(BaseModel):
     id: str
     nickname: str
     comment: Optional[str]
+    status: Optional[str] = None
     created_at: datetime
     ips: list[ExportHostIP]
     users: list[ExportHostUser]

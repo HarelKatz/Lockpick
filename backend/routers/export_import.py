@@ -33,6 +33,8 @@ from schemas import (
     OpExport,
     OperationRead,
 )
+from services.activity import log_activity
+from ws_manager import broadcast_sync
 
 router = APIRouter()
 
@@ -134,6 +136,7 @@ def import_op(body: ImportRequest, db: Session = Depends(get_db)):
             op_id=new_op_id,
             nickname=h.nickname,
             comment=h.comment,
+            status=h.status,
             created_at=h.created_at,
         )
         db.add(host)
@@ -143,6 +146,7 @@ def import_op(body: ImportRequest, db: Session = Depends(get_db)):
                 host_id=remap(h.id),
                 ip_address=ip.ip_address,
                 source=ip.source,
+                addr_type=ip.addr_type,
                 first_seen_at=ip.first_seen_at,
             ))
         for u in h.users:
@@ -216,5 +220,7 @@ def import_op(body: ImportRequest, db: Session = Depends(get_db)):
             created_at=a.created_at,
         ))
 
+    log_activity(db, new_op_id, "op.import", "operation", entity_id=new_op_id)
     db.commit()
+    broadcast_sync(new_op_id, {"type": "update", "entity_type": "operation", "op_id": new_op_id})
     return ImportResponse(op_id=new_op_id, op_name=new_op_name)
