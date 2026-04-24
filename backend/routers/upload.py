@@ -133,10 +133,15 @@ def _find_pivot_opportunities(
                 elif link.relationship_type == "authorized_key":
                     auth_keys.append(link)
 
+        link_host_ids = {lnk.host_id for lnk in found_on + auth_keys}
+        link_host_map = (
+            {h.id: h for h in db.query(Host).filter(Host.id.in_(link_host_ids)).all()}
+            if link_host_ids else {}
+        )
         for src in found_on:
             for dst in auth_keys:
-                src_host = db.query(Host).filter(Host.id == src.host_id).first()
-                dst_host = db.query(Host).filter(Host.id == dst.host_id).first()
+                src_host = link_host_map.get(src.host_id)
+                dst_host = link_host_map.get(dst.host_id)
                 if src_host and dst_host and src_host.id != dst_host.id:
                     src_label = f"{src_host.nickname}({src.username or '?'})"
                     dst_label = f"{dst_host.nickname}({dst.username or '?'})"

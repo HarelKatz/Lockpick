@@ -2,7 +2,7 @@
 from collections import defaultdict
 from typing import Optional
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from models import ConnectionRecord, Credential, CredentialLink, Host
 from schemas import (
@@ -80,7 +80,11 @@ def build_graph(
     and edges where both endpoints are in the set.
     """
     # ── Load hosts ──────────────────────────────────────────────────────────
-    host_query = db.query(Host).filter(Host.op_id == op_id)
+    host_query = db.query(Host).filter(Host.op_id == op_id).options(
+        selectinload(Host.ips),
+        selectinload(Host.users),
+        selectinload(Host.credential_links),
+    )
     all_hosts = host_query.all()
 
     if host_ids is not None:
@@ -333,7 +337,16 @@ def expand_host(
         edge_host_ids.add(record.dst_host_id)
 
     # ── Load host objects for all relevant host IDs ───────────────────────────
-    host_objs = db.query(Host).filter(Host.id.in_(edge_host_ids)).all()
+    host_objs = (
+        db.query(Host)
+        .filter(Host.id.in_(edge_host_ids))
+        .options(
+            selectinload(Host.ips),
+            selectinload(Host.users),
+            selectinload(Host.credential_links),
+        )
+        .all()
+    )
     host_by_id = {h.id: h for h in host_objs}
 
     def _nick(hid: str) -> str:

@@ -204,6 +204,27 @@ def test_truncation_over_30_paths(db_session):
     assert resp.truncated is True
 
 
+def test_truncation_exactly_30_paths_not_truncated(db_session):
+    """Exactly 30 paths → truncated must be False (boundary condition for BUG-10)."""
+    op = _make_op(db_session)
+    src = _make_host(db_session, op.id, "src")
+    dst = _make_host(db_session, op.id, "dst")
+    for i in range(30):
+        hop = _make_host(db_session, op.id, f"hop{i}")
+        _make_conn(
+            db_session, op.id, src.id, hop.id,
+            src_ip="10.20.0.0", dst_ip=f"10.20.1.{i % 256}",
+        )
+        _make_conn(
+            db_session, op.id, hop.id, dst.id,
+            src_ip=f"10.20.1.{i % 256}", dst_ip="10.20.0.1",
+        )
+    req = PathFinderRequest(src_host_id=src.id, dst_host_id=dst.id, mode="all")
+    resp = find_paths(db_session, op.id, req)
+    assert len(resp.paths) == 30
+    assert resp.truncated is False
+
+
 def test_waypoint_anywhere(db_session):
     op = _make_op(db_session)
     src = _make_host(db_session, op.id, "src")
