@@ -29,10 +29,15 @@ FILE_TYPES = [
     "auth_log",
     "authorized_keys",
     "bash_history",
+    "etc_hosts",     # Priority 11 addition
     "known_hosts",
+    "nmap_xml",      # Priority 11 addition
     "passwd",
     "private_key",
+    "shadow",        # Priority 11 addition
     "ssh_config",
+    "sshd_config",   # Priority 11 addition
+    "sudoers",       # Priority 11 addition
     "wtmp",
 ]
 
@@ -49,12 +54,8 @@ def _create_host(client, op_id: str) -> str:
     return r.json()["id"]
 
 
-@pytest.fixture(scope="module")
-def op_host(client):
-    """One op+host shared across all bad-file upload tests in this module."""
-    op_id = _create_op(client)
-    host_id = _create_host(client, op_id)
-    return op_id, host_id
+# Priority 22: The `op_host` module-scoped fixture below was declared but never
+# passed to any test function — it was dead code. Removed here.
 
 
 @pytest.mark.parametrize("bad_file", BAD_FILES, ids=[f.name for f in BAD_FILES])
