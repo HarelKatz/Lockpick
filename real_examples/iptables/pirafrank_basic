@@ -1,0 +1,47 @@
+# iptables basic rules to use (in order)
+
+# set default policy to drop
+iptables -P INPUT DROP
+iptables -P OUTPUT ACCEPT
+iptables -P FORWARD ACCEPT
+
+# enable ssh on port 22
+iptables -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+
+# enable udp 1194 only if used by openvpn
+iptables -A INPUT -p udp -m udp --dport 1194 -j ACCEPT
+
+iptables -A INPUT -p tcp --tcp-flags ALL NONE -j DROP
+iptables -A INPUT -p tcp ! --syn -m state --state NEW -j DROP
+iptables -A INPUT -p tcp --tcp-flags ALL ALL -j DROP
+iptables -A INPUT -p icmp --icmp-type echo-request -j DROP
+iptables -A OUTPUT -p icmp --icmp-type echo-reply -j DROP
+
+# enable http web server (e.g. nginx, apache)
+iptables -A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# enable mosh
+iptables -A INPUT -p udp -m multiport --dports 60000:60020 -j ACCEPT
+
+# enable localhost to anywhere on all ports
+iptables -A INPUT -s 127.0.0.1 -j ACCEPT
+
+# persist rules between reboots
+# iptables-save > /etc/iptables/rules.v4
+# https://www.thomas-krenn.com/en/wiki/Saving_Iptables_Firewall_Rules_Permanently
+
+# export rules
+# Debian/Ubuntu: iptables-save > /etc/iptables/rules.v4
+# RHEL/CentOS: iptables-save > /etc/sysconfig/iptables
+
+# restore/import rules
+# Debian/Ubuntu: iptables-restore < /etc/iptables/rules.v4
+# RHEL/CentOS: iptables-restore < /etc/sysconfig/iptables
+
+# delete specific rule
+# iptables -L --line-numbers (to print rules and line numbers next to them)
+# iptables -D INPUT 10 (e.g. rule to delete is on INPUT chain and at line 10)

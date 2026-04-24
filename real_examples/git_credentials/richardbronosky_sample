@@ -1,0 +1,7 @@
+
+# Windows
+* Use `configure-git-credential-hellper.sh` script
+* You may have to install (Microsoft/Git-Credential-Manager-for-Windows)[https://github.com/Microsoft/Git-Credential-Manager-for-Windows/releases/latest]
+
+# Resources
+* https://stackoverflow.com/questions/5343068/is-there-a-way-to-skip-password-typing-when-using-https-on-github

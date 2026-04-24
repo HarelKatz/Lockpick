@@ -1,0 +1,21 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "public_key",
+      "name": "authorized_key from authorized_keys",
+      "relationship_type": "authorized_key",
+      "username": null,
+      "value_length": 775,
+      "value_prefix": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC/"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "keys_parsed": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

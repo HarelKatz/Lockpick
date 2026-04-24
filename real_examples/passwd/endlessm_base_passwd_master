@@ -1,0 +1,51 @@
+root:*:0:0:root:/root:/bin/bash
+daemon:*:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:*:2:2:bin:/bin:/usr/sbin/nologin
+sys:*:3:3:sys:/dev:/usr/sbin/nologin
+sync:*:4:65534:sync:/bin:/bin/sync
+games:*:5:60:games:/usr/games:/usr/sbin/nologin
+man:*:6:12:man:/var/cache/man:/usr/sbin/nologin
+lp:*:7:7:lp:/var/spool/lpd:/usr/sbin/nologin
+mail:*:8:8:mail:/var/mail:/usr/sbin/nologin
+news:*:9:9:news:/var/spool/news:/usr/sbin/nologin
+uucp:*:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin
+proxy:*:13:13:proxy:/bin:/usr/sbin/nologin
+www-data:*:33:33:www-data:/var/www:/usr/sbin/nologin
+backup:*:34:34:backup:/var/backups:/usr/sbin/nologin
+list:*:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin
+irc:*:39:39:ircd:/var/run/ircd:/usr/sbin/nologin
+gnats:*:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/usr/sbin/nologin
+nobody:*:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+uuidd:*:100:101::/run/uuidd:/bin/false
+messagebus:*:101:105::/var/run/dbus:/usr/sbin/nologin
+avahi:*:102:106:Avahi mDNS daemon,,,:/var/run/avahi-daemon:/usr/sbin/nologin
+usbmux:*:103:46:usbmux daemon,,,:/home/usbmux:/usr/sbin/nologin
+dnsmasq:*:104:65534:dnsmasq,,,:/var/lib/misc:/usr/sbin/nologin
+polkitd:*:105:65534::/home/polkitd:/usr/sbin/nologin
+colord:*:106:112:colord colour management daemon,,,:/var/lib/colord:/usr/sbin/nologin
+pulse:*:107:114:PulseAudio daemon,,,:/var/run/pulse:/usr/sbin/nologin
+rtkit:*:108:116:RealtimeKit,,,:/proc:/usr/sbin/nologin
+Debian-gdm:*:109:117:Gnome Display Manager:/var/lib/gdm3:/usr/sbin/nologin
+gnome-initial-setup:*:110:65534::/run/gnome-initial-setup/:/usr/sbin/nologin
+elasticsearch:*:111:118::/usr/share/elasticsearch:/usr/sbin/nologin
+ntp:*:112:119::/home/ntp:/usr/sbin/nologin
+metrics:*:113:120:Endless Metrics Daemon::/usr/sbin/nologin
+geoclue:*:114:122::/var/lib/geoclue:/usr/sbin/nologin
+speech-dispatcher:*:115:29:Speech Dispatcher,,,:/var/run/speech-dispatcher:/usr/sbin/nologin
+app-manager:*:116:123:Endless App Manager:/var/endless:/usr/sbin/nologin
+hplip:*:117:7:HPLIP system user,,,:/var/run/hplip:/usr/sbin/nologin
+systemd-bus-proxy:*:118:125:systemd Bus Proxy,,,:/run/systemd:/bin/false
+sshd:*:119:65534::/var/run/sshd:/usr/sbin/nologin
+systemd-coredump:*:120:126:systemd core dump processing,,,:/run/systemd:/bin/false
+kalite:*:121:128:KA Lite Helper system user,,,:/var/lib/kalite/:/bin/bash
+g-s-helper:*:122:129:GNOME Software helper system user,,,:/var/lib/g-s-helper/:/usr/sbin/nologin
+ndn-user:*:123:130::/var/lib/ndn:/bin/false
+systemd-network:*:124:131:systemd Network Management,,,:/run/systemd/netif:/bin/false
+systemd-resolve:*:125:132:systemd Resolver,,,:/run/systemd/resolve:/bin/false
+companion-app-helper:*:126:133:Companion Application helper system user,,,:/var/lib/eos-companion-app/:/bin/false
+mogwai-scheduled:*:127:135:Mogwai (Download Scheduler) Scheduling Daemon::/usr/sbin/nologin
+_apt:*:129:65534::/nonexistent:/bin/false
+nm-openvpn:*:130:137:NetworkManager OpenVPN,,,:/var/lib/openvpn/chroot:/bin/false
+_flatpak:*:131:138:Flatpak System Helper User::/usr/sbin/nologin
+kolibri:*:132:139:Kolibri:/var/lib/kolibri:/usr/sbin/nologin
+systemd-timesync:*:133:141:systemd Time Synchronization,,,:/run/systemd:/usr/sbin/nologin

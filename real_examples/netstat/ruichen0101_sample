@@ -1,0 +1,1 @@
+sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=1, laddr=addr(ip='127.0.0.1', port=12468), raddr=addr(ip='127.0.0.1', port=12469), status='ESTABLISHED', pid=11612)

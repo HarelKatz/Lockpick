@@ -1,0 +1,15 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "hosts_parsed": 0
+  },
+  "sudo_rules_found": [],
+  "warnings": [
+    "Line 1: hashed known_hosts entry — hostname not recoverable, skipped",
+    "Line 2: hashed known_hosts entry — hostname not recoverable, skipped"
+  ]
+}

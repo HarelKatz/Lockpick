@@ -1,0 +1,10 @@
+# sample /etc/hosts file
+# see http://unix.stackexchange.com/questions/13046/format-of-etc-hosts-on-linux-different-from-windows
+
+# IPv4
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+# IPv6
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+# put your IP address and your hostname and aliases below
+1.2.3.4     myserver.mydomain.example myserver

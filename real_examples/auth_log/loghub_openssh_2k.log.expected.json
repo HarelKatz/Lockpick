@@ -1,0 +1,27 @@
+{
+  "connections_found": [
+    {
+      "auth_method": "password",
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "fztu",
+      "raw_line": "Dec 10 09:32:20 LabSZ sshd[24680]: Accepted password for fztu from 119.137.62.142 port 49116 ssh2",
+      "src_ip": "119.137.62.142",
+      "src_user": null,
+      "timestamp": "2026-12-10T09:32:20+00:00"
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "accepted_logins": 1,
+    "lines_parsed": 2000,
+    "total_records": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

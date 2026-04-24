@@ -1,0 +1,32 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "www.svuniversity.ac.in",
+      "dst_user": null,
+      "raw_line": "Host svu → www.svuniversity.ac.in",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [
+    {
+      "aliases": [
+        "*"
+      ],
+      "username": "something"
+    }
+  ],
+  "stats": {
+    "blocks_parsed": 2
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

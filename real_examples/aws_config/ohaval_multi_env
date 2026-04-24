@@ -1,0 +1,18 @@
+[default]
+region = us-east-1
+mfa_serial = arn:aws:iam::1000:mfa/some-developer
+
+[profile some-developer]
+Credential_process = aws-vault export --format=json some-developer
+
+[profile dev]
+role_arn = arn:aws:iam::2000:role/Admin
+source_profile = some-developer
+
+[profile staging]
+role_arn = arn:aws:iam::3000:role/ReadOnly
+source_profile = some-developer
+
+[profile prod]
+role_arn = arn:aws:iam::4000:role/ReadOnly
+source_profile = some-developer

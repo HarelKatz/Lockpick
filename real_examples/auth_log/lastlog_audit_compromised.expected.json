@@ -1,0 +1,63 @@
+{
+  "connections_found": [
+    {
+      "auth_method": "publickey",
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "deploy",
+      "raw_line": "Mar 27 14:00:22 prod-web-01 sshd[5100]: Accepted publickey for deploy from 10.0.5.22 port 60100 ssh2",
+      "src_ip": "10.0.5.22",
+      "src_user": null,
+      "timestamp": "2026-03-27T14:00:22+00:00"
+    },
+    {
+      "auth_method": "password",
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "root",
+      "raw_line": "Mar 27 03:47:12 prod-web-01 sshd[4435]: Accepted password for root from 185.220.101.34 port 44260 ssh2",
+      "src_ip": "185.220.101.34",
+      "src_user": null,
+      "timestamp": "2026-03-27T03:47:12+00:00"
+    },
+    {
+      "auth_method": "publickey",
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "svc-backup",
+      "raw_line": "Mar 27 04:01:18 prod-web-01 sshd[4550]: Accepted publickey for svc-backup from 185.220.101.34 port 55200 ssh2",
+      "src_ip": "185.220.101.34",
+      "src_user": null,
+      "timestamp": "2026-03-27T04:01:18+00:00"
+    },
+    {
+      "auth_method": "publickey",
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "svc-backup",
+      "raw_line": "Mar 27 03:52:44 prod-web-01 sshd[4500]: Accepted publickey for svc-backup from 45.153.160.140 port 55100 ssh2",
+      "src_ip": "45.153.160.140",
+      "src_user": null,
+      "timestamp": "2026-03-27T03:52:44+00:00"
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "accepted_logins": 4,
+    "lines_parsed": 27,
+    "total_records": 4
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

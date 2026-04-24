@@ -1,0 +1,80 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "1.2.3.4",
+      "dst_user": "wwwdata",
+      "raw_line": "Host aws.apache → 1.2.3.4",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.0.251",
+      "dst_user": "nixcraft",
+      "raw_line": "Host uk.gw.lan uk.lan → 192.168.0.251",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.1.100",
+      "dst_user": "root",
+      "raw_line": "Host nas01 → 192.168.1.100",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "server1.cyberciti.biz",
+      "dst_user": "nixcraft",
+      "raw_line": "Host server1 → server1.cyberciti.biz",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "vps1.cyberciti.biz",
+      "dst_user": "breakfree",
+      "raw_line": "Host proxyus → vps1.cyberciti.biz",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [
+    {
+      "aliases": [
+        "*"
+      ],
+      "username": "nixcraft"
+    }
+  ],
+  "stats": {
+    "blocks_parsed": 6
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

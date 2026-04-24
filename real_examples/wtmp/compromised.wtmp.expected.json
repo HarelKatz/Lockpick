@@ -1,0 +1,27 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "/1admin",
+      "raw_line": "wtmp: /1admin from \u0000\u000010.0.1.101",
+      "src_ip": "\u0000\u000010.0.1.101",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "records_parsed": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": [
+    "File size 3456 is not a multiple of utmp record size 382 — may be truncated or wrong format"
+  ]
+}

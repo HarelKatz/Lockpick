@@ -1,0 +1,88 @@
+# Using git credential store for non-interactive operations over https, without exposing password in remote URL (save, retrieve passwords)
+
+Demoing git credential store usage in CI/CD context - i.e. https non-interactive:
+- [Setup](#setup)
+- [Save credentials](#save-credentials)
+- [Get credentials](#get-credentials)
+- [Selectively remove credentials](#selectively-remove-credentials)
+- [Clean-up](#clean-up)
+
+## Setup
+
+```bash
+# Get a shell into git container
+docker run --rm -it --entrypoint=/bin/sh alpine/git:v2.34.2
+
+# Store credentials to file
+git config --global credential.helper store
+# Note: To store in memory (for 1 day)
+# git config --global credential.helper 'cache --timeout=86400'
+
+# Clean out existing credentials
+rm ~/.git-credentials
+
+# Force non-interactive mode
+export GIT_TERMINAL_PROMPT=0
+```
+
+## Save credentials
+
+```bash
+git credential approve <<'EOT'
+url=https://example.com
+username=user0
+password=0000
+EOT
+
+git credential approve <<'EOT'
+url=https://example.com/test-group/test-repo1.git
+username=user1
+password=1111
+EOT
+
+git credential approve <<'EOT'
+url=https://example.com/test-group/test-repo2.git
+username=user2
+password=2222
+EOT
+```
+
+## Get credentials
+
+```bash
+git credential fill <<'EOT'
+url=https://example.com/test-group/test-repo1.git
+username=user1
+EOT
+
+git credential fill <<'EOT'
+url=https://example.com/test-group/test-repo2.git
+username=user2
+EOT
+
+git credential fill <<'EOT'
+url=https://example.com
+username=user0
+EOT
+```
+
+## Selectively remove credentials
+
+```bash
+git credential reject <<'EOT'
+url=https://example.com
+username=user2
+EOT
+
+# Ensure it's removed - expect to error-out with "fatal: could not read Password for 'https://user2@example.com': terminal prompts disabled"
+git credential fill <<'EOT'
+url=https://example.com/test-group/test-repo2.git
+username=user2
+EOT
+```
+
+## Clean-up
+```bash
+rm ~/.git-credentials
+exit
+```

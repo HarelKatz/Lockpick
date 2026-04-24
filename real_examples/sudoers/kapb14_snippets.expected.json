@@ -1,0 +1,167 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "rules": 19
+  },
+  "sudo_rules_found": [
+    {
+      "commands": "PRINTING, /usr/bin/adduser, /usr/bin/rmuser",
+      "nopasswd": false,
+      "raw_line": "+secretaries    ALL = PRINTING, /usr/bin/adduser, /usr/bin/rmuser",
+      "run_as": "ALL",
+      "subject": "+secretaries",
+      "subject_type": "user"
+    },
+    {
+      "commands": "/sbin/umount /CDROM,         /sbin/mount -o nosuid\\,nodev /dev/cd0a /CDROM",
+      "nopasswd": true,
+      "raw_line": "ALL     CDROM = NOPASSWD: /sbin/umount /CDROM,         /sbin/mount -o nosuid\\,nodev /dev/cd0a /CDROM",
+      "run_as": "ALL",
+      "subject": "ALL",
+      "subject_type": "user"
+    },
+    {
+      "commands": "ALL",
+      "nopasswd": true,
+      "raw_line": "FULLTIMERS  ALL = NOPASSWD: ALL",
+      "run_as": "ALL",
+      "subject": "FULLTIMERS",
+      "subject_type": "user"
+    },
+    {
+      "commands": "ALL",
+      "nopasswd": false,
+      "raw_line": "PARTTIMERS  ALL = ALL",
+      "run_as": "ALL",
+      "subject": "PARTTIMERS",
+      "subject_type": "user"
+    },
+    {
+      "commands": "ALL, (root) /usr/bin/su www",
+      "nopasswd": false,
+      "raw_line": "WEBMASTERS  www = (www) ALL, (root) /usr/bin/su www",
+      "run_as": "www",
+      "subject": "WEBMASTERS",
+      "subject_type": "user"
+    },
+    {
+      "commands": "ALL : SGI = (OP) ALL",
+      "nopasswd": false,
+      "raw_line": "bob     SPARC = (OP) ALL : SGI = (OP) ALL",
+      "run_as": "OP",
+      "subject": "bob",
+      "subject_type": "user"
+    },
+    {
+      "commands": "ALL",
+      "nopasswd": true,
+      "raw_line": "fred        ALL = (DB) NOPASSWD: ALL",
+      "run_as": "DB",
+      "subject": "fred",
+      "subject_type": "user"
+    },
+    {
+      "commands": "ALL",
+      "nopasswd": false,
+      "raw_line": "jack        CSNETS = ALL",
+      "run_as": "ALL",
+      "subject": "jack",
+      "subject_type": "user"
+    },
+    {
+      "commands": "/usr/bin/, !SU, !SHELLS",
+      "nopasswd": false,
+      "raw_line": "jill        SERVERS = /usr/bin/, !SU, !SHELLS",
+      "run_as": "ALL",
+      "subject": "jill",
+      "subject_type": "user"
+    },
+    {
+      "commands": "ALL",
+      "nopasswd": false,
+      "raw_line": "jim     +biglab = ALL",
+      "run_as": "ALL",
+      "subject": "jim",
+      "subject_type": "user"
+    },
+    {
+      "commands": "/usr/bin/su operator",
+      "nopasswd": false,
+      "raw_line": "joe     ALL = /usr/bin/su operator",
+      "run_as": "ALL",
+      "subject": "joe",
+      "subject_type": "user"
+    },
+    {
+      "commands": "/usr/bin/su [!-]*, !/usr/bin/su *root*",
+      "nopasswd": false,
+      "raw_line": "john        ALPHA = /usr/bin/su [!-]*, !/usr/bin/su *root*",
+      "run_as": "ALL",
+      "subject": "john",
+      "subject_type": "user"
+    },
+    {
+      "commands": "ALL",
+      "nopasswd": false,
+      "raw_line": "lisa        CUNETS = ALL",
+      "run_as": "ALL",
+      "subject": "lisa",
+      "subject_type": "user"
+    },
+    {
+      "commands": "KILL",
+      "nopasswd": false,
+      "raw_line": "matt        valkyrie = KILL",
+      "run_as": "ALL",
+      "subject": "matt",
+      "subject_type": "user"
+    },
+    {
+      "commands": "DUMPS, KILL, SHUTDOWN, HALT, REBOOT, PRINTING,         sudoedit /etc/printcap, /usr/oper/bin/",
+      "nopasswd": false,
+      "raw_line": "operator    ALL = DUMPS, KILL, SHUTDOWN, HALT, REBOOT, PRINTING,         sudoedit /etc/printcap, /usr/oper/bin/",
+      "run_as": "ALL",
+      "subject": "operator",
+      "subject_type": "user"
+    },
+    {
+      "commands": "/usr/bin/passwd [A-z]*, !/usr/bin/passwd root",
+      "nopasswd": false,
+      "raw_line": "pete        HPPA = /usr/bin/passwd [A-z]*, !/usr/bin/passwd root",
+      "run_as": "ALL",
+      "subject": "pete",
+      "subject_type": "user"
+    },
+    {
+      "commands": "ALL",
+      "nopasswd": false,
+      "raw_line": "root        ALL = (ALL) ALL",
+      "run_as": "ALL",
+      "subject": "root",
+      "subject_type": "user"
+    },
+    {
+      "commands": "/usr/local/op_commands/",
+      "nopasswd": false,
+      "raw_line": "steve       CSNETS = (operator) /usr/local/op_commands/",
+      "run_as": "operator",
+      "subject": "steve",
+      "subject_type": "user"
+    },
+    {
+      "commands": "ALL",
+      "nopasswd": false,
+      "raw_line": "%wheel      ALL = (ALL) ALL",
+      "run_as": "ALL",
+      "subject": "wheel",
+      "subject_type": "group"
+    }
+  ],
+  "warnings": [
+    "Skipped sudoers line: jen     ALL, !SERVERS = ALL"
+  ]
+}

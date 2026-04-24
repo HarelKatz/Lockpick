@@ -1,0 +1,56 @@
+# Example ssh config file. Usually located in ~/.ssh/config (user) or /etc/ssh/ssh_config (system)
+# This works on both linux and MacOS
+
+# Using patterns in ssh/config file.
+# This removes a lot of unnecessary repetition while writing this file.
+
+
+
+# Subdomain patterns using wildcards
+# Run with "ssh www.example.com" => (equivalent to: "ssh ubuntu@www.example.com")
+# Run with "ssh blog.example.com" => (equivalent to: "ssh ubuntu@blog.example.com")
+Host *.example.com
+	HostName %h
+	User ubuntu
+
+
+# Subdomain patterns with "?" (matches one character)
+# Run with "ssh box1" => (equivalent to: "ssh ubuntu@box1.example.com")
+# Run with "ssh boxZ" => (equivalent to: "ssh ubuntu@boxZ.example.com")
+Host box?
+	HostName %h.example.com
+	User ubuntu
+
+# Multiple patterns
+# Run with "ssh box3" => (equivalent to: "ssh ubuntu@box3.example.com")
+# Run with "ssh cluster01" => (equivalent to: "ssh ubuntu@cluster01.example.com")
+# Run with "ssh cluster99" => (equivalent to: "ssh ubuntu@cluster99.example.com")
+Host box? cluster??
+	HostName %h.example.com
+	User ubuntu
+
+
+# Exclusion Patterns
+# Prepend any pattern with "!" and it will be negated
+# Run with "ssh box1" => (equivalent to: "ssh ubuntu@box1.example.com")
+# Run with "ssh box0" will generate an error: "ssh: Could not resolve hostname box0: nodename nor servname provided, or not known"
+Host box? !box0
+	HostName %h.example.com
+	User ubuntu
+
+
+# Cascaded patterns: Patterns can be cascaded as follows
+# Below options are "defaults" for all subdomains of example.com
+Host *.example.com
+	HostName %h.example.com
+	User ubuntu
+
+Host box?.example.com
+  # Run with "ssh box1.example.com" => (equivalent to: "ssh centos@box1.example.com")
+  User centos
+  
+Host cluster??
+  # Run with "ssh cluster99" => (equivalent to: "ssh -i  ~/.ssh/cluster.id_rsa ubuntu@cluster99.example.com")
+	IdentityFile ~/.ssh/cluster.id_rsa
+
+# More on patterns under "Patterns" section here: https://linux.die.net/man/5/ssh_config

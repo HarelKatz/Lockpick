@@ -1,0 +1,9 @@
+[SAMPLE]
+type = onedrive
+token = {"access_token":"foo","token_type":"headers","refresh_token":"{\"username\":\"<YOUR USERNAME>\",\"password\":\"<YOUR PASSWORD>\",\"tenant\":\"<YOUR TENANT NAME>.sharepoint.com\",\"site_url\":\"https://<YOUR TENANT NAME>.sharepoint.com/sites/<YOUR SITE NAME>\"}","expiry":"1970-02-15T08:47:29.993180336Z"}
+drive_id = <SEE THE GUIDE>
+drive_type = sharepoint
+chunk_size = 20M
+oauth_endpoint = <BETTER TO SET UP ONE ON YOUR OWN, OR USE https://oauth.1145.eu/sharepoint>
+root_url = https://<TENANT>.sharepoint.com/sites/<SITE>/_api/v2.0/drives/<DRIVE_ID>
+root_url_v1 = https://<TENANT>.sharepoint.com/sites/<SITE>/_api

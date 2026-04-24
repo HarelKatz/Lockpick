@@ -1,0 +1,37 @@
+function parseNetstat {
+    param([object[]]$Lines)
+
+    if ($IsWindows) {
+        $skip = 4
+    } else {
+        $skip = 3
+    }
+
+    $Lines | Select-Object -Skip $skip | ForEach-Object {
+        $columns = ($_ -split ' ').Trim() | Where-Object {$_ }
+        if ($columns[1].IndexOf('[') -lt 0) {
+            $laddr = $columns[1].Split(':')[0]
+            $lport = $columns[1].Split(':')[1]
+        } else {
+            $laddr = $columns[1].Split(']:')[0].Trim('[')
+            $lport = $columns[1].Split(']:')[1]
+        }
+        if ($columns[2].IndexOf('[') -lt 0) {
+            $raddr = $columns[2].Split(':')[0]
+            $rport = $columns[2].Split(':')[1]
+        } else {
+            $raddr = $columns[2].Split(']:')[0].Trim('[')
+            $rport = $columns[2].Split(']:')[1]
+        }
+        [pscustomobject]@{
+            Protocol = $columns[0]
+            LocalAddress = $laddr
+            LocalPort = $lport
+            RemoteAddress = $raddr
+            RemotePort = $rport
+            State = $columns[3]
+        }
+    }
+}
+
+parseNetstat -Lines (netstat)

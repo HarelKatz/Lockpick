@@ -1,0 +1,9 @@
+Started with command:
+
+    WILDFLY_MGMT_PORT=9980 SFWEB_HTTP_PORT=9080 HTTP_PORT=9080 MGMT_PORT=9980 docker-compose -f rhel-test/docker-compose.yaml start
+
+
+$ docker ps
+CONTAINER ID        IMAGE                                              COMMAND                  CREATED             STATUS              PORTS                                            NAMES
+fcae22fa4144        sunflower-docker.cse.sri.com/rhel-sfweb:latest     "/opt/bin/entrypoint-"   2 hours ago         Up 2 minutes        0.0.0.0:9080->9090/tcp, 0.0.0.0:9980->9990/tcp   rheltest_sfweb_1
+155206af2f03        sunflower-docker.cse.sri.com/rhel-floradb:latest   "/entrypoint.sh mysql"   2 hours ago         Up 2 minutes        3306/tcp, 33060/tcp                              rheltest_db_1

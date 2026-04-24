@@ -1,0 +1,21 @@
+# Example ssh config file. Usually located in ~/.ssh/config (user) or /etc/ssh/ssh_config (system)
+# This works on both linux and MacOS
+
+# Basic ssh commands converted to ssh/config file format
+
+
+
+# Simplest format
+# Run with: "ssh blog" => (equivalent to: "ssh ubuntu@example.com" and  "ssh -i ~/.ssh/id_rsa -p 22 ubuntu@example.com")
+Host blog
+	User ubuntu
+	HostName example.com
+
+
+# Setting more options
+# Run with: "ssh secure_blog" => (equivalent to: "ssh -p 12345 -i ~/.ssh/identity_file_that_is_not-id_rsa ubuntu@example.com")
+Host secure_blog
+	User ubuntu
+	HostName example.com
+	Port 12345
+	IdentityFile ~/.ssh/identity_file_that_is_not-id_rsa

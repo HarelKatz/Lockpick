@@ -1,0 +1,68 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "confidential",
+      "dst_user": "centos",
+      "raw_line": "Host confidential → confidential",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "myproxy.example.com",
+      "dst_user": "ubuntu",
+      "raw_line": "Host jumpbox → myproxy.example.com",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "myproxy.example.com",
+      "dst_user": "ubuntu",
+      "raw_line": "Host jumpbox_tunnels → myproxy.example.com",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "private01",
+      "dst_user": "centos",
+      "raw_line": "Host jb.private01 → private01",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [
+    {
+      "aliases": [
+        "jb.*"
+      ],
+      "username": "centos"
+    }
+  ],
+  "stats": {
+    "blocks_parsed": 5
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

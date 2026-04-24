@@ -1,0 +1,25 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "configured",
+      "dst_user": "intermediate",
+      "raw_line": "Host target → configured",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "blocks_parsed": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

@@ -1,0 +1,12 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {},
+  "sudo_rules_found": [],
+  "warnings": [
+    "File does not appear to contain a PEM-encoded private key"
+  ]
+}

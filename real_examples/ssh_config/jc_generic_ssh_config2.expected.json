@@ -1,0 +1,69 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.1.10",
+      "dst_user": "daenerys",
+      "raw_line": "Host targaryen → 192.168.1.10",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.10.20",
+      "dst_user": null,
+      "raw_line": "Host tyrell → 192.168.10.20",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.10.50",
+      "dst_user": null,
+      "raw_line": "Host martell → 192.168.10.50",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [
+    {
+      "aliases": [
+        "*"
+      ],
+      "username": "root"
+    },
+    {
+      "aliases": [
+        "*",
+        "!martell"
+      ],
+      "username": null
+    },
+    {
+      "aliases": [
+        "*ell"
+      ],
+      "username": "oberyn"
+    }
+  ],
+  "stats": {
+    "blocks_parsed": 6
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

@@ -1,0 +1,70 @@
+Make a backup copy of the default network interfaces file
+
+```
+cp /etc/network/interfaces /etc/network/default-interfaces
+```
+
+Edit the interfaces file
+
+```
+nano /etc/network/interfaces
+```
+
+Look for these lines, substituting `enp0s1` for your own interface
+
+```
+allow-hotplug enp0s1
+iface enp0s1 inet dhcp
+```
+
+Edit to this, substituting your own _address_, _gateway_, and _dns-nameservers_.
+
+```
+auto enp0s1
+iface enp0s1 inet static
+ address 192.168.1.100
+ netmask 255.255.255.0
+ gateway 192.168.1.1
+ dns-nameservers 9.9.9.11 149.112.112.11
+```
+
+Save and close the file, restart the network interface
+
+```
+systemctl restart ifup@enp0s1
+```
+
+And restart the networking service
+
+```
+systemctl restart networking.service
+```
+
+> **Note:** If you're using a different service to control networking, restart it instead --<br>
+> e.g. `systemctl restart NetworkManager.service`
+
+Now edit (or create) resolv config file
+
+```
+nano /etc/resolv.conf
+```
+
+Add your DNS resolvers into it
+
+```
+nameserver 9.9.9.11
+nameserver 149.112.112.11
+```
+
+Confirm your IP is now static with this command
+
+```
+ip -c addr show enp0s1
+```
+
+The output should look something like this
+
+```
+2: enp0s1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    inet 192.168.1.100/24 brd 192.168.0.255 scope global enp0s1
+```

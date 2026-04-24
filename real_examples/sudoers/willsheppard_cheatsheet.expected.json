@@ -1,0 +1,63 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "rules": 3
+  },
+  "sudo_rules_found": [
+    {
+      "commands": "ALL",
+      "nopasswd": false,
+      "raw_line": "%admin ALL=(ALL) ALL",
+      "run_as": "ALL",
+      "subject": "admin",
+      "subject_type": "group"
+    },
+    {
+      "commands": "ALL",
+      "nopasswd": false,
+      "raw_line": "root    ALL=(ALL:ALL) ALL",
+      "run_as": "ALL:ALL",
+      "subject": "root",
+      "subject_type": "user"
+    },
+    {
+      "commands": "ALL",
+      "nopasswd": false,
+      "raw_line": "%sudo   ALL=(ALL:ALL) ALL",
+      "run_as": "ALL:ALL",
+      "subject": "sudo",
+      "subject_type": "group"
+    }
+  ],
+  "warnings": [
+    "Skipped sudoers line: Define text editor",
+    "Skipped sudoers line: ```",
+    "Skipped sudoers line: $ sudo update-alternatives --config editor",
+    "Skipped sudoers line: ```",
+    "Skipped sudoers line: Edit `/etc/sudoers` file",
+    "Skipped sudoers line: ```",
+    "Skipped sudoers line: $ sudo visudo /etc/sudoers",
+    "Skipped sudoers line: ```",
+    "Skipped sudoers line: Add a user to sudo group",
+    "Skipped sudoers line: ```",
+    "Skipped sudoers line: $ sudo usermod -aG sudo username",
+    "Skipped sudoers line: or",
+    "Skipped sudoers line: $ sudo gpasswd -a username sudo",
+    "Skipped sudoers line: ```",
+    "Skipped sudoers line: (but CentOS uses \"wheel\" group instead)",
+    "Skipped sudoers line: Default config for Ubuntu 22:",
+    "Skipped sudoers line: ```",
+    "Skipped sudoers line: ```",
+    "Skipped sudoers line: Remove login for default users:",
+    "Skipped sudoers line: ```",
+    "Skipped sudoers line: $ usermod -s /usr/sbin/nologin username",
+    "Skipped sudoers line: ```",
+    "Skipped sudoers line: Sources:",
+    "Skipped sudoers line: - https://www.sudo.ws/docs/man/1.8.17/sudoers.man",
+    "Skipped sudoers line: - https://www.digitalocean.com/community/tutorials/how-to-edit-the-sudoers-file#"
+  ]
+}

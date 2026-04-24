@@ -1,0 +1,22 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "private_key",
+      "name": "paramiko_support_ecdsa_256",
+      "relationship_type": "found_on_disk",
+      "username": null,
+      "value_length": 227,
+      "value_prefix": "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEI"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "fingerprint": "SHA256:BrQG04oNKUETjKCeL4ifkARASg3yxS/pUHl3wWM26Yg",
+    "key_type": "ecdsa-sha2-nistp256"
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

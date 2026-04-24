@@ -1,0 +1,25 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "github.com",
+      "dst_user": "git",
+      "raw_line": "Host github.com → github.com",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "blocks_parsed": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

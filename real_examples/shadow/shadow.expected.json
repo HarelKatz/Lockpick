@@ -1,0 +1,70 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "password",
+      "name": "shadow hash for netneng",
+      "relationship_type": "found_on_disk",
+      "username": "netneng",
+      "value_length": 34,
+      "value_prefix": "$1$khkWa1Nz$vcfIQnl.MEGEqD2GMKCB81"
+    },
+    {
+      "cred_type": "password",
+      "name": "shadow hash for root",
+      "relationship_type": "found_on_disk",
+      "username": "root",
+      "value_length": 34,
+      "value_prefix": "$1$TDQFedzX$.kv51AjM.FInu0lrH1dY30"
+    },
+    {
+      "cred_type": "password",
+      "name": "shadow hash for t",
+      "relationship_type": "found_on_disk",
+      "username": "t",
+      "value_length": 34,
+      "value_prefix": "$1$TDQFedzX$.kv51AjM.FInu0lrH1dY30"
+    }
+  ],
+  "host_users_found": [
+    [
+      "netneng",
+      null,
+      null
+    ],
+    [
+      "root",
+      null,
+      null
+    ],
+    [
+      "t",
+      null,
+      null
+    ]
+  ],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "hashes_found": 3,
+    "users_found": 3
+  },
+  "sudo_rules_found": [],
+  "warnings": [
+    "User 'bin': account is locked (*) — no hash",
+    "User 'daemon': account is locked (*) — no hash",
+    "User 'adm': account is locked (*) — no hash",
+    "User 'lp': account is locked (*) — no hash",
+    "User 'sync': account is locked (*) — no hash",
+    "User 'shutdown': account is locked (*) — no hash",
+    "User 'halt': account is locked (*) — no hash",
+    "User 'mail': account is locked (*) — no hash",
+    "User 'news': account is locked (*) — no hash",
+    "User 'uucp': account is locked (*) — no hash",
+    "User 'operator': account is locked (*) — no hash",
+    "User 'games': account is locked (*) — no hash",
+    "User 'gopher': account is locked (*) — no hash",
+    "User 'ftp': account is locked (*) — no hash",
+    "User 'nobody': account is locked (*) — no hash"
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [
+    {
+      "ip_address": "199.185.137.3",
+      "nickname": "cvs.openbsd.org"
+    },
+    {
+      "ip_address": "204.152.190.12",
+      "nickname": "www.netbsd.org"
+    },
+    {
+      "ip_address": "204.152.191.37",
+      "nickname": "pub2.kernel.org"
+    },
+    {
+      "ip_address": "64.13.134.48",
+      "nickname": "64.13.134.48"
+    },
+    {
+      "ip_address": "66.35.250.168",
+      "nickname": "freshmeat.net"
+    },
+    {
+      "ip_address": "66.35.250.203",
+      "nickname": "sourceforge.net"
+    },
+    {
+      "ip_address": "72.14.207.99",
+      "nickname": "eh-in-f99.google.com"
+    },
+    {
+      "ip_address": "72.14.253.83",
+      "nickname": "po-in-f83.google.com"
+    }
+  ],
+  "patterns_found": [],
+  "stats": {
+    "hosts_found": 8
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

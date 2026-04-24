@@ -1,0 +1,52 @@
+# Example ssh config file. Usually located in ~/.ssh/config (user) or /etc/ssh/ssh_config (system)
+# This works on both linux and MacOS
+
+# Jumpboxes/Proxies/Firewalls can be in between servers. (e.g. localbox -> proxy -> example.com)
+# Login through proxy
+# First define the proxy connection
+Host jumpbox
+  HostName myproxy.example.com
+  User ubuntu
+
+
+
+# Login to a private machine (behind a jumpbox)
+# Run with "ssh jb.private01" => (equivalent to: "ssh jumpbox -tt ssh centos@private01")
+#   => Also equivilant to ssh ubuntu@myproxy.example.com -tt ssh centos@private01
+# Note that User/HostName are used by jumpbox's connection, not your local machine
+Host jb.private01
+	HostName private01
+	User centos
+	ProxyCommand ssh jumpbox -W %h:%p
+
+
+
+# Login to multiple private machines (behind a jumpbox), with a common prefix
+# Run with "ssh jb.private99" => (equivalent to: "ssh jumpbox -tt ssh centos@private99")
+# $(echo %h | cut -d. -f1- ) takes the hostname "jb.private99", splits it by "." delimiter, then captures all the fields starting second
+Host jb.*
+	User centos
+	ProxyCommand ssh jumpbox -W $(echo %h | cut -d. -f2- ):%p
+
+
+
+# Login to a private machine with a non-default key
+# You need "nc" to be installed on the jumpbox machine to be able to do this
+# Run with "ssh confidential" => (equivalent to: "ssh jumpbox -tt ssh -i ~/non_default_key centos@private01")
+Host confidential
+	HostName confidential
+	User centos
+  ProxyCommand ssh -o 'ForwardAgent yes' jumpbox 'ssh-add path/to/keyfile && nc %h %p'
+
+
+
+# Port-forwarding (using tunnels)
+# Tunnel with "ssh -fN jumpbox_tunnels" (then you can access private:9200 as localhost:9401)
+Host jumpbox_tunnels
+  HostName myproxy.example.com
+  User ubuntu
+  LocalForward 9401 private01:9200
+  LocalForward 9402 private02:9200
+  LocalForward 9403 private03:9200
+
+

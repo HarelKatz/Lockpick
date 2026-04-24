@@ -1,0 +1,40 @@
+#
+# AWS Access Keys
+#
+# Some shortcuts:
+#
+# Use a specific profile with:
+#
+#     aws COMMAND [OPTIONS ...] --profile PROFILE
+#
+# List all files from a bucket or bucket/folder:
+#
+#     aws s3 ls s3://BUCKETNAME[/PATH]
+#
+# Output a file to the standard output:
+#
+#     aws s3 cp s3://BUCKETNAME/PATH/to/FILE -
+#
+# Delete a file or a folder recursively
+#
+#     aws s3 rm s3://BUCKETNAME/PATH --profile PROFILE --recursive
+#
+# Generate a pre-signed URL for an Amazon S3 object:
+#
+#     aws s3 presign s3://BUCKETNAME/PATH --expires-in SECONDS
+#
+# List all active access keys from a user:
+#
+#     aws iam list-access-keys
+#
+# Get object information by name:
+#
+#     aws iam get-[user|group|role] --[user|group|role]-name NAME
+#
+
+
+[default]
+region = us-east-1
+# UserName: mrsarm
+aws_access_key_id = AKIA....
+aws_secret_access_key = XXXXXXXYYYYYYYY...

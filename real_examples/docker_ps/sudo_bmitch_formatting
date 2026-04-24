@@ -1,0 +1,84 @@
+Start with a normal `docker ps` output:
+
+```
+$ docker ps
+CONTAINER ID        IMAGE                            COMMAND                  CREATED             STATUS   PORTS               NAMES
+4edf61bfedce        prom/node-exporter:latest        "/bin/node_exporter …"   18 hours ago        Up 18 hours   9100/tcp            prometheus_node-exporter.q44zx0s2lvu1fdduk800e5ini.e68ujezn8rsvsll8epgay2oxi
+8ad16badf470        grafana/grafana:latest           "/run.sh"                18 hours ago        Up 18 hours   3000/tcp            prometheus_grafana.1.5qhwvzvlng8ny8utzdajhxsyo
+822f8207aee0        prom/prometheus:latest           "/bin/prometheus --c…"   18 hours ago        Up 18 hours   9090/tcp            prometheus_prometheus.1.umq9zg7qpu8cyluwbo4awzhtx
+8c3f044d503b        prom/alertmanager:latest         "/bin/alertmanager -…"   18 hours ago        Up 18 hours   9093/tcp            prometheus_alertmanager.1.vtqoaudacac1xlgh0xvvb7j2x
+7d32bb10f579        google/cadvisor:latest           "/usr/bin/cadvisor -…"   18 hours ago        Up 18 hours   8080/tcp            prometheus_cadvisor.q44zx0s2lvu1fdduk800e5ini.7p1nmx0ol7x3vocsu5hrydaia
+```
+
+What fields do we have to work with, lets use the `--format {{json .}} | jq .` trick to show all of the possible fields:
+
+```
+$ docker ps --format '{{json .}}' | jq .
+{                                                                                                                   
+  "Command": "\"/bin/node_exporter …\"",                                                                                                                                                  
+  "CreatedAt": "2018-02-01 14:24:51 -0500 EST",                                                                                  
+  "ID": "4edf61bfedce",                                                                                                               
+  "Image": "prom/node-exporter:latest",                                                                                               
+  "Labels": "com.docker.stack.namespace=prometheus,com.docker.swarm.node.id=q44zx0s2lvu1fdduk800e5ini,com.docker.swarm.service.id=z2tjxmdllvi336ltuv5wdlf16,com.docker.swarm.service.name=prometheus_node-exporter,com.docker.swarm.task=,com.
+docker.swarm.task.id=e68ujezn8rsvsll8epgay2oxi,com.docker.swarm.task.name=prometheus_node-exporter.q44zx0s2lvu1fdduk800e5ini.e68ujezn8rsvsll8epgay2oxi",
+  "LocalVolumes": "0",
+  "Mounts": "/proc,/sys,/",
+  "Names": "prometheus_node-exporter.q44zx0s2lvu1fdduk800e5ini.e68ujezn8rsvsll8epgay2oxi",
+  "Networks": "ingress,prometheus_prometheus",
+  "Ports": "9100/tcp",
+  "RunningFor": "18 hours ago",
+  "Size": "0B",
+  "Status": "Up 18 hours"
+}
+...
+```
+
+Lets pick our favorite fields:
+
+```
+$ docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Command}}\t{{.ID}}\t{{.Status}}'                                                                                                                                                                                                                      
+NAMES                                                                          IMAGE                            COMMAND                  CONTAINER ID        STATUS                                                                           
+prometheus_node-exporter.q44zx0s2lvu1fdduk800e5ini.e68ujezn8rsvsll8epgay2oxi   prom/node-exporter:latest        "/bin/node_exporter …"   4edf61bfedce        Up 18 hours                                                                      
+prometheus_grafana.1.5qhwvzvlng8ny8utzdajhxsyo                                 grafana/grafana:latest           "/run.sh"                8ad16badf470        Up 18 hours                                                                      
+prometheus_prometheus.1.umq9zg7qpu8cyluwbo4awzhtx                              prom/prometheus:latest           "/bin/prometheus --c…"   822f8207aee0        Up 18 hours                                                                      
+prometheus_alertmanager.1.vtqoaudacac1xlgh0xvvb7j2x                            prom/alertmanager:latest         "/bin/alertmanager -…"   8c3f044d503b        Up 18 hours                                                                      
+prometheus_cadvisor.q44zx0s2lvu1fdduk800e5ini.7p1nmx0ol7x3vocsu5hrydaia        google/cadvisor:latest           "/usr/bin/cadvisor -…"   7d32bb10f579        Up 18 hours
+```
+
+Hmm, those names are rather long, lets truncate them:
+
+```
+$ docker ps --format 'table {{printf "%.20s" .Names}}\t{{.Image}}\t{{.Command}}\t{{.ID}}\t{{printf "%.15s" .Status}}'
+NAMES                  IMAGE                            COMMAND                  CONTAINER ID        STATUS
+prometheus_node-expo   prom/node-exporter:latest        "/bin/node_exporter …"   4edf61bfedce        Up 18 hours
+prometheus_grafana.1   grafana/grafana:latest           "/run.sh"                8ad16badf470        Up 18 hours
+prometheus_prometheu   prom/prometheus:latest           "/bin/prometheus --c…"   822f8207aee0        Up 18 hours
+prometheus_alertmana   prom/alertmanager:latest         "/bin/alertmanager -…"   8c3f044d503b        Up 18 hours
+prometheus_cadvisor.   google/cadvisor:latest           "/usr/bin/cadvisor -…"   7d32bb10f579        Up 18 hours
+```
+
+Thats looking pretty good, lets make it our default `docker ps` output by adding it to our ~/.docker/config.json 
+(leave the auths sections alone if you don't want to have to `docker login` to your registries again):
+
+```
+$ cat ~/.docker/config.json
+{
+   "experimental": "enabled",
+   "psFormat": "table {{printf \"%.20s\" .Names}}\t{{.Image}}\t{{.Command}}\t{{.ID}}\t{{printf \"%.15s\" .Status}}",
+   "auths": {
+   ......
+   }
+}
+```
+ 
+Lets see what that did to the default `docker ps` command:
+
+```
+$ docker ps
+NAMES                  IMAGE                            COMMAND                  CONTAINER ID        STATUS
+prometheus_node-expo   prom/node-exporter:latest        "/bin/node_exporter …"   4edf61bfedce        Up 19 hours
+prometheus_grafana.1   grafana/grafana:latest           "/run.sh"                8ad16badf470        Up 19 hours
+prometheus_prometheu   prom/prometheus:latest           "/bin/prometheus --c…"   822f8207aee0        Up 19 hours
+prometheus_alertmana   prom/alertmanager:latest         "/bin/alertmanager -…"   8c3f044d503b        Up 19 hours
+prometheus_cadvisor.   google/cadvisor:latest           "/usr/bin/cadvisor -…"   7d32bb10f579        Up 19 hours
+```

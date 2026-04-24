@@ -1,0 +1,108 @@
+#!/usr/sbin/nft -f
+
+#
+# This config was adapted from various sources.
+#
+# Use at your own risk. Learn what each rule does
+# prior to implementing in your environment.
+#
+
+flush ruleset
+
+# Here we're defining two groups of fictitious IP ranges
+# and then combining them in a second, single group.
+
+# This is just to illustrate how you can use nftables
+# to define variables and some interesting ways they
+# can be combined into your ruleset.
+
+define CDN_EDGE = {
+    192.168.1.1,
+    10.0.0.0/8
+}
+
+define CDN_MONITORS = {
+    192.168.1.10,
+    192.168.1.20
+}
+
+define CDN = {
+    $CDN_EDGE,
+    $CDN_MONITORS
+}
+
+# Define the firewall table called [firewall].
+# [inet] means this table applies to ipv4 and ipv6.
+# The name is [firewall], but that can be changed if desired.
+
+table inet firewall {
+
+    # Chains are containers for rules.
+    # Set up a chain called [inbound], name can be customized if desired.
+    # We'll put our inbound rules here.
+
+    chain inbound {
+
+    	# By default, drop all traffic unless it meets
+    	# a filter criteria specified by the following rules.
+        type filter hook input priority 0; policy drop;
+
+        # --- GENERAL TRAFFIC --------------------------------------------------
+
+        # Allow traffic from established and related packets.
+        ct state established,related accept
+
+        # Drop invalid packets.
+        ct state invalid drop
+
+        # Allow loopback traffic.
+        iifname lo accept
+
+        # Allow all ICMP and IGMP traffic, but enforce a rate limit
+        # to help prevent some types of flood attacks.
+        ip protocol icmp limit rate 4/second accept
+        ip6 nexthdr ipv6-icmp limit rate 4/second accept
+        ip protocol igmp limit rate 4/second accept
+
+        # --- SPECIFIC TRAFFIC -------------------------------------------------
+
+        # Allow SSH on port 22.
+        tcp dport 22 accept
+
+        # Allow HTTP(S).
+        # -- From anywhere
+        tcp dport { http, https } accept
+        udp dport { http, https } accept
+        # -- From approved IP ranges only
+        # tcp dport { http, https } ip saddr $CDN accept
+        # udp dport { http, https } ip saddr $CDN accept
+
+        # Allow Jekyll dev traffic on port 4000.
+        tcp dport 4000 accept
+
+        # Allow Hugo dev traffic on port 1313.
+        tcp dport 1313 accept
+
+        # Logging
+        # log prefix "[nftables] Inbound Denied: " flags all counter drop
+
+    }
+
+    chain forward {
+
+        # Drop everything (if not a router)
+        type filter hook forward priority 0; policy drop;
+
+        # Uncomment to enable logging
+        # log prefix "[nftables] Forward Denied: " flags all counter drop
+
+    }
+
+    chain outbound {
+
+        # Allow all outbound traffic
+        type filter hook output priority 0; policy accept;
+
+    }
+
+}

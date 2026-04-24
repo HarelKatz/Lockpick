@@ -1,0 +1,57 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [
+    {
+      "aliases": [
+        "*.example.com"
+      ],
+      "username": "ubuntu"
+    },
+    {
+      "aliases": [
+        "*.example.com"
+      ],
+      "username": "ubuntu"
+    },
+    {
+      "aliases": [
+        "box?"
+      ],
+      "username": "ubuntu"
+    },
+    {
+      "aliases": [
+        "box?",
+        "!box0"
+      ],
+      "username": "ubuntu"
+    },
+    {
+      "aliases": [
+        "box?",
+        "cluster??"
+      ],
+      "username": "ubuntu"
+    },
+    {
+      "aliases": [
+        "box?.example.com"
+      ],
+      "username": "centos"
+    },
+    {
+      "aliases": [
+        "cluster??"
+      ],
+      "username": null
+    }
+  ],
+  "stats": {
+    "blocks_parsed": 7
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

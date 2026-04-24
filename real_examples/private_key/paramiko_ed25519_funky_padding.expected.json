@@ -1,0 +1,22 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "private_key",
+      "name": "paramiko_ed25519_funky_padding",
+      "relationship_type": "found_on_disk",
+      "username": null,
+      "value_length": 399,
+      "value_prefix": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3Bl"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "fingerprint": "SHA256:3IBDT/vhj7a/KLk0eOJGmAwr61J1BDyJFzcN1uR7svo",
+    "key_type": "ssh-ed25519"
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

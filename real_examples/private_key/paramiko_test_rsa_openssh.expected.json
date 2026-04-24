@@ -1,0 +1,21 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "private_key",
+      "name": "paramiko_test_rsa_openssh",
+      "relationship_type": "found_on_disk",
+      "username": null,
+      "value_length": 1876,
+      "value_prefix": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3Bl"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {},
+  "sudo_rules_found": [],
+  "warnings": [
+    "Private key is passphrase-protected — stored without fingerprint. Supply the passphrase via the API if you want cross-referencing."
+  ]
+}
