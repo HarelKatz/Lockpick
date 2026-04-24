@@ -1,6 +1,10 @@
 """CRUD endpoints for Credentials and CredentialLinks."""
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
+log = logging.getLogger(__name__)
 
 from database import get_db
 from models import Credential, CredentialLink, Host
@@ -27,7 +31,7 @@ def create_credential(op_id: str, body: CredentialCreate, db: Session = Depends(
     get_op_or_404(op_id, db)
 
     key_type, fingerprint = None, None
-    if body.cred_type == "private_key":
+    if body.cred_type in ("private_key", "public_key"):
         key_type, fingerprint = infer_key_info(body.value, body.passphrase)
 
     cred = Credential(
@@ -83,6 +87,7 @@ def update_credential(cred_id: str, body: CredentialUpdate, db: Session = Depend
             cred.key_type, cred.fingerprint = infer_key_info(cred.value, body.passphrase)
     if body.comment is not None:
         cred.comment = body.comment
+    log_activity(db, cred.op_id, "credential.update", "credential", entity_id=cred_id)
     db.commit()
     db.refresh(cred)
     broadcast_sync(cred.op_id, {"type": "update", "entity_type": "credential", "entity_id": cred_id, "op_id": cred.op_id})
@@ -108,6 +113,8 @@ def create_credential_link(body: CredentialLinkCreate, db: Session = Depends(get
     host = db.query(Host).filter(Host.id == body.host_id).first()
     if not host:
         raise HTTPException(status_code=404, detail="Host not found")
+    if cred.op_id != host.op_id:
+        raise HTTPException(status_code=400, detail="Credential and host belong to different operations")
 
     link = CredentialLink(
         credential_id=body.credential_id,
@@ -151,6 +158,9 @@ def update_credential_link(link_id: str, body: CredentialLinkUpdate, db: Session
         link.relationship_type = body.relationship_type
     if body.file_source is not None:
         link.file_source = body.file_source
+    cred_for_log = db.get(Credential, link.credential_id)
+    if cred_for_log:
+        log_activity(db, cred_for_log.op_id, "credential_link.update", "credential", entity_id=link.credential_id)
     db.commit()
     db.refresh(link)
     cred = db.get(Credential, link.credential_id)
@@ -167,6 +177,8 @@ def delete_credential_link(link_id: str, db: Session = Depends(get_db)):
     cred = db.get(Credential, link.credential_id)
     op_id = cred.op_id if cred else None
     cred_id = link.credential_id
+    if not cred:
+        log.warning("Orphaned CredentialLink %s references missing Credential %s", link_id, link.credential_id)
     if op_id:
         log_activity(db, op_id, "credential_link.delete", "credential",
                      entity_id=cred_id, detail="Removed credential link")
