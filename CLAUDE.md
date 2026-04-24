@@ -15,6 +15,8 @@ SSH pivot tracker for red teams. Ingests raw evidence (private keys, `authorized
 
 Commit after every unit of completed work: feature, bug fix, refactor, parser, schema change + migration, test file, or edit to `CLAUDE.md` / `AGENT.md`. Skip only for isolated typos and single-line CSS tweaks. One commit per unit, not batched at end of session — the user should never have to prompt a commit.
 
+**Before the pre-commit gate, ask:** did this change introduce a runtime-enforced invariant or cross-file contract (a new `lazy="raise_on_sql"`, a new required-call-before-commit, a new structural rule)? If yes, add an Architecture Rule to AGENT.md in the same commit — the gate catches violations, but the rule is what tells the next contributor the invariant exists before they trip it.
+
 **Pre-commit gate (code changes):**
 
 ```bash
