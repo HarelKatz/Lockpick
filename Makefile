@@ -25,7 +25,7 @@ test:
 	cd backend && uv run pytest ../tests/ -n auto -q --tb=short
 
 test-api:
-	cd backend && uv run pytest ../tests/test_api/ -q --tb=short
+	cd backend && uv run pytest ../tests/test_api/ -n auto -q --tb=short
 
 test-parsers:
 	cd backend && uv run pytest ../tests/test_parsers/ -q --tb=short
