@@ -82,6 +82,10 @@ Full stack built and tested: CRUD APIs, graph visualization, file upload + 14 pa
 
 **Invariants:** Merge is atomic — all relations move and source is deleted, or nothing changes. Auto-merge applies only to unresolved hosts (zero user-authored content). Activity log records every merge with source id, target id, and relation counts moved.
 
+**Hooks landed in Phase 14 that this phase should build on:**
+- The upload pipeline already detects alias conflicts (an `/etc/hosts` hostname that belongs to a different host, etc.) and surfaces them as per-file `warnings` strings (see `services/upload_pipeline.py` §1b). Phase 15 should extend the response with a structured additive field `merge_candidates: list[{alias, conflicting_host_id}]` on `per_file[*].summary`, plumbed through both `routers/upload.py` and `routers/collection.py`. The Collection tab UI then iterates this list to render a "Merge X into host Y" button directly — instead of regex-parsing the warning text. Pure additive change; the warning strings stay for the activity log.
+- The "unresolved host" predicate is used in two places today — `services/upload_pipeline.py` (nickname-clobber guard looks for `"Auto-created"` in `Host.comment`) and the auto-merge spec above (no users / no links / no notes / no sudo rules). Promote these to a single `services/ip_resolver.is_unresolved_host(host) -> bool` helper in the first Phase 15 commit so the two definitions can't drift.
+
 ---
 
 ### Phase 16 — System File Parsers
