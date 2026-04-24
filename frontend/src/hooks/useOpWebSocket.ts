@@ -83,6 +83,9 @@ export function useOpWebSocket(
       const attempt = attemptsRef.current
       attemptsRef.current += 1
 
+      // Intentional: no auto-recovery after MAX_ATTEMPTS. This is a trusted-network
+      // tool — if the connection is permanently lost, a page reload is the expected
+      // recovery path. Silent failure avoids confusing reconnect loops in air-gapped envs.
       if (attempt >= MAX_ATTEMPTS) {
         setStatus('disconnected')
         setReconnectIn(null)

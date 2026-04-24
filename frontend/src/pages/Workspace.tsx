@@ -460,6 +460,8 @@ export default function Workspace({ op, onBack }: Props) {
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
+  // Explicit refresh after write — the WS broadcast may arrive before the DB
+  // transaction commits, so this ensures the activity feed reflects the latest state.
   const refreshActivity = useCallback(async () => {
     try {
       setActivityLog(await getActivityLog(op.id))

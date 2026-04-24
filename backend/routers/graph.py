@@ -219,7 +219,8 @@ def generate_path_commands(
 ) -> PathCommandsResponse:
     """Generate actionable SSH commands for every discovered pivot path. Read-only."""
     get_op_or_404(op_id, db)
-    result = find_paths(db, op_id, body)
+    graph = build_graph(db, op_id)
+    result = find_paths(db, op_id, body, graph=graph)
 
     if not result.paths:
         return PathCommandsResponse(paths=[], truncated=result.truncated)
