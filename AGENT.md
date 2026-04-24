@@ -16,7 +16,7 @@ A web-based tool for red teams to collaboratively organize SSH credentials, host
 
 **Last completed: Phases 1–13 — full stack, 14 parsers, WS live push, host notes, status enum, addr_type, SudoRule**
 
-**Next: Phase 14 — Engagement Report Export**
+**Next: Phase 14 — Collection Script + Bulk Archive Import**
 
 ---
 
@@ -71,52 +71,69 @@ Full stack built and tested: CRUD APIs, graph visualization, file upload + 14 pa
 
 ---
 
-### Phase 14 — Engagement Report Export
+### Phase 14 — Collection Script + Bulk Archive Import
 
-New endpoint: `GET /ops/{op_id}/report?format=markdown|html`
-- Renders a structured engagement summary using existing export logic: op metadata, host inventory table (nickname, IPs/hostnames, status tag, credential count), credential inventory, pivot paths (calls `find_paths`), sudo escalation summary per host, activity timeline
-- Markdown is primary format; HTML wraps markdown output in a minimal printable template — no external PDF library
-- Frontend: "Export Report" button in op header with format picker
+`GET /ops/{op_id}/collection-script` returns a bash script that snapshots parseable files and command outputs on a compromised host into `lockpick_<hostname>_<ts>.tar.gz`. Filename convention inside the tarball: `<file_type>__<username>.<ext>` (e.g. `authorized_keys__bob.txt`, `ip_addr__root.out`) plus a top-level `manifest.json` mapping each file to its `file_type` and originating path.
 
-**Invariants:** Report is read-only. Password hashes and private key material are redacted to first 8 chars + `...`. Fingerprints shown in full (not sensitive).
+`POST /ops/{op_id}/hosts/{host_id}/import-archive` accepts the tarball: extracts, reads `manifest.json`, and dispatches each file through the existing upload pipeline using the recorded `file_type` and target `host_id`. Response shape mirrors bulk upload — per-file status, stats, warnings.
 
----
+Script gathers whatever's readable by the executing user; command stderr captured to a per-file `.err` sibling inside the tarball. Unsupported file types in the manifest produce warnings, not failures — lets the script gather future-parser targets now and reparse after the parser lands.
 
-### Phase 15 — Graph Path Highlight + Time Slider
+Frontend: host detail panel gains a "Collection" section with a "Download script" button and an "Import archive" drop zone.
 
-Shift+click a second node dims everything not on any BFS path between the two selected hosts (uses existing `POST /ops/{op_id}/graph/paths`). Time slider at the bottom of GraphView filters edges by `ConnectionRecord.timestamp` when any op has timestamped connections; key-match edges always shown.
-
-**Invariants:** Pure frontend filter state — no DB writes, no API changes. Path highlight and time slider can be active simultaneously.
+**Invariants:** No schema changes. Script is idempotent — re-running on the same host and re-importing must not create duplicates (parsers handle dedup). Script contains no op-specific secrets — same script for any host in any op, differentiated only by the upload target.
 
 ---
 
-### Phase 17 — System File Parsers
+### Phase 15 — Host Merge
 
-Static files from disk — RHEL/CentOS log aliases (`secure`/`syslog`/`messages` → `AuthLogParser`), binary login records (`lastlog`, `last`), shell histories and configs (`zsh_history`, `fish_history`, `bashrc`, `zshrc`), and network configs (`/etc/network/interfaces`, netplan, ifcfg). No schema changes. Network config parsers emit only the upload host's own IPs and gateways — no connection records.
+**Auto-merge:** when a new IP or hostname added to HostA matches the sole identifier of an "unresolved" host (no users, no credential links, no notes, no sudo rules — just one IP or FQDN), the unresolved host is merged into HostA without prompting.
 
----
+**Manual merge:** "Merge into…" action in host detail. Moves all `HostIP`, `HostUser`, `CredentialLink`, `ConnectionRecord` (both sides), `HostNote`, `SshConfigPattern`, and `SudoRule` relations from source → target. Nickname / comment / status conflicts resolved in the merge dialog. Source host deleted on commit.
 
-### Phase 18 — Command Output Parsers
-
-Output captured from commands run on the target — network state (`ip addr`, `ip route`, `ip neigh`, `arp`), active connections (`netstat`, `ss`), firewall rules (`iptables`, `nftables`), process/env state (`ps aux`, `env`), and container state (`docker ps`, `docker network`, `kubectl get pods`). No schema changes. Parsers emitting only `HostData`/`CredentialData` surface in the host detail panel only; firewall and tunnel parsers emit indicator-confidence edges at best.
+**Invariants:** Merge is atomic — all relations move and source is deleted, or nothing changes. Auto-merge applies only to unresolved hosts (zero user-authored content). Activity log records every merge with source id, target id, and relation counts moved.
 
 ---
 
-### Phase 19 — Secret & Credential File Parsers
+### Phase 16 — System File Parsers
 
-Files storing non-SSH credentials — `netrc`, `pgpass`, `~/.my.cnf`, cloud credentials (AWS / GCP ADC / kubeconfig / boto), `.env`, `~/.docker/config.json`, `~/.git-credentials`, and rclone. No schema changes — non-key secrets use `cred_type: password` with a descriptive `name`. Export redaction (Phase 14) applies to all secret values.
-
----
-
-### Phase 20 — Collection Script + Bulk Archive Import
-
-`GET /ops/{op_id}/collection-script` returns a bash script that snapshots parseable files and command outputs on a compromised host into `lockpick_<hostname>_<ts>.tar.gz`, using filename convention `<file_type>__<username>.<ext>` plus a `manifest.json`. `POST /ops/{op_id}/hosts/{host_id}/import-archive` accepts that tarball and dispatches each file through the normal upload pipeline. No schema changes.
+Static files — RHEL/CentOS log aliases (`secure`/`syslog`/`messages` → `AuthLogParser`), binary login records (`lastlog`, `last`), shell configs/histories (`bashrc`, `zshrc`, `zsh_history`, `fish_history`), and network configs (`/etc/network/interfaces`, netplan, ifcfg). No schema changes. Network config parsers emit the upload host's own IPs and gateways only — no connection records.
 
 ---
 
-### Phase 16 — MCP Server
+### Phase 17 — Command Output Parsers
 
-Standalone `mcp/` package (does **not** import from `backend/`) exposing op data over MCP/stdio so an AI agent like Claude Desktop can help navigate pivots. Talks to the Lockpick REST API over HTTP; configurable via `LOCKPICK_URL`. Last phase — implement only when all others are stable.
+Captured command output — network state (`ip addr`/`route`/`neigh`, `arp`), connections (`netstat`, `ss`), firewall (`iptables`, `nftables`), process/env (`ps aux`, `env`), containers (`docker ps`/`network`, `kubectl get pods`). No schema changes. Firewall parsers emit indicator-confidence edges at best.
+
+---
+
+### Phase 18 — Secret & Credential File Parsers
+
+Non-SSH credentials — `netrc`, `pgpass`, `.my.cnf`, cloud creds (AWS, GCP ADC, kubeconfig, boto), `.env`, `.docker/config.json`, `.git-credentials`, rclone. Non-key secrets stored as `cred_type: password` with a descriptive `name`. Report redaction (Phase 19) applies to all secret values.
+
+---
+
+### Phase 19 — Engagement Report Export
+
+`GET /ops/{op_id}/report?format=markdown|html` — structured engagement summary (op metadata, host inventory, credential inventory, pivot paths via `find_paths`, sudo escalation summary, activity timeline). Markdown primary; HTML wraps it in a minimal printable template. Password hashes and private key material redacted to first 8 chars + `...`; fingerprints shown in full.
+
+---
+
+### Phase 20 — Graph Path Highlight + Time Slider
+
+Shift+click a second node dims everything not on a BFS path between the two selected hosts (uses existing `POST /ops/{op_id}/graph/paths`). Time slider at the bottom of GraphView filters edges by `ConnectionRecord.timestamp`; key-match edges always shown. Pure frontend state — no API changes.
+
+---
+
+### Phase 21 — Credential Blast Radius + Op Briefing
+
+Per-credential rollup — "unlocks N hosts across Y users" — surfaced in the credential detail panel and list row, derived from existing `CredentialLink` data (no schema change). Operation gains two new markdown fields: `summary` (short, rendered in op header) and `briefing` (long, rendered in op detail view, collapsible). Both user-editable, optional.
+
+---
+
+### Phase 22 — MCP Server
+
+Standalone `mcp/` package (does **not** import from `backend/`) exposes op data over MCP/stdio so an AI agent can help navigate pivots. Talks to the Lockpick REST API over HTTP; configurable via `LOCKPICK_URL`. Implement only when all prior phases are stable.
 
 ---
 
