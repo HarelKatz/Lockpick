@@ -353,3 +353,245 @@ def test_commands_named_credential(client, op, host_a, host_b):
     assert resp.status_code == 200
     p = resp.json()["paths"][0]
     assert "my-pivot-key" in p["walkthrough"]
+
+
+# ─── Priority 5: POST /ops/{op_id}/graph/paths ───────────────────────────────
+
+def _paths_body(src_id, dst_id, mode="shortest", waypoints=None):
+    body = {"src_host_id": src_id, "dst_host_id": dst_id, "mode": mode}
+    if waypoints is not None:
+        body["waypoints"] = waypoints
+    return body
+
+
+def test_paths_op_not_found(client):
+    resp = client.post(
+        "/api/ops/nonexistent/graph/paths",
+        json=_paths_body("a", "b"),
+    )
+    assert resp.status_code == 404
+
+
+def test_paths_no_path_between_disconnected_hosts(client, op, host_a, host_b):
+    """No connections → paths list is empty, truncated is False."""
+    resp = client.post(
+        f"/api/ops/{op['id']}/graph/paths",
+        json=_paths_body(host_a["id"], host_b["id"]),
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["paths"] == []
+    assert data["truncated"] is False
+
+
+def test_paths_single_hop_connection(client, op, host_a, host_b):
+    """A direct connection A→B must yield one path [A, B]."""
+    client.post(
+        f"/api/ops/{op['id']}/connections",
+        json={
+            "src_host_id": host_a["id"], "src_ip": "10.0.0.1",
+            "dst_host_id": host_b["id"], "dst_ip": "10.0.0.2",
+            "connection_type": "ssh", "direction_context": "from_dst_logs",
+            "source_file": "auth.log",
+        },
+    )
+    resp = client.post(
+        f"/api/ops/{op['id']}/graph/paths",
+        json=_paths_body(host_a["id"], host_b["id"]),
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data["paths"]) == 1
+    assert data["paths"][0]["host_ids"] == [host_a["id"], host_b["id"]]
+    assert data["truncated"] is False
+
+
+def test_paths_key_match_edge(client, op, host_a, host_b):
+    """Key-match edge (found_on_disk + authorized_key) must produce a path."""
+    # Create a real credential with a real fingerprint
+    import os, sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
+    from services.graph_builder import build_graph
+    from models import Credential, CredentialLink
+
+    # Use DB session to insert a credential with a known fingerprint
+    # and two links — found_on_disk on A, authorized_key on B
+    from sqlalchemy import text
+    import uuid
+
+    # Seed via API: create credential and links manually
+    cred_resp = client.post(
+        f"/api/ops/{op['id']}/credentials",
+        json={"cred_type": "private_key", "value": "placeholder"},
+    )
+    cred_id = cred_resp.json()["id"]
+
+    # We need to update the fingerprint directly since the placeholder value won't parse
+    # Instead, use the DB session from the test client to seed a proper fingerprint
+    # Use a workaround: upload the real private key to hostA
+    import pathlib
+    fixtures = pathlib.Path(__file__).parent.parent / "fixtures"
+    priv = (fixtures / "id_rsa").read_bytes()
+    pub = (fixtures / "id_rsa.pub").read_text().strip()
+
+    # Upload private key to hostA
+    r1 = client.post(
+        f"/api/ops/{op['id']}/upload",
+        data={"file_type": "private_key", "host_id": host_a["id"], "username": "alice"},
+        files={"file": ("id_rsa", priv, "text/plain")},
+    )
+    assert r1.status_code == 200
+
+    # Upload public key (authorized_keys) to hostB
+    r2 = client.post(
+        f"/api/ops/{op['id']}/upload",
+        data={"file_type": "authorized_keys", "host_id": host_b["id"], "username": "root"},
+        files={"file": ("authorized_keys", (pub + "\n").encode(), "text/plain")},
+    )
+    assert r2.status_code == 200
+
+    # Now query paths — key match creates an edge A→B
+    resp = client.post(
+        f"/api/ops/{op['id']}/graph/paths",
+        json=_paths_body(host_a["id"], host_b["id"]),
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data["paths"]) == 1
+    path = data["paths"][0]
+    assert path["host_ids"] == [host_a["id"], host_b["id"]]
+    # The edge must have evidence
+    assert len(path["edges"]) == 1
+    assert path["edges"][0]["confidence"] == "confirmed"
+
+
+# ─── Priority 12: test_graph_key_match_edge — meaningful assertion ────────────
+
+def test_graph_key_match_edge_with_real_key(client, op, host_a, host_b):
+    """Real key upload produces a confirmed key_match edge in the graph."""
+    import pathlib
+    fixtures = pathlib.Path(__file__).parent.parent / "fixtures"
+    priv = (fixtures / "id_rsa").read_bytes()
+    pub = (fixtures / "id_rsa.pub").read_text().strip()
+
+    client.post(
+        f"/api/ops/{op['id']}/upload",
+        data={"file_type": "private_key", "host_id": host_a["id"], "username": "alice"},
+        files={"file": ("id_rsa", priv, "text/plain")},
+    )
+    client.post(
+        f"/api/ops/{op['id']}/upload",
+        data={"file_type": "authorized_keys", "host_id": host_b["id"], "username": "root"},
+        files={"file": ("authorized_keys", (pub + "\n").encode(), "text/plain")},
+    )
+
+    resp = client.get(f"/api/ops/{op['id']}/graph")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data["edges"]) == 1
+    edge = data["edges"][0]
+    assert edge["src_host_id"] == host_a["id"]
+    assert edge["dst_host_id"] == host_b["id"]
+    assert edge["confidence"] == "confirmed"
+    assert any(e["type"] == "key_match" for e in edge["evidence"])
+
+
+# ─── Priority 21: _cred_label fingerprint branch (no double SHA256:) ─────────
+
+def test_cred_label_no_double_sha256_prefix(client, op, host_a, host_b):
+    """Nameless credential with fingerprint must not produce 'SHA256:SHA256:' in walkthrough.
+
+    Uses a credential created via the API (no name set) with a fingerprint injected
+    via the public key route, then a manual connection to trigger command generation.
+    """
+    import pathlib
+    fixtures = pathlib.Path(__file__).parent.parent / "fixtures"
+
+    # Use the RSA pub key to create a public_key credential — no name, gets fingerprint
+    # NOTE: private_key parser always sets name="{filename} ({username})", so we use
+    # the API to create a nameless credential manually and inject a realistic fingerprint.
+    # Create a password credential, then update it to a realistic-looking fingerprint.
+    cred_resp = client.post(
+        f"/api/ops/{op['id']}/credentials",
+        json={"cred_type": "private_key", "value": "placeholder-no-name"},
+    )
+    assert cred_resp.status_code == 201
+    cred_id = cred_resp.json()["id"]
+
+    # Patch the credential to set a realistic fingerprint without a name
+    # (direct API doesn't allow setting fingerprint — use PATCH to set name to None is not meaningful)
+    # Instead: use the known RSA public key (from fixture) to create a public_key cred with fingerprint
+    pub_key = (fixtures / "id_rsa.pub").read_text().strip()
+    cred_pk_resp = client.post(
+        f"/api/ops/{op['id']}/credentials",
+        json={"cred_type": "public_key", "value": pub_key},
+    )
+    assert cred_pk_resp.status_code == 201
+    cred_pk = cred_pk_resp.json()
+    cred_pk_id = cred_pk["id"]
+    fingerprint = cred_pk["fingerprint"]
+    assert fingerprint is not None and fingerprint.startswith("SHA256:")
+    # Verify no name was set
+    assert cred_pk["name"] is None
+
+    # Create connection using the nameless fingerprinted credential
+    client.post(
+        f"/api/ops/{op['id']}/connections",
+        json={
+            "src_host_id": host_a["id"], "src_ip": "10.0.0.1", "src_user": "alice",
+            "dst_host_id": host_b["id"], "dst_ip": "10.0.0.2", "dst_user": "root",
+            "connection_type": "ssh", "direction_context": "from_dst_logs",
+            "source_file": "auth.log",
+            "credential_id": cred_pk_id,
+        },
+    )
+
+    resp = client.post(
+        f"/api/ops/{op['id']}/graph/paths/commands",
+        json=_cmd_body(host_a["id"], host_b["id"]),
+    )
+    assert resp.status_code == 200
+    p = resp.json()["paths"][0]
+    # The walkthrough must not produce the double 'SHA256:SHA256:' prefix (BUG-02 fix)
+    assert "SHA256:SHA256:" not in p["walkthrough"]
+    # The fingerprint (with single SHA256: prefix) should appear in the walkthrough
+    assert fingerprint in p["walkthrough"]
+
+
+# ─── Priority 24: cross-op graph isolation ────────────────────────────────────
+
+def test_cross_op_graph_isolation(client):
+    """Credential links from op_A must not appear in op_B graph."""
+    op_a = client.post("/api/ops", json={"name": "Op A"}).json()
+    op_b = client.post("/api/ops", json={"name": "Op B"}).json()
+
+    # Create hosts in op_A and link them via key match
+    ha1 = client.post(f"/api/ops/{op_a['id']}/hosts", json={"nickname": "A1"}).json()
+    ha2 = client.post(f"/api/ops/{op_a['id']}/hosts", json={"nickname": "A2"}).json()
+    client.post(f"/api/hosts/{ha1['id']}/ips", json={"ip_address": "10.1.0.1"})
+    client.post(f"/api/hosts/{ha2['id']}/ips", json={"ip_address": "10.1.0.2"})
+
+    import pathlib
+    fixtures = pathlib.Path(__file__).parent.parent / "fixtures"
+    priv = (fixtures / "id_rsa").read_bytes()
+    pub = (fixtures / "id_rsa.pub").read_text().strip()
+
+    client.post(
+        f"/api/ops/{op_a['id']}/upload",
+        data={"file_type": "private_key", "host_id": ha1["id"], "username": "alice"},
+        files={"file": ("id_rsa", priv, "text/plain")},
+    )
+    client.post(
+        f"/api/ops/{op_a['id']}/upload",
+        data={"file_type": "authorized_keys", "host_id": ha2["id"], "username": "root"},
+        files={"file": ("authorized_keys", (pub + "\n").encode(), "text/plain")},
+    )
+
+    # op_A should have an edge
+    graph_a = client.get(f"/api/ops/{op_a['id']}/graph").json()
+    assert len(graph_a["edges"]) == 1
+
+    # op_B has no hosts — graph must be empty
+    graph_b = client.get(f"/api/ops/{op_b['id']}/graph").json()
+    assert graph_b["nodes"] == []
+    assert graph_b["edges"] == []
