@@ -1,9 +1,12 @@
 """Pivot path analysis — path finding over the aggregated edge graph using NetworkX."""
+from typing import Optional
+
 import networkx as nx
 from sqlalchemy.orm import Session
 
 from schemas import (
     GraphEdge,
+    GraphResponse,
     PathFinderRequest,
     PathFinderResponse,
     PathResult,
@@ -18,9 +21,15 @@ def find_paths(
     db: Session,
     op_id: str,
     request: PathFinderRequest,
+    graph: Optional[GraphResponse] = None,
 ) -> PathFinderResponse:
-    """Find pivot paths between two hosts, with optional waypoint constraints."""
-    graph = build_graph(db, op_id)
+    """Find pivot paths between two hosts, with optional waypoint constraints.
+
+    Pass a pre-built *graph* to avoid an extra ``build_graph`` call when the
+    caller already holds one (e.g. ``generate_path_commands``).
+    """
+    if graph is None:
+        graph = build_graph(db, op_id)
 
     # Build directed graph and edge lookup
     G: nx.DiGraph = nx.DiGraph()
@@ -35,16 +44,16 @@ def find_paths(
     if src == dst:
         return PathFinderResponse(paths=[], truncated=False)
 
-    # Find raw paths
+    # Find raw paths — collect one extra to detect truncation without a false positive
     if request.mode == "shortest":
         raw_paths = _nx_shortest(G, src, dst)
     else:
-        raw_paths = _nx_all(G, src, dst)
+        raw_paths = _nx_all(G, src, dst, cap=_MAX_PATHS + 1)
 
     # Filter by waypoint constraints
     filtered = _apply_waypoints(raw_paths, request.waypoints)
 
-    truncated = len(filtered) >= _MAX_PATHS
+    truncated = len(filtered) > _MAX_PATHS
 
     # Build PathResult objects
     results: list[PathResult] = []
@@ -70,13 +79,17 @@ def _nx_shortest(G: nx.DiGraph, src: str, dst: str) -> list[list[str]]:
         return []
 
 
-def _nx_all(G: nx.DiGraph, src: str, dst: str) -> list[list[str]]:
-    """Return all simple paths up to _MAX_DEPTH hops, capped at _MAX_PATHS."""
+def _nx_all(G: nx.DiGraph, src: str, dst: str, cap: int = _MAX_PATHS) -> list[list[str]]:
+    """Return all simple paths up to _MAX_DEPTH hops, capped at *cap* entries.
+
+    Pass ``cap=_MAX_PATHS + 1`` to collect one extra path so the caller can
+    detect truncation without a false positive when exactly _MAX_PATHS paths exist.
+    """
     results: list[list[str]] = []
     try:
         for path in nx.all_simple_paths(G, src, dst, cutoff=_MAX_DEPTH):
             results.append(path)
-            if len(results) >= _MAX_PATHS:
+            if len(results) >= cap:
                 break
     except (nx.NetworkXNoPath, nx.NodeNotFound):
         pass

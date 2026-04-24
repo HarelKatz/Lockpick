@@ -14,7 +14,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from config import settings
 from database import get_db
@@ -116,18 +116,12 @@ def _find_pivot_opportunities(
     """Return human-readable pivot messages for newly added keys that match authorized_keys elsewhere."""
     messages = []
     for fp in new_fingerprints:
-        cred = (
-            db.query(Credential)
-            .filter(Credential.op_id == op_id, Credential.fingerprint == fp)
-            .first()
-        )
-        if not cred:
-            continue
         # Collect all links across ALL creds with this fingerprint
         # (normally just one Credential due to dedup, but may be multiple)
         all_creds = (
             db.query(Credential)
             .filter(Credential.op_id == op_id, Credential.fingerprint == fp)
+            .options(selectinload(Credential.links))
             .all()
         )
         found_on = []
