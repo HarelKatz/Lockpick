@@ -13,7 +13,7 @@ def _load_private_key(content: bytes, passphrase: str | None = None):
         paramiko.ECDSAKey,
     ]
     # Ed25519Key and DSSKey may not exist in all paramiko versions
-    for name in ("Ed25519Key",):
+    for name in ("Ed25519Key", "DSSKey"):
         cls = getattr(paramiko, name, None)
         if cls is not None:
             loaders.append(cls)
@@ -51,9 +51,9 @@ class PrivateKeyParser(BaseParser):
                 result.warnings.append("Could not parse private key — unsupported format or corrupted")
                 return result
         except Exception as e:
-            # _load_private_key only propagates PasswordRequiredException;
-            # check the exact class name to avoid importing paramiko at module level.
-            if type(e).__name__ == "PasswordRequiredException":
+            # _load_private_key only propagates PasswordRequiredException.
+            from paramiko.ssh_exception import PasswordRequiredException
+            if isinstance(e, PasswordRequiredException):
                 # Still store it — we just can't compute fingerprint
                 result.warnings.append(
                     "Private key is passphrase-protected — stored without fingerprint. "

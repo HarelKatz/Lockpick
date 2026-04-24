@@ -48,7 +48,6 @@ class AuthLogParser(BaseParser):
 
     def parse(self, content: bytes, metadata: UploadMetadata) -> ParseResult:
         result = ParseResult()
-        filename = metadata.filename or "auth.log"
 
         # Decompress if gzip
         if content[:2] == b"\x1f\x8b":

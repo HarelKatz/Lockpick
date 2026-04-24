@@ -34,7 +34,6 @@ class BashHistoryParser(BaseParser):
 
     def parse(self, content: bytes, metadata: UploadMetadata) -> ParseResult:
         result = ParseResult()
-        filename = metadata.filename or "bash_history"
         src_user = metadata.username
 
         try:

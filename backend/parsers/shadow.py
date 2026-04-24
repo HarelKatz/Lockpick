@@ -56,10 +56,12 @@ class ShadowParser(BaseParser):
                 result.warnings.append(f"User '{username}': account is locked ({hash_val}) — no hash")
                 continue
 
-            # Locked account with a recoverable hash (e.g. "!$6$salt$hash...")
+            # Locked account with a recoverable hash (e.g. "!$6$salt$hash..." or "!!$6$salt$hash...")
             if hash_val.startswith("!") and len(hash_val) > 1:
-                actual_hash = hash_val[1:]
-                result.warnings.append(f"User '{username}': account is locked (! prefix) — hash stored")
+                actual_hash = hash_val.lstrip("!")
+                result.warnings.append(
+                    f"User '{username}': locked account with recoverable hash — leading '!' stripped"
+                )
             else:
                 actual_hash = hash_val
 
