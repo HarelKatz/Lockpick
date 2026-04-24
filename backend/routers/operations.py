@@ -37,11 +37,12 @@ def get_operation(op_id: str, db: Session = Depends(get_db)):
 @router.patch("/ops/{op_id}", response_model=OperationRead)
 def update_operation(op_id: str, body: OperationUpdate, db: Session = Depends(get_db)):
     op = get_op_or_404(op_id, db)
+    old_name = op.name
     if body.name is not None:
         op.name = body.name
     if body.description is not None:
         op.description = body.description
-    log_activity(db, op.id, "operation.update", "operation", entity_id=op.id, detail=f"Updated operation '{op.name}'")
+    log_activity(db, op.id, "operation.update", "operation", entity_id=op.id, detail=f"Updated operation '{old_name}'")
     db.commit()
     db.refresh(op)
     broadcast_sync(op.id, {"type": "update", "entity_type": "operation", "op_id": op.id})
@@ -51,7 +52,6 @@ def update_operation(op_id: str, body: OperationUpdate, db: Session = Depends(ge
 @router.delete("/ops/{op_id}", status_code=204)
 def delete_operation(op_id: str, db: Session = Depends(get_db)):
     op = get_op_or_404(op_id, db)
-    op_id = op.id
     log_activity(db, op_id, "operation.delete", "operation", entity_id=op_id, detail=f"Deleted operation '{op.name}'")
     db.delete(op)
     db.commit()
