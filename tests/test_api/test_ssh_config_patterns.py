@@ -126,8 +126,9 @@ def test_upload_auto_host_matches_existing_pattern(client):
     # 1. A ConnectionRecord from bash_history parse
     # 2. A ConnectionRecord from pattern match (if apply_patterns_to_host is called)
     conns = client.get(f"/api/ops/{op_id}/connections").json()
-    # At minimum, there must be at least one connection from the bash_history
-    assert len(conns) >= 1
+    # Exactly one connection from the bash_history parse (apply_patterns_to_host is not
+    # called on hosts created by the upload router, only on explicitly added hosts)
+    assert len(conns) == 1
     # The auto-created host "web.internal" must exist
     hosts = client.get(f"/api/ops/{op_id}/hosts").json()
     nicknames = {h["nickname"] for h in hosts}

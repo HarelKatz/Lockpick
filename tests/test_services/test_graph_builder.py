@@ -350,7 +350,7 @@ def test_expand_host_indicator_filter(db_session):
 
 # ─── Priority 19: _max_confidence([]) guard ───────────────────────────────────
 
-def test_max_confidence_with_single_item(db_session):
+def test_max_confidence_with_single_item():
     """_max_confidence works correctly with a single-element list."""
     from services.graph_builder import _max_confidence
     assert _max_confidence(["confirmed"]) == "confirmed"
@@ -358,7 +358,7 @@ def test_max_confidence_with_single_item(db_session):
     assert _max_confidence(["indicator"]) == "indicator"
 
 
-def test_max_confidence_returns_highest(db_session):
+def test_max_confidence_returns_highest():
     """_max_confidence returns the highest-ranked confidence from mixed list."""
     from services.graph_builder import _max_confidence
     assert _max_confidence(["indicator", "confirmed", "observed"]) == "confirmed"
@@ -366,7 +366,7 @@ def test_max_confidence_returns_highest(db_session):
     assert _max_confidence(["indicator", "indicator"]) == "indicator"
 
 
-def test_max_confidence_empty_list_raises(db_session):
+def test_max_confidence_empty_list_raises():
     """_max_confidence([]) raises ValueError (documents the known gap — no empty guard).
 
     NOTE: This test documents BUG-10 from the audit: _max_confidence has no guard

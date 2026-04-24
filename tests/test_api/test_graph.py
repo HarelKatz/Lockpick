@@ -1,4 +1,6 @@
 """API tests for graph endpoints."""
+import pathlib
+
 import pytest
 
 
@@ -54,19 +56,21 @@ def test_graph_nodes_populated(client, op, host_a, host_b):
         assert len(node["ips"]) == 1
 
 
-def test_graph_key_match_edge(client, op, host_a, host_b):
-    # Create a credential with fingerprint
+def test_graph_no_edge_when_fingerprint_null(client, op, host_a, host_b):
+    """Credential links with no fingerprint must not produce a key_match edge.
+
+    An unparseable key value means fingerprint=NULL. Without a fingerprint,
+    the graph builder cannot confirm a key match, so edges must be empty.
+    """
     cred_resp = client.post(
         f"/api/ops/{op['id']}/credentials",
-        json={"cred_type": "public_key", "value": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAtest"},
+        json={"cred_type": "public_key", "value": "plaintext-not-a-key"},
     )
-    # Manually patch fingerprint via update (backend doesn't infer for this test value,
-    # so we create links with a credential that already has a fingerprint via direct DB seeding
-    # — use the service test for that. Here we test the API shape.)
     cred = cred_resp.json()
     cred_id = cred["id"]
+    # Confirm no fingerprint was computed for the invalid key material
+    assert cred["fingerprint"] is None
 
-    # Create links
     client.post(
         f"/api/ops/{op['id']}/credential-links",
         json={
@@ -89,10 +93,8 @@ def test_graph_key_match_edge(client, op, host_a, host_b):
     resp = client.get(f"/api/ops/{op['id']}/graph")
     assert resp.status_code == 200
     data = resp.json()
-    # No key-match edge because fingerprint isn't computed for invalid key value,
-    # but the response shape is valid and nodes are present
     assert len(data["nodes"]) == 2
-    assert "edges" in data
+    assert data["edges"] == []
 
 
 def test_graph_connection_record_edge(client, op, host_a, host_b):
@@ -408,18 +410,7 @@ def test_paths_single_hop_connection(client, op, host_a, host_b):
 
 def test_paths_key_match_edge(client, op, host_a, host_b):
     """Key-match edge (found_on_disk + authorized_key) must produce a path."""
-    # Create a real credential with a real fingerprint
-    import os, sys
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
-    from services.graph_builder import build_graph
-    from models import Credential, CredentialLink
-
-    # Use DB session to insert a credential with a known fingerprint
-    # and two links — found_on_disk on A, authorized_key on B
-    from sqlalchemy import text
-    import uuid
-
-    # Seed via API: create credential and links manually
+    # Seed via API: upload real key files so fingerprints are computed and matched
     cred_resp = client.post(
         f"/api/ops/{op['id']}/credentials",
         json={"cred_type": "private_key", "value": "placeholder"},
@@ -429,7 +420,6 @@ def test_paths_key_match_edge(client, op, host_a, host_b):
     # We need to update the fingerprint directly since the placeholder value won't parse
     # Instead, use the DB session from the test client to seed a proper fingerprint
     # Use a workaround: upload the real private key to hostA
-    import pathlib
     fixtures = pathlib.Path(__file__).parent.parent / "fixtures"
     priv = (fixtures / "id_rsa").read_bytes()
     pub = (fixtures / "id_rsa.pub").read_text().strip()
@@ -469,7 +459,6 @@ def test_paths_key_match_edge(client, op, host_a, host_b):
 
 def test_graph_key_match_edge_with_real_key(client, op, host_a, host_b):
     """Real key upload produces a confirmed key_match edge in the graph."""
-    import pathlib
     fixtures = pathlib.Path(__file__).parent.parent / "fixtures"
     priv = (fixtures / "id_rsa").read_bytes()
     pub = (fixtures / "id_rsa.pub").read_text().strip()
@@ -504,7 +493,6 @@ def test_cred_label_no_double_sha256_prefix(client, op, host_a, host_b):
     Uses a credential created via the API (no name set) with a fingerprint injected
     via the public key route, then a manual connection to trigger command generation.
     """
-    import pathlib
     fixtures = pathlib.Path(__file__).parent.parent / "fixtures"
 
     # Use the RSA pub key to create a public_key credential — no name, gets fingerprint
@@ -571,7 +559,6 @@ def test_cross_op_graph_isolation(client):
     client.post(f"/api/hosts/{ha1['id']}/ips", json={"ip_address": "10.1.0.1"})
     client.post(f"/api/hosts/{ha2['id']}/ips", json={"ip_address": "10.1.0.2"})
 
-    import pathlib
     fixtures = pathlib.Path(__file__).parent.parent / "fixtures"
     priv = (fixtures / "id_rsa").read_bytes()
     pub = (fixtures / "id_rsa.pub").read_text().strip()

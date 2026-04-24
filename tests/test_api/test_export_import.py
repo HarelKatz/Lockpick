@@ -355,8 +355,8 @@ def test_export_import_drops_host_notes(client, op):
     )
 
 
-def test_export_import_drops_ssh_config_patterns(client, op):
-    """SSH config patterns are not exported — imported op must have 0 patterns.
+def test_export_import_drops_ssh_config_pattern_table(client, op):
+    """SshConfigPattern table is not exported — imported op must have 0 patterns.
 
     NOTE: This documents a known limitation of the export format (lockpick_export_version: 1).
     SshConfigPattern records are not in the export schema. Any retroactive edges
