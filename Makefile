@@ -1,4 +1,4 @@
-.PHONY: run up down logs backup dev-backend dev-frontend test test-api test-parsers test-services test-scenarios
+.PHONY: run up down logs backup dev-backend dev-frontend test test-api test-parsers test-services test-scenarios test-real-examples
 
 run:
 	docker compose up -d --build && docker compose logs -f
@@ -35,3 +35,6 @@ test-services:
 
 test-scenarios:
 	cd backend && uv run pytest ../tests/test_scenario_network.py ../tests/test_scenario_random_network.py -n auto -q --tb=short
+
+test-real-examples:
+	cd backend && uv run pytest ../tests/test_real_examples/ -q --tb=short

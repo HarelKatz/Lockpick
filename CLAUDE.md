@@ -66,6 +66,7 @@ make test-api       # API integration tests (~14s)
 make test-parsers   # parser unit tests (~0.1s)
 make test-services  # service layer tests (~0.7s)
 make test-scenarios # scenario tests (~4.5s)
+make test-real-examples  # parser regression vs real_examples/ corpus (~0.5s)
 ```
 
 **Always use `uv run` for Python — never `python` directly.**
@@ -111,6 +112,23 @@ Parsers in `backend/parsers/` implement `BaseParser` — see `parsers/__init__.p
 - System/service user filtering: when emitting `host_users_found`, only include accounts that can actually log in. For passwd: skip UID < 1000 (except root) and nologin/false shells. For shadow: skip entries with `x`, `!!`, `""`, `*`, `!` password sentinels — only emit users with a real recoverable hash
 
 Fixture files for parser tests live in `tests/fixtures/`.
+
+## Parser Testing
+
+Two layers:
+
+- **Canonical behavior** — `tests/test_parsers/` with hand-crafted assertions against curated `tests/fixtures/` (e.g. "exactly 2 Accepted lines"). Canonical spec; edit these when parser behavior intentionally changes.
+- **Regression coverage** — `tests/test_real_examples/` runs every registered parser against every sample in `real_examples/<type>/`. Smoke layer asserts no crash; snapshot layer diffs parser output against committed `<file>.expected.json` siblings (jc convention).
+
+To regenerate snapshots after an intentional parser change:
+
+```bash
+REGEN_SNAPSHOTS=1 uv run pytest tests/test_real_examples/test_snapshots.py
+git diff real_examples/     # skim for unexpected deltas
+git add real_examples/
+```
+
+Samples for future-phase parsers (Phase 17–19) are staged in `real_examples/` but skipped by both layers until their parser is registered in `backend/parsers/registry.py`. Registering a new parser auto-lights-up its samples.
 
 ## Frontend Conventions
 
