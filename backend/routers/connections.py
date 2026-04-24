@@ -92,6 +92,8 @@ def update_connection(connection_id: str, body: ConnectionRecordUpdate, db: Sess
     for field in ("auth_method", "credential_id"):
         if field in body.model_fields_set:
             setattr(record, field, getattr(body, field))
+    log_activity(db, record.op_id, "connection.update", "connection", entity_id=connection_id,
+                 detail=f"Updated {record.connection_type} connection: {record.src_ip} → {record.dst_ip}")
     db.commit()
     db.refresh(record)
     broadcast_sync(record.op_id, {"type": "update", "entity_type": "connection", "entity_id": connection_id, "op_id": record.op_id})

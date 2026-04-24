@@ -18,7 +18,10 @@ def test_activity_op_not_found(client):
 def test_activity_empty_op(client, op):
     resp = client.get(f"/api/ops/{op['id']}/activity")
     assert resp.status_code == 200
-    assert resp.json() == []
+    entries = resp.json()
+    # create_operation now logs operation.create
+    assert len(entries) == 1
+    assert entries[0]["action"] == "operation.create"
 
 
 def test_activity_logged_after_host_create(client, op):
@@ -26,7 +29,8 @@ def test_activity_logged_after_host_create(client, op):
     resp = client.get(f"/api/ops/{op['id']}/activity")
     assert resp.status_code == 200
     entries = resp.json()
-    assert len(entries) == 1
+    # operation.create + host.create
+    assert len(entries) == 2
     host_create_entries = [e for e in entries if e["action"] == "host.create"]
     assert len(host_create_entries) == 1
     entry = host_create_entries[0]
@@ -40,7 +44,8 @@ def test_activity_entries_sorted_newest_first(client, op):
     resp = client.get(f"/api/ops/{op['id']}/activity")
     assert resp.status_code == 200
     entries = resp.json()
-    assert len(entries) == 3
+    # operation.create + 3x host.create
+    assert len(entries) == 4
     timestamps = [
         datetime.fromisoformat(e["created_at"].rstrip("Z"))
         for e in entries

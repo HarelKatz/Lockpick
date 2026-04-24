@@ -116,6 +116,7 @@ def delete_host_ip(host_id: str, ip_id: str, db: Session = Depends(get_db)):
     ip = db.query(HostIP).filter(HostIP.id == ip_id, HostIP.host_id == host_id).first()
     if not ip:
         raise HTTPException(status_code=404, detail="IP not found")
+    log_activity(db, host.op_id, "host_ip.delete", "host", entity_id=host_id, detail=f"Removed IP {ip.ip_address} from '{host.nickname}'")
     db.delete(ip)
     db.commit()
     broadcast_sync(host.op_id, {"type": "update", "entity_type": "host", "entity_id": host_id, "op_id": host.op_id})
@@ -134,6 +135,8 @@ def create_host_user(host_id: str, body: HostUserCreate, db: Session = Depends(g
         source=body.source,
     )
     db.add(user)
+    db.flush()
+    log_activity(db, host.op_id, "host_user.create", "host", entity_id=host_id, detail=f"Added user '{body.username}' to '{host.nickname}'")
     db.commit()
     db.refresh(user)
     broadcast_sync(host.op_id, {"type": "update", "entity_type": "host", "entity_id": host_id, "op_id": host.op_id})
@@ -152,6 +155,7 @@ def delete_host_user(host_id: str, user_id: str, db: Session = Depends(get_db)):
     user = db.query(HostUser).filter(HostUser.id == user_id, HostUser.host_id == host_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    log_activity(db, host.op_id, "host_user.delete", "host", entity_id=host_id, detail=f"Deleted user '{user.username}' from '{host.nickname}'")
     db.delete(user)
     db.commit()
     broadcast_sync(host.op_id, {"type": "update", "entity_type": "host", "entity_id": host_id, "op_id": host.op_id})
