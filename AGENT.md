@@ -40,6 +40,7 @@ A web-based tool for red teams to collaboratively organize SSH credentials, host
 16. **HostIP addr_type** — `HostIP.ip_address` holds either a numeric IP or FQDN; `addr_type` (ipv4|ipv6|hostname) disambiguates. IP resolver infers addr_type via `_infer_addr_type()` and sets it on new records. Hostname lookups are case-insensitive.
 17. **SudoRule** — read-only from the upload pipeline; no manual create endpoint. `SudoRule.op_id` stored for bulk queries. Sudo rules do not affect BFS pivot path confidence — informational context only.
 18. **WS live push** — `broadcast_sync(op_id, event)` (`ws_manager.py`) must be called after `db.commit()` in every write endpoint. Event shape: `{"type": "update", "entity_type": "<host|credential|connection|...>", "op_id": op_id}`. It is fire-and-forget and safe to call even when no clients are connected.
+19. **Host lazy-load gate** — `Host.ips`, `Host.users`, `Host.credential_links`, `Host.notes` use `lazy="raise_on_sql"`. Any query that loads hosts for serialization or bulk iteration must `selectinload` the relationships it touches. `_host_q(db)` in `routers/hosts.py` covers the `HostRead` path; `services/graph_builder.py` applies its own options for the graph path.
 
 ---
 
