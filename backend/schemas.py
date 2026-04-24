@@ -88,7 +88,7 @@ class HostUserRead(BaseModel):
 class HostIPCreate(BaseModel):
     ip_address: str
     source: Literal["manual", "parsed"] = "manual"
-    addr_type: str = "ipv4"
+    addr_type: Literal["ipv4", "ipv6", "hostname"] = "ipv4"
 
 
 class HostIPRead(BaseModel):
@@ -97,8 +97,8 @@ class HostIPRead(BaseModel):
     id: str
     host_id: str
     ip_address: str
-    source: str
-    addr_type: str
+    source: Literal["manual", "parsed"]
+    addr_type: Literal["ipv4", "ipv6", "hostname"]
     first_seen_at: datetime
 
 
@@ -160,7 +160,7 @@ class HostRead(BaseModel):
     op_id: str
     nickname: str
     comment: Optional[str]
-    status: Optional[str] = None
+    status: Optional[_HOST_STATUS] = None
     created_at: datetime
     ips: list[HostIPRead] = []
     users: list[HostUserRead] = []

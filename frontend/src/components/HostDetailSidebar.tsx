@@ -31,7 +31,7 @@ interface Props {
   onHostUpdated?: () => void
 }
 
-export default function HostDetailSidebar({ node, edges, host, onClose }: Props) {
+export default function HostDetailSidebar({ node, edges, host, onClose, onHostUpdated }: Props) {
   const [tab, setTab] = useState<Tab>('info')
 
   // Sudo rules state
@@ -97,6 +97,7 @@ export default function HostDetailSidebar({ node, edges, host, onClose }: Props)
     setCurrentStatus(newStatus)
     try {
       await updateHost(host.id, { status: newStatus })
+      onHostUpdated?.()
     } catch {
       // Revert on failure
       setCurrentStatus(host.status ?? null)
