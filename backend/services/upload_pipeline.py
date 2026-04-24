@@ -37,7 +37,7 @@ from models import (
 )
 from parsers import UploadMetadata
 from parsers.registry import PARSER_REGISTRY
-from services.ip_resolver import resolve_ip
+from services.ip_resolver import _infer_addr_type, _is_routable_address, resolve_ip
 from services.key_utils import infer_key_info
 from services.ssh_pattern import ssh_match
 
@@ -249,12 +249,44 @@ def process_single_file(
     new_hosts = 0
     for hd in result.hosts_found:
         resolved_id = resolve_ip(db, op_id, hd.ip_address, create_if_missing=True)
-        if resolved_id:
-            if hd.nickname:
-                resolved_host = db.query(Host).filter(Host.id == resolved_id).first()
-                if resolved_host and resolved_host.comment and "Auto-created" in resolved_host.comment:
-                    resolved_host.nickname = hd.nickname
-            new_hosts += 1
+        if not resolved_id:
+            continue
+        if hd.nickname:
+            resolved_host = db.query(Host).filter(Host.id == resolved_id).first()
+            if resolved_host and resolved_host.comment and "Auto-created" in resolved_host.comment:
+                resolved_host.nickname = hd.nickname
+        new_hosts += 1
+
+        # Aliases: additional identifiers (IPs / hostnames) for the same
+        # host. Add each as a HostIP on the resolved host, unless it:
+        #   - is non-routable (multicast, garbage, spaces, etc.),
+        #   - already points to a different host (Phase 15 host-merge
+        #     will handle conflict resolution; silently merging here would
+        #     be destructive),
+        #   - is already a HostIP on our host.
+        seen_aliases: set[str] = set()
+        for alias in hd.aliases:
+            alias = alias.strip()
+            if not alias or alias in seen_aliases:
+                continue
+            seen_aliases.add(alias)
+            if not _is_routable_address(alias):
+                continue
+            existing = resolve_ip(db, op_id, alias, create_if_missing=False)
+            if existing is not None:
+                # Already known — either on our host (no-op) or on another
+                # host (don't silently merge).
+                continue
+            db.add(HostIP(
+                id=_uuid(),
+                host_id=resolved_id,
+                ip_address=alias,
+                addr_type=_infer_addr_type(alias),
+                source="parsed",
+                first_seen_at=_now(),
+            ))
+        if seen_aliases:
+            db.flush()
 
     # ── 2. Credentials + CredentialLinks ─────────────────────────────────
     all_fingerprints: list[str] = []

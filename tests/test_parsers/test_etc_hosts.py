@@ -19,15 +19,17 @@ def _load_fixture() -> bytes:
 
 
 def test_parses_ips_and_hostnames():
+    """Each non-loopback line produces ONE HostData (primary IP) with the
+    line's hostnames as aliases — NOT separate HostData per identifier."""
     result = EtcHostsParser().parse(_load_fixture(), _meta())
-    addresses = [h.ip_address for h in result.hosts_found]
-    # 4 IPs (10.0.0.1, 10.0.0.10, 192.168.1.50, 172.16.5.20)
-    ips = [a for a in addresses if a[0].isdigit()]
-    assert len(ips) == 4
-    # Hostnames: gateway.internal, gateway, webserver.internal, web01,
-    #            db-primary.corp, db-primary, dev-box.internal, dev-box = 8
-    hostnames = [a for a in addresses if not a[0].isdigit() and ":" not in a]
-    assert len(hostnames) == 8
+    # 4 lines → 4 HostData (fixture has 4 non-loopback lines)
+    assert len(result.hosts_found) == 4
+    by_ip = {h.ip_address: h for h in result.hosts_found}
+    assert set(by_ip.keys()) == {"10.0.0.1", "10.0.0.10", "192.168.1.50", "172.16.5.20"}
+    # Each line carries its hostnames as aliases
+    total_aliases = sum(len(h.aliases) for h in result.hosts_found)
+    assert total_aliases == 8  # gateway.internal, gateway, webserver.internal, web01,
+                               # db-primary.corp, db-primary, dev-box.internal, dev-box
 
 
 def test_skips_loopback():
@@ -39,13 +41,28 @@ def test_skips_loopback():
     assert "10.0.0.5" in addresses
 
 
+def test_skips_multicast_and_reserved_ipv6():
+    """IPv6 multicast / reserved lines must not produce phantom hosts,
+    even via their hostname aliases (ip6-allnodes, ip6-mcastprefix, ...)."""
+    content = (
+        b"ff02::1 ip6-allnodes\n"
+        b"ff00::0 ip6-mcastprefix\n"
+        b"fe00::0 ip6-localnet\n"
+        b"10.0.0.5 realhost\n"
+    )
+    result = EtcHostsParser().parse(content, _meta())
+    assert len(result.hosts_found) == 1
+    assert result.hosts_found[0].ip_address == "10.0.0.5"
+    assert result.hosts_found[0].aliases == ["realhost"]
+
+
 def test_skips_comments():
     content = b"# this is a comment\n10.0.0.1 host1\n"
     result = EtcHostsParser().parse(content, _meta())
-    assert len(result.hosts_found) == 2  # IP + hostname
-    addresses = [h.ip_address for h in result.hosts_found]
-    assert "10.0.0.1" in addresses
-    assert "host1" in addresses
+    # ONE HostData for the one non-comment line
+    assert len(result.hosts_found) == 1
+    assert result.hosts_found[0].ip_address == "10.0.0.1"
+    assert result.hosts_found[0].aliases == ["host1"]
 
 
 def test_skips_broadcast():
@@ -74,7 +91,7 @@ def test_stats_counts():
 def test_inline_comment_stripped():
     content = b"10.0.0.1 myhost  # this is inline\n"
     result = EtcHostsParser().parse(content, _meta())
-    addresses = [h.ip_address for h in result.hosts_found]
-    assert "myhost" in addresses
-    assert "this" not in addresses
-    assert "is" not in addresses
+    assert len(result.hosts_found) == 1
+    hd = result.hosts_found[0]
+    assert hd.ip_address == "10.0.0.1"
+    assert hd.aliases == ["myhost"]  # comment and its words are stripped

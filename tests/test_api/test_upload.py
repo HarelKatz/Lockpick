@@ -162,8 +162,10 @@ def test_nmap_upload_new_hosts_in_stats(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body["ok"] is True
-    # nmap_scan.xml has 3 "up" hosts; the dual-stack host emits 2 IPs → 4 HostData records total
-    assert body["summary"]["new_hosts"] == 4
+    # 3 "up" hosts in fixture. The parser now emits ONE HostData per host,
+    # with secondary IPs + hostnames as aliases on the same record (so the
+    # dual-stack host is one Host with two HostIPs, not two separate Hosts).
+    assert body["summary"]["new_hosts"] == 3
 
 
 def test_nmap_upload_sets_nickname_from_hostname(client):
@@ -268,15 +270,20 @@ def test_etc_hosts_upload_creates_hosts(client):
     body = resp.json()
     assert body["ok"] is True
 
-    # Both IPs + their hostname aliases should create hosts.
-    # etc_hosts parser emits one HostData per IP and one per hostname.
-    # 2 IPs + 2 hostnames = 4 HostData records → 4 new hosts.
-    assert body["summary"]["new_hosts"] == 4
+    # 2 /etc/hosts lines → 2 new Hosts. Each line's hostname rides along
+    # on the same Host as an additional HostIP (not a separate host).
+    assert body["summary"]["new_hosts"] == 2
 
-    # Verify hosts are actually in the DB (total = 1 upload host + 4 new)
+    # 1 upload host + 2 new from etc_hosts = 3 total
     hosts_resp = client.get(f"/api/ops/{op_id}/hosts")
     assert hosts_resp.status_code == 200
-    assert len(hosts_resp.json()) == 5
+    hosts = hosts_resp.json()
+    assert len(hosts) == 3
+    # Each /etc/hosts host must own BOTH its IP and its hostname
+    web = next(h for h in hosts if h["nickname"] == "10.10.0.1")
+    assert {ip["ip_address"] for ip in web["ips"]} == {"10.10.0.1", "web-server"}
+    db_h = next(h for h in hosts if h["nickname"] == "10.10.0.2")
+    assert {ip["ip_address"] for ip in db_h["ips"]} == {"10.10.0.2", "db-server"}
 
 
 def test_etc_hosts_upload_loopback_skipped(client):
@@ -291,8 +298,8 @@ def test_etc_hosts_upload_loopback_skipped(client):
         files={"file": ("etc_hosts", content, "text/plain")},
     )
     assert resp.status_code == 200
-    # Only 1 IP + 1 hostname for realhost; loopbacks skipped → 2 new hosts
-    assert resp.json()["summary"]["new_hosts"] == 2
+    # Only one real line → one new host (realhost alias is a HostIP on it)
+    assert resp.json()["summary"]["new_hosts"] == 1
 
 
 # ─── Priority 2: Re-upload dedup: same key in two files → 1 cred, 2 links ────

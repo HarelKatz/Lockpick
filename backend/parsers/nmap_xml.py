@@ -60,9 +60,17 @@ class NmapXmlParser(BaseParser):
 
             nickname = hostnames[0] if hostnames else ips[0]
 
-            for ip in ips:
-                result.hosts_found.append(HostData(ip_address=ip, nickname=nickname))
-                hosts_found += 1
+            # One HostData per scanned host: the first IP is the primary,
+            # the other IPs and any hostnames ride along as aliases so they
+            # land as additional HostIPs on the same Host record.
+            primary_ip = ips[0]
+            aliases = ips[1:] + hostnames
+            result.hosts_found.append(HostData(
+                ip_address=primary_ip,
+                nickname=nickname,
+                aliases=aliases,
+            ))
+            hosts_found += 1
 
         result.stats = {"hosts_found": hosts_found}
         return result

@@ -4,38 +4,47 @@
   "host_users_found": [],
   "hosts_found": [
     {
+      "aliases": [],
       "ip_address": "192.168.0.0",
       "nickname": "192.168.0.0"
     },
     {
+      "aliases": [],
       "ip_address": "192.168.0.1",
       "nickname": "192.168.0.1"
     },
     {
+      "aliases": [],
       "ip_address": "192.168.0.2",
       "nickname": "192.168.0.2"
     },
     {
+      "aliases": [],
       "ip_address": "192.168.0.3",
       "nickname": "192.168.0.3"
     },
     {
+      "aliases": [],
       "ip_address": "192.168.0.4",
       "nickname": "192.168.0.4"
     },
     {
+      "aliases": [],
       "ip_address": "192.168.0.5",
       "nickname": "192.168.0.5"
     },
     {
+      "aliases": [],
       "ip_address": "192.168.0.6",
       "nickname": "192.168.0.6"
     },
     {
+      "aliases": [],
       "ip_address": "192.168.0.7",
       "nickname": "192.168.0.7"
     },
     {
+      "aliases": [],
       "ip_address": "192.168.0.8",
       "nickname": "192.168.0.8"
     }

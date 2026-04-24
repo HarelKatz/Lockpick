@@ -4,34 +4,56 @@
   "host_users_found": [],
   "hosts_found": [
     {
+      "aliases": [
+        "cvs.openbsd.org"
+      ],
       "ip_address": "199.185.137.3",
       "nickname": "cvs.openbsd.org"
     },
     {
+      "aliases": [
+        "www.netbsd.org"
+      ],
       "ip_address": "204.152.190.12",
       "nickname": "www.netbsd.org"
     },
     {
+      "aliases": [
+        "pub2.kernel.org"
+      ],
       "ip_address": "204.152.191.37",
       "nickname": "pub2.kernel.org"
     },
     {
+      "aliases": [],
       "ip_address": "64.13.134.48",
       "nickname": "64.13.134.48"
     },
     {
+      "aliases": [
+        "freshmeat.net"
+      ],
       "ip_address": "66.35.250.168",
       "nickname": "freshmeat.net"
     },
     {
+      "aliases": [
+        "sourceforge.net"
+      ],
       "ip_address": "66.35.250.203",
       "nickname": "sourceforge.net"
     },
     {
+      "aliases": [
+        "eh-in-f99.google.com"
+      ],
       "ip_address": "72.14.207.99",
       "nickname": "eh-in-f99.google.com"
     },
     {
+      "aliases": [
+        "po-in-f83.google.com"
+      ],
       "ip_address": "72.14.253.83",
       "nickname": "po-in-f83.google.com"
     }

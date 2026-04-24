@@ -79,7 +79,11 @@ def _truncate(s: str | None, n: int) -> str | None:
 
 
 def _serialize_host(h) -> dict:
-    return {"ip_address": h.ip_address, "nickname": h.nickname}
+    return {
+        "ip_address": h.ip_address,
+        "nickname": h.nickname,
+        "aliases": sorted(h.aliases),
+    }
 
 
 def _serialize_credential(c) -> dict:

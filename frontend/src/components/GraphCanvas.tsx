@@ -5,7 +5,7 @@
  *
  * Purely driven by props — parent owns graphData and hiddenIds.
  */
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import ForceGraph2D from 'react-force-graph-2d'
 import type { ForceGraphMethods, GraphData } from 'react-force-graph-2d'
 import * as d3Force from 'd3-force'
@@ -193,6 +193,20 @@ export default function GraphCanvas({
 
   const graphRef = useRef<ForceGraphMethods | undefined>(undefined)
   const fitNeededRef = useRef(false)
+
+  // ── Remount-on-node-set-change key ──────────────────────────────────────────
+  // ForceGraph2D's internal diff between old and new graphData can call
+  // forceLink.initialize() against stale simulation nodes when the set of
+  // nodes grows or shrinks (throws "node not found: <id>"). Clearing the
+  // link force via ref is not reliable in every ordering. Remounting the
+  // ForceGraph2D component whenever the node SET changes is — a fresh
+  // simulation has no stale refs. The key is derived from a sorted join
+  // of host_ids so data-only changes (rename, status flip) keep the key
+  // stable and preserve camera + simulation continuity.
+  const nodeSetKey = useMemo(
+    () => graphData.nodes.map(n => n.host_id).sort().join('|'),
+    [graphData.nodes],
+  )
 
   // Saved node positions (top-left coords, compatible with layout algorithms)
   const savedPos = useRef<PosMap>(new Map())
@@ -587,6 +601,7 @@ export default function GraphCanvas({
     <div ref={containerRef} className={styles.canvas}>
       {dims.w > 0 && dims.h > 0 && (
         <ForceGraph2D
+          key={nodeSetKey}
           ref={graphRef}
           width={dims.w}
           height={dims.h}

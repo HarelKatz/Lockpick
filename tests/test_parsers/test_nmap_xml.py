@@ -29,11 +29,12 @@ def test_parses_up_hosts(metadata):
     content = (FIXTURES / "nmap_scan.xml").read_bytes()
     result = NmapXmlParser().parse(content, metadata)
 
-    # 3 up hosts: webserver (1 IP), IP-only (1 IP), dbserver (2 IPs)
-    assert len(result.hosts_found) == 4
+    # 3 up hosts. One HostData per HOST (not per IP) — the dbserver's
+    # second IP and any hostnames ride along as aliases on a single record.
+    assert len(result.hosts_found) == 3
     assert result.credentials_found == []
     assert result.connections_found == []
-    assert result.stats["hosts_found"] == 4
+    assert result.stats["hosts_found"] == 3
 
 
 def test_hostname_used_as_nickname(metadata):
@@ -61,12 +62,14 @@ def test_skips_down_hosts(metadata):
 
 
 def test_dual_stack_host_emits_both_ips(metadata):
+    """Dual-stack host keeps both addresses on the SAME HostData — primary
+    in ip_address, secondary in aliases — so the upload pipeline creates
+    one Host with two HostIPs rather than two separate Hosts."""
     content = (FIXTURES / "nmap_scan.xml").read_bytes()
     result = NmapXmlParser().parse(content, metadata)
 
-    ips = {h.ip_address for h in result.hosts_found}
-    assert "10.0.0.20" in ips
-    assert "fe80::1" in ips
+    dual_stack = next(h for h in result.hosts_found if h.ip_address == "10.0.0.20")
+    assert "fe80::1" in dual_stack.aliases
 
 
 def test_empty_file(metadata):

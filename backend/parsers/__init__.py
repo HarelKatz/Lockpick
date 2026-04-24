@@ -7,9 +7,18 @@ from typing import Optional
 
 @dataclass
 class HostData:
-    """A host discovered while parsing a file."""
+    """A host discovered while parsing a file.
+
+    `aliases` are additional identifiers (IPs and/or hostnames) that belong
+    to the SAME host as `ip_address` — e.g. the hostnames on an /etc/hosts
+    line, or the secondary IPs plus hostnames on an nmap scan record. The
+    upload pipeline resolves `ip_address` to a Host, then adds each alias
+    as an additional HostIP on that same host (skipping non-routable
+    values and aliases that already resolve to a different host).
+    """
     ip_address: str
     nickname: Optional[str] = None  # suggested name; backend may override
+    aliases: list[str] = field(default_factory=list)
 
 
 @dataclass

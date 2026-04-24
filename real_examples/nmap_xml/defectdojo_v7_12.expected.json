@@ -4,6 +4,10 @@
   "host_users_found": [],
   "hosts_found": [
     {
+      "aliases": [
+        "joaquinlp.me",
+        "mocha2005.mochahost.com"
+      ],
       "ip_address": "198.38.82.159",
       "nickname": "joaquinlp.me"
     }

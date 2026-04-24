@@ -4,15 +4,11 @@
   "host_users_found": [],
   "hosts_found": [
     {
+      "aliases": [
+        "myserver",
+        "myserver.mydomain.example"
+      ],
       "ip_address": "1.2.3.4",
-      "nickname": null
-    },
-    {
-      "ip_address": "myserver",
-      "nickname": null
-    },
-    {
-      "ip_address": "myserver.mydomain.example",
       "nickname": null
     }
   ],

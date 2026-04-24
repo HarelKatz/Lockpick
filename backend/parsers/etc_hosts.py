@@ -32,22 +32,39 @@ class EtcHostsParser(BaseParser):
             ip = parts[0]
             hostnames = parts[1:]
 
-            # Skip loopback
+            # Skip loopback — not a real pivot target, already resolved to
+            # the upload host by the pipeline.
             if ip.startswith("127.") or ip == "::1" or ip.lower() == "localhost":
                 continue
-            # Skip broadcast/any
-            if ip in ("0.0.0.0", "255.255.255.255"):
+
+            # Drop obvious localhost-family hostnames. Multicast / reserved
+            # IPv6 hostnames like `ip6-allnodes` are filtered by the IP
+            # validation: if the line's IP is itself non-routable, the
+            # whole line is skipped here so the hostnames never leak in as
+            # phantom hosts.
+            try:
+                import ipaddress
+                ip_obj = ipaddress.ip_address(ip)
+                if ip_obj.is_multicast or ip_obj.is_reserved or ip_obj.is_unspecified:
+                    continue
+            except ValueError:
+                # Non-IP on the left side of /etc/hosts is malformed; skip.
                 continue
 
-            result.hosts_found.append(HostData(ip_address=ip))
-            ip_count += 1
+            filtered_hostnames = [
+                h for h in hostnames
+                if not (h.lower() == "localhost" or h.lower().startswith("localhost."))
+            ]
 
-            for hostname in hostnames:
-                hn = hostname.lower()
-                if hn == "localhost" or hn.startswith("localhost."):
-                    continue
-                result.hosts_found.append(HostData(ip_address=hostname))
-                hostname_count += 1
+            # Emit ONE HostData per line — the IP is the primary identifier,
+            # hostnames ride along as aliases so they end up as additional
+            # HostIPs on the same host instead of spawning phantom hosts.
+            result.hosts_found.append(HostData(
+                ip_address=ip,
+                aliases=filtered_hostnames,
+            ))
+            ip_count += 1
+            hostname_count += len(filtered_hostnames)
 
         result.stats = {"ips": ip_count, "hostnames": hostname_count}
         return result
