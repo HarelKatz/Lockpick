@@ -166,6 +166,29 @@ def test_nmap_upload_new_hosts_in_stats(client):
     assert body["summary"]["new_hosts"] == 4
 
 
+def test_nmap_upload_sets_nickname_from_hostname(client):
+    """Nmap-discovered hosts must get their hostname as nickname (Fix: use Auto-created guard)."""
+    op_id = _create_op(client)
+    host_id = _create_host(client, op_id)
+
+    content = (FIXTURES / "nmap_scan.xml").read_bytes()
+    resp = client.post(
+        f"/api/ops/{op_id}/upload",
+        data={"file_type": "nmap_xml", "host_id": host_id},
+        files={"file": ("nmap_scan.xml", content, "application/xml")},
+    )
+    assert resp.status_code == 200
+
+    hosts_resp = client.get(f"/api/ops/{op_id}/hosts")
+    assert hosts_resp.status_code == 200
+    hosts = hosts_resp.json()
+    nicknames = {h["nickname"] for h in hosts}
+
+    # nmap_scan.xml contains webserver.corp.local (10.0.0.5) and dbserver.corp.local (10.0.0.20)
+    assert "webserver.corp.local" in nicknames, f"Expected webserver.corp.local in {nicknames}"
+    assert "dbserver.corp.local" in nicknames, f"Expected dbserver.corp.local in {nicknames}"
+
+
 def test_credential_link_dedup_includes_username(client):
     """Same key uploaded for two different users on the same host must create 2 CredentialLinks (Fix 3)."""
     op_id = _create_op(client)

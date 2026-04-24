@@ -241,7 +241,7 @@ async def upload_file(
         if resolved_id:
             if hd.nickname:
                 resolved_host = db.query(Host).filter(Host.id == resolved_id).first()
-                if resolved_host and resolved_host.nickname == hd.ip_address:
+                if resolved_host and resolved_host.comment and "Auto-created" in resolved_host.comment:
                     resolved_host.nickname = hd.nickname
             new_discovered_hosts += 1
     new_hosts += new_discovered_hosts
