@@ -41,6 +41,9 @@ from ws_manager import broadcast_sync
 
 log = logging.getLogger(__name__)
 
+_UUID_PREFIX_LEN = 36   # UUID is 36 chars
+_SAFE_NAME_OFFSET = 37  # UUID + underscore separator
+
 router = APIRouter(tags=["upload"])
 
 
@@ -194,7 +197,8 @@ async def upload_file(
             fh.write(content)
     except OSError as e:
         log.warning("Failed to save raw upload %s: %s", raw_path, e)
-        safe_name = filename  # still proceed with parsing
+        # Do not revert safe_name — keep the UUID-prefixed value so that any
+        # CredentialLink / ConnectionRecord file_source references remain consistent.
 
     metadata = UploadMetadata(
         op_id=op_id,
@@ -228,6 +232,19 @@ async def upload_file(
         user_source = "log_evidence"
     for (uname, shell, home_dir) in result.host_users_found:
         _get_or_create_host_user(db, host_id, uname, shell, home_dir, user_source)
+
+    # ── 1b. Persist discovered hosts (e.g. from nmap, etc_hosts) ─────────────
+    new_hosts = 0
+    new_discovered_hosts = 0
+    for hd in result.hosts_found:
+        resolved_id = resolve_ip(db, op_id, hd.ip_address, create_if_missing=True)
+        if resolved_id:
+            if hd.nickname:
+                resolved_host = db.query(Host).filter(Host.id == resolved_id).first()
+                if resolved_host and resolved_host.comment and "Auto-created" in resolved_host.comment:
+                    resolved_host.nickname = hd.nickname
+            new_discovered_hosts += 1
+    new_hosts += new_discovered_hosts
 
     # ── 2. Insert Credentials + CredentialLinks ───────────────────────────────
     all_upload_fingerprints: list[str] = []  # all fps seen (new or existing)
@@ -272,21 +289,27 @@ async def upload_file(
         if link_username:
             hu = _get_or_create_host_user(db, host_id, link_username, None, None, user_source)
 
-        link = CredentialLink(
-            id=_uuid(),
-            credential_id=cred_obj.id,
-            host_id=host_id,
-            username=link_username,
-            host_user_id=hu.id if hu else None,
-            relationship_type=cred_data.relationship_type,
-            file_source=safe_name,
-        )
-        db.add(link)
-        new_links += 1
+        existing_link = db.query(CredentialLink).filter(
+            CredentialLink.credential_id == cred_obj.id,
+            CredentialLink.host_id == host_id,
+            CredentialLink.relationship_type == cred_data.relationship_type,
+            CredentialLink.username == link_username,
+        ).first()
+        if not existing_link:
+            link = CredentialLink(
+                id=_uuid(),
+                credential_id=cred_obj.id,
+                host_id=host_id,
+                username=link_username,
+                host_user_id=hu.id if hu else None,
+                relationship_type=cred_data.relationship_type,
+                file_source=safe_name,
+            )
+            db.add(link)
+            new_links += 1
 
     # ── 3. Insert ConnectionRecords ───────────────────────────────────────────
     new_connections = 0
-    new_hosts = 0
 
     for conn_data in result.connections_found:
         # Resolve src/dst IPs — replace __upload_host__ sentinel
@@ -351,6 +374,14 @@ async def upload_file(
             if not any(ssh_match(n, pat_data.aliases) for n in names):
                 continue
             dst_ip = candidate.ips[0].ip_address if candidate.ips else candidate.nickname
+            raw = f"ssh_config pattern match: Host {pattern_str}"
+            existing = db.query(ConnectionRecord).filter(
+                ConnectionRecord.src_host_id == host_id,
+                ConnectionRecord.dst_host_id == candidate.id,
+                ConnectionRecord.raw_line == raw,
+            ).first()
+            if existing:
+                continue
             db.add(ConnectionRecord(
                 id=_uuid(),
                 op_id=op_id,
@@ -361,7 +392,7 @@ async def upload_file(
                 dst_ip=dst_ip,
                 connection_type="ssh",
                 direction_context="from_src_logs",
-                raw_line=f"ssh_config pattern match: Host {pattern_str}",
+                raw_line=raw,
                 source_file=safe_name,
                 created_at=_now(),
             ))
@@ -399,7 +430,7 @@ async def upload_file(
     db.commit()
     broadcast_sync(op_id, {"type": "update", "entity_type": "host", "op_id": op_id})
 
-    # ── 4. Check for new pivot opportunities ─────────────────────────────────
+    # ── 6. Check for new pivot opportunities ─────────────────────────────────
     pivot_messages = _find_pivot_opportunities(db, op_id, all_upload_fingerprints)
 
     return {
@@ -459,8 +490,8 @@ def list_uploads(op_id: str, db: Session = Depends(get_db)):
         if not entry.is_file():
             continue
         safe_name = entry.name
-        # Strip the UUID prefix (36 chars + underscore) to recover original filename
-        original_name = safe_name[37:] if len(safe_name) > 37 and safe_name[36] == "_" else safe_name
+        # Strip the UUID prefix (_UUID_PREFIX_LEN chars + underscore separator) to recover original filename
+        original_name = safe_name[_SAFE_NAME_OFFSET:] if len(safe_name) > _SAFE_NAME_OFFSET and safe_name[_UUID_PREFIX_LEN] == "_" else safe_name
         stat = entry.stat()
         host_ids = list(
             (link_hosts.get(safe_name, set()) | conn_hosts.get(safe_name, set()))
@@ -507,7 +538,7 @@ def get_upload(
     if not file_path.is_file():
         raise HTTPException(status_code=404, detail="File not found")
 
-    original_name = safe_name[37:] if len(safe_name) > 37 and safe_name[36] == "_" else safe_name
+    original_name = safe_name[_SAFE_NAME_OFFSET:] if len(safe_name) > _SAFE_NAME_OFFSET and safe_name[_UUID_PREFIX_LEN] == "_" else safe_name
 
     disposition = "attachment" if download else "inline"
     return FileResponse(
