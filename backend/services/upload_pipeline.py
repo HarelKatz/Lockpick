@@ -250,6 +250,9 @@ def process_single_file(
     existing_host_ids: set[str] = {
         hid for (hid,) in db.query(Host.id).filter(Host.op_id == op_id).all()
     }
+    # Warnings produced by the pipeline itself (vs. parser-generated
+    # `result.warnings`). Merged into the returned warnings list.
+    helper_warnings: list[str] = []
     new_hosts = 0
     for hd in result.hosts_found:
         resolved_id = resolve_ip(db, op_id, hd.ip_address, create_if_missing=True)
@@ -280,8 +283,15 @@ def process_single_file(
                 continue
             existing = resolve_ip(db, op_id, alias, create_if_missing=False)
             if existing is not None:
-                # Already known — either on our host (no-op) or on another
-                # host (don't silently merge).
+                if existing != resolved_id:
+                    # Conflict: alias already belongs to a DIFFERENT host.
+                    # Surface it so the operator sees there's a merge
+                    # opportunity (Phase 15 will render these as candidates).
+                    helper_warnings.append(
+                        f"Alias '{alias}' already bound to another host; skipped "
+                        f"(potential merge candidate with host {existing})"
+                    )
+                # else: alias already on our host — no-op, no warning.
                 continue
             db.add(HostIP(
                 id=_uuid(),
@@ -481,7 +491,7 @@ def process_single_file(
         "new_connections": new_connections,
         "new_hosts": new_hosts,
         "new_sudo_rules": new_sudo_rules,
-        "warnings": result.warnings,
+        "warnings": list(result.warnings) + helper_warnings,
         "fingerprints": all_fingerprints,
         "safe_name": safe_name,
     }

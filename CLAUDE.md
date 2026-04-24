@@ -199,6 +199,7 @@ tests/
 |----------|---------|-------------|
 | `DB_PATH` | `../data/tracker.db` | SQLite database path |
 | `UPLOAD_PATH` | `../data/uploads` | Uploaded raw files directory |
-| `ARCHIVE_IMPORT_MAX_BYTES` | `104857600` | Size cap (100 MiB) on bulk archive-import tarballs |
+| `ARCHIVE_IMPORT_MAX_BYTES` | `104857600` | Size cap (100 MiB) on the compressed bulk archive upload |
+| `ARCHIVE_IMPORT_MAX_UNCOMPRESSED_BYTES` | `524288000` | Size cap (500 MiB) on uncompressed archive contents — gzip-bomb defense |
 
 Frontend uses `/api` prefix proxied by nginx (production) or `vite.config.ts` (dev). No frontend env vars needed.

@@ -314,6 +314,31 @@ def test_import_archive_oversized_rejected(client, monkeypatch):
     assert r.status_code == 413
 
 
+def test_import_archive_gzip_bomb_rejected(client, monkeypatch):
+    """A tarball whose compressed size fits under the limit but whose
+    uncompressed members would blow past the uncompressed cap must be
+    rejected before extractall() runs (otherwise a ~200 KB tarball can
+    expand to 200+ MB of null bytes)."""
+    monkeypatch.setattr("config.settings.archive_import_max_uncompressed_bytes", 1024)
+    op_id = _create_op(client)
+    host_id = _create_host(client, op_id)
+
+    # 4 KB of highly compressible null bytes — tarball ends up tiny but
+    # the member's size field is 4096 > 1024 cap.
+    payload = b"\x00" * 4096
+    tarball = _build_tarball(
+        {"auth_log__.txt": payload},
+        include_manifest=False,
+    )
+
+    r = client.post(
+        f"/api/ops/{op_id}/hosts/{host_id}/import-archive",
+        files={"file": ("bomb.tar.gz", tarball, "application/gzip")},
+    )
+    assert r.status_code == 413
+    assert "uncompressed" in r.json()["detail"].lower()
+
+
 def test_import_archive_host_in_wrong_op_returns_404(client):
     op_a = _create_op(client, "OpA")
     op_b = _create_op(client, "OpB")
@@ -337,6 +362,59 @@ def test_import_archive_unknown_op_returns_404(client):
 
 
 # ─── Activity log + pivot ────────────────────────────────────────────────────
+
+def test_import_archive_alias_conflict_surfaces_warning(client):
+    """When an /etc/hosts line's hostname already belongs to a DIFFERENT
+    host, the pipeline skips the add (to avoid silent merges) but must
+    emit a warning so the operator can act on the merge candidate."""
+    op_id = _create_op(client)
+    host_id = _create_host(client, op_id)
+
+    # First upload: 10.0.0.1 is 'realname' (hostname bound to host X)
+    first = b"10.0.0.1 realname\n"
+    r1 = client.post(
+        f"/api/ops/{op_id}/upload",
+        data={"file_type": "etc_hosts", "host_id": host_id},
+        files={"file": ("etc_hosts", first, "text/plain")},
+    )
+    assert r1.status_code == 200
+
+    # Second upload via archive: 10.0.0.99 claims 'realname' as an alias
+    conflicting = b"10.0.0.99 realname\n"
+    tarball = _build_tarball({"etc_hosts__.txt": conflicting})
+    r2 = client.post(
+        f"/api/ops/{op_id}/hosts/{host_id}/import-archive",
+        files={"file": ("t.tar.gz", tarball, "application/gzip")},
+    )
+    assert r2.status_code == 200
+    entry = next(e for e in r2.json()["per_file"] if e["filename"] == "etc_hosts__.txt")
+    assert any("already bound to another host" in w for w in entry["summary"]["warnings"]), \
+        entry["summary"]["warnings"]
+
+
+def test_import_archive_aggregates_sudo_rules(client):
+    """A sudoers file in the archive must report its sudo rules in per_file
+    summary, totals, and the activity-log detail line."""
+    op_id = _create_op(client)
+    host_id = _create_host(client, op_id)
+    sudoers = (FIXTURES / "sudoers").read_bytes()
+
+    tarball = _build_tarball({"sudoers__.txt": sudoers})
+    r = client.post(
+        f"/api/ops/{op_id}/hosts/{host_id}/import-archive",
+        files={"file": ("t.tar.gz", tarball, "application/gzip")},
+    )
+    assert r.status_code == 200
+    data = r.json()
+    entry = next(e for e in data["per_file"] if e["filename"] == "sudoers__.txt")
+    assert entry["ok"] is True
+    assert entry["summary"]["new_sudo_rules"] >= 1
+    assert data["totals"]["new_sudo_rules"] == entry["summary"]["new_sudo_rules"]
+    # Activity log should name sudo rules
+    log = client.get(f"/api/ops/{op_id}/activity").json()
+    detail = next(e["detail"] for e in log if e["action"] == "upload.archive_import")
+    assert "sudo rules" in detail
+
 
 def test_import_archive_single_activity_log_entry(client):
     """A multi-file archive emits exactly one archive-level activity row."""

@@ -134,12 +134,29 @@ async def import_archive(
             raise HTTPException(status_code=400, detail=f"Invalid tarball: {e}")
 
         try:
-            # Explicit pre-check for bad members — gives specific error messages
-            # that the built-in `data` filter would abstract away.
-            for member in tf.getmembers():
+            # Explicit pre-check: bad members AND total uncompressed size.
+            # Validate EVERY member first so the error message is specific;
+            # the built-in `data` filter is a fallback.
+            members = tf.getmembers()
+            total_uncompressed = 0
+            for member in members:
                 err = _validate_tar_member(member)
                 if err is not None:
                     raise HTTPException(status_code=400, detail=f"Unsafe archive: {err}")
+                if member.isfile():
+                    total_uncompressed += member.size
+            if total_uncompressed > settings.archive_import_max_uncompressed_bytes:
+                # Gzip-bomb defense: a ~200 KB tarball can expand to 200 MB+
+                # of null bytes; the compressed-size cap above doesn't catch
+                # this. Reject before extractall so we never write the bomb
+                # to disk.
+                raise HTTPException(
+                    status_code=413,
+                    detail=(
+                        f"Archive uncompressed size {total_uncompressed} exceeds "
+                        f"{settings.archive_import_max_uncompressed_bytes} byte cap"
+                    ),
+                )
 
             extract_dir = tmpdir / "extracted"
             extract_dir.mkdir()
@@ -172,6 +189,7 @@ async def import_archive(
             "new_credential_links": 0,
             "new_connections": 0,
             "new_hosts": 0,
+            "new_sudo_rules": 0,
             "warnings": [],
         }
 
@@ -193,6 +211,7 @@ async def import_archive(
                     "new_credential_links": 0,
                     "new_connections": 0,
                     "new_hosts": 0,
+                    "new_sudo_rules": 0,
                     "warnings": [],
                 },
             }
@@ -229,6 +248,7 @@ async def import_archive(
                 "new_credential_links": result["new_credential_links"],
                 "new_connections": result["new_connections"],
                 "new_hosts": result["new_hosts"],
+                "new_sudo_rules": result["new_sudo_rules"],
                 "warnings": list(result["warnings"]),
             }
 
@@ -247,6 +267,7 @@ async def import_archive(
                 totals["new_credential_links"] += result["new_credential_links"]
                 totals["new_connections"] += result["new_connections"]
                 totals["new_hosts"] += result["new_hosts"]
+                totals["new_sudo_rules"] += result["new_sudo_rules"]
             else:
                 files_skipped += 1
 
@@ -260,7 +281,8 @@ async def import_archive(
                 f"{totals['new_credentials']} creds, "
                 f"{totals['new_credential_links']} links, "
                 f"{totals['new_connections']} connections, "
-                f"{totals['new_hosts']} hosts"
+                f"{totals['new_hosts']} hosts, "
+                f"{totals['new_sudo_rules']} sudo rules"
             ),
         )
         db.commit()
