@@ -206,3 +206,60 @@ def test_roundtrip_export_import_export(client, op):
     assert len(second_export["hosts"]) == len(first_export["hosts"])
     assert len(second_export["credentials"]) == len(first_export["credentials"])
     assert len(second_export["connections"]) == len(first_export["connections"])
+
+
+def test_roundtrip_addr_type_preserved(client, op):
+    """addr_type on HostIP must survive export → import unchanged."""
+    host_id = client.post(
+        f"/api/ops/{op['id']}/hosts", json={"nickname": "hostname-host"}
+    ).json()["id"]
+    client.post(
+        f"/api/hosts/{host_id}/ips",
+        json={"ip_address": "box.example.com", "addr_type": "hostname"},
+    )
+
+    export_data = client.get(f"/api/ops/{op['id']}/export").json()
+    import_resp = client.post("/api/ops/import", json={"data": export_data})
+    assert import_resp.status_code == 201
+    new_op_id = import_resp.json()["op_id"]
+
+    hosts = client.get(f"/api/ops/{new_op_id}/hosts").json()
+    assert len(hosts) == 1
+    ips = hosts[0]["ips"]
+    assert len(ips) == 1
+    assert ips[0]["addr_type"] == "hostname"
+
+
+def test_roundtrip_host_status_preserved(client, op):
+    """Host.status must survive export → import unchanged."""
+    host_id = client.post(
+        f"/api/ops/{op['id']}/hosts", json={"nickname": "pwned"}
+    ).json()["id"]
+    client.patch(f"/api/hosts/{host_id}", json={"status": "compromised"})
+
+    export_data = client.get(f"/api/ops/{op['id']}/export").json()
+    import_resp = client.post("/api/ops/import", json={"data": export_data})
+    assert import_resp.status_code == 201
+    new_op_id = import_resp.json()["op_id"]
+
+    hosts = client.get(f"/api/ops/{new_op_id}/hosts").json()
+    assert len(hosts) == 1
+    assert hosts[0]["status"] == "compromised"
+
+
+def test_import_old_export_without_addr_type(client, op):
+    """Importing an export that lacks addr_type must succeed (backwards compat)."""
+    host_id = client.post(
+        f"/api/ops/{op['id']}/hosts", json={"nickname": "legacy-host"}
+    ).json()["id"]
+    client.post(f"/api/hosts/{host_id}/ips", json={"ip_address": "10.1.2.3"})
+
+    export_data = client.get(f"/api/ops/{op['id']}/export").json()
+
+    # Simulate a pre-fix export by stripping addr_type from every HostIP
+    for host in export_data["hosts"]:
+        for ip in host["ips"]:
+            ip.pop("addr_type", None)
+
+    resp = client.post("/api/ops/import", json={"data": export_data})
+    assert resp.status_code == 201
