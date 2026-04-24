@@ -2,11 +2,9 @@
 
 Reference samples for every parser Lockpick has or will have. Downloaded from public
 repositories; all files retain the original content and licenses of their source
-projects (mostly MIT, Apache 2.0, or CC0-equivalent). This directory is gitignored
-(via `.gitignore`) because it's operational reference material, not tracked history.
+projects (mostly MIT, Apache 2.0, or CC0-equivalent).
 
-Organized by `file_type` (matching `backend/parsers/registry.py` keys). Empty
-subdirs at the bottom are parsers where I couldn't find public real samples.
+Organized by `file_type` (matching `backend/parsers/registry.py` keys).
 
 ---
 
@@ -23,24 +21,29 @@ subdirs at the bottom are parsers where I couldn't find public real samples.
 - `authorized_keys` — original (pre-existing)
 - `otkrsk_multi_keys` — gist/otkrsk/b0ffd4018e8a79b9010c461af298471e
 
-### `bash_history/` — 0 files
-Couldn't find public real samples. Most `.bash_history` files contain private
-commands and are gitignored in dotfiles repos. Recommend synthesizing or skipping.
+### `bash_history/` — 2 files
+- `jc_ubuntu_18_04_history`, `jc_centos_7_7_history` — kellyjonbrazil/jc `tests/fixtures/{ubuntu-18.04,centos-7.7}/history.out`
 
-### `etc_hosts/` — 1 file
+### `etc_hosts/` — 3 files
 - `centos_hosts` — original (pre-existing)
+- `jc_ubuntu_18_04_hosts`, `jc_centos_7_7_hosts` — kellyjonbrazil/jc `tests/fixtures/{ubuntu-18.04,centos-7.7}/hosts.out`
 
-### `known_hosts/` — 1 file
+### `known_hosts/` — 3 files
 - `known_hosts` — original (pre-existing)
+- `openssh_portable_hostkeys_unittest` — openssh/openssh-portable `regress/unittests/hostkeys/testdata/known_hosts`
+- `ansible_existing_known_hosts` — ansible/ansible `test/integration/targets/known_hosts/files/existing_known_hosts` (mix of plain, `|1|`-hashed, `@cert-authority`, and multi-key-type entries)
 
-### `nmap_xml/` — 4 files
+### `nmap_xml/` — 5 files
 - `nmap_example.xml` — original (pre-existing)
 - `nmap_official_example` — nmap/nmap `zenmap/radialnet/share/sample/nmap_example.xml`
 - `defectdojo_v7_12` — DefectDojo/sample-scan-files `nmap/nmap_output_v7.12.xml`
+- `defectdojo_v6_40` — DefectDojo/sample-scan-files `nmap/nmap_v6.40.xml`
 - `mozilla_minion_v6_40` — mozilla/minion-nmap-plugin `etc/sample-nmap-output.xml`
 
-### `passwd/` — 1 file
+### `passwd/` — 5 files
 - `endlessm_base_passwd_master` — endlessm/base-passwd `passwd.master` (Debian minimal default passwd)
+- `jc_ubuntu_18_04_passwd`, `jc_centos_7_7_passwd`, `jc_osx_10_14_6_passwd` — kellyjonbrazil/jc `tests/fixtures/*/passwd.out`
+- `cowrie_honeyfs_passwd` — cowrie/cowrie `honeyfs/etc/passwd` (honeypot fake passwd served to attackers)
 
 ### `private_key/` — 14 files
 - `id_rsa`, `dss_key` — original (pre-existing; non-production keys)
@@ -50,8 +53,10 @@ commands and are gitignored in dotfiles repos. Recommend synthesizing or skippin
 - `id_rsa.pub`, `dss_key.pub` — original (pre-existing)
 - `paramiko_test_rsa_pub`, `paramiko_ecdsa_256_cert`, `paramiko_ed25519_cert`, `paramiko_rsa_cert` — paramiko/paramiko tests (pub keys + cert keys)
 
-### `shadow/` — 1 file
+### `shadow/` — 4 files
 - `shadow` — original (pre-existing)
+- `jc_ubuntu_18_04_shadow`, `jc_centos_7_7_shadow` — kellyjonbrazil/jc `tests/fixtures/*/shadow.out`
+- `cowrie_honeyfs_shadow` — cowrie/cowrie `honeyfs/etc/shadow` (hashes are fake honeypot bait)
 
 ### `ssh_config/` — 20 files
 - Pre-existing: `config`, `ssh-config-basic`, `ssh-config-patterns`, `ssh-config-proxy`
@@ -59,10 +64,11 @@ commands and are gitignored in dotfiles repos. Recommend synthesizing or skippin
 - `jc_generic_ssh_config{1..5}` — kellyjonbrazil/jc `tests/fixtures/generic/ssh_config[1-5]`
 - 10 paramiko config edge-case fixtures (`basic`, `canon`, `match-all`, `match-exec`, `match-host-glob`, `match-host-glob-list`, `match-host-negated`, `match-localuser`, `hostname-tokenized`, `invalid`) — paramiko/paramiko `tests/configs/`
 
-### `sshd_config/` — 4 files
+### `sshd_config/` — 5 files
 - `openssh_portable_default.conf` — openssh/openssh-portable `sshd_config` (upstream default)
 - `jc_generic_sshd_config_raw` — kellyjonbrazil/jc `tests/fixtures/generic/sshd_config`
 - `jc_generic_sshd_T`, `jc_generic_sshd_T_2` — kellyjonbrazil/jc `generic/sshd-T.out` (output of `sshd -T`, a config-dump variant)
+- `ansible_blockinfile_openbsd_default` — ansible/ansible `test/integration/targets/blockinfile/files/sshd_config` (OpenBSD 1.100 upstream default)
 
 ### `sudoers/` — 6 files
 - `sudoers` — original (pre-existing)
@@ -95,10 +101,10 @@ All from franckferman/LastLog-Audit `samples/`: `apt_cozy_bear`, `apt_lazarus`,
 `brute_force`, `clean_server`, `compromised`, `insider_threat`,
 `pentest_engagement`, `supply_chain`, `timestomped`.
 
-### `last_output/` — 11 files (mostly from kellyjonbrazil/jc test fixtures)
-- `jc_centos_last`, `jc_centos_last_crash`, `jc_centos_last_wF`, `jc_centos_last_wixF`, `jc_centos_lastb`
-- `jc_ubuntu_last`, `jc_ubuntu_last_w`, `jc_ubuntu_lastb`, `jc_ubuntu2004_last_F`
-- `jc_fedora32_last`
+### `last_output/` — 15 files (mostly from kellyjonbrazil/jc test fixtures)
+- `jc_centos_last`, `jc_centos_last_crash`, `jc_centos_last_wF`, `jc_centos_last_wixF`, `jc_centos_last_w`, `jc_centos_lastb`
+- `jc_ubuntu_last`, `jc_ubuntu_last_w`, `jc_ubuntu_last_w2`, `jc_ubuntu_lastb`, `jc_ubuntu2004_last_F`
+- `jc_fedora32_last`, `jc_osx_1014_last`, `jc_freebsd12_last` — macOS + FreeBSD variants
 - `jonathanmorley_linux_commands` — gist/jonathanmorley/9876546 (Linux Commands cheatsheet)
 
 ### `zsh_history/` — 1 file
@@ -133,9 +139,12 @@ All from canonical/netplan upstream `examples/`: `bridge`, `vlan`, `bonding`, `s
 Most of these come from kellyjonbrazil/jc (`tests/fixtures/`), a CLI-output-to-JSON
 parser library that maintains clean real-command-output fixtures per distro.
 
-### `ip_addr/` — 2 files
+### `ip_addr/` — 11 files
 - `jc_ubuntu_ifconfig`, `jc_centos_ifconfig` — AGENT.md Phase 18 says the `ip_addr`
   parser accepts `ip addr show` OR `ifconfig -a`. These are the `ifconfig` variant.
+- `jc_ubuntu_1604_ifconfig` — kellyjonbrazil/jc `ubuntu-16.04/ifconfig.out`
+- `jc_osx_1014_ifconfig`, `jc_osx_1014_ifconfig2`, `jc_osx_1011_ifconfig`, `jc_osx_1011_ifconfig2` — jc macOS variants
+- `jc_freebsd12_ifconfig`, `jc_freebsd12_ifconfig2`, `jc_freebsd12_ifconfig3`, `jc_freebsd12_ifconfig4` — jc FreeBSD 12 (tests extra-field handling)
 
 ### `ip_route/` — 5 files (jc)
 `jc_ubuntu_ip_route`, `jc_centos_ip_route`, `jc_ubuntu_route`, `jc_ubuntu_route_vn`,
@@ -144,11 +153,17 @@ plus `yuriskinfo_cheatsheet`.
 ### `ip_neigh/` — 0 files
 jc doesn't have `ip_neigh` fixtures; couldn't find raw samples publicly.
 
-### `arp/` — 5 files (jc)
-`jc_ubuntu_arp`, `jc_ubuntu_arp_a`, `jc_ubuntu_arp_v`, `jc_centos_arp_a`, `jc_centos_arp_v`.
+### `arp/` — 12 files (jc)
+Original 5 (`jc_ubuntu_arp*`, `jc_centos_arp*`) plus:
+- `jc_aix71_arp_a`, `jc_freebsd12_arp_a`, `jc_centos8_arp_a` — non-Linux + newer distros
+- `jc_osx_1014_arp_a`, `jc_osx_1014_arp_a2`, `jc_osx_1011_arp_a` — macOS format variants
+- `jc_linux_proc_net_arp` — `/proc/net/arp` raw format
 
-### `netstat/` — 11 files (jc)
-Ubuntu 18.04 + generic: plain, `-l`, `-p`, `-rne`, `-sudo-aeep`, `-sudo-lnp`, plus generic `no-state`, `old`.
+### `netstat/` — 23 files
+Original 11 (ubuntu + generic) plus:
+- `jc_centos_netstat`, `jc_centos_netstat_l`, `jc_centos_netstat_p` — CentOS 7.7 variants
+- `jc_ubuntu_netstat_r`, `jc_ubuntu_netstat_rnee`, `jc_ubuntu_netstat_i` — more ubuntu flag variants
+- `jc_osx_netstat`, `jc_osx_netstat_An`, `jc_osx_netstat_Abn`, `jc_osx_netstat_r`, `jc_osx_netstat_rnl`, `jc_osx_netstat_i` — macOS format variants (different column layout)
 
 ### `ss_output/` — 3 files (jc)
 `jc_ubuntu_ss_a`, `jc_ubuntu_ss_tulpen`, `jc_generic_ss_wide`.
@@ -158,13 +173,15 @@ Ubuntu 18.04 + generic: plain, `-l`, `-p`, `-rne`, `-sudo-aeep`, `-sudo-lnp`, pl
 - From jc generic: `no_jump`
 - From gists: polster, hlissner, DominicBreuker, pirafrank (rule files, not command output)
 
-### `nftables/` — 3 files
+### `nftables/` — 8 files
 - `arch_example` — archlinux svntogit `nftables.conf`
 - `gaelanlloyd_example` — gist/gaelanlloyd/0677759fd4dc0f58e1e7449784bb8903
 - `yoramvandevelde_init_rules` — yoramvandevelde/nftables-example
+- `aborrero_ruleset`, `aborrero_filter_forward`, `aborrero_filter_input`, `aborrero_filter_output`, `aborrero_filter_sets` — aborrero/nftables-managed-with-git `nft_ruleset/` (split-file production-style ruleset)
 
-### `ps_output/` — 4 files
-- `jc_ubuntu_ps_axu`, `jc_ubuntu_ps_ef`, `jc_centos_ps_axu`
+### `ps_output/` — 9 files
+- `jc_ubuntu_ps_axu`, `jc_ubuntu_ps_ef`, `jc_centos_ps_axu`, `jc_centos_ps_ef`
+- `jc_osx_1014_ps_axu`, `jc_osx_1014_ps_ef`, `jc_osx_1011_ps_axu`, `jc_osx_1011_ps_ef` — macOS format variants
 - `cahna_ps_aux_parse` — gist/cahna/43a1a3ff4d075bcd71f9d7120037a501 (short)
 
 ### `env_output/` — 3 files (jc)
@@ -173,8 +190,11 @@ Ubuntu 18.04 + generic: plain, `-l`, `-p`, `-rne`, `-sudo-aeep`, `-sudo-lnp`, pl
 ### `docker_ps/` — 4 files
 All from gists: jimklo, sudo-bmitch, deanpeterson, ipedrazas.
 
-### `docker_network/` — 1 file
+### `docker_network/` — 4 files
 - `docker_cli_docs_reference.md` — docker/cli `docs/reference/commandline/network_inspect.md` (official Docker CLI docs containing multiple verbatim `docker network inspect` JSON outputs in fenced code blocks)
+- `debdut_nginx_container_inspect.json` — gist/debdutdeb/9ac7e07f0e6bac2e25a85023f4336675 (`docker inspect` container JSON with full `NetworkSettings` block)
+- `pbitty_container_inspect.txt` — gist/pbitty/e8c7782490421a1c4d5a (similar, older Docker version)
+- `mattes_container_inspect.txt` — gist/mattes/9376490 (Docker 2014 vintage `docker inspect` output)
 
 ### `ip_neigh/` — 1 file
 - `wsl_live_capture.out` — live capture of `ip neigh show` from this WSL2 environment (RFC1918 only: Docker bridge + WSL gateway; no hostnames, no public IPs)
@@ -221,11 +241,13 @@ All from gists: jimklo, sudo-bmitch, deanpeterson, ipedrazas.
 - `innovia_sa_config` — gist/innovia/fbba8259042f71db98ea8d4ad19bd708
 - `tdihp_aks_config` — gist/tdihp/95716ed2ecef99582af06a50f71d2631
 
-### `boto/` — 0 files
-Docs show inline format, no raw samples. Would need synthesis.
+### `boto/` — 2 files
+- `garnaat_eucalyptus_credentials` — gist/garnaat/1284158 (Eucalyptus-flavored `[Credentials]` block)
+- `kevinkarwaski_example` — gist/kevinkarwaski/1007405 (annotated `[Credentials]` + `[Boto]` reference config with proxy settings)
 
-### `env_file/` — 1 file
+### `env_file/` — 2 files
 - `rapidpages_env_example` — rapidpages/rapidpages `.env.example`
+- `ansible_types_env` — ansible/ansible `test/integration/targets/config/files/types.env`
 
 ### `docker_config/` — 2 files
 - `piersharding_auth` — gist/piersharding/44cbd66f8aeebfd5abd02fb9c8f753d7
@@ -236,30 +258,41 @@ Docs show inline format, no raw samples. Would need synthesis.
 - `richardbronosky_sample` — gist/RichardBronosky/9ab50abb8698e02341629db21e5fa6bf
 - `dan_hart_store` — gist/dan-hart/c3553b5e8514faef440041d34cf95a78 (short)
 
-### `rclone_config/` — 1 file
+### `rclone_config/` — 4 files
 - `fotile96_sample` — gist/fotile96/1b0a27b7fa8059a6830b97f9368d377f
+- `kelvinrr_config_session.md` — gist/Kelvinrr/706bbd54b1c2c30d0ce3d12f7dcaa10a (interactive `rclone config` walkthrough with generated config in fenced blocks)
+- `magnetikonline_b2_cheatsheet.md` — gist/magnetikonline/ffca83834a1869e06f386d9d104b0b00 (Backblaze B2)
+- `plembo_gdrive_backup.md` — gist/plembo/187f1b09369ff05c9919566f2e20b06e (Google Drive backup)
 
 ---
 
-## Remaining gaps (3 dirs still empty after exhaustive search)
+## Remaining thin dirs (1 sample each, public sources exhausted)
 
-| Parser | Why it's hard | Suggestion |
-|---|---|---|
-| `bash_history` | Private by nature, gitignored everywhere; no public DFIR corpus publishes them as raw files | Capture from a live host or honeypot, or synthesize from real SSH command patterns |
-| `boto` | Only inline doc examples exist — format is rare enough that nobody publishes raw `~/.boto` files | Synthesize from the [official boto config tutorial](https://boto.cloudhackers.com/en/latest/boto_config_tut.html) |
+| Parser | Status |
+|---|---|
+| `ip_neigh` | 1 sample — WSL live capture; no jc fixtures exist and public gists are tutorials, not captures |
+| `fish_history` | 1 sample — the pseudo-YAML format is rarely committed; private by convention |
+| `zsh_history` | 1 sample — same reasoning as fish; public gists are scripts that manipulate the file, not real histories |
+| `gcloud_credentials` | 1 sample — `application_default_credentials.json` is sensitive; public gists don't exist |
+| `wtmp` | 1 sample — binary format; only LastLog-Audit publishes raw `.wtmp` files publicly |
+| `messages` | 1 sample — RHEL/CentOS variant of auth log; the `auth_log/` corpus transfers |
 
-Both `ip_neigh` and the two that are hard to find as raw files are essentially captures away — running the commands on any Linux box produces a real sample. Let me know if you want me to do that here.
+These can each grow with live captures when we need edge cases; web search has been exhausted for them.
 
 ---
 
 ## Primary upstream sources (attribution)
 
-- [kellyjonbrazil/jc](https://github.com/kellyjonbrazil/jc) — MIT — ~55 test fixtures across distros
+- [kellyjonbrazil/jc](https://github.com/kellyjonbrazil/jc) — MIT — ~90 test fixtures across distros (Ubuntu 16/18/20, CentOS 7/8, macOS 10.11/10.14, FreeBSD 12, AIX 7.1, Fedora 32)
 - [logpai/loghub](https://github.com/logpai/loghub) — CC-BY-NC-SA-2.0 — anonymized log corpus
 - [franckferman/LastLog-Audit](https://github.com/franckferman/LastLog-Audit) — binary lastlog + wtmp samples
 - [securityjoes/MasterParser](https://github.com/securityjoes/MasterParser) — DFIR auth.log sample
-- [openssh/openssh-portable](https://github.com/openssh/openssh-portable) — BSD — upstream ssh_config/sshd_config defaults
+- [openssh/openssh-portable](https://github.com/openssh/openssh-portable) — BSD — upstream ssh_config/sshd_config defaults + unit-test `known_hosts`
+- [ansible/ansible](https://github.com/ansible/ansible) — GPL-3.0 — `existing_known_hosts` (hashed + cert-authority entries), OpenBSD sshd_config, types.env
+- [cowrie/cowrie](https://github.com/cowrie/cowrie) — BSD — honeypot `honeyfs/etc/passwd` + `shadow` (fake but realistic)
 - [canonical/netplan](https://github.com/canonical/netplan) — GPL-3.0 — network YAML examples
 - [sudo-project/sudo](https://github.com/sudo-project/sudo) — ISC — upstream sudoers example
 - [endlessm/base-passwd](https://github.com/endlessm/base-passwd) — GPL-2.0 — Debian passwd.master
+- [aborrero/nftables-managed-with-git](https://github.com/aborrero/nftables-managed-with-git) — split-file nftables ruleset
+- [DefectDojo/sample-scan-files](https://github.com/DefectDojo/sample-scan-files) — Apache-2.0 — nmap XML v6.40 + v7.12
 - Various GitHub gists — per-file attribution above
