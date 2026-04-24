@@ -63,14 +63,17 @@ def search_op(
             ))
 
     # ── Host IPs ───────────────────────────────────────────────────────────────
-    for ip in (
+    ip_results = (
         db.query(HostIP)
         .join(Host, HostIP.host_id == Host.id)
         .filter(Host.op_id == op_id, HostIP.ip_address.ilike(pattern))
         .limit(_MAX_PER_TYPE)
         .all()
-    ):
-        host = db.get(Host, ip.host_id)
+    )
+    ip_host_ids = {ip.host_id for ip in ip_results}
+    ip_host_map = {h.id: h for h in db.query(Host).filter(Host.id.in_(ip_host_ids)).all()} if ip_host_ids else {}
+    for ip in ip_results:
+        host = ip_host_map.get(ip.host_id)
         results.append(SearchResult(
             type="host_ip",
             host_id=ip.host_id,
@@ -80,14 +83,17 @@ def search_op(
         ))
 
     # ── Host Users ─────────────────────────────────────────────────────────────
-    for user in (
+    user_results = (
         db.query(HostUser)
         .join(Host, HostUser.host_id == Host.id)
         .filter(Host.op_id == op_id, HostUser.username.ilike(pattern))
         .limit(_MAX_PER_TYPE)
         .all()
-    ):
-        host = db.get(Host, user.host_id)
+    )
+    user_host_ids = {user.host_id for user in user_results}
+    user_host_map = {h.id: h for h in db.query(Host).filter(Host.id.in_(user_host_ids)).all()} if user_host_ids else {}
+    for user in user_results:
+        host = user_host_map.get(user.host_id)
         results.append(SearchResult(
             type="host_user",
             host_id=user.host_id,

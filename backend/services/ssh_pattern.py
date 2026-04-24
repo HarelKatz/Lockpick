@@ -41,6 +41,13 @@ def apply_patterns_to_host(db: Session, host: Host) -> int:
     candidates = [host.nickname] + [ip.ip_address for ip in host.ips]
     created = 0
 
+    # Bulk-fetch all source hosts referenced by these patterns in one query
+    pattern_host_ids = {p.source_host_id for p in patterns}
+    host_map = {
+        h.id: h
+        for h in db.query(Host).filter(Host.id.in_(pattern_host_ids)).all()
+    }
+
     for pat in patterns:
         if pat.source_host_id == host.id:
             continue  # no self-edges
@@ -65,7 +72,7 @@ def apply_patterns_to_host(db: Session, host: Host) -> int:
         if existing:
             continue
 
-        src_host = db.query(Host).filter(Host.id == pat.source_host_id).first()
+        src_host = host_map.get(pat.source_host_id)
         if not src_host:
             continue
 
