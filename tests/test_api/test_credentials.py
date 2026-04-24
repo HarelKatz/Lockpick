@@ -12,6 +12,13 @@ gxcAAAAEGtest+examplekeyforlocpicktest+AAAAAAAAAAAAAAAAAAAthZW EXAMPLE==
 -----END OPENSSH PRIVATE KEY-----
 """
 
+# RSA public key from tests/fixtures/id_rsa.pub — used to test fingerprint inference on public_key creds.
+TEST_RSA_PUB_KEY = (
+    "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDOP9gj3MATPcJBLT/iM7/Y64eZ8NfaSr8uiymnL+SkZ2MXlcH"
+    "+7+8mGTCZis4OJMQA21IUIZMpTPlnlBV0T3jNpHPz2DzlPZdWEwx5LoYLrNCPUO7d3OpyLAA9kjs/rBHz22RP"
+    "20NOFtxb5P7njbQv/mRC+5rHk9PPw4ZB5DbOFQ== test@fixture"
+)
+
 
 @pytest.fixture
 def op(client):
@@ -207,3 +214,75 @@ def test_delete_credential_link(client, op, cred_link):
     assert resp.status_code == 204
     links = client.get(f"/api/ops/{op['id']}/credential-links").json()
     assert len(links) == 0
+
+
+# ─── SEC-01: cross-op credential link rejection ───────────────────────────────
+
+def test_create_credential_link_cross_op_rejected(client):
+    op1 = client.post("/api/ops", json={"name": "Op One"}).json()
+    op2 = client.post("/api/ops", json={"name": "Op Two"}).json()
+    cred = client.post(
+        f"/api/ops/{op1['id']}/credentials",
+        json={"cred_type": "password", "value": "s3cr3t"},
+    ).json()
+    host = client.post(
+        f"/api/ops/{op2['id']}/hosts",
+        json={"nickname": "target"},
+    ).json()
+    resp = client.post(
+        "/api/credential-links",
+        json={
+            "credential_id": cred["id"],
+            "host_id": host["id"],
+            "relationship_type": "found_on_disk",
+        },
+    )
+    assert resp.status_code == 400
+
+
+# ─── BUG-08: PATCH on fully-orphaned CredentialLink returns 409 ──────────────
+
+def test_patch_orphaned_credential_link_returns_409(client, db_session, op, host, password_cred):
+    """PATCH a CredentialLink whose credential AND host have both been deleted
+    must return 409 (Architecture Rule #7 — log_activity requires an op_id).
+
+    Both Credential and Host cascade-delete their CredentialLinks via the ORM,
+    so normal DELETE endpoints can't produce this state.  We construct it by
+    inserting a link row directly (bypassing ORM cascades) and then pointing
+    it at non-existent IDs.
+    """
+    import uuid
+    from sqlalchemy import text
+
+    orphan_link_id = str(uuid.uuid4())
+    # Insert a link row referencing IDs that do not exist in the DB
+    db_session.execute(
+        text(
+            "INSERT INTO credential_links "
+            "(id, credential_id, host_id, relationship) "
+            "VALUES (:id, :cred_id, :host_id, :rel)"
+        ),
+        {
+            "id": orphan_link_id,
+            "cred_id": "nonexistent-cred-id",
+            "host_id": "nonexistent-host-id",
+            "rel": "found_on_disk",
+        },
+    )
+    db_session.commit()
+
+    resp = client.patch(f"/api/credential-links/{orphan_link_id}", json={"username": "admin"})
+    assert resp.status_code == 409
+
+
+# ─── BUG-07: public_key fingerprint inferred on POST ─────────────────────────
+
+def test_create_public_key_credential_gets_fingerprint(client, op):
+    resp = client.post(
+        f"/api/ops/{op['id']}/credentials",
+        json={"cred_type": "public_key", "value": TEST_RSA_PUB_KEY},
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["fingerprint"] is not None
+    assert data["fingerprint"].startswith("SHA256:")
