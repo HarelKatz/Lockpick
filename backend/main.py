@@ -10,7 +10,7 @@ from config import settings
 from database import engine
 import models  # noqa: F401 — ensures models are registered before migrations
 
-from routers import activity, connections, credentials, export_import, graph, hosts, operations, search, stats, upload, ws
+from routers import activity, collection, connections, credentials, export_import, graph, hosts, operations, search, stats, upload, ws
 from ws_manager import set_main_loop
 
 
@@ -66,6 +66,7 @@ app.include_router(export_import.router, prefix="/api")
 app.include_router(search.router, prefix="/api")
 app.include_router(stats.router, prefix="/api")
 app.include_router(upload.router, prefix="/api")
+app.include_router(collection.router, prefix="/api")
 app.include_router(ws.router, prefix="/api")
 
 
