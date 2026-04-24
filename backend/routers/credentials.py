@@ -165,6 +165,8 @@ def update_credential_link(link_id: str, body: CredentialLinkUpdate, db: Session
         host_for_log = db.get(Host, link.host_id)
         if host_for_log:
             log_activity(db, host_for_log.op_id, "credential_link.update", "credential", entity_id=link_id)
+        else:
+            raise HTTPException(status_code=409, detail="CredentialLink references no existing credential or host")
     db.commit()
     db.refresh(link)
     cred = db.get(Credential, link.credential_id)
