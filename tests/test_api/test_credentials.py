@@ -12,6 +12,13 @@ gxcAAAAEGtest+examplekeyforlocpicktest+AAAAAAAAAAAAAAAAAAAthZW EXAMPLE==
 -----END OPENSSH PRIVATE KEY-----
 """
 
+# RSA public key from tests/fixtures/id_rsa.pub — used to test fingerprint inference on public_key creds.
+TEST_RSA_PUB_KEY = (
+    "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDOP9gj3MATPcJBLT/iM7/Y64eZ8NfaSr8uiymnL+SkZ2MXlcH"
+    "+7+8mGTCZis4OJMQA21IUIZMpTPlnlBV0T3jNpHPz2DzlPZdWEwx5LoYLrNCPUO7d3OpyLAA9kjs/rBHz22RP"
+    "20NOFtxb5P7njbQv/mRC+5rHk9PPw4ZB5DbOFQ== test@fixture"
+)
+
 
 @pytest.fixture
 def op(client):
@@ -207,3 +214,40 @@ def test_delete_credential_link(client, op, cred_link):
     assert resp.status_code == 204
     links = client.get(f"/api/ops/{op['id']}/credential-links").json()
     assert len(links) == 0
+
+
+# ─── SEC-01: cross-op credential link rejection ───────────────────────────────
+
+def test_create_credential_link_cross_op_rejected(client):
+    op1 = client.post("/api/ops", json={"name": "Op One"}).json()
+    op2 = client.post("/api/ops", json={"name": "Op Two"}).json()
+    cred = client.post(
+        f"/api/ops/{op1['id']}/credentials",
+        json={"cred_type": "password", "value": "s3cr3t"},
+    ).json()
+    host = client.post(
+        f"/api/ops/{op2['id']}/hosts",
+        json={"nickname": "target"},
+    ).json()
+    resp = client.post(
+        "/api/credential-links",
+        json={
+            "credential_id": cred["id"],
+            "host_id": host["id"],
+            "relationship_type": "found_on_disk",
+        },
+    )
+    assert resp.status_code == 400
+
+
+# ─── BUG-07: public_key fingerprint inferred on POST ─────────────────────────
+
+def test_create_public_key_credential_gets_fingerprint(client, op):
+    resp = client.post(
+        f"/api/ops/{op['id']}/credentials",
+        json={"cred_type": "public_key", "value": TEST_RSA_PUB_KEY},
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["fingerprint"] is not None
+    assert data["fingerprint"].startswith("SHA256:")

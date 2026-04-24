@@ -4,14 +4,9 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-log = logging.getLogger(__name__)
-
 from database import get_db
 from models import Credential, CredentialLink, Host
 from routers.deps import get_cred_or_404, get_op_or_404
-from services.activity import log_activity
-from services.key_utils import infer_key_info
-from ws_manager import broadcast_sync
 from schemas import (
     CredentialCreate,
     CredentialLinkCreate,
@@ -20,6 +15,11 @@ from schemas import (
     CredentialRead,
     CredentialUpdate,
 )
+from services.activity import log_activity
+from services.key_utils import infer_key_info
+from ws_manager import broadcast_sync
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(tags=["credentials"])
 
@@ -76,8 +76,8 @@ def update_credential(cred_id: str, body: CredentialUpdate, db: Session = Depend
         cred.name = body.name or None
     if body.value is not None:
         cred.value = body.value
-        # Re-infer key info when value changes (for private keys)
-        if cred.cred_type == "private_key":
+        # Re-infer key info when value changes (for private and public keys)
+        if cred.cred_type in ("private_key", "public_key"):
             passphrase = body.passphrase if body.passphrase is not None else cred.passphrase
             cred.key_type, cred.fingerprint = infer_key_info(body.value, passphrase)
     if body.passphrase is not None:
@@ -161,6 +161,10 @@ def update_credential_link(link_id: str, body: CredentialLinkUpdate, db: Session
     cred_for_log = db.get(Credential, link.credential_id)
     if cred_for_log:
         log_activity(db, cred_for_log.op_id, "credential_link.update", "credential", entity_id=link.credential_id)
+    else:
+        host_for_log = db.get(Host, link.host_id)
+        if host_for_log:
+            log_activity(db, host_for_log.op_id, "credential_link.update", "credential", entity_id=link_id)
     db.commit()
     db.refresh(link)
     cred = db.get(Credential, link.credential_id)
