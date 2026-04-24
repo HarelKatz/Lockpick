@@ -118,3 +118,142 @@ def test_empty_candidate_with_star():
 
 def test_empty_candidate_exact_no_match():
     assert not ssh_match("", ["host"])
+
+
+# ─── Priority 4: apply_patterns_to_host unit tests ───────────────────────────
+
+import uuid as _uuid_mod
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
+
+from database import Base
+from models import ConnectionRecord, Host, HostIP, Operation, SshConfigPattern
+from services.ssh_pattern import apply_patterns_to_host
+
+
+@pytest.fixture
+def pattern_db():
+    """Isolated in-memory DB for apply_patterns_to_host tests."""
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    session = Session()
+    try:
+        yield session
+    finally:
+        session.close()
+    Base.metadata.drop_all(engine)
+    engine.dispose()
+
+
+def _mk_op(db):
+    op = Operation(name="pat-test")
+    db.add(op)
+    db.flush()
+    return op
+
+
+def _mk_host(db, op_id, nickname, ip=None):
+    host = Host(op_id=op_id, nickname=nickname)
+    db.add(host)
+    db.flush()
+    if ip:
+        db.add(HostIP(host_id=host.id, ip_address=ip, addr_type="ipv4"))
+        db.flush()
+    return host
+
+
+def _mk_pattern(db, op_id, source_host_id, pattern, username=None):
+    pat = SshConfigPattern(
+        op_id=op_id,
+        source_host_id=source_host_id,
+        pattern=pattern,
+        username=username,
+    )
+    db.add(pat)
+    db.flush()
+    return pat
+
+
+def test_apply_patterns_creates_connection_for_match(pattern_db):
+    """A matching pattern→host pair creates exactly one ConnectionRecord."""
+    db = pattern_db
+    op = _mk_op(db)
+    src = _mk_host(db, op.id, "src-host", ip="10.0.0.1")
+    _mk_pattern(db, op.id, src.id, "*.corp")
+
+    # New host with a name matching the pattern
+    new_host = _mk_host(db, op.id, "web.corp", ip="10.0.0.2")
+
+    count = apply_patterns_to_host(db, new_host)
+    assert count == 1
+
+    # Flush so pending records are visible to queries (session has autoflush=False)
+    db.flush()
+
+    # Verify the ConnectionRecord was created
+    records = db.query(ConnectionRecord).filter(
+        ConnectionRecord.op_id == op.id,
+        ConnectionRecord.src_host_id == src.id,
+        ConnectionRecord.dst_host_id == new_host.id,
+    ).all()
+    assert len(records) == 1
+    assert records[0].source_file == "ssh_config_pattern"
+    assert records[0].direction_context == "from_src_logs"
+
+
+def test_apply_patterns_no_duplicate_on_second_call(pattern_db):
+    """Calling apply_patterns_to_host twice for the same host must not create duplicates."""
+    db = pattern_db
+    op = _mk_op(db)
+    src = _mk_host(db, op.id, "src-host", ip="10.0.0.1")
+    _mk_pattern(db, op.id, src.id, "*.corp")
+    new_host = _mk_host(db, op.id, "web.corp", ip="10.0.0.2")
+
+    count1 = apply_patterns_to_host(db, new_host)
+    # Flush after first call so the dedup query in second call can see the record
+    db.flush()
+    count2 = apply_patterns_to_host(db, new_host)
+    assert count1 == 1
+    assert count2 == 0  # dedup: no new record created
+
+    db.flush()
+    total = db.query(ConnectionRecord).filter(
+        ConnectionRecord.op_id == op.id,
+        ConnectionRecord.src_host_id == src.id,
+        ConnectionRecord.dst_host_id == new_host.id,
+    ).count()
+    assert total == 1
+
+
+def test_apply_patterns_no_match_creates_nothing(pattern_db):
+    """A host whose name does not match the pattern creates no ConnectionRecord."""
+    db = pattern_db
+    op = _mk_op(db)
+    src = _mk_host(db, op.id, "src-host", ip="10.0.0.1")
+    _mk_pattern(db, op.id, src.id, "*.corp")
+    non_matching = _mk_host(db, op.id, "prod.example.com", ip="10.0.0.2")
+
+    count = apply_patterns_to_host(db, non_matching)
+    assert count == 0
+    assert db.query(ConnectionRecord).filter(ConnectionRecord.op_id == op.id).count() == 0
+
+
+def test_apply_patterns_self_loop_prevented(pattern_db):
+    """Pattern source host must not create a ConnectionRecord to itself."""
+    db = pattern_db
+    op = _mk_op(db)
+    src = _mk_host(db, op.id, "jb.corp", ip="10.0.0.1")
+    _mk_pattern(db, op.id, src.id, "*.corp")  # pattern matches "jb.corp"
+
+    # Call apply_patterns for the source host itself
+    count = apply_patterns_to_host(db, src)
+    assert count == 0
+    assert db.query(ConnectionRecord).count() == 0
