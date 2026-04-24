@@ -101,3 +101,83 @@ def test_cross_op_isolation(db_session):
     # Result must be a new host in op_b, not op_a's host
     host = db_session.query(Host).filter_by(id=result).one()
     assert host.op_id == op_b.id
+
+
+# ─── Priority 17: IPv6 address handling ──────────────────────────────────────
+
+def test_ipv6_address_infers_addr_type(db_session):
+    """resolve_ip with an IPv6 address must create a HostIP with addr_type='ipv6'."""
+    from services.ip_resolver import _infer_addr_type
+    assert _infer_addr_type("fe80::1") == "ipv6"
+    assert _infer_addr_type("::1") == "ipv6"
+    assert _infer_addr_type("2001:db8::1") == "ipv6"
+
+
+def test_ipv4_address_infers_addr_type(db_session):
+    from services.ip_resolver import _infer_addr_type
+    assert _infer_addr_type("10.0.0.1") == "ipv4"
+    assert _infer_addr_type("192.168.1.1") == "ipv4"
+
+
+def test_hostname_infers_addr_type(db_session):
+    from services.ip_resolver import _infer_addr_type
+    assert _infer_addr_type("web01.corp") == "hostname"
+    assert _infer_addr_type("localhost") == "hostname"
+
+
+def test_ipv6_creates_host_with_correct_addr_type(db_session):
+    """resolve_ip with IPv6 creates a HostIP with addr_type='ipv6'."""
+    op = _make_op(db_session)
+    host_id = resolve_ip(db_session, op.id, "fe80::1", create_if_missing=True)
+    assert host_id is not None
+    hip = db_session.query(HostIP).filter_by(host_id=host_id).one()
+    assert hip.addr_type == "ipv6"
+    assert hip.ip_address == "fe80::1"
+
+
+def test_ipv6_existing_host_resolved(db_session):
+    """resolve_ip for an already-stored IPv6 address returns the existing host."""
+    op = _make_op(db_session)
+    # Manually create a host with an IPv6 address
+    host = Host(op_id=op.id, nickname="ipv6-host")
+    db_session.add(host)
+    db_session.flush()
+    db_session.add(HostIP(host_id=host.id, ip_address="2001:db8::cafe",
+                          source="manual", addr_type="ipv6"))
+    db_session.flush()
+
+    result = resolve_ip(db_session, op.id, "2001:db8::cafe")
+    assert result == host.id
+
+
+# ─── Priority 18: Hostname case-insensitive lookup ────────────────────────────
+
+def test_hostname_lookup_case_insensitive(db_session):
+    """resolve_ip('WEB01') must match an existing HostIP stored as 'web01'."""
+    op = _make_op(db_session)
+    host = Host(op_id=op.id, nickname="web01")
+    db_session.add(host)
+    db_session.flush()
+    db_session.add(HostIP(host_id=host.id, ip_address="web01",
+                          source="manual", addr_type="hostname"))
+    db_session.flush()
+
+    # Lookup with different case — must match the stored hostname
+    result = resolve_ip(db_session, op.id, "WEB01")
+    assert result == host.id, (
+        f"Expected case-insensitive match for 'WEB01' → 'web01', got {result}"
+    )
+
+
+def test_hostname_lookup_uppercase_stored(db_session):
+    """resolve_ip('web01') must match an existing HostIP stored as 'WEB01'."""
+    op = _make_op(db_session)
+    host = Host(op_id=op.id, nickname="WEB01")
+    db_session.add(host)
+    db_session.flush()
+    db_session.add(HostIP(host_id=host.id, ip_address="WEB01",
+                          source="manual", addr_type="hostname"))
+    db_session.flush()
+
+    result = resolve_ip(db_session, op.id, "web01")
+    assert result == host.id
