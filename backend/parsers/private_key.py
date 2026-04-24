@@ -1,30 +1,28 @@
 """Parser for SSH private key files (id_rsa, id_ed25519, etc.)."""
 from __future__ import annotations
 
+import io
+
+import paramiko
+from paramiko.ssh_exception import PasswordRequiredException
+
 from parsers import BaseParser, CredentialData, ParseResult, UploadMetadata
 
 
 def _load_private_key(content: bytes, passphrase: str | None = None):
     """Try to load a private key with paramiko. Returns (key_obj, key_type) or raises."""
-    import paramiko
-
+    # Build the list dynamically — same order as key_utils.py (authoritative source)
     loaders = [
-        paramiko.RSAKey,
-        paramiko.ECDSAKey,
+        cls for name in ("RSAKey", "Ed25519Key", "ECDSAKey", "DSSKey")
+        if (cls := getattr(paramiko, name, None)) is not None
     ]
-    # Ed25519Key and DSSKey may not exist in all paramiko versions
-    for name in ("Ed25519Key", "DSSKey"):
-        cls = getattr(paramiko, name, None)
-        if cls is not None:
-            loaders.append(cls)
     pw = passphrase.encode() if passphrase else None
-    import io
 
     for loader in loaders:
         try:
             key = loader.from_private_key(io.StringIO(content.decode("utf-8", errors="replace")), password=pw)
             return key, key.get_name()
-        except paramiko.ssh_exception.PasswordRequiredException:
+        except PasswordRequiredException:
             raise  # propagate — caller should report "key is encrypted"
         except Exception:
             continue
@@ -52,7 +50,6 @@ class PrivateKeyParser(BaseParser):
                 return result
         except Exception as e:
             # _load_private_key only propagates PasswordRequiredException.
-            from paramiko.ssh_exception import PasswordRequiredException
             if isinstance(e, PasswordRequiredException):
                 # Still store it — we just can't compute fingerprint
                 result.warnings.append(

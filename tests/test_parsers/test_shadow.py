@@ -112,3 +112,12 @@ def test_stats(metadata):
     result = ShadowParser().parse(content, metadata)
     assert result.stats["hashes_found"] == 3  # root, alice, bob (locked but recoverable)
     assert result.stats["users_found"] == 3   # only users with actual hashes get HostUser
+
+
+def test_double_bang_hash_stripped(metadata):
+    """BUG-04 regression: double-bang locked hashes must have all leading '!' chars stripped."""
+    content = b"charlie:!!$6$salt$hashvalue:19800:0:99999:7:::\n"
+    result = ShadowParser().parse(content, metadata)
+    assert len(result.credentials_found) == 1
+    assert result.credentials_found[0].value == "$6$salt$hashvalue"
+    assert any("stripped" in w or "locked" in w for w in result.warnings)
