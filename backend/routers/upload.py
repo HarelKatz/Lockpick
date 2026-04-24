@@ -234,11 +234,17 @@ async def upload_file(
         _get_or_create_host_user(db, host_id, uname, shell, home_dir, user_source)
 
     # ── 1b. Persist discovered hosts (e.g. from nmap, etc_hosts) ─────────────
+    new_hosts = 0
     new_discovered_hosts = 0
     for hd in result.hosts_found:
-        resolved = resolve_ip(db, op_id, hd.ip_address, create_if_missing=True)
-        if resolved:
+        resolved_id = resolve_ip(db, op_id, hd.ip_address, create_if_missing=True)
+        if resolved_id:
+            if hd.nickname:
+                resolved_host = db.query(Host).filter(Host.id == resolved_id).first()
+                if resolved_host and resolved_host.nickname == hd.ip_address:
+                    resolved_host.nickname = hd.nickname
             new_discovered_hosts += 1
+    new_hosts += new_discovered_hosts
 
     # ── 2. Insert Credentials + CredentialLinks ───────────────────────────────
     all_upload_fingerprints: list[str] = []  # all fps seen (new or existing)
@@ -287,6 +293,7 @@ async def upload_file(
             CredentialLink.credential_id == cred_obj.id,
             CredentialLink.host_id == host_id,
             CredentialLink.relationship_type == cred_data.relationship_type,
+            CredentialLink.username == link_username,
         ).first()
         if not existing_link:
             link = CredentialLink(
@@ -303,7 +310,6 @@ async def upload_file(
 
     # ── 3. Insert ConnectionRecords ───────────────────────────────────────────
     new_connections = 0
-    new_hosts = 0
 
     for conn_data in result.connections_found:
         # Resolve src/dst IPs — replace __upload_host__ sentinel
@@ -484,7 +490,7 @@ def list_uploads(op_id: str, db: Session = Depends(get_db)):
         if not entry.is_file():
             continue
         safe_name = entry.name
-        # Strip the UUID prefix (36 chars + underscore) to recover original filename
+        # Strip the UUID prefix (_UUID_PREFIX_LEN chars + underscore separator) to recover original filename
         original_name = safe_name[_SAFE_NAME_OFFSET:] if len(safe_name) > _SAFE_NAME_OFFSET and safe_name[_UUID_PREFIX_LEN] == "_" else safe_name
         stat = entry.stat()
         host_ids = list(
