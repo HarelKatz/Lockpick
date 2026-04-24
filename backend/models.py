@@ -12,9 +12,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
-from database import TZDateTime
-
-from database import Base
+from database import Base, TZDateTime
 
 
 def _now() -> datetime:

@@ -1,6 +1,9 @@
 """Parser for nmap XML output files."""
 from __future__ import annotations
 
+# SEC: xml.etree.ElementTree has limited protection against XML billion-laughs attacks.
+# Mitigation: replace with defusedxml.ElementTree.fromstring() once defusedxml is added
+# as a dependency (pip install defusedxml). Until then, only parse files from trusted ops.
 import xml.etree.ElementTree as ET
 
 from parsers import BaseParser, HostData, ParseResult, UploadMetadata

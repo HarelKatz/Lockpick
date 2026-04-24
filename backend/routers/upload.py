@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 import os
-import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -29,6 +28,8 @@ from models import (
     Operation,
     SshConfigPattern,
     SudoRule,
+    _now,
+    _uuid,
 )
 from parsers import UploadMetadata
 from parsers.registry import PARSER_REGISTRY
@@ -45,14 +46,6 @@ _UUID_PREFIX_LEN = 36   # UUID is 36 chars
 _SAFE_NAME_OFFSET = 37  # UUID + underscore separator
 
 router = APIRouter(tags=["upload"])
-
-
-def _now() -> datetime:
-    return datetime.now(timezone.utc)
-
-
-def _uuid() -> str:
-    return str(uuid.uuid4())
 
 
 def _get_or_create_host_user(
