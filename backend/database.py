@@ -47,9 +47,12 @@ class Base(DeclarativeBase):
 
 
 def get_db():
-    """Dependency: yield a DB session, close on exit."""
+    """Dependency: yield a DB session, roll back on unhandled exception, close on exit."""
     db = SessionLocal()
     try:
         yield db
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()

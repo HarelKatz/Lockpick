@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
     import subprocess
     import sys
 
-    set_main_loop(asyncio.get_event_loop())
+    set_main_loop(asyncio.get_running_loop())
 
     os.makedirs(os.path.dirname(os.path.abspath(settings.db_path)), exist_ok=True)
     os.makedirs(settings.upload_path, exist_ok=True)
@@ -47,10 +47,10 @@ app = FastAPI(
 )
 
 # CORS: allow all origins — this is a trusted-network red team tool
+# Note: allow_credentials must be False when allow_origins=["*"] (CORS spec)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

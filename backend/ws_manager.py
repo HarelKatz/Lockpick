@@ -1,8 +1,11 @@
 """WebSocket connection manager for live push events."""
 import asyncio
+import logging
 from typing import Dict, List, Optional
 
 from fastapi import WebSocket
+
+log = logging.getLogger(__name__)
 
 
 class ConnectionManager:
@@ -24,7 +27,8 @@ class ConnectionManager:
         for ws in sockets:
             try:
                 await ws.send_json(event)
-            except Exception:
+            except Exception as e:
+                log.debug("WS send failed to %s: %s", ws, e)
                 dead.append(ws)
         for ws in dead:
             self.disconnect(ws, op_id)
