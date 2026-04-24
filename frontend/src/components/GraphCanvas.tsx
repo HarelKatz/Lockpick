@@ -230,6 +230,10 @@ export default function GraphCanvas({
   useEffect(() => { dimsRef.current = dims }, [dims])
 
   // ── Customize d3-force once container is ready ───────────────────────────────
+  // nodeSetKey in deps: a node-set change remounts ForceGraph2D below, so
+  // graphRef.current points to a FRESH simulation with default physics.
+  // Re-apply our customizations whenever that happens, otherwise drag /
+  // repulsion / link distance all revert to library defaults.
   useEffect(() => {
     if (!graphRef.current || dims.w === 0) return
     // Increase link distance so node labels have room to breathe.
@@ -241,7 +245,7 @@ export default function GraphCanvas({
     graphRef.current.d3Force('collision', d3Force.forceCollide(64))
     graphRef.current.d3Force('center', null)  // no gravity toward any canvas point
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dims.w > 0])
+  }, [dims.w > 0, nodeSetKey])
 
   // ── Effect 1: structural rebuild ─────────────────────────────────────────────
   useEffect(() => {
