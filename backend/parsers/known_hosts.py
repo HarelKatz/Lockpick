@@ -14,7 +14,6 @@ class KnownHostsParser(BaseParser):
 
     def parse(self, content: bytes, metadata: UploadMetadata) -> ParseResult:
         result = ParseResult()
-        filename = metadata.filename or "known_hosts"
         src_user = metadata.username
 
         try:

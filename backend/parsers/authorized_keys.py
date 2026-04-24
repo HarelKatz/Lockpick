@@ -1,21 +1,7 @@
 """Parser for .ssh/authorized_keys files."""
 from __future__ import annotations
 
-import base64
-import hashlib
-
 from parsers import BaseParser, CredentialData, ParseResult, UploadMetadata
-
-
-def _fingerprint(key_b64: str) -> str | None:
-    """Compute SHA256 fingerprint from base64-encoded key blob."""
-    try:
-        raw = base64.b64decode(key_b64)
-        digest = hashlib.sha256(raw).digest()
-        b64 = base64.b64encode(digest).decode().rstrip("=")
-        return f"SHA256:{b64}"
-    except Exception:
-        return None
 
 
 class AuthorizedKeysParser(BaseParser):
@@ -62,21 +48,15 @@ class AuthorizedKeysParser(BaseParser):
                 result.warnings.append(f"Line {lineno}: unrecognised format, skipping")
                 continue
 
-            key_b64 = parts[idx + 1]
-            fingerprint = _fingerprint(key_b64)
-
             cred = CredentialData(
                 cred_type="public_key",
-                value=line,
+                value=" ".join(parts[idx:]),  # keytype base64 [comment] — no options prefix
                 username=username,
                 relationship_type="authorized_key",
                 name=f"authorized_key from {filename}" + (f" ({username})" if username else ""),
             )
             result.credentials_found.append(cred)
             keys_found += 1
-
-            if fingerprint is None:
-                result.warnings.append(f"Line {lineno}: could not compute fingerprint for key")
 
         if username:
             # Record that this user account exists on the host

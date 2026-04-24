@@ -49,7 +49,6 @@ class WtmpParser(BaseParser):
 
     def parse(self, content: bytes, metadata: UploadMetadata) -> ParseResult:
         result = ParseResult()
-        filename = metadata.filename or "wtmp"
 
         if len(content) % _UTMP_SIZE != 0:
             result.warnings.append(

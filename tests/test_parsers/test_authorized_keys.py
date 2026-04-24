@@ -60,3 +60,12 @@ def test_only_comments(metadata):
 def test_malformed_line_warns(metadata):
     result = AuthorizedKeysParser().parse(b"not-a-key\n", metadata)
     assert len(result.warnings) > 0
+
+
+def test_option_prefix_value_is_canonical(metadata):
+    """BUG-03 regression: option-prefix keys must store canonical key material, not the full line."""
+    content = b"no-port-forwarding,no-pty ssh-rsa AAAAB3NzABC... restricted-key\n"
+    result = AuthorizedKeysParser().parse(content, metadata)
+    assert len(result.credentials_found) == 1
+    assert result.credentials_found[0].value.startswith("ssh-rsa ")
+    assert "no-port-forwarding" not in result.credentials_found[0].value
