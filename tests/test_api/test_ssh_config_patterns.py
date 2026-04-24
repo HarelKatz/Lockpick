@@ -7,11 +7,7 @@ Priorities covered:
 """
 from __future__ import annotations
 
-import os
-import sys
 from pathlib import Path
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
 
 FIXTURES = Path(__file__).parent.parent / "fixtures"
 
@@ -94,8 +90,8 @@ def test_retroactive_edge_idempotent(client):
 # ─── Priority 23: upload-created host matches existing SshConfigPattern ────────
 
 def test_upload_auto_host_does_not_trigger_pattern_retroaction(client):
-    """An auto-host created by an upload (e.g. from bash_history IP) must be
-    checked against existing SshConfigPatterns and get a retroactive edge."""
+    """An auto-host created by an upload is NOT checked against existing SshConfigPatterns.
+    Only explicitly-added hosts (via POST /hosts) trigger retroactive edge creation."""
     op_id = _create_op(client)
     src_host_id = _create_host(client, op_id, "jumpbox")
     # Add an IP to the source host so the connection records work
