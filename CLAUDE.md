@@ -83,8 +83,14 @@ docker compose up -d --build
 make dev-backend    # uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
 make dev-frontend   # npm run dev  (dev server: http://localhost:5173)
 
-# Tests
-make test           # cd backend && uv run pytest ../tests/ -v
+# Tests (full suite — required before every commit)
+make test           # all 652 tests, parallel, quiet — failures only
+
+# Tests (by group — for fast iteration while working in a specific area)
+make test-api       # API integration tests (~14s)
+make test-parsers   # parser unit tests (~0.1s)
+make test-services  # service layer tests (~0.7s)
+make test-scenarios # scenario tests (~4.5s)
 ```
 
 **Always use `uv run` for Python — never `python` directly.**
