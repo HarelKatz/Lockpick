@@ -14,9 +14,9 @@ A web-based tool for red teams to collaboratively organize SSH credentials, host
 
 > **Edit rules:** ≤5 lines. Last completed · Next · Any blocker. Nothing else — detail belongs in commit messages.
 
-**Last completed: Phases 1–13 — full stack, 14 parsers, WS live push, host notes, status enum, addr_type, SudoRule**
+**Last completed: Phases 1–14 — full stack, 14 parsers, WS live push, host notes, status enum, addr_type, SudoRule, one-click collection script + bulk archive import**
 
-**Next: Phase 14 — Collection Script + Bulk Archive Import**
+**Next: Phase 15 — Host Merge**
 
 ---
 
@@ -36,11 +36,14 @@ A web-based tool for red teams to collaboratively organize SSH credentials, host
 12. **Graph click timing** — node single-click is delayed 250 ms to let double-click (lock/unlock) preempt it. Do not remove or shorten this delay.
 13. **Graph detail panel** — right detail panel uses `push` mode (shrinks canvas) when the clicked node falls in the rightmost 320 px of the canvas; `overlay` (absolute, canvas unchanged) otherwise. Mode is evaluated once on open and held through the close transition.
 14. **SSH config patterns** — `Host` blocks with wildcard/token aliases (`jb.*`, `*.example.com`, `%h`) are stored as `SshConfigPattern` records (table: `ssh_config_patterns`), never as hosts. The `services/ssh_pattern.py` `ssh_match()` function implements SSH glob semantics (`fnmatch` + `!` negation, case-insensitive). Pattern-to-host edges are created at upload time (existing hosts) and retroactively when a new host/IP is added.
-15. **Loopback routing** — `127.x.x.x`, `::1`, and `localhost` in connection records always resolve to the upload host, never create new host records. Handled in `_resolve_ip_side()` (`routers/upload.py`).
+15. **Loopback routing** — `127.x.x.x`, `::1`, and `localhost` in connection records always resolve to the upload host, never create new host records. Handled in `_resolve_ip_side()` (`services/upload_pipeline.py`).
 16. **HostIP addr_type** — `HostIP.ip_address` holds either a numeric IP or FQDN; `addr_type` (ipv4|ipv6|hostname) disambiguates. IP resolver infers addr_type via `_infer_addr_type()` and sets it on new records. Hostname lookups are case-insensitive.
 17. **SudoRule** — read-only from the upload pipeline; no manual create endpoint. `SudoRule.op_id` stored for bulk queries. Sudo rules do not affect BFS pivot path confidence — informational context only.
 18. **WS live push** — `broadcast_sync(op_id, event)` (`ws_manager.py`) must be called after `db.commit()` in every write endpoint. Event shape: `{"type": "update", "entity_type": "<host|credential|connection|...>", "op_id": op_id}`. It is fire-and-forget and safe to call even when no clients are connected.
 19. **Host lazy-load gate** — `Host.ips`, `Host.users`, `Host.credential_links`, `Host.notes` use `lazy="raise_on_sql"`. Any query that loads hosts for serialization or bulk iteration must `selectinload` the relationships it touches. `_host_q(db)` in `routers/hosts.py` covers the `HostRead` path; `services/graph_builder.py` applies its own options for the graph path.
+20. **Upload pipeline split** — `services/upload_pipeline.process_single_file()` is the authoritative record-persistence helper for parseable evidence. It parses, persists records with dedup, and returns a result dict (counters, fingerprints, safe_name); it does **not** commit, log activity, or broadcast. Callers own those, plus the pivot scan — which must run *after* `db.commit()` so newly-added links are visible. Any new endpoint ingesting parseable files must use this helper — do not duplicate parser-dispatch or dedup logic.
+21. **Collection script invariants** — the bash script served by `GET /ops/{op_id}/collection-script` is byte-identical for every op (no op-specific data). Filename convention `<file_type>__<username>.<ext>` inside the tarball is authoritative for dispatch at import time; `manifest.json` is informational only. The script must remain sudo-free and must not perform network activity.
+22. **Archive import safety** — `POST /ops/{op_id}/hosts/{host_id}/import-archive` extracts tarballs through two layers of defense: an explicit member pre-check that rejects absolute paths, `..` components, symlinks, hardlinks, and devices; and `tarfile.extractall(..., filter="data")` as fallback. Extraction goes into `tempfile.TemporaryDirectory()` only. Size capped by `settings.archive_import_max_bytes` (default 100 MiB).
 
 ---
 
@@ -65,23 +68,9 @@ AGENT.md is the project roadmap and architecture reference — the current sourc
 
 > Detail tracks imminence: the next phase gets a full spec, 1–2 phases out get a short summary + invariants, and anything further is a one-liner heading. Expand a phase when it becomes next.
 
-### Phases 1–13 — Complete
+### Phases 1–14 — Complete
 
-Full stack built and tested: CRUD APIs, graph visualization, file upload + 14 parsers (8 original + nmap_xml, shadow, sshd_config, etc_hosts, sudoers, public_key alias), BFS pivot analysis, global search, export/import, activity log, operational command generation, WS live push, host notes, Host.status enum, HostIP addr_type, SudoRule table with sudoers CRUD.
-
----
-
-### Phase 14 — Collection Script + Bulk Archive Import
-
-`GET /ops/{op_id}/collection-script` returns a bash script that snapshots parseable files and command outputs on a compromised host into `lockpick_<hostname>_<ts>.tar.gz`. Filename convention inside the tarball: `<file_type>__<username>.<ext>` (e.g. `authorized_keys__bob.txt`, `ip_addr__root.out`) plus a top-level `manifest.json` mapping each file to its `file_type` and originating path.
-
-`POST /ops/{op_id}/hosts/{host_id}/import-archive` accepts the tarball: extracts, reads `manifest.json`, and dispatches each file through the existing upload pipeline using the recorded `file_type` and target `host_id`. Response shape mirrors bulk upload — per-file status, stats, warnings.
-
-Script gathers whatever's readable by the executing user; command stderr captured to a per-file `.err` sibling inside the tarball. Unsupported file types in the manifest produce warnings, not failures — lets the script gather future-parser targets now and reparse after the parser lands.
-
-Frontend: host detail panel gains a "Collection" section with a "Download script" button and an "Import archive" drop zone.
-
-**Invariants:** No schema changes. Script is idempotent — re-running on the same host and re-importing must not create duplicates (parsers handle dedup). Script contains no op-specific secrets — same script for any host in any op, differentiated only by the upload target.
+Full stack built and tested: CRUD APIs, graph visualization, file upload + 14 parsers (8 original + nmap_xml, shadow, sshd_config, etc_hosts, sudoers, public_key alias), BFS pivot analysis, global search, export/import, activity log, operational command generation, WS live push, host notes, Host.status enum, HostIP addr_type, SudoRule table with sudoers CRUD; one-click collection via bash snapshot script + bulk archive import.
 
 ---
 

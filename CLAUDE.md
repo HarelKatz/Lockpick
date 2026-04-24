@@ -77,12 +77,13 @@ make test-real-examples  # parser regression vs real_examples/ corpus (~0.5s)
 2. Pydantic schemas in `backend/schemas.py` (Create / Update / Read variants)
 3. Router function in `backend/routers/` (or new file)
 4. Register router in `backend/main.py`
-5. Alembic migration if schema changed: `cd backend && uv run alembic revision --autogenerate -m "describe"`
-6. Call `log_activity()` before `db.commit()` in every write endpoint (Architecture Rule #7)
-7. Call `broadcast_sync(op_id, event)` after `db.commit()` in every write endpoint (Architecture Rule #18)
-8. Tests in `tests/test_api/`
-9. TypeScript types in `frontend/src/types/index.ts`
-10. API client functions in `frontend/src/api/`
+5. If the endpoint ingests parseable evidence files, dispatch through `services/upload_pipeline.process_single_file()` — do not duplicate parser-dispatch logic (Architecture Rule #20)
+6. Alembic migration if schema changed: `cd backend && uv run alembic revision --autogenerate -m "describe"`
+7. Call `log_activity()` before `db.commit()` in every write endpoint (Architecture Rule #7)
+8. Call `broadcast_sync(op_id, event)` after `db.commit()` in every write endpoint (Architecture Rule #18)
+9. Tests in `tests/test_api/`
+10. TypeScript types in `frontend/src/types/index.ts`
+11. API client functions in `frontend/src/api/`
 
 ## Adding a New Parser
 
@@ -160,14 +161,17 @@ backend/
 ├── models.py        # ORM models
 ├── schemas.py       # Pydantic request/response models
 ├── ws_manager.py    # WebSocket connection manager; broadcast_sync() called after db.commit()
-├── routers/         # One file per resource group (operations, hosts, credentials, connections, graph, upload, search, stats, export_import, activity, ws)
+├── routers/         # One file per resource group (operations, hosts, credentials, connections, graph, upload, collection, search, stats, export_import, activity, ws)
 ├── parsers/         # File parsers implementing BaseParser; registry.py maps file_type → class
-├── services/        # Graph builder, IP resolver, pivot analysis
+├── collection_script/ # Static bash script served by GET /ops/{op_id}/collection-script
+│   └── lockpick_collect.sh  # Byte-identical per op (Architecture Rule #21)
+├── services/        # Graph builder, IP resolver, pivot analysis, shared upload helper
 │   ├── graph_builder.py   # Aggregate CredentialLinks + ConnectionRecords → edge objects
 │   ├── ip_resolver.py     # Match IPs/hostnames to known hosts (best-effort)
 │   ├── key_utils.py       # Cross-reference fingerprints across an op
 │   ├── pivot_analysis.py  # BFS path finding between hosts
 │   ├── ssh_pattern.py     # ssh_match() SSH glob semantics; apply_patterns_to_host()
+│   ├── upload_pipeline.py # process_single_file() — shared by upload + archive import (Architecture Rule #20)
 │   └── activity.py        # log_activity() — call before db.commit() in all write endpoints
 └── alembic/         # Migrations
 
@@ -195,5 +199,6 @@ tests/
 |----------|---------|-------------|
 | `DB_PATH` | `../data/tracker.db` | SQLite database path |
 | `UPLOAD_PATH` | `../data/uploads` | Uploaded raw files directory |
+| `ARCHIVE_IMPORT_MAX_BYTES` | `104857600` | Size cap (100 MiB) on bulk archive-import tarballs |
 
 Frontend uses `/api` prefix proxied by nginx (production) or `vite.config.ts` (dev). No frontend env vars needed.
