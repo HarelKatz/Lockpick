@@ -221,3 +221,87 @@ def test_update_connection_broadcasts(client, connection):
     assert resp.status_code == 200
     mock_bc.assert_called_once()
     assert mock_bc.call_args[0][1]["entity_type"] == "connection"
+
+
+# ─── Priority 13: Missing broadcast coverage ──────────────────────────────────
+
+# hosts router — create, update, delete
+
+def test_create_host_broadcasts(client, op):
+    with _patch_broadcast("routers.hosts") as mock_bc:
+        resp = client.post(f"/api/ops/{op['id']}/hosts", json={"nickname": "newhost"})
+    assert resp.status_code == 201
+    mock_bc.assert_called_once()
+    assert mock_bc.call_args[0][1]["entity_type"] == "host"
+
+
+def test_update_host_broadcasts(client, host):
+    with _patch_broadcast("routers.hosts") as mock_bc:
+        resp = client.patch(f"/api/hosts/{host['id']}", json={"comment": "updated"})
+    assert resp.status_code == 200
+    mock_bc.assert_called_once()
+    assert mock_bc.call_args[0][1]["entity_type"] == "host"
+
+
+def test_delete_host_broadcasts(client, host):
+    with _patch_broadcast("routers.hosts") as mock_bc:
+        resp = client.delete(f"/api/hosts/{host['id']}")
+    assert resp.status_code == 204
+    mock_bc.assert_called_once()
+
+
+# credentials router — create, delete
+
+def test_create_credential_broadcasts(client, op):
+    with _patch_broadcast("routers.credentials") as mock_bc:
+        resp = client.post(
+            f"/api/ops/{op['id']}/credentials",
+            json={"cred_type": "password", "value": "newpass"},
+        )
+    assert resp.status_code == 201
+    mock_bc.assert_called_once()
+    assert mock_bc.call_args[0][1]["entity_type"] == "credential"
+
+
+def test_delete_credential_broadcasts(client, cred):
+    with _patch_broadcast("routers.credentials") as mock_bc:
+        resp = client.delete(f"/api/credentials/{cred['id']}")
+    assert resp.status_code == 204
+    mock_bc.assert_called_once()
+
+
+# connections router — create, delete
+
+def test_create_connection_broadcasts(client, op):
+    with _patch_broadcast("routers.connections") as mock_bc:
+        resp = client.post(
+            f"/api/ops/{op['id']}/connections",
+            json={
+                "src_ip": "10.0.0.1", "dst_ip": "10.0.0.2",
+                "direction_context": "from_src_logs", "source_file": "test.log",
+            },
+        )
+    assert resp.status_code == 201
+    mock_bc.assert_called_once()
+    assert mock_bc.call_args[0][1]["entity_type"] == "connection"
+
+
+def test_delete_connection_broadcasts(client, connection):
+    with _patch_broadcast("routers.connections") as mock_bc:
+        resp = client.delete(f"/api/connections/{connection['id']}")
+    assert resp.status_code == 204
+    mock_bc.assert_called_once()
+
+
+# upload router — broadcasts on file upload
+
+def test_upload_file_broadcasts(client, op, host, tmp_path):
+    with _patch_broadcast("routers.upload") as mock_bc:
+        resp = client.post(
+            f"/api/ops/{op['id']}/upload",
+            data={"file_type": "bash_history", "host_id": host["id"]},
+            files={"file": (".bash_history", b"ssh root@10.0.0.1\n", "text/plain")},
+        )
+    assert resp.status_code == 200
+    mock_bc.assert_called_once()
+    assert mock_bc.call_args[0][1]["entity_type"] == "host"
