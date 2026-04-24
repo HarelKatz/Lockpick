@@ -361,7 +361,13 @@ async def upload_file(
         pattern_str = " ".join(pat_data.aliases)
 
         # Match against all existing hosts in this op (excluding the upload host)
-        for candidate in db.query(Host).filter(Host.op_id == op_id, Host.id != host_id).all():
+        candidates = (
+            db.query(Host)
+            .options(selectinload(Host.ips))
+            .filter(Host.op_id == op_id, Host.id != host_id)
+            .all()
+        )
+        for candidate in candidates:
             names = [candidate.nickname] + [ip.ip_address for ip in candidate.ips]
             if not any(ssh_match(n, pat_data.aliases) for n in names):
                 continue

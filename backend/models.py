@@ -53,11 +53,11 @@ class Host(Base):
     created_at = Column(TZDateTime, nullable=False, default=_now)
 
     operation = relationship("Operation", back_populates="hosts")
-    ips = relationship("HostIP", back_populates="host", cascade="all, delete-orphan")
-    users = relationship("HostUser", back_populates="host", cascade="all, delete-orphan")
-    credential_links = relationship("CredentialLink", back_populates="host", cascade="all, delete-orphan")
+    ips = relationship("HostIP", back_populates="host", cascade="all, delete-orphan", lazy="raise_on_sql")
+    users = relationship("HostUser", back_populates="host", cascade="all, delete-orphan", lazy="raise_on_sql")
+    credential_links = relationship("CredentialLink", back_populates="host", cascade="all, delete-orphan", lazy="raise_on_sql")
     sudo_rules = relationship("SudoRule", back_populates="host", cascade="all, delete-orphan")
-    notes = relationship("HostNote", back_populates="host", cascade="all, delete-orphan")
+    notes = relationship("HostNote", back_populates="host", cascade="all, delete-orphan", lazy="raise_on_sql")
     src_connections = relationship(
         "ConnectionRecord",
         foreign_keys="ConnectionRecord.src_host_id",

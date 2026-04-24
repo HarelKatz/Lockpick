@@ -3,11 +3,12 @@ from __future__ import annotations
 
 import fnmatch
 import uuid
+from collections import defaultdict
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from models import ConnectionRecord, Host, SshConfigPattern
+from models import ConnectionRecord, Host, HostIP, SshConfigPattern
 
 
 def ssh_match(candidate: str, aliases: list[str]) -> bool:
@@ -38,11 +39,18 @@ def apply_patterns_to_host(db: Session, host: Host) -> int:
     if not patterns:
         return 0
 
-    candidates = [host.nickname] + [ip.ip_address for ip in host.ips]
+    # Bulk-fetch IPs for the target host and every pattern source host in one
+    # IN(...) query, so we never rely on the caller to eager-load host.ips.
+    pattern_host_ids = {p.source_host_id for p in patterns}
+    all_ip_host_ids = pattern_host_ids | {host.id}
+    ips_by_host: dict[str, list[str]] = defaultdict(list)
+    for row in db.query(HostIP).filter(HostIP.host_id.in_(all_ip_host_ids)).all():
+        ips_by_host[row.host_id].append(row.ip_address)
+
+    target_ips = ips_by_host.get(host.id, [])
+    candidates = [host.nickname] + target_ips
     created = 0
 
-    # Bulk-fetch all source hosts referenced by these patterns in one query
-    pattern_host_ids = {p.source_host_id for p in patterns}
     host_map = {
         h.id: h
         for h in db.query(Host).filter(Host.id.in_(pattern_host_ids)).all()
@@ -76,8 +84,9 @@ def apply_patterns_to_host(db: Session, host: Host) -> int:
         if not src_host:
             continue
 
-        src_ip = src_host.ips[0].ip_address if src_host.ips else src_host.nickname
-        dst_ip = host.ips[0].ip_address if host.ips else host.nickname
+        src_ips = ips_by_host.get(pat.source_host_id, [])
+        src_ip = src_ips[0] if src_ips else src_host.nickname
+        dst_ip = target_ips[0] if target_ips else host.nickname
 
         db.add(ConnectionRecord(
             id=str(uuid.uuid4()),

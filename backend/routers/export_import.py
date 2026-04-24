@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from database import get_db
 from models import (
@@ -47,7 +47,12 @@ def export_op(op_id: str, db: Session = Depends(get_db)):
     if not op:
         raise HTTPException(status_code=404, detail="Operation not found")
 
-    hosts = db.query(Host).filter(Host.op_id == op_id).all()
+    hosts = (
+        db.query(Host)
+        .options(selectinload(Host.ips), selectinload(Host.users))
+        .filter(Host.op_id == op_id)
+        .all()
+    )
     credentials = db.query(Credential).filter(Credential.op_id == op_id).all()
 
     credential_ids = {c.id for c in credentials}

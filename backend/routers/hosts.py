@@ -1,6 +1,6 @@
 """CRUD endpoints for Hosts and HostIPs."""
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from database import get_db
 from models import Host, HostIP, HostNote, HostUser, SudoRule
@@ -24,6 +24,15 @@ from schemas import (
 router = APIRouter(tags=["hosts"])
 
 
+def _host_q(db: Session):
+    """Host query pre-configured with the eager loads HostRead requires."""
+    return db.query(Host).options(
+        selectinload(Host.ips),
+        selectinload(Host.users),
+        selectinload(Host.notes),
+    )
+
+
 # ─── Hosts ────────────────────────────────────────────────────────────────────
 
 @router.post("/ops/{op_id}/hosts", response_model=HostRead, status_code=201)
@@ -32,19 +41,19 @@ def create_host(op_id: str, body: HostCreate, db: Session = Depends(get_db)):
     host = Host(op_id=op_id, nickname=body.nickname, comment=body.comment)
     db.add(host)
     db.flush()
+    host_id = host.id
     log_activity(db, op_id, "host.create", "host", detail=f"Added host '{body.nickname}'")
     apply_patterns_to_host(db, host)
     db.commit()
-    db.refresh(host)
-    broadcast_sync(op_id, {"type": "update", "entity_type": "host", "entity_id": host.id, "op_id": op_id})
-    return host
+    broadcast_sync(op_id, {"type": "update", "entity_type": "host", "entity_id": host_id, "op_id": op_id})
+    return _host_q(db).filter(Host.id == host_id).first()
 
 
 @router.get("/ops/{op_id}/hosts", response_model=list[HostRead])
 def list_hosts(op_id: str, db: Session = Depends(get_db)):
     get_op_or_404(op_id, db)
     return (
-        db.query(Host)
+        _host_q(db)
         .filter(Host.op_id == op_id)
         .order_by(Host.created_at.asc())
         .all()
@@ -53,7 +62,10 @@ def list_hosts(op_id: str, db: Session = Depends(get_db)):
 
 @router.get("/hosts/{host_id}", response_model=HostRead)
 def get_host(host_id: str, db: Session = Depends(get_db)):
-    return get_host_or_404(host_id, db)
+    host = _host_q(db).filter(Host.id == host_id).first()
+    if not host:
+        raise HTTPException(status_code=404, detail="Host not found")
+    return host
 
 
 @router.patch("/hosts/{host_id}", response_model=HostRead)
@@ -65,11 +77,11 @@ def update_host(host_id: str, body: HostUpdate, db: Session = Depends(get_db)):
         host.comment = body.comment
     if "status" in body.model_fields_set:
         host.status = body.status  # None clears it; a valid string sets it
-    log_activity(db, host.op_id, "host.update", "host", entity_id=host_id, detail=f"Updated host '{host.nickname}'")
+    op_id = host.op_id
+    log_activity(db, op_id, "host.update", "host", entity_id=host_id, detail=f"Updated host '{host.nickname}'")
     db.commit()
-    db.refresh(host)
-    broadcast_sync(host.op_id, {"type": "update", "entity_type": "host", "entity_id": host_id, "op_id": host.op_id})
-    return host
+    broadcast_sync(op_id, {"type": "update", "entity_type": "host", "entity_id": host_id, "op_id": op_id})
+    return _host_q(db).filter(Host.id == host_id).first()
 
 
 @router.delete("/hosts/{host_id}", status_code=204)
@@ -95,7 +107,6 @@ def add_host_ip(host_id: str, body: HostIPCreate, db: Session = Depends(get_db))
     )
     db.add(ip)
     db.flush()
-    db.refresh(host)  # pick up the new IP for pattern matching
     log_activity(db, host.op_id, "host_ip.add", "host", entity_id=host_id, detail=f"Added IP {body.ip_address} to '{host.nickname}'")
     apply_patterns_to_host(db, host)
     db.commit()
