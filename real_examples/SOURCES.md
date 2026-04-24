@@ -22,16 +22,18 @@ Organized by `file_type` (matching `backend/parsers/registry.py` keys).
 - `saltstack_integration_command_prefix` — saltstack/salt `tests/integration/files/ssh/authorized_keys` (single entry with `command="..."` option prefix — important edge case)
 - `saltstack_git_pillar_user` — saltstack/salt `tests/integration/files/file/base/git_pillar/ssh/user/files/authorized_keys`
 
-### `bash_history/` — 8 files
+### `bash_history/` — 5 files
 
 Benign / numbered-history variant (2):
 - `jc_ubuntu_18_04_history`, `jc_centos_7_7_history` — kellyjonbrazil/jc `tests/fixtures/{ubuntu-18.04,centos-7.7}/history.out`
   > These are the OUTPUT of the `history` shell builtin (numbered lines), not raw `~/.bash_history` files. The parser's regex tolerates both formats.
 
-Real attacker sessions from Cowrie honeypots (6):
-- `cowrie_2020_03_cc95d998`, `cowrie_2020_03_25938f9d` — extracted from jasonmpittman/cowrie-log-analyzer `import/cowrie.json.2020-03-19` (Mirai-style payload delivery)
-- `cowrie_2024_za_sensor_0bb8edce`, `cowrie_2024_za_sensor_491748bb`, `cowrie_2024_za_sensor_40308dc3`, `cowrie_2024_za_sensor_c6f9f3c5` — extracted from EfeEmirYuce/Cowrie-Honeypot-Log-Analysis-Engine `logs/cowrie_[1,3].json` (2024 South Africa sensor; busybox-recon + tftp/wget fetch patterns)
-  > Extracted, not synthesized: each file is the verbatim `input` fields from every `cowrie.command.input` event in a single attacker session, one command per line. This is the canonical `.bash_history` representation of what that attacker actually typed.
+Real attacker sessions from Cowrie honeypots (3, one per distinct attack pattern):
+- `cowrie_2020_03_cc95d998` — jasonmpittman/cowrie-log-analyzer `import/cowrie.json.2020-03-19` (Mirai-style wget/curl/chmod+x payload delivery)
+- `cowrie_2024_za_sensor_0bb8edce` — EfeEmirYuce/Cowrie-Honeypot-Log-Analysis-Engine `logs/cowrie_1.json` (busybox-recon `/dev/shm` staging pattern)
+- `cowrie_2024_za_sensor_491748bb` — same repo, `logs/cowrie_1.json` (MikroTik/IoT fingerprint: `ip cloud print`, `ifconfig`, crypto-miner hunt via `ps | grep [Mm]iner`, smsd/qmuxd file probes)
+  > Extracted, not synthesized: each file is the verbatim `input` fields from every `cowrie.command.input` event in a single attacker session, one command per line. Canonical `.bash_history` format containing real attacker commands.
+  > Round 4 removed 3 near-duplicate sessions: `cowrie_2020_03_25938f9d` (differed from cc95d998 by 1 IP+filename token — same Mirai loader campaign) and `cowrie_2024_za_sensor_{40308dc3,c6f9f3c5}` (same busybox-recon pattern as 0bb8edce, differing only in the random busybox marker token).
 
 ### `etc_hosts/` — 5 files
 - `centos_hosts` — original (pre-existing)
@@ -133,11 +135,10 @@ All from dotfile repos: helmuthdu, tanghaibao, sporkmonger, miguelmota, gist/rch
 ### `zshrc/` — 4 files
 From dotfile repos: driesvints, wookayin, olivernn, ryanb.
 
-### `network_interfaces/` — 5 files
+### `network_interfaces/` — 4 files
 - `sebw_debian_example` — gist/sebw/6018342 (original)
-- `ifupdown_examples_network_interfaces` — Debian ifupdown `examples/network-interfaces` (canonical annotated template)
 - `ifupdown_testcase_multi_iface`, `ifupdown_testcase_allow_hotplug`, `ifupdown_testcase_hwaddress` — Debian ifupdown `tests/linux/testcase.*` (multi-interface test fixtures)
-  > Round 3 audit removed `fullmetalbrackets_static` (markdown tutorial) and `und3fined_sample` (363-line markdown guide).
+  > Round 3 audit removed `fullmetalbrackets_static` (markdown tutorial) and `und3fined_sample` (363-line markdown guide). Round 4 removed `ifupdown_examples_network_interfaces` — the Debian template is 184 lines but every example is commented out, leaving zero parseable content.
 
 ### `netplan/` — 8 files
 All from canonical/netplan upstream `examples/`: `bridge`, `vlan`, `bonding`, `static`, `dhcp`, `wireless`, `modem`, `vrf`.
