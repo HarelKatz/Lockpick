@@ -514,6 +514,18 @@ export default function Workspace({ op, onBack }: Props) {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
 
+  // Derived: credential for the currently-edited link (null when editLink is unset or cred not found)
+  const editLinkCred = editLink
+    ? credentials.find(c => c.id === editLink.credential_id) ?? null
+    : null
+
+  // Close the credential-link edit modal if its credential was deleted while the modal was open
+  useEffect(() => {
+    if (editLink && !credentials.find(c => c.id === editLink.credential_id)) {
+      setEditLink(null)
+    }
+  }, [editLink, credentials])
+
   // ─── Search select handler ────────────────────────────────────────────────
 
   function handleSearchSelect(result: SearchResult) {
@@ -888,10 +900,7 @@ export default function Workspace({ op, onBack }: Props) {
         </EditModal>
       )}
 
-      {editLink && (() => {
-        const editLinkCred = credentials.find(c => c.id === editLink.credential_id)
-        if (!editLinkCred) { setEditLink(null); return null }
-        return (
+      {editLink && editLinkCred && (
         <EditModal title="Edit Credential Link" onClose={() => setEditLink(null)}>
           <EditCredentialLinkForm
             link={editLink}
@@ -904,8 +913,7 @@ export default function Workspace({ op, onBack }: Props) {
             onClose={() => setEditLink(null)}
           />
         </EditModal>
-        )
-      })()}
+      )}
 
       {editConn && (
         <EditModal title="Edit Connection" onClose={() => setEditConn(null)}>

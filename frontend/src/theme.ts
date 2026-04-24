@@ -55,8 +55,9 @@ export const CONFIDENCE_OBSERVED  = '#d29922'  // = theme.observed
 export const CONFIDENCE_MUTED     = '#6e7681'  // = theme.indicator / textMuted
 
 // Node fill colors for special states
-export const NODE_FILL_HOSTILE  = '#2d1f1f'    // path-highlighted node fill (warm dark)
-export const NODE_FILL_FRIENDLY = '#1a2332'    // default node fill (cool dark)
+export const NODE_FILL_HOSTILE   = '#2d1f1f'   // path-highlighted node fill (warm dark)
+export const NODE_FILL_FRIENDLY  = '#1a2332'   // default node fill (cool dark)
+export const NODE_FILL_SELECTED  = '#1f2d3d'   // selected node fill (lighter than default)
 
 // Node label color
 export const NODE_LABEL_COLOR = '#e6edf3'      // slightly brighter than textPrimary for canvas legibility

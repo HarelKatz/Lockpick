@@ -14,7 +14,7 @@ import type { GraphEdge, GraphNode, GraphResponse } from '../types'
 import {
   theme, statusColors,
   CONFIDENCE_CONFIRMED, CONFIDENCE_OBSERVED, CONFIDENCE_MUTED,
-  NODE_FILL_HOSTILE, NODE_FILL_FRIENDLY, NODE_LABEL_COLOR,
+  NODE_FILL_HOSTILE, NODE_FILL_FRIENDLY, NODE_FILL_SELECTED, NODE_LABEL_COLOR,
 } from '../theme'
 import styles from './GraphCanvas.module.css'
 
@@ -416,7 +416,7 @@ export default function GraphCanvas({
       // Use a darkened tint of the status color as fill
       ctx.fillStyle = NODE_FILL_FRIENDLY
     } else {
-      ctx.fillStyle = isSelected ? '#1f2d3d' : NODE_FILL_FRIENDLY
+      ctx.fillStyle = isSelected ? NODE_FILL_SELECTED : NODE_FILL_FRIENDLY
     }
     ctx.fill()
 
