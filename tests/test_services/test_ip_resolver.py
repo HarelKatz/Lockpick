@@ -181,3 +181,56 @@ def test_hostname_lookup_uppercase_stored(db_session):
 
     result = resolve_ip(db_session, op.id, "web01")
     assert result == host.id
+
+
+# ─── Non-routable / invalid inputs ────────────────────────────────────────────
+
+@pytest.mark.parametrize(
+    "bad_input",
+    [
+        # IPv6 multicast / link-local / reserved — commonly in /etc/hosts on Linux
+        "ff00::0",
+        "ff02::1",
+        "ff02::2",
+        "fe00::0",
+        # IPv4 multicast + broadcast + unspecified + reserved
+        "224.0.0.1",
+        "239.255.255.255",
+        "255.255.255.255",
+        "0.0.0.0",
+        "240.0.0.1",
+        # utmp-style magic that doesn't look like a hostname
+        "~",
+        # Shell-like garbage
+        "not a hostname with spaces",
+        "(command: ip addr)",
+    ],
+)
+def test_non_routable_inputs_are_rejected(db_session, bad_input):
+    """resolve_ip must never auto-create hosts for multicast / reserved /
+    non-hostname inputs. Bad inputs leak in from /etc/hosts and wtmp."""
+    op = _make_op(db_session)
+    result = resolve_ip(db_session, op.id, bad_input, create_if_missing=True)
+    assert result is None, f"Expected None for {bad_input!r}, got {result}"
+    # No phantom host should have been created
+    assert db_session.query(Host).filter(Host.op_id == op.id).count() == 0
+
+
+def test_valid_ipv4_still_resolved(db_session):
+    op = _make_op(db_session)
+    result = resolve_ip(db_session, op.id, "10.0.0.5", create_if_missing=True)
+    assert result is not None
+    assert db_session.query(Host).filter(Host.op_id == op.id).count() == 1
+
+
+def test_valid_hostname_still_resolved(db_session):
+    op = _make_op(db_session)
+    result = resolve_ip(db_session, op.id, "web01.corp.local", create_if_missing=True)
+    assert result is not None
+
+
+def test_unique_local_ipv6_still_resolved(db_session):
+    """fc00::/7 (unique local) is routable within an org — must not be rejected."""
+    op = _make_op(db_session)
+    result = resolve_ip(db_session, op.id, "fd12:3456::1", create_if_missing=True)
+    assert result is not None

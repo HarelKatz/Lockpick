@@ -81,3 +81,24 @@ def test_empty_file(metadata):
 def test_size_mismatch_warns(metadata):
     result = WtmpParser().parse(b"\x00" * 10, metadata)
     assert any("multiple" in w.lower() or "truncated" in w.lower() for w in result.warnings)
+
+
+def test_utmp_magic_values_in_ut_host_skipped(metadata):
+    """Real wtmp files contain console-login records where ut_host is
+    'consLOGIN' / 'LOGIN' — these are bookkeeping, not SSH logins."""
+    data = (
+        _make_utmp_record("root", "consLOGIN", 1710507720)
+        + _make_utmp_record("bob", "LOGIN", 1710507730)
+        + _make_utmp_record("alice", "10.10.0.9", 1710507800)  # real login
+    )
+    result = WtmpParser().parse(data, metadata)
+    assert len(result.connections_found) == 1
+    assert result.connections_found[0].dst_user == "alice"
+    assert result.connections_found[0].src_ip == "10.10.0.9"
+
+
+def test_utmp_magic_values_in_ut_user_skipped(metadata):
+    """Some wtmp records have ut_user='LOGIN' (getty) — those aren't SSH sessions."""
+    data = _make_utmp_record("LOGIN", "10.10.0.5", 1710507720)
+    result = WtmpParser().parse(data, metadata)
+    assert result.connections_found == []

@@ -27,7 +27,7 @@ A web-based tool for red teams to collaboratively organize SSH credentials, host
 3. **The frontend never touches the DB** — all data flows through the REST API
 4. **No authentication on the tool** — it runs on a trusted network / VPN. The red team trusts each other.
 5. **All state in `./data/`** — DB file, uploaded raw files, nothing else. This directory is the only thing that needs to be backed up or moved.
-6. **IP resolution is best-effort** — when a parser finds an IP, try to match it to an existing host. If no match, create an "unresolved" host with just that IP. The user can merge hosts later.
+6. **IP resolution is best-effort** — when a parser finds an IP, try to match it to an existing host. If no match, create an "unresolved" host with just that IP. The user can merge hosts later. The resolver rejects (returns `None` for) multicast, reserved, unspecified addresses and non-hostname garbage (e.g. utmp magic values, strings with spaces) so they never become phantom hosts — callers should treat a `None` return as "skip this record." Loopback handling is a separate earlier-stage filter (see Rule #15).
 7. **Activity log** — `log_activity()` (`services/activity.py`) must be called before `db.commit()` in every write endpoint. It adds to the current session and does not commit independently.
 8. **Export format** — op exports use `lockpick_export_version: 1`. Import remaps all IDs — never re-use original IDs from an export.
 9. **File uploads** — raw files stored at `data/uploads/{op_id}/{uuid}_{filename}`. Update/delete is intentionally unsupported: parsed records carry no per-file provenance marker, so replacing a file would create duplicates.

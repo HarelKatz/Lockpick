@@ -26,6 +26,15 @@ _UTMP_SIZE = struct.calcsize(_UTMP_FMT)
 _UT_USER_PROCESS = 7   # USER_PROCESS: normal login
 _UT_LOGIN_PROCESS = 6  # LOGIN_PROCESS: getty / terminal login
 
+# utmp writes these magic values into ut_user / ut_host for records that don't
+# represent a remote login (console logins, runlevel transitions, reboots).
+# Matching either field on one of these values means the record is not a
+# real SSH-style login and should be skipped.
+_UTMP_MAGIC_VALUES = frozenset({
+    "consLOGIN", "LOGIN", "RUNLEVEL", "REBOOT", "SHUTDOWN",
+    "BOOT_TIME", "NEW_TIME", "OLD_TIME", "~", "~~",
+})
+
 
 def _decode_str(b: bytes) -> str:
     return b.rstrip(b"\x00").decode("utf-8", errors="replace").strip()
@@ -83,6 +92,11 @@ class WtmpParser(BaseParser):
             user = _decode_str(ut_user)
             host = _decode_str(ut_host)
             if not user:
+                continue
+            # Skip utmp bookkeeping records masquerading as logins (console
+            # logins, runlevel transitions, reboots). Real SSH logins have a
+            # username in ut_user and either an empty or real-hostname ut_host.
+            if user in _UTMP_MAGIC_VALUES or host in _UTMP_MAGIC_VALUES:
                 continue
 
             ts = None
