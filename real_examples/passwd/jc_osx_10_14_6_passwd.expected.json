@@ -1,0 +1,18 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [
+    [
+      "root",
+      "/bin/sh",
+      "/var/root"
+    ]
+  ],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "users_parsed": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

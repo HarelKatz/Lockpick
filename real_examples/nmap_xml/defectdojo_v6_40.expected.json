@@ -1,0 +1,20 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [
+    {
+      "aliases": [
+        "localhost.localdomain"
+      ],
+      "ip_address": "127.0.0.1",
+      "nickname": "localhost.localdomain"
+    }
+  ],
+  "patterns_found": [],
+  "stats": {
+    "hosts_found": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

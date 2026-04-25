@@ -1,0 +1,54 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "password",
+      "name": "shadow hash for joeuser",
+      "relationship_type": "found_on_disk",
+      "username": "joeuser",
+      "value_length": 106,
+      "value_prefix": "$6$sR1OEFM1KVuMeBUt$NhanSmm91.BspCYlMtrj"
+    },
+    {
+      "cred_type": "password",
+      "name": "shadow hash for root",
+      "relationship_type": "found_on_disk",
+      "username": "root",
+      "value_length": 106,
+      "value_prefix": "$6$27lBiByDWdiM7lvJ$ulWkJyfKNbqDnrIKPLhU"
+    }
+  ],
+  "host_users_found": [
+    [
+      "joeuser",
+      null,
+      null
+    ],
+    [
+      "root",
+      null,
+      null
+    ]
+  ],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "hashes_found": 2,
+    "users_found": 2
+  },
+  "sudo_rules_found": [],
+  "warnings": [
+    "User 'bin': account is locked (*) — no hash",
+    "User 'daemon': account is locked (*) — no hash",
+    "User 'adm': account is locked (*) — no hash",
+    "User 'lp': account is locked (*) — no hash",
+    "User 'sync': account is locked (*) — no hash",
+    "User 'shutdown': account is locked (*) — no hash",
+    "User 'halt': account is locked (*) — no hash",
+    "User 'mail': account is locked (*) — no hash",
+    "User 'operator': account is locked (*) — no hash",
+    "User 'games': account is locked (*) — no hash",
+    "User 'ftp': account is locked (*) — no hash",
+    "User 'nobody': account is locked (*) — no hash"
+  ]
+}

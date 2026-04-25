@@ -1,0 +1,22 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "private_key",
+      "name": "paramiko_test_rsa_openssh_nopad",
+      "relationship_type": "found_on_disk",
+      "username": null,
+      "value_length": 1799,
+      "value_prefix": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3Bl"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "fingerprint": "SHA256:j9MjfcEwC+S2CgkNmQnZ8G4KurEvg0D9+69F3cANMCA",
+    "key_type": "ssh-rsa"
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

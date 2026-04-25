@@ -1,0 +1,21 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "public_key",
+      "name": "authorized_key from outlaw_attacker_dropped",
+      "relationship_type": "authorized_key",
+      "username": null,
+      "value_length": 388,
+      "value_prefix": "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEArDp4"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "keys_parsed": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

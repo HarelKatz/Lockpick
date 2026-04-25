@@ -1,0 +1,29 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "public_key",
+      "name": "authorized_key from saltstack_git_pillar_user",
+      "relationship_type": "authorized_key",
+      "username": null,
+      "value_length": 733,
+      "value_prefix": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCl"
+    },
+    {
+      "cred_type": "public_key",
+      "name": "authorized_key from saltstack_git_pillar_user",
+      "relationship_type": "authorized_key",
+      "username": null,
+      "value_length": 731,
+      "value_prefix": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDX"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "keys_parsed": 2
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

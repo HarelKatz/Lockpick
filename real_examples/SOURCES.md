@@ -17,25 +17,29 @@ Organized by `file_type` (matching `backend/parsers/registry.py` keys).
 - `lastlog_audit_compromised` — franckferman/LastLog-Audit `samples/compromised.auth.log` (realistic red-team scenario)
 - `masterparser_example` — securityjoes/MasterParser `01-Logs/MasterParser-Example-auth.log`
 
-### `authorized_keys/` — 4 files
+### `authorized_keys/` — 5 files
 - `authorized_keys` — original (pre-existing)
 - `saltstack_integration_command_prefix` — saltstack/salt `tests/integration/files/ssh/authorized_keys` (single entry with `command="..."` option prefix — important edge case)
 - `saltstack_git_pillar_user` — saltstack/salt `tests/integration/files/file/base/git_pillar/ssh/user/files/authorized_keys`
 - `outlaw_attacker_dropped` — IOC from Outlaw/Shellbot malware campaign (`mdrfckr` comment), extracted from the 2024 Cowrie honeypot session `85c6efc6d102`. This is the actual key attackers drop into victims' `~/.ssh/authorized_keys` after gaining access — useful for blue-team detection testing.
+- `puttygen_attacker_immutable` — IOC from a separate 2024 Cowrie attacker (session `0790cce5c223`, `honeypot-japan`, src 94.103.125.37). Distinct from `outlaw_attacker_dropped`: PuTTYgen-format key (`AAAAB3NzaC1yc2EAAAADAQABAAABAQ...`, comment `rsa-key-20230629`), and the dropping operator follows it with `chattr +ai ~/.ssh/authorized_keys` to make the file append-only AND immutable — defeating naive cleanup. Useful for testing parsers against PuTTY-format keys (different MPI encoding than OpenSSH-generated `AAAAB3NzaC1yc2EAAAABJQ...`).
 
-### `bash_history/` — 5 files
+### `bash_history/` — 11 files
 
 Benign / numbered-history variant (2):
 - `jc_ubuntu_18_04_history`, `jc_centos_7_7_history` — kellyjonbrazil/jc `tests/fixtures/{ubuntu-18.04,centos-7.7}/history.out`
   > These are the OUTPUT of the `history` shell builtin (numbered lines), not raw `~/.bash_history` files. The parser's regex tolerates both formats.
 
-Real attacker sessions from Cowrie honeypots (6, one per distinct attack pattern):
+Real attacker sessions from Cowrie honeypots (9, one per distinct attack pattern):
 - `cowrie_2020_03_cc95d998` — jasonmpittman/cowrie-log-analyzer `import/cowrie.json.2020-03-19` (Mirai-style wget/curl/chmod+x payload delivery)
 - `cowrie_2024_za_sensor_0bb8edce` — EfeEmirYuce/Cowrie-Honeypot-Log-Analysis-Engine `logs/cowrie_1.json` (busybox-recon `/dev/shm` staging pattern)
 - `cowrie_2024_za_sensor_491748bb` — same repo, `logs/cowrie_1.json` (MikroTik/IoT fingerprint: `ip cloud print`, `ifconfig`, crypto-miner hunt via `ps | grep [Mm]iner`, smsd/qmuxd file probes)
 - `cowrie_2024_outlaw_85c6efc6` — `logs/cowrie_6.json` (Outlaw/Shellbot persistence: `chattr -ia .ssh`, replaces `.ssh/authorized_keys` with attacker key, `chpasswd` to change root password, kills rival security scripts)
 - `cowrie_2024_multiarch_542a97f9` — `logs/cowrie_8.json` (multi-arch polymorphic loader: 21 commands with arch markers `arm_linux/mips_linux/mipsel_linux/miner/windows/winminer`, encoded base64 blob delivery via `curl || wget || /dev/tcp` fallback chain)
 - `cowrie_2024_iot_pivot_59b0a2b6` — `logs/cowrie_10.json` (router-shell escape chain: `start`/`enable`/`config terminal`/`system`/`linuxshell`/`su`/`shell`/`sh` — Huawei/MikroTik CLI-escape pattern — then attempts to pull payload from internal `192.168.1.1:8088`, suggesting lateral-movement intent)
+- `cowrie_2024_dusk_loader_0f6ad91b` — `logs/cowrie_5.json`, `honeypot-japan`, src 45.125.66.24 (multi-protocol DUSK-family loader: `wget … && tftp -c get && tftp -r -g && ftpget -v -u anonymous` from `185.193.127.129` — chains four transfer protocols in a single `cd /var/run || cd /mnt || cd /root` fallback. Useful for parsers that need to recognize legacy `tftp`/`ftpget` invocations alongside HTTP)
+- `cowrie_2024_puttykey_immutable_0790cce5` — `logs/cowrie_5.json`, `honeypot-japan`, src 94.103.125.37 (different operator from `cowrie_2024_outlaw_85c6efc6`: SCP-drops `clean.sh` + `setup.sh`, then writes a PuTTYgen-format key with `chattr +ai ~/.ssh/authorized_keys` to make it append-only-AND-immutable, finally signals `\x61\x75\x74\x68\x5F\x6F\x6B` ("auth_ok") to its C2. Companion key fixture: `authorized_keys/puttygen_attacker_immutable`)
+- `cowrie_2024_perl_hexip_0281d6fd` — `logs/cowrie_3.json`, `honeypot-australia`, src 59.110.170.68 (Perl-based "dred" loader using hex-encoded URL `http://0x2763da4e/dred` (= 39.99.218.78), preceded by `lspci | grep -i 'vga\|3d\|2d'` GPU probe — distinctive because the entire payload is a single piped Perl script, not an ELF binary)
   > Extracted, not synthesized: each file is the verbatim `input` fields from every `cowrie.command.input` event in a single attacker session, one command per line. Canonical `.bash_history` format containing real attacker commands.
   > Round 4 removed 3 near-duplicate sessions: `cowrie_2020_03_25938f9d` (differed from cc95d998 by 1 IP+filename token — same Mirai loader campaign) and `cowrie_2024_za_sensor_{40308dc3,c6f9f3c5}` (same busybox-recon pattern as 0bb8edce, differing only in the random busybox marker token).
 

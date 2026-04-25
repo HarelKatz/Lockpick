@@ -1,0 +1,21 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "public_key",
+      "name": "authorized_key from saltstack_integration_command_prefix",
+      "relationship_type": "authorized_key",
+      "username": null,
+      "value_length": 563,
+      "value_prefix": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "keys_parsed": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

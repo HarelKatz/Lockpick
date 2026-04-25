@@ -1,0 +1,41 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "@cert-authority",
+      "dst_user": null,
+      "raw_line": "@cert-authority *.example.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDXh1gk2xgS2MekPvo7ZEKiOT7HoyvOAzai2GqoLXGHO",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "example.com",
+      "dst_user": null,
+      "raw_line": "example.com ssh-dss AAAAB3NzaC1kc3MAAACBALT8YHxZ59d8yX4oQNPbpdK9AMPRQGKFY9X13S2fp4UMPijiB3ETxU1bAyVTjTbsoag065naFt13aIVl+u0MDPfMuYgVJFEorAZkDlBixvT25zpKyQhI4CtHhZ9Y9YWug4xLqSaFUYEPO31Bie7k8xRfDwsHtzTR",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "hosts_parsed": 2
+  },
+  "sudo_rules_found": [],
+  "warnings": [
+    "Line 2: hashed known_hosts entry — hostname not recoverable, skipped",
+    "Line 3: hashed known_hosts entry — hostname not recoverable, skipped",
+    "Line 4: hashed known_hosts entry — hostname not recoverable, skipped"
+  ]
+}

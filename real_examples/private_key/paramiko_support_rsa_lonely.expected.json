@@ -1,0 +1,22 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "private_key",
+      "name": "paramiko_support_rsa_lonely",
+      "relationship_type": "found_on_disk",
+      "username": null,
+      "value_length": 883,
+      "value_prefix": "-----BEGIN RSA PRIVATE KEY-----\nMIICWgIB"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "fingerprint": "SHA256:OhNL391d/beeFnxxg18AwWVYTAHww+D4djEE7Co0Yng",
+    "key_type": "ssh-rsa"
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

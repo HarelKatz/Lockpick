@@ -1,0 +1,28 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [
+    [
+      "nobody",
+      "/bin/sh",
+      "/nonexistent"
+    ],
+    [
+      "phil",
+      "/bin/bash",
+      "/home/phil"
+    ],
+    [
+      "root",
+      "/bin/bash",
+      "/root"
+    ]
+  ],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "users_parsed": 3
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

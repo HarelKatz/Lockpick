@@ -1,0 +1,61 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "password",
+      "name": "shadow hash for phil",
+      "relationship_type": "found_on_disk",
+      "username": "phil",
+      "value_length": 98,
+      "value_prefix": "$6$ErqInBoz$FibX212AFnHMvyZdWW87bq5Cm321"
+    },
+    {
+      "cred_type": "password",
+      "name": "shadow hash for root",
+      "relationship_type": "found_on_disk",
+      "username": "root",
+      "value_length": 98,
+      "value_prefix": "$6$4aOmWdpJ$/kyPOik9rR0kSLyABIYNXgg/UqlW"
+    }
+  ],
+  "host_users_found": [
+    [
+      "phil",
+      null,
+      null
+    ],
+    [
+      "root",
+      null,
+      null
+    ]
+  ],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "hashes_found": 2,
+    "users_found": 2
+  },
+  "sudo_rules_found": [],
+  "warnings": [
+    "User 'daemon': account is locked (*) — no hash",
+    "User 'bin': account is locked (*) — no hash",
+    "User 'sys': account is locked (*) — no hash",
+    "User 'sync': account is locked (*) — no hash",
+    "User 'games': account is locked (*) — no hash",
+    "User 'man': account is locked (*) — no hash",
+    "User 'lp': account is locked (*) — no hash",
+    "User 'mail': account is locked (*) — no hash",
+    "User 'news': account is locked (*) — no hash",
+    "User 'uucp': account is locked (*) — no hash",
+    "User 'proxy': account is locked (*) — no hash",
+    "User 'www-data': account is locked (*) — no hash",
+    "User 'backup': account is locked (*) — no hash",
+    "User 'list': account is locked (*) — no hash",
+    "User 'irc': account is locked (*) — no hash",
+    "User 'gnats': account is locked (*) — no hash",
+    "User 'nobody': account is locked (*) — no hash",
+    "User 'libuuid': account is locked (!) — no hash",
+    "User 'sshd': account is locked (*) — no hash"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "passwordauthentication": "no",
+    "permitrootlogin": "no",
+    "port": "{{ pillar['git_pillar']['sshd_port'] }}"
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}
