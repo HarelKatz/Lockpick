@@ -24,6 +24,7 @@ from parsers.nmap_xml import NmapXmlParser
 from parsers.passwd import PasswdParser
 from parsers.pgpass import PgpassParser
 from parsers.private_key import PrivateKeyParser
+from parsers.rclone_config import RcloneConfigParser
 from parsers.shadow import ShadowParser
 from parsers.ssh_config import SshConfigParser
 from parsers.sshd_config import SshdConfigParser
@@ -56,4 +57,5 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "env_file": EnvFileParser,
     "docker_config": DockerConfigParser,
     "git_credentials": GitCredentialsParser,
+    "rclone_config": RcloneConfigParser,
 }
