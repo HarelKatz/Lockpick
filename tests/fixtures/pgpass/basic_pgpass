@@ -1,0 +1,4 @@
+# comment line
+db1.example.com:5432:postgres:dbadmin:supersecret
+*:*:appdb:appuser:apppass
+db2:5432:*:reader:r3adon1y

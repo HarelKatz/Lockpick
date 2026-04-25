@@ -1,0 +1,22 @@
+[s3-bucket]
+type = s3
+provider = AWS
+region = us-east-1
+access_key_id = AKIARCLONE
+secret_access_key = rclonesecret
+
+[onedrive-personal]
+type = onedrive
+token = {"access_token":"foo","refresh_token":"bar"}
+
+[ftp-server]
+type = ftp
+host = ftp.example.com
+user = ftpuser
+pass = obscuredpass
+
+[crypt-volume]
+type = crypt
+remote = s3-bucket:bucket
+password = crypt_pass
+password2 = crypt_salt

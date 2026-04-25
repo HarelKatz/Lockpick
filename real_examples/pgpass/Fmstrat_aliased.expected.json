@@ -1,0 +1,29 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "password",
+      "name": "pgpass:host2:db2",
+      "relationship_type": "found_on_disk",
+      "username": "user2",
+      "value_length": 5,
+      "value_prefix": "pass2"
+    },
+    {
+      "cred_type": "password",
+      "name": "pgpass:host:db",
+      "relationship_type": "found_on_disk",
+      "username": "user",
+      "value_length": 4,
+      "value_prefix": "pass"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "credentials": 2
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

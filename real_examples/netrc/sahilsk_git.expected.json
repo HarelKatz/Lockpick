@@ -1,0 +1,29 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "password",
+      "name": "netrc:api.github.com:technoweenie",
+      "relationship_type": "found_on_disk",
+      "username": "technoweenie",
+      "value_length": 6,
+      "value_prefix": "SECRET"
+    },
+    {
+      "cred_type": "password",
+      "name": "netrc:github.com:technoweenie",
+      "relationship_type": "found_on_disk",
+      "username": "technoweenie",
+      "value_length": 6,
+      "value_prefix": "SECRET"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "credentials": 2
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

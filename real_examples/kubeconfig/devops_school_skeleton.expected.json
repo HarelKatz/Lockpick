@@ -1,0 +1,21 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "password",
+      "name": "kubeconfig:blue-user:token",
+      "relationship_type": "found_on_disk",
+      "username": "blue-user",
+      "value_length": 10,
+      "value_prefix": "blue-token"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "credentials": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

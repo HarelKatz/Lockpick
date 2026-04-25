@@ -1,0 +1,6 @@
+{
+  "client_id": "client-abc.apps.googleusercontent.com",
+  "client_secret": "GOCSPX-clientsecret",
+  "refresh_token": "1//refreshtoken_value",
+  "type": "authorized_user"
+}

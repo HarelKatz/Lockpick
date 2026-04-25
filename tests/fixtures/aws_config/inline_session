@@ -1,0 +1,8 @@
+[default]
+region = us-east-1
+aws_session_token = SESSION_TOKEN_VALUE
+
+[profile dev]
+region = us-west-2
+aws_access_key_id = AKIAEXAMPLE
+aws_secret_access_key = SECRETSAUCE

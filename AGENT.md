@@ -14,9 +14,9 @@ A web-based tool for red teams to collaboratively organize SSH credentials, host
 
 > **Edit rules:** ≤5 lines. Last completed · Next · Any blocker. Nothing else — detail belongs in commit messages.
 
-**Last completed: Phases 1–17 — full stack, 34 parsers (Phase 16 system files: secure/syslog/messages aliases, lastlog/last_output, bashrc/zshrc/zsh_history/fish_history, network_interfaces/netplan/ifcfg; Phase 17 command output: ip_addr/ip_route/ip_neigh/arp, netstat/ss, iptables/nftables, ps_output/env_output, docker_ps), WS live push, host notes, status enum, addr_type, SudoRule, host merge, one-click collection script + bulk archive import**
+**Last completed: Phases 1–18 — full stack, 46 parsers (Phase 16 system files, Phase 17 command output, Phase 18 secret/credential files including netrc/pgpass/mysql_config/AWS/GCP ADC/kubeconfig/env_file/docker_config/git_credentials/rclone_config), WS live push, host notes, status enum, addr_type, SudoRule, host merge, one-click collection script + bulk archive import**
 
-**Next: Phase 18 — Secret & Credential File Parsers**
+**Next: Phase 19 — Engagement Report Export**
 
 ---
 
@@ -71,15 +71,9 @@ AGENT.md is the project roadmap and architecture reference — the current sourc
 
 > Detail tracks imminence: the next phase gets a full spec, 1–2 phases out get a short summary + invariants, and anything further is a one-liner heading. Expand a phase when it becomes next.
 
-### Phases 1–17 — Complete
+### Phases 1–18 — Complete
 
-Full stack built and tested: CRUD APIs, graph visualization, file upload + parsers (8 original + nmap_xml, shadow, sshd_config, etc_hosts, sudoers, public_key alias), BFS pivot analysis, global search, export/import, activity log, operational command generation, WS live push, host notes, Host.status enum, HostIP addr_type, SudoRule table with sudoers CRUD; one-click collection via bash snapshot script + bulk archive import; host merge (atomic relation-mover with HostIP/CredentialLink dedup, structured `merge_candidates` per-file response field, manual merge dialog, and auto-merge of unresolved placeholder hosts on alias conflict). Phase 16 added system-file parsers: RHEL/CentOS log aliases (`secure`/`syslog`/`messages` → `AuthLogParser`), binary `lastlog` + textual `last` output, shell configs/histories (`bashrc` and `zshrc` via shared `ShellRcParser` with aggressive secret harvesting, plus `zsh_history` extended-format and `fish_history` YAML-ish), and network configs (`network_interfaces`, `netplan`, `ifcfg`) emitting only the upload host's own IPs as one HostData (primary + aliases) — gateways counted but never emitted as host records. Phase 17 added command-output parsers for network state (`ip addr`/`route`/`neigh`, `arp`), connections (`netstat`, `ss`), firewall (`iptables`, `nftables`), processes (`ps` with cmdline secret harvest), env vars (aggressive `*_KEY`/`*_TOKEN`/`*_PASSWORD` harvest), and Docker container inventory; `docker_network` and `kubectl_pods` deferred (no samples).
-
----
-
-### Phase 18 — Secret & Credential File Parsers
-
-Non-SSH credentials — `netrc`, `pgpass`, `.my.cnf`, cloud creds (AWS, GCP ADC, kubeconfig, boto), `.env`, `.docker/config.json`, `.git-credentials`, rclone. Non-key secrets stored as `cred_type: password` with a descriptive `name`. Report redaction (Phase 19) applies to all secret values.
+Full stack built and tested: CRUD APIs, graph visualization, file upload + parsers (8 original + nmap_xml, shadow, sshd_config, etc_hosts, sudoers, public_key alias), BFS pivot analysis, global search, export/import, activity log, operational command generation, WS live push, host notes, Host.status enum, HostIP addr_type, SudoRule table with sudoers CRUD; one-click collection via bash snapshot script + bulk archive import; host merge (atomic relation-mover with HostIP/CredentialLink dedup, structured `merge_candidates` per-file response field, manual merge dialog, and auto-merge of unresolved placeholder hosts on alias conflict). Phase 16 added system-file parsers: RHEL/CentOS log aliases (`secure`/`syslog`/`messages` → `AuthLogParser`), binary `lastlog` + textual `last` output, shell configs/histories (`bashrc` and `zshrc` via shared `ShellRcParser` with aggressive secret harvesting, plus `zsh_history` extended-format and `fish_history` YAML-ish), and network configs (`network_interfaces`, `netplan`, `ifcfg`) emitting only the upload host's own IPs as one HostData (primary + aliases) — gateways counted but never emitted as host records. Phase 17 added command-output parsers for network state (`ip addr`/`route`/`neigh`, `arp`), connections (`netstat`, `ss`), firewall (`iptables`, `nftables`), processes (`ps` with cmdline secret harvest), env vars (aggressive `*_KEY`/`*_TOKEN`/`*_PASSWORD` harvest), and Docker container inventory; `docker_network` and `kubectl_pods` deferred (no samples). Phase 18 added secret/credential file parsers for `netrc`, `pgpass`, `mysql_config`, AWS (`config`/`credentials`/`boto`), GCP ADC (`gcloud_credentials`), `kubeconfig` (token + decoded client-key), `.env` aggressive secret harvest, Docker registry auth (`docker_config`), `.git-credentials`, and rclone — all emitted as `CredentialData` (cred_type=password or private_key for actual keys).
 
 ---
 

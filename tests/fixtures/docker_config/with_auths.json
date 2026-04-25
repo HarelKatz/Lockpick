@@ -1,0 +1,15 @@
+{
+  "auths": {
+    "registry.example.com": {
+      "auth": "YWxpY2U6czNjcmV0"
+    },
+    "https://index.docker.io/v1/": {
+      "auth": "Ym9iOnDimIM="
+    },
+    "split.example.com": {
+      "username": "carol",
+      "password": "carolpw"
+    }
+  },
+  "credsStore": "secretservice"
+}

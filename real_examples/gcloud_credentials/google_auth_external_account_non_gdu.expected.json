@@ -1,0 +1,29 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "password",
+      "name": "gcp:client_secret:clientId",
+      "relationship_type": "found_on_disk",
+      "username": null,
+      "value_length": 12,
+      "value_prefix": "clientSecret"
+    },
+    {
+      "cred_type": "password",
+      "name": "gcp:refresh_token:clientId",
+      "relationship_type": "found_on_disk",
+      "username": null,
+      "value_length": 12,
+      "value_prefix": "refreshToken"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "credentials": 2
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

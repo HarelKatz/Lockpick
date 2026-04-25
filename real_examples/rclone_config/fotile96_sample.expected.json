@@ -1,0 +1,21 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "password",
+      "name": "rclone:SAMPLE:token",
+      "relationship_type": "found_on_disk",
+      "username": null,
+      "value_length": 304,
+      "value_prefix": "{\"access_token\":\"foo\",\"token_type\":\"head"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "credentials": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}
