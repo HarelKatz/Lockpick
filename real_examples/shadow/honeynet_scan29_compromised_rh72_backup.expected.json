@@ -1,0 +1,29 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "hashes_found": 0,
+    "users_found": 0
+  },
+  "sudo_rules_found": [],
+  "warnings": [
+    "User 'bin': account is locked (*) — no hash",
+    "User 'daemon': account is locked (*) — no hash",
+    "User 'adm': account is locked (*) — no hash",
+    "User 'lp': account is locked (*) — no hash",
+    "User 'sync': account is locked (*) — no hash",
+    "User 'shutdown': account is locked (*) — no hash",
+    "User 'halt': account is locked (*) — no hash",
+    "User 'mail': account is locked (*) — no hash",
+    "User 'news': account is locked (*) — no hash",
+    "User 'uucp': account is locked (*) — no hash",
+    "User 'operator': account is locked (*) — no hash",
+    "User 'games': account is locked (*) — no hash",
+    "User 'gopher': account is locked (*) — no hash",
+    "User 'ftp': account is locked (*) — no hash",
+    "User 'nobody': account is locked (*) — no hash"
+  ]
+}

