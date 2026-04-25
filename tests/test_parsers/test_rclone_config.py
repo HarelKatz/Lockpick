@@ -68,3 +68,91 @@ def test_empty_file(metadata):
 def test_garbage(metadata):
     result = RcloneConfigParser().parse(b"not\nvalid ini\n[\n", metadata)
     assert isinstance(result.credentials_found, list)
+
+
+def test_swift_user_paired_as_username_not_password(metadata):
+    """swift `user` is the username — must be paired on the `key` credential,
+    NEVER emitted as a standalone password credential whose value is the username."""
+    content = (FIXTURES / "swift_remote.conf").read_bytes()
+    result = RcloneConfigParser().parse(content, metadata)
+
+    # Exactly one credential — the swift `key`
+    assert len(result.credentials_found) == 1
+    assert result.stats == {"credentials": 1}
+
+    cred = result.credentials_found[0]
+    assert cred.name == "rclone:swift_demo:key"
+    assert cred.value == "supersecret123"
+    assert cred.cred_type == "password"
+    assert cred.username == "swiftuser"
+
+    # Must NOT have leaked the username as a password value anywhere
+    assert all(c.value != "swiftuser" for c in result.credentials_found)
+
+
+def test_azureblob_account_paired_as_username(metadata):
+    """azureblob `account` is the storage-account username — paired, not a password."""
+    content = (FIXTURES / "azureblob_remote.conf").read_bytes()
+    result = RcloneConfigParser().parse(content, metadata)
+
+    assert len(result.credentials_found) == 1
+    assert result.stats == {"credentials": 1}
+
+    cred = result.credentials_found[0]
+    assert cred.name == "rclone:azure_demo:key"
+    assert cred.value == "azuresecretkey=="
+    assert cred.cred_type == "password"
+    assert cred.username == "azaccount"
+
+    assert all(c.value != "azaccount" for c in result.credentials_found)
+
+
+def test_b2_account_paired_as_username(metadata):
+    """b2 `account` is the account ID (username-like) — paired on the `key` cred."""
+    content = (FIXTURES / "b2_remote.conf").read_bytes()
+    result = RcloneConfigParser().parse(content, metadata)
+
+    assert len(result.credentials_found) == 1
+    assert result.stats == {"credentials": 1}
+
+    cred = result.credentials_found[0]
+    assert cred.name == "rclone:b2_demo:key"
+    assert cred.value == "b2applicationkey"
+    assert cred.cred_type == "password"
+    assert cred.username == "b2accountid"
+
+    assert all(c.value != "b2accountid" for c in result.credentials_found)
+
+
+def test_webdav_user_paired_as_username(metadata):
+    """webdav `user` is the username — paired on the `pass` cred."""
+    content = (FIXTURES / "webdav_remote.conf").read_bytes()
+    result = RcloneConfigParser().parse(content, metadata)
+
+    assert len(result.credentials_found) == 1
+    assert result.stats == {"credentials": 1}
+
+    cred = result.credentials_found[0]
+    assert cred.name == "rclone:webdav_demo:pass"
+    assert cred.value == "davpassword"
+    assert cred.cred_type == "password"
+    assert cred.username == "davuser"
+
+    assert all(c.value != "davuser" for c in result.credentials_found)
+
+
+def test_mega_user_paired_as_username(metadata):
+    """mega `user` is the username — paired on the `pass` cred."""
+    content = (FIXTURES / "mega_remote.conf").read_bytes()
+    result = RcloneConfigParser().parse(content, metadata)
+
+    assert len(result.credentials_found) == 1
+    assert result.stats == {"credentials": 1}
+
+    cred = result.credentials_found[0]
+    assert cred.name == "rclone:mega_demo:pass"
+    assert cred.value == "megapassword"
+    assert cred.cred_type == "password"
+    assert cred.username == "megauser@example.com"
+
+    assert all(c.value != "megauser@example.com" for c in result.credentials_found)
