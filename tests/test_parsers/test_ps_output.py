@@ -79,3 +79,23 @@ def test_empty_file():
     assert result.connections_found == []
     assert result.credentials_found == []
     assert result.stats == {"connections": 0, "credentials": 0}
+
+
+def test_ssh_copy_id_classified_as_ssh_copy_id():
+    """`ssh-copy-id` must be detected before `ssh` (longest-first alternation).
+
+    Regression: regex `\b(ssh|...|ssh-copy-id)\b` previously matched `ssh`
+    on `ssh-copy-id` cmdlines because `\b` matches between `h` and `-`,
+    yielding connection_type="ssh" instead of "ssh_copy_id".
+    """
+    content = (
+        b"USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND\n"
+        b"alice    12345  0.0  0.1  12345  6789 pts/0    S+   10:00   0:00 ssh-copy-id -i /home/alice/.ssh/id_rsa.pub root@10.0.0.5\n"
+    )
+    result = PsOutputParser().parse(content, _meta())
+    assert len(result.connections_found) == 1
+    conn = result.connections_found[0]
+    assert conn.connection_type == "ssh_copy_id"
+    assert conn.dst_ip == "10.0.0.5"
+    assert conn.dst_user == "root"
+    assert conn.src_user == "alice"

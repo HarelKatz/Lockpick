@@ -29,8 +29,11 @@ _PS_AUX_CMD_INDEX = 10
 _PS_EF_CMD_INDEX = 7
 
 # ssh-style commands.  We capture the user@host token if present.
+# Alternation is left-to-right and `\b` matches between `h` and `-`, so
+# `ssh-copy-id` must come before `ssh` (longest-first) — otherwise the
+# regex matches `ssh` and mis-classifies it as a plain ssh connection.
 _SSH_CMD_RE = re.compile(
-    r"\b(?P<tool>ssh|scp|rsync|sftp|ssh-copy-id)\b"
+    r"\b(?P<tool>ssh-copy-id|ssh|scp|rsync|sftp)\b"
 )
 # `user@host` or `host` after the ssh tool token.  We accept hostnames or IPs.
 _USER_HOST_RE = re.compile(
