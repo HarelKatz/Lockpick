@@ -11,6 +11,7 @@ from parsers.aws_config import AwsConfigParser
 from parsers.aws_credentials import AwsCredentialsParser
 from parsers.bash_history import BashHistoryParser
 from parsers.boto import BotoParser
+from parsers.docker_config import DockerConfigParser
 from parsers.env_file import EnvFileParser
 from parsers.etc_hosts import EtcHostsParser
 from parsers.gcloud_credentials import GcloudCredentialsParser
@@ -52,4 +53,5 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "gcloud_credentials": GcloudCredentialsParser,
     "kubeconfig": KubeconfigParser,
     "env_file": EnvFileParser,
+    "docker_config": DockerConfigParser,
 }
