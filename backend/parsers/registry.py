@@ -9,6 +9,7 @@ from parsers.arp_output import ArpParser
 from parsers.authorized_keys import AuthorizedKeysParser
 from parsers.auth_log import AuthLogParser
 from parsers.bash_history import BashHistoryParser
+from parsers.docker_ps import DockerPsParser
 from parsers.env_output import EnvOutputParser
 from parsers.etc_hosts import EtcHostsParser
 from parsers.ip_addr import IpAddrParser
@@ -54,4 +55,5 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "nftables": NftablesParser,
     "ps_output": PsOutputParser,
     "env_output": EnvOutputParser,
+    "docker_ps": DockerPsParser,
 }
