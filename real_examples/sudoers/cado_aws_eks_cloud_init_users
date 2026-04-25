@@ -1,0 +1,7 @@
+# Created by cloud-init v. 19.3-44.amzn2 on Mon, 28 Jun 2021 16:35:44 +0000
+
+# User rules for ec2-user
+ec2-user ALL=(ALL) NOPASSWD:ALL
+
+# User rules for ec2-user
+ec2-user ALL=(ALL) NOPASSWD:ALL

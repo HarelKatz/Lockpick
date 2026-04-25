@@ -1,0 +1,5 @@
+cd /etc/kubernetes/kubelet/
+vi kubelet-config.json 
+systemctl restart kubelet
+systemctl status kubelet
+exit

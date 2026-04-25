@@ -1,0 +1,214 @@
+Jul  7 12:15:37 ip-172-31-44-7 sshd[4182]: Server listening on 0.0.0.0 port 22.
+Jul  7 12:15:37 ip-172-31-44-7 sshd[4182]: Server listening on :: port 22.
+Jul  7 12:48:46 ip-172-31-44-7 sshd[27260]: Received disconnect from 82.157.1.250 port 33964:11: Bye Bye [preauth]
+Jul  7 12:48:46 ip-172-31-44-7 sshd[27260]: Disconnected from 82.157.1.250 port 33964 [preauth]
+Jul  7 12:49:31 ip-172-31-44-7 sshd[27818]: Received disconnect from 157.230.153.75 port 32780:11: Bye Bye [preauth]
+Jul  7 12:49:31 ip-172-31-44-7 sshd[27818]: Disconnected from 157.230.153.75 port 32780 [preauth]
+Jul  7 12:54:14 ip-172-31-44-7 sshd[30904]: Received disconnect from 49.232.194.141 port 60768:11: Bye Bye [preauth]
+Jul  7 12:54:14 ip-172-31-44-7 sshd[30904]: Disconnected from 49.232.194.141 port 60768 [preauth]
+Jul  7 12:56:02 ip-172-31-44-7 sshd[32119]: Received disconnect from 138.121.245.93 port 17114:11: Bye Bye [preauth]
+Jul  7 12:56:02 ip-172-31-44-7 sshd[32119]: Disconnected from 138.121.245.93 port 17114 [preauth]
+Jul  7 13:03:39 ip-172-31-44-7 sshd[4880]: Received disconnect from 2.45.185.2 port 53988:11: Bye Bye [preauth]
+Jul  7 13:03:39 ip-172-31-44-7 sshd[4880]: Disconnected from 2.45.185.2 port 53988 [preauth]
+Jul  7 13:10:23 ip-172-31-44-7 sshd[9404]: Did not receive identification string from 107.189.1.161 port 53762
+Jul  7 13:12:04 ip-172-31-44-7 sshd[10531]: Did not receive identification string from 205.185.125.109 port 46216
+Jul  7 13:12:13 ip-172-31-44-7 sshd[10603]: Invalid user user from 205.185.125.109 port 40176
+Jul  7 13:12:13 ip-172-31-44-7 sshd[10603]: input_userauth_request: invalid user user [preauth]
+Jul  7 13:12:13 ip-172-31-44-7 sshd[10603]: Received disconnect from 205.185.125.109 port 40176:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 13:12:13 ip-172-31-44-7 sshd[10603]: Disconnected from 205.185.125.109 port 40176 [preauth]
+Jul  7 13:12:38 ip-172-31-44-7 sshd[10894]: Invalid user user from 205.185.125.109 port 46748
+Jul  7 13:12:38 ip-172-31-44-7 sshd[10894]: input_userauth_request: invalid user user [preauth]
+Jul  7 13:12:38 ip-172-31-44-7 sshd[10894]: Received disconnect from 205.185.125.109 port 46748:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 13:12:38 ip-172-31-44-7 sshd[10894]: Disconnected from 205.185.125.109 port 46748 [preauth]
+Jul  7 13:13:02 ip-172-31-44-7 sshd[11170]: Invalid user user from 205.185.125.109 port 53416
+Jul  7 13:13:02 ip-172-31-44-7 sshd[11170]: input_userauth_request: invalid user user [preauth]
+Jul  7 13:13:02 ip-172-31-44-7 sshd[11170]: Received disconnect from 205.185.125.109 port 53416:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 13:13:02 ip-172-31-44-7 sshd[11170]: Disconnected from 205.185.125.109 port 53416 [preauth]
+Jul  7 13:13:26 ip-172-31-44-7 sshd[11453]: Invalid user user from 205.185.125.109 port 60056
+Jul  7 13:13:26 ip-172-31-44-7 sshd[11453]: input_userauth_request: invalid user user [preauth]
+Jul  7 13:13:26 ip-172-31-44-7 sshd[11453]: Received disconnect from 205.185.125.109 port 60056:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 13:13:26 ip-172-31-44-7 sshd[11453]: Disconnected from 205.185.125.109 port 60056 [preauth]
+Jul  7 13:13:50 ip-172-31-44-7 sshd[11724]: Invalid user user from 205.185.125.109 port 38470
+Jul  7 13:13:50 ip-172-31-44-7 sshd[11724]: input_userauth_request: invalid user user [preauth]
+Jul  7 13:13:50 ip-172-31-44-7 sshd[11724]: Received disconnect from 205.185.125.109 port 38470:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 13:13:50 ip-172-31-44-7 sshd[11724]: Disconnected from 205.185.125.109 port 38470 [preauth]
+Jul  7 13:24:10 ip-172-31-44-7 sshd[26293]: Received disconnect from 139.199.4.191 port 50572:11: Bye Bye [preauth]
+Jul  7 13:24:10 ip-172-31-44-7 sshd[26293]: Disconnected from 139.199.4.191 port 50572 [preauth]
+Jul  7 13:24:32 ip-172-31-44-7 sshd[26521]: Address 123.31.27.102 maps to static.vnpt.vn, but this does not map back to the address - POSSIBLE BREAK-IN ATTEMPT!
+Jul  7 13:24:32 ip-172-31-44-7 sshd[26521]: Received disconnect from 123.31.27.102 port 57410:11: Bye Bye [preauth]
+Jul  7 13:24:32 ip-172-31-44-7 sshd[26521]: Disconnected from 123.31.27.102 port 57410 [preauth]
+Jul  7 13:26:38 ip-172-31-44-7 sshd[27900]: Received disconnect from 129.204.131.218 port 59590:11: Bye Bye [preauth]
+Jul  7 13:26:38 ip-172-31-44-7 sshd[27900]: Disconnected from 129.204.131.218 port 59590 [preauth]
+Jul  7 13:31:04 ip-172-31-44-7 sshd[31000]: Received disconnect from 23.97.240.235 port 55912:11: Bye Bye [preauth]
+Jul  7 13:31:04 ip-172-31-44-7 sshd[31000]: Disconnected from 23.97.240.235 port 55912 [preauth]
+Jul  7 13:32:33 ip-172-31-44-7 sshd[31991]: Received disconnect from 102.164.248.235 port 46118:11: Bye Bye [preauth]
+Jul  7 13:32:33 ip-172-31-44-7 sshd[31991]: Disconnected from 102.164.248.235 port 46118 [preauth]
+Jul  7 13:36:39 ip-172-31-44-7 sshd[2262]: Received disconnect from 170.106.117.220 port 37122:11: Bye Bye [preauth]
+Jul  7 13:36:39 ip-172-31-44-7 sshd[2262]: Disconnected from 170.106.117.220 port 37122 [preauth]
+Jul  7 13:39:16 ip-172-31-44-7 sshd[4004]: Received disconnect from 47.52.157.249 port 52972:11: Bye Bye [preauth]
+Jul  7 13:39:16 ip-172-31-44-7 sshd[4004]: Disconnected from 47.52.157.249 port 52972 [preauth]
+Jul  7 13:51:15 ip-172-31-44-7 sshd[11906]: Invalid user ts from 1.234.58.166 port 38826
+Jul  7 13:51:15 ip-172-31-44-7 sshd[11906]: input_userauth_request: invalid user ts [preauth]
+Jul  7 13:51:15 ip-172-31-44-7 sshd[11906]: Received disconnect from 1.234.58.166 port 38826:11: Bye Bye [preauth]
+Jul  7 13:51:15 ip-172-31-44-7 sshd[11906]: Disconnected from 1.234.58.166 port 38826 [preauth]
+Jul  7 14:17:38 ip-172-31-44-7 sshd[29525]: Invalid user ftpuser from 45.120.216.93 port 48790
+Jul  7 14:17:38 ip-172-31-44-7 sshd[29525]: input_userauth_request: invalid user ftpuser [preauth]
+Jul  7 14:17:38 ip-172-31-44-7 sshd[29525]: Received disconnect from 45.120.216.93 port 48790:11: Bye Bye [preauth]
+Jul  7 14:17:38 ip-172-31-44-7 sshd[29525]: Disconnected from 45.120.216.93 port 48790 [preauth]
+Jul  7 14:18:51 ip-172-31-44-7 sshd[30338]: Received disconnect from 167.172.157.160 port 57344:11: Bye Bye [preauth]
+Jul  7 14:18:51 ip-172-31-44-7 sshd[30338]: Disconnected from 167.172.157.160 port 57344 [preauth]
+Jul  7 14:18:55 ip-172-31-44-7 sshd[30356]: Invalid user benson from 167.71.238.179 port 52784
+Jul  7 14:18:55 ip-172-31-44-7 sshd[30356]: input_userauth_request: invalid user benson [preauth]
+Jul  7 14:18:56 ip-172-31-44-7 sshd[30356]: Received disconnect from 167.71.238.179 port 52784:11: Bye Bye [preauth]
+Jul  7 14:18:56 ip-172-31-44-7 sshd[30356]: Disconnected from 167.71.238.179 port 52784 [preauth]
+Jul  7 14:20:43 ip-172-31-44-7 sshd[31544]: Received disconnect from 119.45.252.147 port 35016:11: Bye Bye [preauth]
+Jul  7 14:20:43 ip-172-31-44-7 sshd[31544]: Disconnected from 119.45.252.147 port 35016 [preauth]
+Jul  7 14:21:27 ip-172-31-44-7 sshd[32042]: Invalid user dm from 119.147.184.22 port 51007
+Jul  7 14:21:27 ip-172-31-44-7 sshd[32042]: input_userauth_request: invalid user dm [preauth]
+Jul  7 14:21:27 ip-172-31-44-7 sshd[32042]: Received disconnect from 119.147.184.22 port 51007:11: Bye Bye [preauth]
+Jul  7 14:21:27 ip-172-31-44-7 sshd[32042]: Disconnected from 119.147.184.22 port 51007 [preauth]
+Jul  7 14:29:48 ip-172-31-44-7 sshd[5231]: Did not receive identification string from 195.133.40.104 port 55286
+Jul  7 14:30:06 ip-172-31-44-7 sshd[5475]: Invalid user user from 195.133.40.104 port 46780
+Jul  7 14:30:06 ip-172-31-44-7 sshd[5475]: input_userauth_request: invalid user user [preauth]
+Jul  7 14:30:07 ip-172-31-44-7 sshd[5475]: Received disconnect from 195.133.40.104 port 46780:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 14:30:07 ip-172-31-44-7 sshd[5475]: Disconnected from 195.133.40.104 port 46780 [preauth]
+Jul  7 14:30:46 ip-172-31-44-7 sshd[5938]: Did not receive identification string from 45.61.185.207 port 43068
+Jul  7 14:43:53 ip-172-31-44-7 sshd[14633]: Did not receive identification string from 167.99.34.181 port 42720
+Jul  7 14:51:15 ip-172-31-44-7 sshd[19529]: Invalid user user from 167.99.34.181 port 42298
+Jul  7 14:51:15 ip-172-31-44-7 sshd[19529]: input_userauth_request: invalid user user [preauth]
+Jul  7 14:51:15 ip-172-31-44-7 sshd[19529]: Received disconnect from 167.99.34.181 port 42298:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 14:51:15 ip-172-31-44-7 sshd[19529]: Disconnected from 167.99.34.181 port 42298 [preauth]
+Jul  7 14:53:36 ip-172-31-44-7 sshd[21063]: Received disconnect from 212.64.27.53 port 37086:11: Bye Bye [preauth]
+Jul  7 14:53:36 ip-172-31-44-7 sshd[21063]: Disconnected from 212.64.27.53 port 37086 [preauth]
+Jul  7 14:54:20 ip-172-31-44-7 sshd[21600]: Invalid user user from 167.99.34.181 port 51136
+Jul  7 14:54:20 ip-172-31-44-7 sshd[21600]: input_userauth_request: invalid user user [preauth]
+Jul  7 14:54:21 ip-172-31-44-7 sshd[21600]: Received disconnect from 167.99.34.181 port 51136:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 14:54:21 ip-172-31-44-7 sshd[21600]: Disconnected from 167.99.34.181 port 51136 [preauth]
+Jul  7 14:57:27 ip-172-31-44-7 sshd[23647]: Invalid user user from 167.99.34.181 port 59984
+Jul  7 14:57:27 ip-172-31-44-7 sshd[23647]: input_userauth_request: invalid user user [preauth]
+Jul  7 14:57:27 ip-172-31-44-7 sshd[23647]: Received disconnect from 167.99.34.181 port 59984:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 14:57:27 ip-172-31-44-7 sshd[23647]: Disconnected from 167.99.34.181 port 59984 [preauth]
+Jul  7 15:00:30 ip-172-31-44-7 sshd[25680]: Invalid user user from 167.99.34.181 port 40988
+Jul  7 15:00:30 ip-172-31-44-7 sshd[25680]: input_userauth_request: invalid user user [preauth]
+Jul  7 15:00:30 ip-172-31-44-7 sshd[25680]: Received disconnect from 167.99.34.181 port 40988:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 15:00:30 ip-172-31-44-7 sshd[25680]: Disconnected from 167.99.34.181 port 40988 [preauth]
+Jul  7 15:01:03 ip-172-31-44-7 sshd[26015]: reverse mapping checking getaddrinfo for 5x3x6x82.static.ertelecom.ru [5.3.6.82] failed - POSSIBLE BREAK-IN ATTEMPT!
+Jul  7 15:01:03 ip-172-31-44-7 sshd[26015]: Received disconnect from 5.3.6.82 port 52494:11: Bye Bye [preauth]
+Jul  7 15:01:03 ip-172-31-44-7 sshd[26015]: Disconnected from 5.3.6.82 port 52494 [preauth]
+Jul  7 15:03:43 ip-172-31-44-7 sshd[27802]: reverse mapping checking getaddrinfo for jncjkup.website [117.50.37.35] failed - POSSIBLE BREAK-IN ATTEMPT!
+Jul  7 15:03:43 ip-172-31-44-7 sshd[27802]: Received disconnect from 117.50.37.35 port 58886:11: Bye Bye [preauth]
+Jul  7 15:03:43 ip-172-31-44-7 sshd[27802]: Disconnected from 117.50.37.35 port 58886 [preauth]
+Jul  7 15:03:46 ip-172-31-44-7 sshd[27849]: Invalid user user from 167.99.34.181 port 49554
+Jul  7 15:03:46 ip-172-31-44-7 sshd[27849]: input_userauth_request: invalid user user [preauth]
+Jul  7 15:03:47 ip-172-31-44-7 sshd[27849]: Received disconnect from 167.99.34.181 port 49554:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 15:03:47 ip-172-31-44-7 sshd[27849]: Disconnected from 167.99.34.181 port 49554 [preauth]
+Jul  7 15:06:53 ip-172-31-44-7 sshd[29919]: Invalid user user from 167.99.34.181 port 58214
+Jul  7 15:06:53 ip-172-31-44-7 sshd[29919]: input_userauth_request: invalid user user [preauth]
+Jul  7 15:06:53 ip-172-31-44-7 sshd[29919]: Received disconnect from 167.99.34.181 port 58214:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 15:06:53 ip-172-31-44-7 sshd[29919]: Disconnected from 167.99.34.181 port 58214 [preauth]
+Jul  7 15:09:50 ip-172-31-44-7 sshd[31866]: Invalid user user from 167.99.34.181 port 38778
+Jul  7 15:09:50 ip-172-31-44-7 sshd[31866]: input_userauth_request: invalid user user [preauth]
+Jul  7 15:09:50 ip-172-31-44-7 sshd[31866]: Received disconnect from 167.99.34.181 port 38778:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 15:09:50 ip-172-31-44-7 sshd[31866]: Disconnected from 167.99.34.181 port 38778 [preauth]
+Jul  7 15:10:59 ip-172-31-44-7 sshd[32648]: Did not receive identification string from 74.201.28.120 port 36438
+Jul  7 15:12:47 ip-172-31-44-7 sshd[1389]: Invalid user user from 167.99.34.181 port 47688
+Jul  7 15:12:47 ip-172-31-44-7 sshd[1389]: input_userauth_request: invalid user user [preauth]
+Jul  7 15:12:47 ip-172-31-44-7 sshd[1389]: Received disconnect from 167.99.34.181 port 47688:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 15:12:47 ip-172-31-44-7 sshd[1389]: Disconnected from 167.99.34.181 port 47688 [preauth]
+Jul  7 15:15:39 ip-172-31-44-7 sshd[3328]: Invalid user user from 167.99.34.181 port 56572
+Jul  7 15:15:39 ip-172-31-44-7 sshd[3328]: input_userauth_request: invalid user user [preauth]
+Jul  7 15:15:39 ip-172-31-44-7 sshd[3328]: Received disconnect from 167.99.34.181 port 56572:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 15:15:39 ip-172-31-44-7 sshd[3328]: Disconnected from 167.99.34.181 port 56572 [preauth]
+Jul  7 15:17:42 ip-172-31-44-7 sshd[4743]: Address 74.201.28.120 maps to einem.impactflower.com, but this does not map back to the address - POSSIBLE BREAK-IN ATTEMPT!
+Jul  7 15:17:42 ip-172-31-44-7 sshd[4743]: Invalid user user from 74.201.28.120 port 42902
+Jul  7 15:17:42 ip-172-31-44-7 sshd[4743]: input_userauth_request: invalid user user [preauth]
+Jul  7 15:17:42 ip-172-31-44-7 sshd[4743]: Received disconnect from 74.201.28.120 port 42902:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 15:17:42 ip-172-31-44-7 sshd[4743]: Disconnected from 74.201.28.120 port 42902 [preauth]
+Jul  7 15:18:42 ip-172-31-44-7 sshd[5465]: Invalid user user from 167.99.34.181 port 37326
+Jul  7 15:18:42 ip-172-31-44-7 sshd[5465]: input_userauth_request: invalid user user [preauth]
+Jul  7 15:18:42 ip-172-31-44-7 sshd[5465]: Received disconnect from 167.99.34.181 port 37326:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 15:18:42 ip-172-31-44-7 sshd[5465]: Disconnected from 167.99.34.181 port 37326 [preauth]
+Jul  7 15:19:42 ip-172-31-44-7 sshd[6145]: Did not receive identification string from 209.141.42.147 port 42194
+Jul  7 15:21:33 ip-172-31-44-7 sshd[7366]: Invalid user user from 167.99.34.181 port 45976
+Jul  7 15:21:33 ip-172-31-44-7 sshd[7366]: input_userauth_request: invalid user user [preauth]
+Jul  7 15:21:34 ip-172-31-44-7 sshd[7366]: Received disconnect from 167.99.34.181 port 45976:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 15:21:34 ip-172-31-44-7 sshd[7366]: Disconnected from 167.99.34.181 port 45976 [preauth]
+Jul  7 15:23:05 ip-172-31-44-7 sshd[8357]: Invalid user user from 167.99.34.181 port 54780
+Jul  7 15:23:05 ip-172-31-44-7 sshd[8357]: input_userauth_request: invalid user user [preauth]
+Jul  7 15:23:05 ip-172-31-44-7 sshd[8357]: Received disconnect from 167.99.34.181 port 54780:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 15:23:05 ip-172-31-44-7 sshd[8357]: Disconnected from 167.99.34.181 port 54780 [preauth]
+Jul  7 15:24:37 ip-172-31-44-7 sshd[9386]: Invalid user user from 167.99.34.181 port 35410
+Jul  7 15:24:37 ip-172-31-44-7 sshd[9386]: input_userauth_request: invalid user user [preauth]
+Jul  7 15:24:37 ip-172-31-44-7 sshd[9386]: Received disconnect from 167.99.34.181 port 35410:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 15:24:37 ip-172-31-44-7 sshd[9386]: Disconnected from 167.99.34.181 port 35410 [preauth]
+Jul  7 15:26:07 ip-172-31-44-7 sshd[10411]: Received disconnect from 118.27.19.198 port 57874:11: Bye Bye [preauth]
+Jul  7 15:26:07 ip-172-31-44-7 sshd[10411]: Disconnected from 118.27.19.198 port 57874 [preauth]
+Jul  7 15:26:17 ip-172-31-44-7 sshd[10552]: Did not receive identification string from 195.133.40.104 port 54302
+Jul  7 15:26:49 ip-172-31-44-7 sshd[10914]: Invalid user user from 195.133.40.104 port 42272
+Jul  7 15:26:49 ip-172-31-44-7 sshd[10914]: input_userauth_request: invalid user user [preauth]
+Jul  7 15:26:50 ip-172-31-44-7 sshd[10914]: Received disconnect from 195.133.40.104 port 42272:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 15:26:50 ip-172-31-44-7 sshd[10914]: Disconnected from 195.133.40.104 port 42272 [preauth]
+Jul  7 15:27:35 ip-172-31-44-7 sshd[11399]: Received disconnect from 51.222.9.219 port 59596:11: Bye Bye [preauth]
+Jul  7 15:27:35 ip-172-31-44-7 sshd[11399]: Disconnected from 51.222.9.219 port 59596 [preauth]
+Jul  7 15:28:28 ip-172-31-44-7 sshd[12020]: Did not receive identification string from 45.35.130.62 port 45885
+Jul  7 15:32:30 ip-172-31-44-7 sshd[14638]: Received disconnect from 121.5.197.248 port 53416:11: Bye Bye [preauth]
+Jul  7 15:32:30 ip-172-31-44-7 sshd[14638]: Disconnected from 121.5.197.248 port 53416 [preauth]
+Jul  7 15:35:20 ip-172-31-44-7 sshd[16500]: Received disconnect from 106.52.38.68 port 34440:11: Bye Bye [preauth]
+Jul  7 15:35:20 ip-172-31-44-7 sshd[16500]: Disconnected from 106.52.38.68 port 34440 [preauth]
+Jul  7 15:36:12 ip-172-31-44-7 sshd[17126]: Received disconnect from 47.157.232.199 port 51332:11: Bye Bye [preauth]
+Jul  7 15:36:12 ip-172-31-44-7 sshd[17126]: Disconnected from 47.157.232.199 port 51332 [preauth]
+Jul  7 15:53:06 ip-172-31-44-7 sshd[28242]: Received disconnect from 106.75.10.157 port 41252:11: Bye Bye [preauth]
+Jul  7 15:53:06 ip-172-31-44-7 sshd[28242]: Disconnected from 106.75.10.157 port 41252 [preauth]
+Jul  7 15:53:28 ip-172-31-44-7 sshd[28354]: Connection closed by 162.142.125.56 port 42614 [preauth]
+Jul  7 16:03:27 ip-172-31-44-7 sshd[2710]: Invalid user techuser from 42.193.183.121 port 43170
+Jul  7 16:03:27 ip-172-31-44-7 sshd[2710]: input_userauth_request: invalid user techuser [preauth]
+Jul  7 16:03:27 ip-172-31-44-7 sshd[2710]: Received disconnect from 42.193.183.121 port 43170:11: Bye Bye [preauth]
+Jul  7 16:03:27 ip-172-31-44-7 sshd[2710]: Disconnected from 42.193.183.121 port 43170 [preauth]
+Jul  7 16:06:22 ip-172-31-44-7 sshd[4808]: Did not receive identification string from 141.98.10.29 port 36710
+Jul  7 16:06:33 ip-172-31-44-7 sshd[4919]: Invalid user user from 141.98.10.29 port 59514
+Jul  7 16:06:33 ip-172-31-44-7 sshd[4919]: input_userauth_request: invalid user user [preauth]
+Jul  7 16:06:34 ip-172-31-44-7 sshd[4919]: Received disconnect from 141.98.10.29 port 59514:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 16:06:34 ip-172-31-44-7 sshd[4919]: Disconnected from 141.98.10.29 port 59514 [preauth]
+Jul  7 16:06:44 ip-172-31-44-7 sshd[5060]: Invalid user user from 141.98.10.29 port 60008
+Jul  7 16:06:44 ip-172-31-44-7 sshd[5060]: input_userauth_request: invalid user user [preauth]
+Jul  7 16:06:44 ip-172-31-44-7 sshd[5060]: Received disconnect from 141.98.10.29 port 60008:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 16:06:44 ip-172-31-44-7 sshd[5060]: Disconnected from 141.98.10.29 port 60008 [preauth]
+Jul  7 16:06:55 ip-172-31-44-7 sshd[5183]: Invalid user user from 141.98.10.29 port 60516
+Jul  7 16:06:55 ip-172-31-44-7 sshd[5183]: input_userauth_request: invalid user user [preauth]
+Jul  7 16:06:55 ip-172-31-44-7 sshd[5183]: Received disconnect from 141.98.10.29 port 60516:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 16:06:55 ip-172-31-44-7 sshd[5183]: Disconnected from 141.98.10.29 port 60516 [preauth]
+Jul  7 16:10:41 ip-172-31-44-7 sshd[7614]: Received disconnect from 114.69.249.194 port 33265:11: Bye Bye [preauth]
+Jul  7 16:10:41 ip-172-31-44-7 sshd[7614]: Disconnected from 114.69.249.194 port 33265 [preauth]
+Jul  7 16:30:31 ip-172-31-44-7 sshd[20847]: Received disconnect from 121.204.156.100 port 56870:11: Bye Bye [preauth]
+Jul  7 16:30:31 ip-172-31-44-7 sshd[20847]: Disconnected from 121.204.156.100 port 56870 [preauth]
+Jul  7 16:35:56 ip-172-31-44-7 sshd[24423]: error: AuthorizedKeysCommand /opt/aws/bin/eic_run_authorized_keys ec2-user SHA256:EqRlNJX4cexDXMm/TlJ4bJW4x8gElgCrD1j6ptMlBTc failed, status 22
+Jul  7 16:35:56 ip-172-31-44-7 sshd[24423]: Accepted publickey for ec2-user from 172.31.3.135 port 41984 ssh2: RSA SHA256:EqRlNJX4cexDXMm/TlJ4bJW4x8gElgCrD1j6ptMlBTc
+Jul  7 16:35:56 ip-172-31-44-7 sshd[24423]: pam_unix(sshd:session): session opened for user ec2-user by (uid=0)
+Jul  7 16:35:59 ip-172-31-44-7 sudo: ec2-user : TTY=pts/0 ; PWD=/home/ec2-user ; USER=root ; COMMAND=/bin/su
+Jul  7 16:35:59 ip-172-31-44-7 sudo: pam_unix(sudo:session): session opened for user root by ec2-user(uid=0)
+Jul  7 16:35:59 ip-172-31-44-7 su: pam_unix(su:session): session opened for user root by ec2-user(uid=0)
+Jul  7 16:36:02 ip-172-31-44-7 sshd[24570]: Did not receive identification string from 111.19.171.174 port 54138
+Jul  7 16:36:10 ip-172-31-44-7 sshd[24571]: Connection closed by 111.19.171.174 port 54480 [preauth]
+Jul  7 16:38:33 ip-172-31-44-7 su: pam_unix(su:session): session closed for user root
+Jul  7 16:38:33 ip-172-31-44-7 sudo: pam_unix(sudo:session): session closed for user root
+Jul  7 16:47:25 ip-172-31-44-7 sshd[24483]: Received disconnect from 172.31.3.135 port 41984:11: disconnected by user
+Jul  7 16:47:25 ip-172-31-44-7 sshd[24483]: Disconnected from 172.31.3.135 port 41984
+Jul  7 16:47:25 ip-172-31-44-7 sshd[24423]: pam_unix(sshd:session): session closed for user ec2-user
+Jul  7 16:50:44 ip-172-31-44-7 sshd[2197]: Did not receive identification string from 195.133.40.104 port 56598
+Jul  7 16:51:20 ip-172-31-44-7 sshd[2631]: Invalid user user from 195.133.40.104 port 47728
+Jul  7 16:51:20 ip-172-31-44-7 sshd[2631]: input_userauth_request: invalid user user [preauth]
+Jul  7 16:51:20 ip-172-31-44-7 sshd[2631]: Received disconnect from 195.133.40.104 port 47728:11: Normal Shutdown, Thank you for playing [preauth]
+Jul  7 16:51:20 ip-172-31-44-7 sshd[2631]: Disconnected from 195.133.40.104 port 47728 [preauth]
+Jul  7 17:04:36 ip-172-31-44-7 sshd[12181]: error: AuthorizedKeysCommand /opt/aws/bin/eic_run_authorized_keys root SHA256:vOXRNDL81KRnPckyfgXT7POjxWnKrvLbvgRPYxqbRhs failed, status 22
+Jul  7 17:04:36 ip-172-31-44-7 sshd[12181]: error: AuthorizedKeysCommand /opt/aws/bin/eic_run_authorized_keys root SHA256:vOXRNDL81KRnPckyfgXT7POjxWnKrvLbvgRPYxqbRhs failed, status 22
+Jul  7 17:04:36 ip-172-31-44-7 sshd[12181]: Accepted publickey for root from 3.81.123.81 port 54736 ssh2: RSA SHA256:vOXRNDL81KRnPckyfgXT7POjxWnKrvLbvgRPYxqbRhs
+Jul  7 17:04:36 ip-172-31-44-7 sshd[12181]: pam_unix(sshd:session): session opened for user root by (uid=0)
+Jul  7 17:13:29 ip-172-31-44-7 sshd[18754]: Did not receive identification string from 209.141.61.31 port 39680
+Jul  7 17:13:53 ip-172-31-44-7 sshd[19012]: reverse mapping checking getaddrinfo for 92x255x195x14.static-customer.kzn.ertelecom.ru [92.255.195.14] failed - POSSIBLE BREAK-IN ATTEMPT!
+Jul  7 17:13:53 ip-172-31-44-7 sshd[19012]: Invalid user pi from 92.255.195.14 port 57452
+Jul  7 17:13:53 ip-172-31-44-7 sshd[19012]: input_userauth_request: invalid user pi [preauth]
+Jul  7 17:13:53 ip-172-31-44-7 sshd[19012]: Connection closed by 92.255.195.14 port 57452 [preauth]
+Jul  7 17:13:53 ip-172-31-44-7 sshd[19014]: reverse mapping checking getaddrinfo for 92x255x195x14.static-customer.kzn.ertelecom.ru [92.255.195.14] failed - POSSIBLE BREAK-IN ATTEMPT!
+Jul  7 17:13:53 ip-172-31-44-7 sshd[19014]: Invalid user pi from 92.255.195.14 port 57468
+Jul  7 17:13:53 ip-172-31-44-7 sshd[19014]: input_userauth_request: invalid user pi [preauth]
+Jul  7 17:13:53 ip-172-31-44-7 sshd[19014]: Connection closed by 92.255.195.14 port 57468 [preauth]

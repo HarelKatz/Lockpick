@@ -1,0 +1,29 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "public_key",
+      "name": "authorized_key from cado_aws_eks_root_with_attacker_kali",
+      "relationship_type": "authorized_key",
+      "username": null,
+      "value_length": 387,
+      "value_prefix": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCR"
+    },
+    {
+      "cred_type": "public_key",
+      "name": "authorized_key from cado_aws_eks_root_with_attacker_kali",
+      "relationship_type": "authorized_key",
+      "username": null,
+      "value_length": 562,
+      "value_prefix": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDT"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "keys_parsed": 2
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

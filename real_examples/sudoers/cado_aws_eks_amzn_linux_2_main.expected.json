@@ -1,0 +1,29 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "rules": 2
+  },
+  "sudo_rules_found": [
+    {
+      "commands": "ALL",
+      "nopasswd": false,
+      "raw_line": "root\tALL=(ALL) \tALL",
+      "run_as": "ALL",
+      "subject": "root",
+      "subject_type": "user"
+    },
+    {
+      "commands": "ALL",
+      "nopasswd": false,
+      "raw_line": "%wheel\tALL=(ALL)\tALL",
+      "run_as": "ALL",
+      "subject": "wheel",
+      "subject_type": "group"
+    }
+  ],
+  "warnings": []
+}
