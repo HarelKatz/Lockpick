@@ -17,20 +17,21 @@ Organized by `file_type` (matching `backend/parsers/registry.py` keys).
 - `lastlog_audit_compromised` — franckferman/LastLog-Audit `samples/compromised.auth.log` (realistic red-team scenario)
 - `masterparser_example` — securityjoes/MasterParser `01-Logs/MasterParser-Example-auth.log`
 
-### `authorized_keys/` — 5 files
+### `authorized_keys/` — 6 files
 - `authorized_keys` — original (pre-existing)
 - `saltstack_integration_command_prefix` — saltstack/salt `tests/integration/files/ssh/authorized_keys` (single entry with `command="..."` option prefix — important edge case)
 - `saltstack_git_pillar_user` — saltstack/salt `tests/integration/files/file/base/git_pillar/ssh/user/files/authorized_keys`
 - `outlaw_attacker_dropped` — IOC from Outlaw/Shellbot malware campaign (`mdrfckr` comment), extracted from the 2024 Cowrie honeypot session `85c6efc6d102`. This is the actual key attackers drop into victims' `~/.ssh/authorized_keys` after gaining access — useful for blue-team detection testing.
 - `puttygen_attacker_immutable` — IOC from a separate 2024 Cowrie attacker (session `0790cce5c223`, `honeypot-japan`, src 94.103.125.37). Distinct from `outlaw_attacker_dropped`: PuTTYgen-format key (`AAAAB3NzaC1yc2EAAAADAQABAAABAQ...`, comment `rsa-key-20230629`), and the dropping operator follows it with `chattr +ai ~/.ssh/authorized_keys` to make the file append-only AND immutable — defeating naive cleanup. Useful for testing parsers against PuTTY-format keys (different MPI encoding than OpenSSH-generated `AAAAB3NzaC1yc2EAAAABJQ...`).
+- `ethos_miner_attacker_dropped` — IOC from a 2020 Cowrie attacker targeting EthOS cryptomining rigs (sweetie-data session `382575d10851`, src 80.229.157.225, login as `user`). Distinct from the other two attacker keys: no comment field, key is appended (not replacing the file), the campaign reads `claymore.stub.conf` / `claymore-zcash.stub.conf` / `sgminer.conf` afterward to steal mining wallet addresses. Companion bash_history fixture: `cowrie_2020_ethos_miner_recon_382575d1`.
 
-### `bash_history/` — 11 files
+### `bash_history/` — 14 files
 
 Benign / numbered-history variant (2):
 - `jc_ubuntu_18_04_history`, `jc_centos_7_7_history` — kellyjonbrazil/jc `tests/fixtures/{ubuntu-18.04,centos-7.7}/history.out`
   > These are the OUTPUT of the `history` shell builtin (numbered lines), not raw `~/.bash_history` files. The parser's regex tolerates both formats.
 
-Real attacker sessions from Cowrie honeypots (9, one per distinct attack pattern):
+Real attacker sessions from Cowrie honeypots (12, one per distinct attack pattern):
 - `cowrie_2020_03_cc95d998` — jasonmpittman/cowrie-log-analyzer `import/cowrie.json.2020-03-19` (Mirai-style wget/curl/chmod+x payload delivery)
 - `cowrie_2024_za_sensor_0bb8edce` — EfeEmirYuce/Cowrie-Honeypot-Log-Analysis-Engine `logs/cowrie_1.json` (busybox-recon `/dev/shm` staging pattern)
 - `cowrie_2024_za_sensor_491748bb` — same repo, `logs/cowrie_1.json` (MikroTik/IoT fingerprint: `ip cloud print`, `ifconfig`, crypto-miner hunt via `ps | grep [Mm]iner`, smsd/qmuxd file probes)
@@ -40,6 +41,9 @@ Real attacker sessions from Cowrie honeypots (9, one per distinct attack pattern
 - `cowrie_2024_dusk_loader_0f6ad91b` — `logs/cowrie_5.json`, `honeypot-japan`, src 45.125.66.24 (multi-protocol DUSK-family loader: `wget … && tftp -c get && tftp -r -g && ftpget -v -u anonymous` from `185.193.127.129` — chains four transfer protocols in a single `cd /var/run || cd /mnt || cd /root` fallback. Useful for parsers that need to recognize legacy `tftp`/`ftpget` invocations alongside HTTP)
 - `cowrie_2024_puttykey_immutable_0790cce5` — `logs/cowrie_5.json`, `honeypot-japan`, src 94.103.125.37 (different operator from `cowrie_2024_outlaw_85c6efc6`: SCP-drops `clean.sh` + `setup.sh`, then writes a PuTTYgen-format key with `chattr +ai ~/.ssh/authorized_keys` to make it append-only-AND-immutable, finally signals `\x61\x75\x74\x68\x5F\x6F\x6B` ("auth_ok") to its C2. Companion key fixture: `authorized_keys/puttygen_attacker_immutable`)
 - `cowrie_2024_perl_hexip_0281d6fd` — `logs/cowrie_3.json`, `honeypot-australia`, src 59.110.170.68 (Perl-based "dred" loader using hex-encoded URL `http://0x2763da4e/dred` (= 39.99.218.78), preceded by `lspci | grep -i 'vga\|3d\|2d'` GPU probe — distinctive because the entire payload is a single piped Perl script, not an ELF binary)
+- `cowrie_2020_fbot_inline_elf_15a8724b` — 0xsha/sweetie-data `cowrie/log/cowrie.json.2.gz`, sensor `0cd5699635eb`, src 196.61.36.162 (Mirai-FBOT family, 59 commands, 10 KB. Distinct technique: 16-directory filesystem-write-permission probe (`>/tmp/t && cd /tmp/ && >retrieve` repeated for `/var`, `/dev`, `/mnt`, `/var/run`, `/var/tmp`, `/`, `/dev/netslink`, `/dev/shm`, `/bin`, `/etc`, `/boot`, `/usr`, `/sys`), then **builds an ELF binary inline** by piping raw bytes via repeated `/bin/busybox echo -en '\xHH\xHH...' >> retrieve` with `\x45\x43\x48\x4f\x44\x4f\x4e\x45` ("ECHODONE") sync markers between chunks — the entire MIPS binary is reconstructed from the SSH input stream)
+- `cowrie_2020_outlaw_rsync_dropper_fd851f08` — same repo, `cowrie/log/cowrie.json.17.gz`, sensor `23ae0a6c5937`, src 188.254.0.226, login as `hjd` (Outlaw/Shellbot full kill chain — distinct from the partial post-pwn capture in `cowrie_2024_outlaw_85c6efc6`. Adds: interactive `passwd` rotation with the `Enter new UNIX password:` prompt, `.var03522123` filesystem-write capability probe, `up.txt` IP target list (`hjd 123456`), competitor cleanup (`rm -rf /var/tmp/dota*`), and a base64-encoded bash payload that decodes to `cd /tmp; rm -rf .X1{3,7,9}-unix; mkdir .X19-unix; tar xf /var/tmp/dota3.tar.gz; nohup /tmp/.X19-unix/.rsync/c/tsm -t 150 -p 22 -i 0 /tmp/up.txt 192.168` — the actual Outlaw rsync/DOTA SSH brute-force scanner deployment, which `cowrie_2024_outlaw_85c6efc6` does not capture)
+- `cowrie_2020_ethos_miner_recon_382575d1` — same repo, `cowrie/log/cowrie.json.17.gz`, sensor `23ae0a6c5937`, src 80.229.157.225, login as `user` (cryptomining-rig-targeting bot, single-line one-shot 1.7 KB. Distinct target: not generic Linux/IoT but **EthOS** mining-OS rigs specifically — reads `/home/ethos/{local,remote}.conf`, `/home/ethos/claymore{,-zcash}.stub.conf`, `/var/run/ethos/sgminer.conf` to extract wallet addresses. Distinctive automation marker: XML-style output tags `<cmd7uname>...</cmd7uname>` etc, suggesting downstream automated parsing. Drops attacker key into `/home/user/.ssh/authorized_keys` — companion fixture: `authorized_keys/ethos_miner_attacker_dropped`)
   > Extracted, not synthesized: each file is the verbatim `input` fields from every `cowrie.command.input` event in a single attacker session, one command per line. Canonical `.bash_history` format containing real attacker commands.
   > Round 4 removed 3 near-duplicate sessions: `cowrie_2020_03_25938f9d` (differed from cc95d998 by 1 IP+filename token — same Mirai loader campaign) and `cowrie_2024_za_sensor_{40308dc3,c6f9f3c5}` (same busybox-recon pattern as 0bb8edce, differing only in the random busybox marker token).
 
@@ -334,6 +338,7 @@ These gaps are genuine — either the file is private by convention (history fil
 - [cowrie/cowrie](https://github.com/cowrie/cowrie) — BSD — honeypot `honeyfs/etc/passwd` + `shadow` (fake but realistic)
 - [jasonmpittman/cowrie-log-analyzer](https://github.com/jasonmpittman/cowrie-log-analyzer) — real March 2020 Cowrie attacker session JSON (extracted to `bash_history/cowrie_2020_*`)
 - [EfeEmirYuce/Cowrie-Honeypot-Log-Analysis-Engine](https://github.com/EfeEmirYuce/Cowrie-Honeypot-Log-Analysis-Engine) — ~130 MB of 2024 Cowrie JSON logs from a South Africa sensor (selected sessions extracted to `bash_history/cowrie_2024_*`)
+- [0xsha/sweetie-data](https://github.com/0xsha/sweetie-data) — MIT — multi-honeypot capture covering Dec 2019–Feb 2020 (~2.9 GB cowrie JSON across 105 daily logs); selected attacker sessions extracted to `bash_history/cowrie_2020_*` and `authorized_keys/ethos_miner_*`
 - [canonical/netplan](https://github.com/canonical/netplan) — GPL-3.0 — network YAML examples
 - [sudo-project/sudo](https://github.com/sudo-project/sudo) — ISC — upstream sudoers example
 - [endlessm/base-passwd](https://github.com/endlessm/base-passwd) — GPL-2.0 — Debian passwd.master

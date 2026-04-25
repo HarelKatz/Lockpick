@@ -1,0 +1,21 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "public_key",
+      "name": "authorized_key from ethos_miner_attacker_dropped",
+      "relationship_type": "authorized_key",
+      "username": null,
+      "value_length": 380,
+      "value_prefix": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC6"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "keys_parsed": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}
