@@ -1,0 +1,8 @@
+: 1700000000:0;ls -la
+: 1700000010:0;ssh root@10.0.0.5
+: 1700000020:0;scp file.txt admin@backup.example.com:/tmp/
+: 1700000030:0;cat /etc/passwd
+: 1700000040:0;ssh -p 2222 ops@jumpbox.corp
+: 1700000050:5;rsync -av /data/ user@archive.example.com:/backup/ \
+&& echo "done"
+: 1700000100:0;echo "hello"
