@@ -14,7 +14,7 @@ A web-based tool for red teams to collaboratively organize SSH credentials, host
 
 > **Edit rules:** ≤5 lines. Last completed · Next · Any blocker. Nothing else — detail belongs in commit messages.
 
-**Last completed: Phases 1–18 — full stack, parsers (SSH evidence, system files, command output, secret/credential files), WS live push, host notes, status enum, addr_type, SudoRule, one-click collection script + bulk archive import, host merge (auto + manual)**
+**Last completed: Phases 1–15 — full stack, 14 parsers, WS live push, host notes, status enum, addr_type, SudoRule, one-click collection script + bulk archive import, host merge (auto + manual) with conflict-resolution UI; this branch adds Phase 18 (Secret & Credential File Parsers).**
 
 **Next: Phase 19 — Engagement Report Export**
 
@@ -70,9 +70,11 @@ AGENT.md is the project roadmap and architecture reference — the current sourc
 
 > Detail tracks imminence: the next phase gets a full spec, 1–2 phases out get a short summary + invariants, and anything further is a one-liner heading. Expand a phase when it becomes next.
 
-### Phases 1–18 — Complete
+### Phases 1–15 + 18 — Complete
 
-Full stack built and tested: CRUD APIs, graph visualization, file upload + parser registry, BFS pivot analysis, global search, export/import, activity log, operational command generation, WS live push, host notes, Host.status enum, HostIP addr_type, SudoRule table with sudoers CRUD; one-click collection via bash snapshot script + bulk archive import; host merge (atomic relation-mover with HostIP/CredentialLink dedup, structured `merge_candidates` per-file response field, manual merge dialog, and auto-merge of unresolved placeholder hosts on alias conflict). Parser coverage: SSH evidence (authorized_keys, known_hosts, ssh_config, sshd_config, private/public keys, auth.log, wtmp, bash_history, /etc/passwd, /etc/shadow, /etc/hosts, sudoers, nmap XML); system files (RHEL/CentOS log aliases, lastlog/last, bash/zsh/fish histories, network configs); command output (ip/arp/netstat/ss, iptables/nftables, ps/env, docker/kubectl); secret/credential files (`netrc`, `pgpass`, MySQL `.my.cnf`, AWS `config`/`credentials`, `boto`, GCP ADC `gcloud_credentials`, `kubeconfig` token + decoded base64 client-key, `.env` aggressive secret harvest, Docker registry auth via `~/.docker/config.json`, `.git-credentials`, rclone) — all emitted as `CredentialData` with `cred_type=password` (or `private_key` for actual PEM keys).
+Full stack built and tested: CRUD APIs, graph visualization, file upload + 14 parsers (8 original + nmap_xml, shadow, sshd_config, etc_hosts, sudoers, public_key alias), BFS pivot analysis, global search, export/import, activity log, operational command generation, WS live push, host notes, Host.status enum, HostIP addr_type, SudoRule table with sudoers CRUD; one-click collection via bash snapshot script + bulk archive import; host merge (atomic relation-mover with HostIP/CredentialLink dedup, structured `merge_candidates` per-file response field, manual merge dialog, and auto-merge of unresolved placeholder hosts on alias conflict).
+
+**Phase 18 (this branch):** Secret/credential file parsers for `netrc`, `pgpass`, `mysql_config`, AWS (`config`/`credentials`/`boto`), GCP ADC (`gcloud_credentials`), `kubeconfig` (token + decoded client-key), `.env` aggressive secret harvest, Docker registry auth (`docker_config`), `.git-credentials`, and rclone — all emitted as `CredentialData` (cred_type=password or private_key for actual keys).
 
 ---
 
