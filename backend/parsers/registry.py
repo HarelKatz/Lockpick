@@ -12,6 +12,7 @@ from parsers.aws_credentials import AwsCredentialsParser
 from parsers.bash_history import BashHistoryParser
 from parsers.boto import BotoParser
 from parsers.etc_hosts import EtcHostsParser
+from parsers.gcloud_credentials import GcloudCredentialsParser
 from parsers.known_hosts import KnownHostsParser
 from parsers.mysql_config import MysqlConfigParser
 from parsers.netrc import NetrcParser
@@ -46,4 +47,5 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "aws_config": AwsConfigParser,
     "aws_credentials": AwsCredentialsParser,
     "boto": BotoParser,
+    "gcloud_credentials": GcloudCredentialsParser,
 }
