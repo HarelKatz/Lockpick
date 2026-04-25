@@ -1,0 +1,19 @@
+# False-positive cases for the SSH command finder. Only the real `ssh
+# user@example.com` line and the `sshpass ... ssh user@host` line should
+# emit a connection. The rest must NOT emit anything.
+
+# Key management — should NOT match
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519
+ssh-add ~/.ssh/id_rsa
+ssh-agent bash
+ssh-keyscan -t ed25519 example.com
+ssh-import-id gh:someuser
+
+# String containing the literal word "ssh" — should NOT match
+echo "running ssh tunnel"
+
+# sshpass wrapping a real ssh — exactly ONE connection (to `host`).
+sshpass -p secret ssh user@host
+
+# A real ssh — exactly ONE connection (to `example.com`).
+ssh user@example.com

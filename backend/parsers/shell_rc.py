@@ -28,7 +28,85 @@ from parsers import (
 
 # An ssh-family command keyword sitting at a word boundary. Used to chunk a
 # line into invocations; the rest of each chunk is parsed for `[user@]host`.
+# NOTE: this regex by itself is not enough — `\b` matches between `h` and `-`
+# in `ssh-keygen`/`ssh-add`, and unrelated words can satisfy `\b` boundaries
+# too. Each match must be validated by `_is_real_cmd_match()` below.
 _SSH_CMD_RE = re.compile(r"\b(?P<cmd>ssh-copy-id|ssh|scp|rsync|sftp)\b")
+
+# Characters that are valid immediately before an ssh-family command keyword:
+# start-of-line, whitespace, or a shell separator/quote/assignment. Anything
+# else (e.g. inside an unrelated word like `xssh` or `myssh`) is a false hit.
+_VALID_PREFIX_CHARS = frozenset(" \t=\"'`(;&|!")
+# Characters that, if they appear immediately AFTER the matched keyword,
+# mean this is a different command (e.g. `ssh-keygen`, `ssh-add`,
+# `ssh-agent`, `ssh-keyscan`, `ssh-import-id`, `ssh_foo`).
+_INVALID_SUFFIX_CHARS = frozenset("-_")
+
+
+def _quoted_spans(line: str) -> list[tuple[int, int, str]]:
+    """Return a list of (start, end, quote_char) for every quoted span in `line`.
+
+    Naive but sufficient for shell-rc / shell-history use: scans the string
+    left-to-right, opens a span on `'` or `"` that isn't backslash-escaped,
+    and closes it on the next matching unescaped quote. Backticks aren't
+    treated as quote spans here (they're already filtered as dynamic values
+    elsewhere). Unterminated quotes yield no span.
+    """
+    spans: list[tuple[int, int, str]] = []
+    i = 0
+    n = len(line)
+    while i < n:
+        c = line[i]
+        if c in ("'", '"') and (i == 0 or line[i - 1] != "\\"):
+            quote = c
+            j = i + 1
+            while j < n:
+                if line[j] == "\\" and j + 1 < n:
+                    j += 2
+                    continue
+                if line[j] == quote:
+                    spans.append((i, j, quote))
+                    i = j + 1
+                    break
+                j += 1
+            else:
+                # Unterminated quote — bail.
+                break
+        else:
+            i += 1
+    return spans
+
+
+def _is_real_cmd_match(
+    line: str,
+    cmd_m: "re.Match[str]",
+    spans: list[tuple[int, int, str]] | None = None,
+) -> bool:
+    """Validate that an `_SSH_CMD_RE` hit is a real ssh-family invocation.
+
+    Rejects:
+    - Matches inside larger identifiers (`ssh-keygen`, `xssh`): suffix `-`/`_`
+      check, and prefix-char check against a known set of shell separators.
+    - Matches inside a quoted string that DOES NOT begin with the keyword
+      (e.g. `echo "running ssh tunnel"` — `ssh` is several chars into the
+      `"..."` span). Aliases of the form `alias x='ssh user@host'` ARE
+      accepted because the keyword sits immediately after the opening quote.
+    """
+    start = cmd_m.start()
+    end = cmd_m.end()
+    if start > 0 and line[start - 1] not in _VALID_PREFIX_CHARS:
+        return False
+    if end < len(line) and line[end] in _INVALID_SUFFIX_CHARS:
+        return False
+    if spans is None:
+        spans = _quoted_spans(line)
+    for q_start, q_end, _ in spans:
+        if q_start < start < q_end:
+            # Match is inside a quoted span. Accept only if the keyword
+            # starts right after the opening quote (alias-style invocation).
+            if start != q_start + 1:
+                return False
+    return True
 # `[user@]host[:port]` token. Host is either a dotted IPv4 OR a hostname
 # containing at least one letter (rules out flag args like `2222`).
 _HOST_PART = r"(?:(?:\d{1,3}\.){3}\d{1,3}|(?=[a-zA-Z0-9_.\-]*[a-zA-Z])[a-zA-Z0-9_.\-]+)"
@@ -136,7 +214,10 @@ class ShellRcParser(BaseParser):
             #      a) any token containing `@` (definitely user@host[:path])
             #      b) for ssh-family commands, the first plain token that looks
             #         like [hostname-or-ip] and isn't a flag/local path/digit.
+            spans = _quoted_spans(line)
             for cmd_m in _SSH_CMD_RE.finditer(line):
+                if not _is_real_cmd_match(line, cmd_m, spans):
+                    continue
                 cmd_raw = cmd_m.group("cmd")
                 conn_type = _CMD_MAP.get(cmd_raw, "ssh")
                 tail = line[cmd_m.end():]

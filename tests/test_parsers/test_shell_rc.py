@@ -128,3 +128,20 @@ def test_comments_ignored(metadata):
     result = ShellRcParser().parse(content, metadata)
     assert result.connections_found == []
     assert result.credentials_found == []
+
+
+def test_ssh_keygen_family_not_matched(metadata):
+    """ssh-keygen / ssh-add / ssh-agent / ssh-keyscan / ssh-import-id /
+    quoted-string `echo "...ssh tunnel..."` must NOT emit ConnectionData.
+
+    Only `sshpass -p ... ssh user@host` (a real ssh) and the bare
+    `ssh user@example.com` should emit — exactly 2 connections in total.
+    """
+    content = (FIXTURES / "false_positives").read_bytes()
+    result = ShellRcParser().parse(content, metadata)
+    assert len(result.connections_found) == 2
+    dsts = sorted(c.dst_ip for c in result.connections_found)
+    assert dsts == ["example.com", "host"]
+    assert "tunnel" not in dsts
+    assert "ed25519" not in dsts
+    assert "secret" not in dsts

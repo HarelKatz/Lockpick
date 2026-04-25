@@ -79,3 +79,20 @@ def test_paths_block_ignored(metadata):
 def test_empty_file(metadata):
     result = FishHistoryParser().parse(b"", metadata)
     assert result.connections_found == []
+
+
+def test_ssh_keygen_family_not_matched(metadata):
+    """ssh-keygen / ssh-add / ssh-agent / ssh-keyscan and the quoted
+    `echo "running ssh tunnel"` must NOT emit ConnectionData.
+
+    Only `sshpass -p ... ssh user@host` and the bare `ssh user@example.com`
+    are real — exactly 2 connections in total.
+    """
+    content = (FIXTURES / "false_positives").read_bytes()
+    result = FishHistoryParser().parse(content, metadata)
+    assert len(result.connections_found) == 2
+    dsts = sorted(c.dst_ip for c in result.connections_found)
+    assert dsts == ["example.com", "host"]
+    assert "tunnel" not in dsts
+    assert "ed25519" not in dsts
+    assert "secret" not in dsts

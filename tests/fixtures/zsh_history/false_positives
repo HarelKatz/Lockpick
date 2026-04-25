@@ -1,0 +1,7 @@
+: 1700000000:0;ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519
+: 1700000010:0;ssh-add ~/.ssh/id_rsa
+: 1700000020:0;ssh-agent bash
+: 1700000030:0;ssh-keyscan -t ed25519 example.com
+: 1700000040:0;echo "running ssh tunnel"
+: 1700000050:0;sshpass -p secret ssh user@host
+: 1700000060:0;ssh user@example.com
