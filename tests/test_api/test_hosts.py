@@ -121,3 +121,152 @@ def test_delete_host_ip(client, host):
     ip_id = add_resp.json()["id"]
     resp = client.delete(f"/api/hosts/{host['id']}/ips/{ip_id}")
     assert resp.status_code == 204
+
+
+# ─── Merge endpoint ──────────────────────────────────────────────────────────
+
+def _two_hosts(client, op_id, src_nick="src", tgt_nick="tgt", src_comment=None,
+               src_status=None, tgt_comment=None, tgt_status=None):
+    src = client.post(
+        f"/api/ops/{op_id}/hosts",
+        json={"nickname": src_nick, "comment": src_comment},
+    ).json()
+    if src_status:
+        client.patch(f"/api/hosts/{src['id']}", json={"status": src_status})
+    tgt = client.post(
+        f"/api/ops/{op_id}/hosts",
+        json={"nickname": tgt_nick, "comment": tgt_comment},
+    ).json()
+    if tgt_status:
+        client.patch(f"/api/hosts/{tgt['id']}", json={"status": tgt_status})
+    return src["id"], tgt["id"]
+
+
+def test_merge_happy_path(client, op):
+    src_id, tgt_id = _two_hosts(client, op["id"])
+    client.post(f"/api/hosts/{src_id}/ips", json={"ip_address": "10.0.0.5"})
+    client.post(f"/api/hosts/{src_id}/users", json={"username": "bob"})
+
+    resp = client.post(
+        f"/api/hosts/{src_id}/merge",
+        json={"target_host_id": tgt_id, "resolutions": {}},
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["target"]["id"] == tgt_id
+    assert body["counts"]["ips_moved"] == 1
+    assert body["counts"]["users_moved"] == 1
+
+    # Source is gone, target now owns the relations.
+    assert client.get(f"/api/hosts/{src_id}").status_code == 404
+    target = client.get(f"/api/hosts/{tgt_id}").json()
+    assert any(ip["ip_address"] == "10.0.0.5" for ip in target["ips"])
+    assert any(u["username"] == "bob" for u in target["users"])
+
+    # Activity log captures the merge.
+    log = client.get(f"/api/ops/{op['id']}/activity").json()
+    merge_entries = [e for e in log if e["action"] == "host.merge"]
+    assert len(merge_entries) == 1
+    assert merge_entries[0]["entity_id"] == tgt_id
+    assert "Merged 'src' into 'tgt'" in merge_entries[0]["detail"]
+
+
+def test_merge_resolution_pick_source_nickname(client, op):
+    src_id, tgt_id = _two_hosts(client, op["id"], src_nick="prefer-this")
+    resp = client.post(
+        f"/api/hosts/{src_id}/merge",
+        json={"target_host_id": tgt_id, "resolutions": {"nickname": "source"}},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["target"]["nickname"] == "prefer-this"
+
+
+def test_merge_resolution_freetext_nickname(client, op):
+    src_id, tgt_id = _two_hosts(client, op["id"])
+    resp = client.post(
+        f"/api/hosts/{src_id}/merge",
+        json={"target_host_id": tgt_id, "resolutions": {"nickname": "frankenhost"}},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["target"]["nickname"] == "frankenhost"
+
+
+def test_merge_resolution_pick_source_status(client, op):
+    src_id, tgt_id = _two_hosts(
+        client, op["id"], src_status="compromised", tgt_status="pivot",
+    )
+    resp = client.post(
+        f"/api/hosts/{src_id}/merge",
+        json={"target_host_id": tgt_id, "resolutions": {"status": "source"}},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["target"]["status"] == "compromised"
+
+
+def test_merge_no_resolutions_keeps_target_values(client, op):
+    src_id, tgt_id = _two_hosts(
+        client, op["id"], src_comment="src note", tgt_comment="tgt note",
+    )
+    resp = client.post(
+        f"/api/hosts/{src_id}/merge",
+        json={"target_host_id": tgt_id, "resolutions": {}},
+    )
+    assert resp.status_code == 200
+    target = resp.json()["target"]
+    assert target["nickname"] == "tgt"
+    assert target["comment"] == "tgt note"
+
+
+def test_merge_self_returns_400(client, op):
+    src_id, _ = _two_hosts(client, op["id"])
+    resp = client.post(
+        f"/api/hosts/{src_id}/merge",
+        json={"target_host_id": src_id, "resolutions": {}},
+    )
+    assert resp.status_code == 400
+    assert "differ" in resp.json()["detail"]
+
+
+def test_merge_cross_op_returns_400(client):
+    op_a = client.post("/api/ops", json={"name": "A"}).json()
+    op_b = client.post("/api/ops", json={"name": "B"}).json()
+    src = client.post(f"/api/ops/{op_a['id']}/hosts", json={"nickname": "s"}).json()
+    tgt = client.post(f"/api/ops/{op_b['id']}/hosts", json={"nickname": "t"}).json()
+
+    resp = client.post(
+        f"/api/hosts/{src['id']}/merge",
+        json={"target_host_id": tgt["id"], "resolutions": {}},
+    )
+    assert resp.status_code == 400
+    assert "same operation" in resp.json()["detail"]
+
+
+def test_merge_source_not_found_returns_404(client, op):
+    tgt = client.post(f"/api/ops/{op['id']}/hosts", json={"nickname": "t"}).json()
+    resp = client.post(
+        "/api/hosts/deadbeef-no-such-host/merge",
+        json={"target_host_id": tgt["id"], "resolutions": {}},
+    )
+    assert resp.status_code == 404
+
+
+def test_merge_target_not_found_returns_404(client, op):
+    src = client.post(f"/api/ops/{op['id']}/hosts", json={"nickname": "s"}).json()
+    resp = client.post(
+        f"/api/hosts/{src['id']}/merge",
+        json={"target_host_id": "deadbeef-no-target", "resolutions": {}},
+    )
+    assert resp.status_code == 404
+
+
+def test_merge_rejects_empty_nickname(client, op):
+    """Empty / whitespace-only nickname must be rejected at the boundary —
+    the frontend disables submit, but the endpoint itself should not
+    trust client-side validation."""
+    src_id, tgt_id = _two_hosts(client, op["id"])
+    for bad in ("", "   ", "\t"):
+        resp = client.post(
+            f"/api/hosts/{src_id}/merge",
+            json={"target_host_id": tgt_id, "resolutions": {"nickname": bad}},
+        )
+        assert resp.status_code == 422, f"expected 422 for nickname={bad!r}"

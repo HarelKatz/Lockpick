@@ -14,9 +14,9 @@ A web-based tool for red teams to collaboratively organize SSH credentials, host
 
 > **Edit rules:** ≤5 lines. Last completed · Next · Any blocker. Nothing else — detail belongs in commit messages.
 
-**Last completed: Phases 1–14 — full stack, 14 parsers, WS live push, host notes, status enum, addr_type, SudoRule, one-click collection script + bulk archive import**
+**Last completed: Phases 1–15 — full stack, 14 parsers, WS live push, host notes, status enum, addr_type, SudoRule, one-click collection script + bulk archive import, host merge (auto + manual) with conflict-resolution UI**
 
-**Next: Phase 15 — Host Merge**
+**Next: Phase 16 — System File Parsers**
 
 ---
 
@@ -44,6 +44,8 @@ A web-based tool for red teams to collaboratively organize SSH credentials, host
 20. **Upload pipeline split** — `services/upload_pipeline.process_single_file()` is the authoritative record-persistence helper for parseable evidence. It parses, persists records with dedup, and returns a result dict (counters, fingerprints, safe_name); it does **not** commit, log activity, or broadcast. Callers own those, plus the pivot scan — which must run *after* `db.commit()` so newly-added links are visible. Any new endpoint ingesting parseable files must use this helper — do not duplicate parser-dispatch or dedup logic.
 21. **Collection script invariants** — the bash script served by `GET /ops/{op_id}/collection-script` is byte-identical for every op (no op-specific data). Filename convention `<file_type>__<username>.<ext>` inside the tarball is authoritative for dispatch at import time; `manifest.json` is informational only. The script must remain sudo-free and must not perform network activity.
 22. **Archive import safety** — `POST /ops/{op_id}/hosts/{host_id}/import-archive` extracts tarballs through two layers of defense: an explicit member pre-check that rejects absolute paths, `..` components, symlinks, hardlinks, and devices; and `tarfile.extractall(..., filter="data")` as fallback. Extraction goes into `tempfile.TemporaryDirectory()` only. Compressed payload is capped by `settings.archive_import_max_bytes` (default 100 MiB), AND the sum of declared `member.size` values must be below `settings.archive_import_max_uncompressed_bytes` (default 500 MiB) — the second check runs before `extractall()` to defend against gzip bombs where a tiny tarball expands to gigabytes.
+23. **Host merge invariants** — `services/host_merge.merge_hosts()` is the single relation-mover for both manual merge (`POST /hosts/{source_id}/merge`) and the upload-pipeline auto-merge path. It moves `HostIP`, `HostUser`, `CredentialLink`, `ConnectionRecord` (src + dst), `HostNote`, `SshConfigPattern`, and `SudoRule` from source → target, then deletes source. Atomic — caller wraps in one transaction (the helper flushes but does not commit; activity log + broadcast are caller's responsibility, mirroring Rule #20). Call only from routers and `services/upload_pipeline.py`; parsers never invoke the merge service. Dedup keys: `HostIP` on `(host_id, ip_address)` and `CredentialLink` on `(credential_id, host_id, relationship_type, username)` — these match upload-time dedup. `HostUser` and `SudoRule` are NOT deduped. `ConnectionRecord` self-loops (src=dst=target) are preserved as audit evidence; graph rendering can filter them. Activity entries are emitted one per merge — `host.merge` for manual, `host.auto_merge` for pipeline auto-merges.
+24. **Auto-merge constraint** — `services/ip_resolver.is_unresolved_host(host)` is the canonical "this row was created by the parser and has no operator content" predicate. Returns True iff `host.comment == AUTO_CREATED_COMMENT` (the marker `resolve_ip()` writes) AND `host.users`/`credential_links`/`notes`/`sudo_rules` are all empty. Two callers gate on it: the upload pipeline's nickname-clobber path (which renames placeholder hosts with parser-supplied nicknames), and the alias-conflict auto-merge path (which dissolves placeholders into resolved hosts). Caller must `selectinload` the four relationships before invoking. The upload-pipeline auto-merge additionally guards `existing != host_id` so the upload host itself is never dissolved as the source of an auto-merge.
 
 ---
 
@@ -68,23 +70,9 @@ AGENT.md is the project roadmap and architecture reference — the current sourc
 
 > Detail tracks imminence: the next phase gets a full spec, 1–2 phases out get a short summary + invariants, and anything further is a one-liner heading. Expand a phase when it becomes next.
 
-### Phases 1–14 — Complete
+### Phases 1–15 — Complete
 
-Full stack built and tested: CRUD APIs, graph visualization, file upload + 14 parsers (8 original + nmap_xml, shadow, sshd_config, etc_hosts, sudoers, public_key alias), BFS pivot analysis, global search, export/import, activity log, operational command generation, WS live push, host notes, Host.status enum, HostIP addr_type, SudoRule table with sudoers CRUD; one-click collection via bash snapshot script + bulk archive import.
-
----
-
-### Phase 15 — Host Merge
-
-**Auto-merge:** when a new IP or hostname added to HostA matches the sole identifier of an "unresolved" host (no users, no credential links, no notes, no sudo rules — just one IP or FQDN), the unresolved host is merged into HostA without prompting.
-
-**Manual merge:** "Merge into…" action in host detail. Moves all `HostIP`, `HostUser`, `CredentialLink`, `ConnectionRecord` (both sides), `HostNote`, `SshConfigPattern`, and `SudoRule` relations from source → target. Nickname / comment / status conflicts resolved in the merge dialog. Source host deleted on commit.
-
-**Invariants:** Merge is atomic — all relations move and source is deleted, or nothing changes. Auto-merge applies only to unresolved hosts (zero user-authored content). Activity log records every merge with source id, target id, and relation counts moved.
-
-**Hooks landed in Phase 14 that this phase should build on:**
-- The upload pipeline already detects alias conflicts (an `/etc/hosts` hostname that belongs to a different host, etc.) and surfaces them as per-file `warnings` strings (see `services/upload_pipeline.py` §1b). Phase 15 should extend the response with a structured additive field `merge_candidates: list[{alias, conflicting_host_id}]` on `per_file[*].summary`, plumbed through both `routers/upload.py` and `routers/collection.py`. The Collection tab UI then iterates this list to render a "Merge X into host Y" button directly — instead of regex-parsing the warning text. Pure additive change; the warning strings stay for the activity log.
-- The "unresolved host" predicate is used in two places today — `services/upload_pipeline.py` (nickname-clobber guard looks for `"Auto-created"` in `Host.comment`) and the auto-merge spec above (no users / no links / no notes / no sudo rules). Promote these to a single `services/ip_resolver.is_unresolved_host(host) -> bool` helper in the first Phase 15 commit so the two definitions can't drift.
+Full stack built and tested: CRUD APIs, graph visualization, file upload + 14 parsers (8 original + nmap_xml, shadow, sshd_config, etc_hosts, sudoers, public_key alias), BFS pivot analysis, global search, export/import, activity log, operational command generation, WS live push, host notes, Host.status enum, HostIP addr_type, SudoRule table with sudoers CRUD; one-click collection via bash snapshot script + bulk archive import; host merge (atomic relation-mover with HostIP/CredentialLink dedup, structured `merge_candidates` per-file response field, manual merge dialog, and auto-merge of unresolved placeholder hosts on alias conflict).
 
 ---
 

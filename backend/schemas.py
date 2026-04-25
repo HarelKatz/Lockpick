@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 # ─── Operation ───────────────────────────────────────────────────────────────
@@ -165,6 +165,42 @@ class HostRead(BaseModel):
     ips: list[HostIPRead] = []
     users: list[HostUserRead] = []
     notes: list[HostNoteRead] = []
+
+
+# ─── Merge ────────────────────────────────────────────────────────────────────
+
+class MergeResolutions(BaseModel):
+    """Per-field conflict resolution for a manual host merge.
+
+    Each entry is one of: ``"source"`` (use the source host's value),
+    ``"target"`` (keep the target host's value), or — for ``nickname`` and
+    ``comment`` only — any other string used as a free-text override.
+    Missing keys mean "no conflict — keep target's existing value."
+    """
+    nickname: Optional[str] = None
+    comment: Optional[str] = None
+    status: Optional[Literal["source", "target"]] = None
+
+    @field_validator("nickname")
+    @classmethod
+    def _nickname_not_empty(cls, v: Optional[str]) -> Optional[str]:
+        # Empty / whitespace-only nicknames break downstream UI — reject at
+        # the boundary rather than letting a free-text override land an
+        # empty Host.nickname. The frontend already disables submit, but the
+        # endpoint shouldn't trust that.
+        if v is not None and v.strip() == "":
+            raise ValueError("nickname must not be empty")
+        return v
+
+
+class MergeHostRequest(BaseModel):
+    target_host_id: str
+    resolutions: MergeResolutions = MergeResolutions()
+
+
+class MergeHostResponse(BaseModel):
+    target: HostRead
+    counts: dict[str, int]
 
 
 # ─── Credential ───────────────────────────────────────────────────────────────

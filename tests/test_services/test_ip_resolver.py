@@ -1,9 +1,18 @@
-"""Unit tests for services/ip_resolver.py — resolve_ip()."""
+"""Unit tests for services/ip_resolver.py — resolve_ip(), is_unresolved_host()."""
 import pytest
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
-from models import Host, HostIP, Operation
-from services.ip_resolver import resolve_ip
+from models import (
+    Credential,
+    CredentialLink,
+    Host,
+    HostIP,
+    HostNote,
+    HostUser,
+    Operation,
+    SudoRule,
+)
+from services.ip_resolver import AUTO_CREATED_COMMENT, is_unresolved_host, resolve_ip
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -234,3 +243,113 @@ def test_unique_local_ipv6_still_resolved(db_session):
     op = _make_op(db_session)
     result = resolve_ip(db_session, op.id, "fd12:3456::1", create_if_missing=True)
     assert result is not None
+
+
+# ─── is_unresolved_host predicate ─────────────────────────────────────────────
+
+def _eager_host(db: Session, host_id: str) -> Host:
+    """Re-fetch a host with the four relationships is_unresolved_host requires."""
+    return (
+        db.query(Host)
+        .options(
+            selectinload(Host.users),
+            selectinload(Host.credential_links),
+            selectinload(Host.notes),
+            selectinload(Host.sudo_rules),
+        )
+        .filter(Host.id == host_id)
+        .one()
+    )
+
+
+def _placeholder(db: Session, op_id: str, ip: str) -> Host:
+    """Create a placeholder host the way resolve_ip does, so the auto-created
+    comment marker is in place."""
+    host_id = resolve_ip(db, op_id, ip, create_if_missing=True)
+    return db.query(Host).filter(Host.id == host_id).one()
+
+
+def test_is_unresolved_host_pure_placeholder(db_session):
+    """A bare placeholder (auto-created marker, only IPs) is unresolved."""
+    op = _make_op(db_session)
+    host = _placeholder(db_session, op.id, "10.0.0.1")
+    assert is_unresolved_host(_eager_host(db_session, host.id)) is True
+
+
+def test_is_unresolved_host_user_created_returns_false(db_session):
+    """A host the operator created (no auto-marker comment) is NOT unresolved
+    even when it has zero relations attached."""
+    op = _make_op(db_session)
+    host = _make_host(db_session, op.id, "web01", ip="10.0.0.5")
+    # _make_host leaves comment=None — like a manual POST /hosts.
+    assert is_unresolved_host(_eager_host(db_session, host.id)) is False
+
+
+def test_is_unresolved_host_with_user_returns_false(db_session):
+    op = _make_op(db_session)
+    host = _placeholder(db_session, op.id, "10.0.0.5")
+    db_session.add(HostUser(host_id=host.id, username="root"))
+    db_session.flush()
+    assert is_unresolved_host(_eager_host(db_session, host.id)) is False
+
+
+def test_is_unresolved_host_with_credential_link_returns_false(db_session):
+    op = _make_op(db_session)
+    host = _placeholder(db_session, op.id, "10.0.0.5")
+    cred = Credential(op_id=op.id, cred_type="password", value="hunter2")
+    db_session.add(cred)
+    db_session.flush()
+    db_session.add(CredentialLink(
+        credential_id=cred.id, host_id=host.id,
+        username="root", relationship_type="accepted_password",
+    ))
+    db_session.flush()
+    assert is_unresolved_host(_eager_host(db_session, host.id)) is False
+
+
+def test_is_unresolved_host_with_note_returns_false(db_session):
+    op = _make_op(db_session)
+    host = _placeholder(db_session, op.id, "10.0.0.5")
+    db_session.add(HostNote(op_id=op.id, host_id=host.id, content="Operator note"))
+    db_session.flush()
+    assert is_unresolved_host(_eager_host(db_session, host.id)) is False
+
+
+def test_is_unresolved_host_with_sudo_rule_returns_false(db_session):
+    op = _make_op(db_session)
+    host = _placeholder(db_session, op.id, "10.0.0.5")
+    db_session.add(SudoRule(
+        host_id=host.id, op_id=op.id,
+        subject="alice", subject_type="user",
+        run_as="root", commands="ALL", nopasswd=False,
+    ))
+    db_session.flush()
+    assert is_unresolved_host(_eager_host(db_session, host.id)) is False
+
+
+def test_is_unresolved_host_with_multiple_ips_still_true(db_session):
+    """Several parsed HostIPs on a placeholder, no other content → still unresolved."""
+    op = _make_op(db_session)
+    host = _placeholder(db_session, op.id, "10.0.0.1")
+    db_session.add(HostIP(host_id=host.id, ip_address="db1.corp",
+                          source="parsed", addr_type="hostname"))
+    db_session.add(HostIP(host_id=host.id, ip_address="10.0.0.2",
+                          source="parsed", addr_type="ipv4"))
+    db_session.flush()
+    assert is_unresolved_host(_eager_host(db_session, host.id)) is True
+
+
+def test_is_unresolved_host_edited_comment_returns_false(db_session):
+    """Operator edited the comment — host is no longer 'auto-created' from our view."""
+    op = _make_op(db_session)
+    host = _placeholder(db_session, op.id, "10.0.0.1")
+    host.comment = "Lead jump box for cluster"
+    db_session.flush()
+    assert is_unresolved_host(_eager_host(db_session, host.id)) is False
+
+
+def test_auto_created_comment_constant_matches_what_resolve_ip_writes(db_session):
+    """The placeholder we just created carries the canonical marker."""
+    op = _make_op(db_session)
+    host = _placeholder(db_session, op.id, "10.0.0.1")
+    assert host.comment == AUTO_CREATED_COMMENT

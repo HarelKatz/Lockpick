@@ -6,6 +6,7 @@ from database import get_db
 from models import Host, HostIP, HostNote, HostUser, SudoRule
 from routers.deps import get_host_or_404, get_op_or_404
 from services.activity import log_activity
+from services.host_merge import merge_hosts
 from services.ssh_pattern import apply_patterns_to_host
 from ws_manager import broadcast_sync
 from schemas import (
@@ -18,6 +19,8 @@ from schemas import (
     HostUpdate,
     HostUserCreate,
     HostUserRead,
+    MergeHostRequest,
+    MergeHostResponse,
     SudoRuleRead,
 )
 
@@ -92,6 +95,53 @@ def delete_host(host_id: str, db: Session = Depends(get_db)):
     db.delete(host)
     db.commit()
     broadcast_sync(op_id, {"type": "update", "entity_type": "host", "entity_id": host_id, "op_id": op_id})
+
+
+@router.post("/hosts/{source_id}/merge", response_model=MergeHostResponse)
+def merge_host_endpoint(source_id: str, body: MergeHostRequest, db: Session = Depends(get_db)):
+    """Move all relations from `source_id` onto `target_host_id`, then delete source.
+
+    The merge service does the heavy lifting; this handler owns the
+    HTTP contract: validation, activity log, commit, and WS broadcast.
+    """
+    source = db.query(Host).filter(Host.id == source_id).first()
+    if not source:
+        raise HTTPException(status_code=404, detail="Source host not found")
+    target = db.query(Host).filter(Host.id == body.target_host_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Target host not found")
+    if source.op_id != target.op_id:
+        raise HTTPException(status_code=400, detail="Source and target must be in the same operation")
+
+    op_id = source.op_id
+    target_id = body.target_host_id
+
+    try:
+        result = merge_hosts(
+            db, op_id, source_id, target_id,
+            resolutions=body.resolutions.model_dump(exclude_none=True),
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    c = result["counts"]
+    log_activity(
+        db, op_id, "host.merge", "host", entity_id=target_id,
+        detail=(
+            f"Merged '{result['source_nickname']}' into "
+            f"'{result['target_nickname']}': "
+            f"{c['ips_moved']} ips, {c['users_moved']} users, "
+            f"{c['credential_links_moved']} cred links, "
+            f"{c['connections_moved']} connections moved"
+        ),
+    )
+    db.commit()
+    broadcast_sync(op_id, {"type": "update", "entity_type": "host", "entity_id": target_id, "op_id": op_id})
+
+    return MergeHostResponse(
+        target=_host_q(db).filter(Host.id == target_id).first(),
+        counts=c,
+    )
 
 
 # ─── HostIPs ──────────────────────────────────────────────────────────────────

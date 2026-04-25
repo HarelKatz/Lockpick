@@ -328,6 +328,38 @@ def test_new_hosts_counter_reflects_actual_new_hosts(client):
     assert r2.json()["summary"]["new_hosts"] == 0
 
 
+def test_new_hosts_counter_excludes_in_file_auto_merge_victim(client):
+    """When a host created earlier in the SAME file is auto-merged into a
+    later host (because the second line's alias collides with the first
+    line's IP), the counter must NOT count the dissolved placeholder.
+
+    Repro: line 1 creates placeholder A for 10.0.0.5 with alias 'foo'.
+    Line 2 creates placeholder B for 10.0.0.6, also with alias 'foo' —
+    the alias collision triggers an auto-merge of A into B because A is
+    a fresh unresolved placeholder. After the upload only B remains, so
+    new_hosts must be 1, not 2.
+    """
+    op_id = _create_op(client)
+    host_id = _create_host(client, op_id)
+
+    content = b"10.0.0.5 foo\n10.0.0.6 foo\n"
+    r = client.post(
+        f"/api/ops/{op_id}/upload",
+        data={"file_type": "etc_hosts", "host_id": host_id},
+        files={"file": ("etc_hosts", content, "text/plain")},
+    )
+    assert r.status_code == 200
+    assert r.json()["summary"]["new_hosts"] == 1
+
+    # Confirm only the upload host + one new host exist (3 minus self).
+    hosts = client.get(f"/api/ops/{op_id}/hosts").json()
+    non_upload = [h for h in hosts if h["id"] != host_id]
+    assert len(non_upload) == 1
+    survivor = non_upload[0]
+    addrs = sorted(ip["ip_address"] for ip in survivor["ips"])
+    assert addrs == ["10.0.0.5", "10.0.0.6", "foo"]
+
+
 # ─── Priority 2: Re-upload dedup: same key in two files → 1 cred, 2 links ────
 
 def test_reupload_same_key_to_two_hosts_deduplicates_credential(client):

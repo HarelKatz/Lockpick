@@ -9,6 +9,7 @@ import type {
   GraphNode,
   GraphResponse,
   Host,
+  MergeCandidate,
   Operation,
   PathResult,
 } from '../types'
@@ -16,6 +17,7 @@ import { fetchGraph, expandHost } from '../api/graph'
 import GraphCanvas, { type CredFilter, type PathFilter, type LayoutName } from '../components/GraphCanvas'
 import HostSelector from '../components/HostSelector'
 import HostDetailSidebar from '../components/HostDetailSidebar'
+import MergeHostDialog from '../components/MergeHostDialog'
 import EdgeDetailPanel from '../components/EdgeDetailPanel'
 import PathDetailPanel from '../components/PathDetailPanel'
 import NodeContextMenu from '../components/NodeContextMenu'
@@ -77,6 +79,11 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
   const [lockedIds, setLockedIds] = useState<Set<string>>(new Set())
   const [statusFilters, setStatusFilters] = useState<Set<string>>(new Set())
   const [panelMode, setPanelMode] = useState<'push' | 'overlay'>('overlay')
+  // Two-step merge state: { source, targetCandidate? } when the dialog is
+  // open. Set by either the "Merge into…" button on the sidebar (no
+  // targetCandidate) or by a CollectionPanel candidate button (target = the
+  // sidebar's current host).
+  const [mergeState, setMergeState] = useState<{ source: Host; targetCandidate?: Host } | null>(null)
   const canvasAreaRef = useRef<HTMLDivElement>(null)
 
   // Set by loadFullGraph before it updates selectedIds to prevent the selectedIds
@@ -318,6 +325,15 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
         host={allHosts.find(h => h.id === selectedNode.host_id) ?? null}
         onClose={() => setSelectedNode(null)}
         onHostUpdated={loadFullGraph}
+        onMergeRequested={() => {
+          const source = allHosts.find(h => h.id === selectedNode.host_id)
+          if (source) setMergeState({ source })
+        }}
+        onMergeWithCandidate={(c: MergeCandidate) => {
+          const source = allHosts.find(h => h.id === c.conflicting_host_id)
+          const target = allHosts.find(h => h.id === selectedNode.host_id)
+          if (source && target) setMergeState({ source, targetCandidate: target })
+        }}
       />
     )
     : selectedEdge
@@ -502,6 +518,26 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
           y={edgeCtxMenu.y}
           onViewEvidence={edge => { setSelectedEdge(edge); setSelectedNode(null) }}
           onClose={() => setEdgeCtxMenu(null)}
+        />
+      )}
+
+      {mergeState && (
+        <MergeHostDialog
+          source={mergeState.source}
+          targetCandidate={mergeState.targetCandidate}
+          allHosts={allHosts}
+          onClose={() => setMergeState(null)}
+          onMerged={() => {
+            // Source host is gone — drop the sidebar if it was pointing
+            // at it. The WS broadcast triggers Workspace.fetchAll which
+            // refreshes allHosts; loadFullGraph runs locally for snappier
+            // graph redraw without waiting for the round-trip.
+            if (selectedNode?.host_id === mergeState.source.id) {
+              setSelectedNode(null)
+            }
+            setMergeState(null)
+            loadFullGraph()
+          }}
         />
       )}
     </div>

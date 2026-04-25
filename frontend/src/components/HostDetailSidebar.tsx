@@ -3,7 +3,7 @@
  * If a full Host object is provided, shows tabs: Info | Sudo Rules | Notes.
  */
 import { useState, useEffect, useCallback } from 'react'
-import type { GraphEdge, GraphNode, Host, HostNote, SudoRule } from '../types'
+import type { GraphEdge, GraphNode, Host, HostNote, MergeCandidate, SudoRule } from '../types'
 import { getSudoRules, deleteSudoRule, getHostNotes, createHostNote, deleteHostNote } from '../api/hosts'
 import { updateHost } from '../api/hosts'
 import { statusColors, STATUS_LABELS } from '../theme'
@@ -30,9 +30,11 @@ interface Props {
   host?: Host | null
   onClose: () => void
   onHostUpdated?: () => void
+  onMergeRequested?: () => void
+  onMergeWithCandidate?: (candidate: MergeCandidate) => void
 }
 
-export default function HostDetailSidebar({ node, edges, host, onClose, onHostUpdated }: Props) {
+export default function HostDetailSidebar({ node, edges, host, onClose, onHostUpdated, onMergeRequested, onMergeWithCandidate }: Props) {
   const [tab, setTab] = useState<Tab>('info')
 
   // Sudo rules state
@@ -189,6 +191,17 @@ export default function HostDetailSidebar({ node, edges, host, onClose, onHostUp
       <div className={styles.body}>
         {(!host || tab === 'info') && (
           <>
+            {host && onMergeRequested && (
+              <div className={styles.section}>
+                <button
+                  className={styles.mergeBtn}
+                  onClick={onMergeRequested}
+                  title="Move all of this host's relations onto another host, then delete this host"
+                >
+                  Merge into…
+                </button>
+              </div>
+            )}
             {host && (
               <div className={styles.section}>
                 <div className={styles.sectionLabel}>Status</div>
@@ -310,7 +323,12 @@ export default function HostDetailSidebar({ node, edges, host, onClose, onHostUp
         )}
 
         {host && tab === 'collection' && (
-          <CollectionPanel opId={host.op_id} hostId={host.id} onImported={onHostUpdated} />
+          <CollectionPanel
+            opId={host.op_id}
+            hostId={host.id}
+            onImported={onHostUpdated}
+            onMergeRequest={onMergeWithCandidate}
+          />
         )}
 
         {host && tab === 'notes' && (

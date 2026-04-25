@@ -37,7 +37,13 @@ from models import (
 )
 from parsers import UploadMetadata
 from parsers.registry import PARSER_REGISTRY
-from services.ip_resolver import _infer_addr_type, _is_routable_address, resolve_ip
+from services.host_merge import merge_hosts
+from services.ip_resolver import (
+    _infer_addr_type,
+    _is_routable_address,
+    is_unresolved_host,
+    resolve_ip,
+)
 from services.key_utils import infer_key_info
 from services.ssh_pattern import ssh_match
 
@@ -195,6 +201,8 @@ def process_single_file(
             "new_hosts": 0,
             "new_sudo_rules": 0,
             "warnings": [f"Unsupported file type '{file_type}'; skipped"],
+            "merge_candidates": [],
+            "auto_merges": [],
             "fingerprints": [],
             "safe_name": "",
         }
@@ -249,27 +257,48 @@ def process_single_file(
         _get_or_create_host_user(db, host_id, uname, shell, home_dir, user_source)
 
     # ── 1b. Discovered hosts (nmap, etc_hosts, …) ────────────────────────
-    # Snapshot existing host ids so we can tell "new vs resolved-to-existing"
-    # for the new_hosts counter. Every time resolve_ip creates a new host
-    # we add its id to this set so subsequent iterations within the same
-    # file don't double-count.
-    existing_host_ids: set[str] = {
+    # `pre_existing_host_ids` is a frozen snapshot of host ids that were in
+    # the DB before this file. `created_in_this_file` tracks ids that were
+    # auto-created by `resolve_ip` during processing; this lets us correctly
+    # roll back the new_hosts counter when an in-file auto-merge dissolves
+    # a host we just created (otherwise new_hosts would over-count).
+    pre_existing_host_ids: frozenset[str] = frozenset(
         hid for (hid,) in db.query(Host.id).filter(Host.op_id == op_id).all()
-    }
+    )
+    created_in_this_file: set[str] = set()
+
+    def _track_new(hid: str) -> None:
+        if hid not in pre_existing_host_ids:
+            created_in_this_file.add(hid)
+
     # Warnings produced by the pipeline itself (vs. parser-generated
     # `result.warnings`). Merged into the returned warnings list.
     helper_warnings: list[str] = []
-    new_hosts = 0
+    # Structured records of pipeline-level events for the caller to log/render:
+    # `auto_merges` describes silent host collapses that happened during
+    # this file (one per merge); `merge_candidates` is what the operator
+    # could merge manually (alias conflict where the colliding host wasn't
+    # safe to dissolve).
+    auto_merges: list[dict] = []
+    merge_candidates: list[dict] = []
     for hd in result.hosts_found:
         resolved_id = resolve_ip(db, op_id, hd.ip_address, create_if_missing=True)
         if not resolved_id:
             continue
-        if resolved_id not in existing_host_ids:
-            new_hosts += 1
-            existing_host_ids.add(resolved_id)
+        _track_new(resolved_id)
         if hd.nickname:
-            resolved_host = db.query(Host).filter(Host.id == resolved_id).first()
-            if resolved_host and resolved_host.comment and "Auto-created" in resolved_host.comment:
+            resolved_host = (
+                db.query(Host)
+                .options(
+                    selectinload(Host.users),
+                    selectinload(Host.credential_links),
+                    selectinload(Host.notes),
+                    selectinload(Host.sudo_rules),
+                )
+                .filter(Host.id == resolved_id)
+                .first()
+            )
+            if resolved_host and is_unresolved_host(resolved_host):
                 resolved_host.nickname = hd.nickname
 
         # Aliases: additional identifiers (IPs / hostnames) for the same
@@ -290,13 +319,59 @@ def process_single_file(
             existing = resolve_ip(db, op_id, alias, create_if_missing=False)
             if existing is not None:
                 if existing != resolved_id:
-                    # Conflict: alias already belongs to a DIFFERENT host.
-                    # Surface it so the operator sees there's a merge
-                    # opportunity (Phase 15 will render these as candidates).
-                    helper_warnings.append(
-                        f"Alias '{alias}' already bound to another host; skipped "
-                        f"(potential merge candidate with host {existing})"
-                    )
+                    # Conflict: alias is bound to a different host. Two
+                    # possible resolutions:
+                    # (a) `existing` is a parser-created placeholder with
+                    #     no operator content, AND it isn't the upload
+                    #     host — silently merge it into resolved_id.
+                    # (b) Otherwise, surface as a manual merge candidate.
+                    auto_merged = False
+                    if existing != host_id:
+                        existing_host = (
+                            db.query(Host)
+                            .options(
+                                selectinload(Host.users),
+                                selectinload(Host.credential_links),
+                                selectinload(Host.notes),
+                                selectinload(Host.sudo_rules),
+                            )
+                            .filter(Host.id == existing)
+                            .first()
+                        )
+                        if existing_host and is_unresolved_host(existing_host):
+                            merge_result = merge_hosts(
+                                db, op_id,
+                                source_id=existing,
+                                target_id=resolved_id,
+                                resolutions=None,
+                            )
+                            auto_merges.append({
+                                "source_host_id": existing,
+                                "target_host_id": resolved_id,
+                                "source_nickname": merge_result["source_nickname"],
+                                "target_nickname": merge_result["target_nickname"],
+                                "alias": alias,
+                                "counts": merge_result["counts"],
+                            })
+                            helper_warnings.append(
+                                f"Auto-merged unresolved host "
+                                f"'{merge_result['source_nickname']}' into "
+                                f"'{merge_result['target_nickname']}' via alias '{alias}'"
+                            )
+                            # The merged-away host disappears — if it was
+                            # one we just created in this file, roll back
+                            # the new_hosts counter accordingly.
+                            created_in_this_file.discard(existing)
+                            auto_merged = True
+                    if not auto_merged:
+                        helper_warnings.append(
+                            f"Alias '{alias}' already bound to another host; skipped "
+                            f"(potential merge candidate with host {existing})"
+                        )
+                        merge_candidates.append({
+                            "alias": alias,
+                            "conflicting_host_id": existing,
+                        })
                 # else: alias already on our host — no-op, no warning.
                 continue
             db.add(HostIP(
@@ -379,9 +454,8 @@ def process_single_file(
             db, op_id, conn_data.dst_ip, upload_host_ip, host_id
         )
         for hid in (src_host_id, dst_host_id):
-            if hid and hid not in existing_host_ids:
-                new_hosts += 1
-                existing_host_ids.add(hid)
+            if hid:
+                _track_new(hid)
 
         cred_id = None
         if conn_data.credential_fingerprint:
@@ -495,9 +569,11 @@ def process_single_file(
         "new_credentials": new_creds,
         "new_credential_links": new_links,
         "new_connections": new_connections,
-        "new_hosts": new_hosts,
+        "new_hosts": len(created_in_this_file),
         "new_sudo_rules": new_sudo_rules,
         "warnings": list(result.warnings) + helper_warnings,
+        "merge_candidates": merge_candidates,
+        "auto_merges": auto_merges,
         "fingerprints": all_fingerprints,
         "safe_name": safe_name,
     }

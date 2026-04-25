@@ -94,6 +94,20 @@ async def upload_file(
             f"{result['new_sudo_rules']} sudo rules"
         ),
     )
+    # One activity entry per auto-merge that happened during parsing — gives
+    # the operator a per-merge audit trail (Architecture Rule #23).
+    for am in result["auto_merges"]:
+        c = am["counts"]
+        log_activity(
+            db, op_id, "host.auto_merge", "host", entity_id=am["target_host_id"],
+            detail=(
+                f"Auto-merged '{am['source_nickname']}' into "
+                f"'{am['target_nickname']}' via alias '{am['alias']}' "
+                f"({c['ips_moved']} ips, {c['users_moved']} users, "
+                f"{c['credential_links_moved']} cred links, "
+                f"{c['connections_moved']} connections moved)"
+            ),
+        )
     db.commit()
     broadcast_sync(op_id, {"type": "update", "entity_type": "host", "op_id": op_id})
 
@@ -111,6 +125,7 @@ async def upload_file(
             "new_hosts": result["new_hosts"],
             "new_sudo_rules": result["new_sudo_rules"],
             "warnings": result["warnings"],
+            "merge_candidates": result["merge_candidates"],
         },
         "pivot_opportunities": pivot_messages,
     }

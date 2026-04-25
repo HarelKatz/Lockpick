@@ -429,12 +429,14 @@ def test_import_archive_alias_same_host_no_warning(client):
 
 def test_import_archive_alias_conflict_surfaces_warning(client):
     """When an /etc/hosts line's hostname already belongs to a DIFFERENT
-    host, the pipeline skips the add (to avoid silent merges) but must
-    emit a warning so the operator can act on the merge candidate."""
+    *non-unresolved* host (one with operator content), the pipeline skips
+    the add and surfaces it as a manual merge candidate — Phase 15 only
+    auto-merges placeholder hosts."""
     op_id = _create_op(client)
     host_id = _create_host(client, op_id)
 
-    # First upload: 10.0.0.1 is 'realname' (hostname bound to host X)
+    # First upload: 10.0.0.1 with hostname 'realname'. The auto-created
+    # placeholder for 10.0.0.1 / realname starts unresolved.
     first = b"10.0.0.1 realname\n"
     r1 = client.post(
         f"/api/ops/{op_id}/upload",
@@ -442,8 +444,14 @@ def test_import_archive_alias_conflict_surfaces_warning(client):
         files={"file": ("etc_hosts", first, "text/plain")},
     )
     assert r1.status_code == 200
+    # Find the placeholder and attach a HostUser so it stops being unresolved
+    # (Phase 15 would otherwise auto-merge it on the next conflict).
+    hosts = client.get(f"/api/ops/{op_id}/hosts").json()
+    placeholder_id = next(h["id"] for h in hosts if h["nickname"] == "10.0.0.1")
+    r_user = client.post(f"/api/hosts/{placeholder_id}/users", json={"username": "root"})
+    assert r_user.status_code in (200, 201)
 
-    # Second upload via archive: 10.0.0.99 claims 'realname' as an alias
+    # Second upload via archive: 10.0.0.99 claims 'realname' as an alias.
     conflicting = b"10.0.0.99 realname\n"
     tarball = _build_tarball({"etc_hosts__.txt": conflicting})
     r2 = client.post(
@@ -454,6 +462,54 @@ def test_import_archive_alias_conflict_surfaces_warning(client):
     entry = next(e for e in r2.json()["per_file"] if e["filename"] == "etc_hosts__.txt")
     assert any("already bound to another host" in w for w in entry["summary"]["warnings"]), \
         entry["summary"]["warnings"]
+    assert entry["summary"]["merge_candidates"] == [
+        {"alias": "realname", "conflicting_host_id": placeholder_id},
+    ]
+
+
+def test_import_archive_alias_conflict_auto_merges_unresolved(client):
+    """When the conflicting host is an unresolved placeholder, the alias
+    triggers a silent auto-merge (Phase 15) instead of a manual candidate."""
+    op_id = _create_op(client)
+    host_id = _create_host(client, op_id)
+
+    # Seed: an evidence-only placeholder for 10.0.0.1 with alias 'realname'.
+    seed = b"10.0.0.1 realname\n"
+    r1 = client.post(
+        f"/api/ops/{op_id}/upload",
+        data={"file_type": "etc_hosts", "host_id": host_id},
+        files={"file": ("etc_hosts", seed, "text/plain")},
+    )
+    assert r1.status_code == 200
+    hosts_before = client.get(f"/api/ops/{op_id}/hosts").json()
+    placeholder_id = next(h["id"] for h in hosts_before if h["nickname"] == "10.0.0.1")
+
+    # Now archive-import a conflicting line — placeholder should be merged
+    # into the new 10.0.0.99 host without prompting.
+    conflicting = b"10.0.0.99 realname\n"
+    tarball = _build_tarball({"etc_hosts__.txt": conflicting})
+    r2 = client.post(
+        f"/api/ops/{op_id}/hosts/{host_id}/import-archive",
+        files={"file": ("t.tar.gz", tarball, "application/gzip")},
+    )
+    assert r2.status_code == 200
+    entry = next(e for e in r2.json()["per_file"] if e["filename"] == "etc_hosts__.txt")
+    assert entry["summary"]["merge_candidates"] == []
+    assert any("Auto-merged unresolved" in w for w in entry["summary"]["warnings"]), \
+        entry["summary"]["warnings"]
+
+    # Placeholder host is gone; the new host owns both addresses.
+    hosts_after = client.get(f"/api/ops/{op_id}/hosts").json()
+    assert all(h["id"] != placeholder_id for h in hosts_after)
+    new_host = next(h for h in hosts_after if h["nickname"] == "10.0.0.99")
+    addrs = sorted(ip["ip_address"] for ip in new_host["ips"])
+    assert addrs == ["10.0.0.1", "10.0.0.99", "realname"]
+
+    # Activity log captures the auto-merge.
+    log = client.get(f"/api/ops/{op_id}/activity").json()
+    auto_entries = [e for e in log if e["action"] == "host.auto_merge"]
+    assert len(auto_entries) == 1
+    assert "Auto-merged '10.0.0.1' into '10.0.0.99'" in auto_entries[0]["detail"]
 
 
 def test_import_archive_aggregates_sudo_rules(client):

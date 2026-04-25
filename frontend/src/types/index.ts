@@ -234,6 +234,26 @@ export interface CreateHostUserRequest {
   source?: HostUser['source']
 }
 
+// ─── Host Merge ───────────────────────────────────────────────────────────────
+
+export interface MergeResolutions {
+  // For nickname/comment: "source" | "target" | <free-text override>.
+  // For status: "source" | "target" only — status is an enum.
+  nickname?: string
+  comment?: string
+  status?: 'source' | 'target'
+}
+
+export interface MergeHostRequest {
+  target_host_id: string
+  resolutions: MergeResolutions
+}
+
+export interface MergeHostResponse {
+  target: Host
+  counts: Record<string, number>
+}
+
 // ─── Graph ────────────────────────────────────────────────────────────────────
 
 export type Confidence = 'confirmed' | 'observed' | 'indicator'
@@ -328,6 +348,11 @@ export type UploadFileType =
   | 'etc_hosts'
   | 'sudoers'
 
+export interface MergeCandidate {
+  alias: string
+  conflicting_host_id: string
+}
+
 export interface UploadSummary {
   new_credentials: number
   new_credential_links: number
@@ -335,6 +360,7 @@ export interface UploadSummary {
   new_hosts: number
   new_sudo_rules: number
   warnings: string[]
+  merge_candidates?: MergeCandidate[]
 }
 
 export interface UploadResult {
