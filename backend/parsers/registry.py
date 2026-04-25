@@ -26,6 +26,10 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "private_key": PrivateKeyParser,
     "public_key": AuthorizedKeysParser,  # lone public key → same parser
     "auth_log": AuthLogParser,
+    # RHEL/CentOS log aliases — same syslog/sshd format as auth.log
+    "secure": AuthLogParser,
+    "syslog": AuthLogParser,
+    "messages": AuthLogParser,
     "wtmp": WtmpParser,
     "bash_history": BashHistoryParser,
     "passwd": PasswdParser,
