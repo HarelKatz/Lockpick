@@ -16,6 +16,7 @@ import { fetchGraph, expandHost } from '../api/graph'
 import GraphCanvas, { type CredFilter, type PathFilter, type LayoutName } from '../components/GraphCanvas'
 import HostSelector from '../components/HostSelector'
 import HostDetailSidebar from '../components/HostDetailSidebar'
+import MergeHostDialog from '../components/MergeHostDialog'
 import EdgeDetailPanel from '../components/EdgeDetailPanel'
 import PathDetailPanel from '../components/PathDetailPanel'
 import NodeContextMenu from '../components/NodeContextMenu'
@@ -77,6 +78,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
   const [lockedIds, setLockedIds] = useState<Set<string>>(new Set())
   const [statusFilters, setStatusFilters] = useState<Set<string>>(new Set())
   const [panelMode, setPanelMode] = useState<'push' | 'overlay'>('overlay')
+  const [mergeOpen, setMergeOpen] = useState(false)
   const canvasAreaRef = useRef<HTMLDivElement>(null)
 
   // Set by loadFullGraph before it updates selectedIds to prevent the selectedIds
@@ -318,6 +320,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
         host={allHosts.find(h => h.id === selectedNode.host_id) ?? null}
         onClose={() => setSelectedNode(null)}
         onHostUpdated={loadFullGraph}
+        onMergeRequested={() => setMergeOpen(true)}
       />
     )
     : selectedEdge
@@ -504,6 +507,27 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
           onClose={() => setEdgeCtxMenu(null)}
         />
       )}
+
+      {mergeOpen && selectedNode && (() => {
+        const sourceHost = allHosts.find(h => h.id === selectedNode.host_id)
+        if (!sourceHost) return null
+        return (
+          <MergeHostDialog
+            source={sourceHost}
+            allHosts={allHosts}
+            onClose={() => setMergeOpen(false)}
+            onMerged={() => {
+              // Source host is gone — drop the sidebar pointing at it.
+              // The WS broadcast triggers Workspace.fetchAll which refreshes
+              // allHosts; loadFullGraph runs locally for snappier graph
+              // redraw without waiting for the round-trip.
+              setSelectedNode(null)
+              setMergeOpen(false)
+              loadFullGraph()
+            }}
+          />
+        )
+      })()}
     </div>
   )
 }

@@ -566,3 +566,21 @@
   margin-top: 2px;
   word-break: break-word;
 }
+
+.mergeBtn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  padding: 6px 10px;
+  width: 100%;
+  text-align: center;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.mergeBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}

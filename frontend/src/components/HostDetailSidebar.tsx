@@ -30,9 +30,10 @@ interface Props {
   host?: Host | null
   onClose: () => void
   onHostUpdated?: () => void
+  onMergeRequested?: () => void
 }
 
-export default function HostDetailSidebar({ node, edges, host, onClose, onHostUpdated }: Props) {
+export default function HostDetailSidebar({ node, edges, host, onClose, onHostUpdated, onMergeRequested }: Props) {
   const [tab, setTab] = useState<Tab>('info')
 
   // Sudo rules state
@@ -189,6 +190,17 @@ export default function HostDetailSidebar({ node, edges, host, onClose, onHostUp
       <div className={styles.body}>
         {(!host || tab === 'info') && (
           <>
+            {host && onMergeRequested && (
+              <div className={styles.section}>
+                <button
+                  className={styles.mergeBtn}
+                  onClick={onMergeRequested}
+                  title="Move all of this host's relations onto another host, then delete this host"
+                >
+                  Merge into…
+                </button>
+              </div>
+            )}
             {host && (
               <div className={styles.section}>
                 <div className={styles.sectionLabel}>Status</div>
