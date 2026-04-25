@@ -20,6 +20,7 @@ from parsers.nftables import NftablesParser
 from parsers.nmap_xml import NmapXmlParser
 from parsers.passwd import PasswdParser
 from parsers.private_key import PrivateKeyParser
+from parsers.ps_output import PsOutputParser
 from parsers.shadow import ShadowParser
 from parsers.ss_output import SsOutputParser
 from parsers.ssh_config import SshConfigParser
@@ -50,4 +51,5 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "ss_output": SsOutputParser,
     "iptables": IptablesParser,
     "nftables": NftablesParser,
+    "ps_output": PsOutputParser,
 }

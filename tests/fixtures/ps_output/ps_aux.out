@@ -1,0 +1,9 @@
+USER        PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root          1  0.0  0.4  78148  9236 ?        Ss   Oct26   0:10 /sbin/init
+root          2  0.0  0.0      0     0 ?        S    Oct26   0:00 [kthreadd]
+root          3  0.0  0.0      0     0 ?        S    Oct26   0:00 [ksoftirqd/0]
+alice      1234  0.1  0.5  98765  4321 pts/0    S    10:00   0:00 ssh root@10.0.0.5
+alice      1235  0.0  0.4  87000  3500 pts/0    S    10:01   0:00 scp /tmp/x bob@webserver.corp:/srv/
+bob        2200  0.0  0.4  87000  3500 pts/0    S    10:02   0:00 mysql -uroot -psupersecret123 -h db.internal
+bob        2201  0.0  0.4  87000  3500 pts/0    S    10:03   0:00 curl -u admin:hunter2 http://api.internal/x
+bob        2202  0.0  0.4  87000  3500 pts/0    S    10:04   0:00 psql postgres://dbuser:dbpass@db.internal/mydb
