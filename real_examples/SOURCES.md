@@ -71,15 +71,17 @@ Real attacker sessions from Cowrie honeypots (13, one per distinct attack patter
 - `jc_ubuntu_18_04_passwd`, `jc_centos_7_7_passwd`, `jc_osx_10_14_6_passwd` — kellyjonbrazil/jc `tests/fixtures/*/passwd.out`
 - `cowrie_honeyfs_passwd` — cowrie/cowrie `honeyfs/etc/passwd` (honeypot fake passwd served to attackers)
 
-### `private_key/` — 22 files
+### `private_key/` — 24 files
 - `id_rsa`, `dss_key` — original (pre-existing; non-production keys)
 - 12 paramiko test keys from round 1: RSA / ECDSA (256/384/521) / Ed25519 / Ed448, including password-encrypted, funky-padding, and `blank_rsa` edge cases
 - Round 2 additions from paramiko/paramiko: `paramiko_test_rsa_openssh_nopad`, `paramiko_test_ecdsa_password_384`, `paramiko_test_ecdsa_password_521`, `paramiko_ed25519_funky_padding_password`, `paramiko_badhash_key1_ed25519`, `paramiko_badhash_key2_ed25519` (corrupted-hash edge cases), `paramiko_support_rsa_lonely`, `paramiko_demos_user_rsa`
+- `openssh_regress_ecdsa_sk_test1`, `openssh_regress_ed25519_sk_test1` — openssh/openssh-portable `regress/unittests/sshkey/testdata/{ecdsa,ed25519}_sk1`. FIDO2/U2F security-key private keys (`sk-ecdsa-sha2-nistp256@openssh.com` / `sk-ssh-ed25519@openssh.com`). Distinct format from the paramiko corpus — exposes parser handling of hardware-backed keys: ecdsa-sk currently parses but reports `key_type: ecdsa-sha2-nistp256` (missing the SK suffix); ed25519-sk fails with "unsupported format" warning. Snapshot locks in this current behavior for explicit regression on future fixes.
 
-### `public_key/` — 9 files
+### `public_key/` — 11 files
 - `id_rsa.pub`, `dss_key.pub` — original (pre-existing)
 - Round 1: `paramiko_test_rsa_pub`, `paramiko_ecdsa_256_cert`, `paramiko_ed25519_cert`, `paramiko_rsa_cert`
 - Round 2: `paramiko_support_rsa_cert`, `paramiko_support_rsa_missing_cert` (cert-pub-without-matching-key edge case), `paramiko_demos_user_rsa_pub`
+- `openssh_regress_ecdsa_sk_test1`, `openssh_regress_ed25519_sk_test1` — openssh/openssh-portable `regress/unittests/sshkey/testdata/{ecdsa,ed25519}_sk1.pub`. FIDO2 security-key public-key formats (`sk-ecdsa-sha2-nistp256@openssh.com` / `sk-ssh-ed25519@openssh.com`); both parse cleanly as `authorized_key`-style entries. Companion fixtures to the private-key SK pair above.
 
 ### `shadow/` — 4 files
 - `shadow` — original (pre-existing)

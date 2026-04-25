@@ -1,0 +1,22 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "private_key",
+      "name": "openssh_regress_ecdsa_sk_test1",
+      "relationship_type": "found_on_disk",
+      "username": null,
+      "value_length": 849,
+      "value_prefix": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3Bl"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "fingerprint": "SHA256:w58v7F6Sk1JYPmWIXifPvXVqBVb/q+1RbdMInRgkt9I",
+    "key_type": "ecdsa-sha2-nistp256"
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

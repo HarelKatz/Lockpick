@@ -1,0 +1,21 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "public_key",
+      "name": "authorized_key from openssh_regress_ed25519_sk_test1",
+      "relationship_type": "authorized_key",
+      "username": null,
+      "value_length": 150,
+      "value_prefix": "sk-ssh-ed25519@openssh.com AAAAGnNrLXNza"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "keys_parsed": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}
