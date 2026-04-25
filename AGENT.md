@@ -14,7 +14,7 @@ A web-based tool for red teams to collaboratively organize SSH credentials, host
 
 > **Edit rules:** ≤5 lines. Last completed · Next · Any blocker. Nothing else — detail belongs in commit messages.
 
-**Last completed: Phases 1–18 — full stack, 46 parsers (Phase 16 system files, Phase 17 command output, Phase 18 secret/credential files including netrc/pgpass/mysql_config/AWS/GCP ADC/kubeconfig/env_file/docker_config/git_credentials/rclone_config), WS live push, host notes, status enum, addr_type, SudoRule, host merge, one-click collection script + bulk archive import**
+**Last completed: Phases 1–18 — full stack, 49 file types / 44 parser classes (Phase 16 system files, Phase 17 command output, Phase 18 secret/credential files including netrc/pgpass/mysql_config/AWS/GCP ADC/kubeconfig/env_file/docker_config/git_credentials/rclone_config), WS live push, host notes, status enum, addr_type, SudoRule, host merge, one-click collection script + bulk archive import**
 
 **Next: Phase 19 — Engagement Report Export**
 
