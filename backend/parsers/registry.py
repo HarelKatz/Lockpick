@@ -13,6 +13,7 @@ from parsers.known_hosts import KnownHostsParser
 from parsers.netrc import NetrcParser
 from parsers.nmap_xml import NmapXmlParser
 from parsers.passwd import PasswdParser
+from parsers.pgpass import PgpassParser
 from parsers.private_key import PrivateKeyParser
 from parsers.shadow import ShadowParser
 from parsers.ssh_config import SshConfigParser
@@ -36,4 +37,5 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "etc_hosts": EtcHostsParser,
     "sudoers": SudoersParser,
     "netrc": NetrcParser,
+    "pgpass": PgpassParser,
 }
