@@ -10,6 +10,7 @@ from parsers.auth_log import AuthLogParser
 from parsers.bash_history import BashHistoryParser
 from parsers.etc_hosts import EtcHostsParser
 from parsers.known_hosts import KnownHostsParser
+from parsers.mysql_config import MysqlConfigParser
 from parsers.netrc import NetrcParser
 from parsers.nmap_xml import NmapXmlParser
 from parsers.passwd import PasswdParser
@@ -38,4 +39,5 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "sudoers": SudoersParser,
     "netrc": NetrcParser,
     "pgpass": PgpassParser,
+    "mysql_config": MysqlConfigParser,
 }
