@@ -1,0 +1,28 @@
+# Sample .bashrc for the parser test
+export PATH="/usr/bin:/bin"
+export HISTSIZE=1000
+
+# Direct ssh in alias form
+alias jb='ssh ops@10.0.0.5'
+alias web='ssh -p 2222 root@web01.corp'
+
+# Helper functions: not what we test, but should not crash
+hello() { echo "hi"; }
+
+# Real secrets — should be harvested
+export AWS_ACCESS_KEY_ID="AKIAEXAMPLE12345"
+export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+export GITHUB_TOKEN='ghp_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+export DB_PASSWORD="hunter2"
+export DATABASE_DSN="postgres://app:secret@db.corp:5432/prod"
+
+# Should NOT be harvested
+export PATH=$PATH:/opt/bin
+export SSH_AUTH_SOCK=/tmp/ssh.sock
+export EDITOR=vim
+export FOO=$(hostname)
+export PROMPT="\u@\h"
+
+# Direct scp/rsync usage
+scp file.txt admin@backup.example.com:/tmp/
+rsync -av /data/ user@archive.example.com:/backup/
