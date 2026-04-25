@@ -257,13 +257,20 @@ def process_single_file(
         _get_or_create_host_user(db, host_id, uname, shell, home_dir, user_source)
 
     # ── 1b. Discovered hosts (nmap, etc_hosts, …) ────────────────────────
-    # Snapshot existing host ids so we can tell "new vs resolved-to-existing"
-    # for the new_hosts counter. Every time resolve_ip creates a new host
-    # we add its id to this set so subsequent iterations within the same
-    # file don't double-count.
-    existing_host_ids: set[str] = {
+    # `pre_existing_host_ids` is a frozen snapshot of host ids that were in
+    # the DB before this file. `created_in_this_file` tracks ids that were
+    # auto-created by `resolve_ip` during processing; this lets us correctly
+    # roll back the new_hosts counter when an in-file auto-merge dissolves
+    # a host we just created (otherwise new_hosts would over-count).
+    pre_existing_host_ids: frozenset[str] = frozenset(
         hid for (hid,) in db.query(Host.id).filter(Host.op_id == op_id).all()
-    }
+    )
+    created_in_this_file: set[str] = set()
+
+    def _track_new(hid: str) -> None:
+        if hid not in pre_existing_host_ids:
+            created_in_this_file.add(hid)
+
     # Warnings produced by the pipeline itself (vs. parser-generated
     # `result.warnings`). Merged into the returned warnings list.
     helper_warnings: list[str] = []
@@ -274,14 +281,11 @@ def process_single_file(
     # safe to dissolve).
     auto_merges: list[dict] = []
     merge_candidates: list[dict] = []
-    new_hosts = 0
     for hd in result.hosts_found:
         resolved_id = resolve_ip(db, op_id, hd.ip_address, create_if_missing=True)
         if not resolved_id:
             continue
-        if resolved_id not in existing_host_ids:
-            new_hosts += 1
-            existing_host_ids.add(resolved_id)
+        _track_new(resolved_id)
         if hd.nickname:
             resolved_host = (
                 db.query(Host)
@@ -354,7 +358,10 @@ def process_single_file(
                                 f"'{merge_result['source_nickname']}' into "
                                 f"'{merge_result['target_nickname']}' via alias '{alias}'"
                             )
-                            existing_host_ids.discard(existing)
+                            # The merged-away host disappears — if it was
+                            # one we just created in this file, roll back
+                            # the new_hosts counter accordingly.
+                            created_in_this_file.discard(existing)
                             auto_merged = True
                     if not auto_merged:
                         helper_warnings.append(
@@ -447,9 +454,8 @@ def process_single_file(
             db, op_id, conn_data.dst_ip, upload_host_ip, host_id
         )
         for hid in (src_host_id, dst_host_id):
-            if hid and hid not in existing_host_ids:
-                new_hosts += 1
-                existing_host_ids.add(hid)
+            if hid:
+                _track_new(hid)
 
         cred_id = None
         if conn_data.credential_fingerprint:
@@ -563,7 +569,7 @@ def process_single_file(
         "new_credentials": new_creds,
         "new_credential_links": new_links,
         "new_connections": new_connections,
-        "new_hosts": new_hosts,
+        "new_hosts": len(created_in_this_file),
         "new_sudo_rules": new_sudo_rules,
         "warnings": list(result.warnings) + helper_warnings,
         "merge_candidates": merge_candidates,

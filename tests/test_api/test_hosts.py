@@ -257,3 +257,16 @@ def test_merge_target_not_found_returns_404(client, op):
         json={"target_host_id": "deadbeef-no-target", "resolutions": {}},
     )
     assert resp.status_code == 404
+
+
+def test_merge_rejects_empty_nickname(client, op):
+    """Empty / whitespace-only nickname must be rejected at the boundary —
+    the frontend disables submit, but the endpoint itself should not
+    trust client-side validation."""
+    src_id, tgt_id = _two_hosts(client, op["id"])
+    for bad in ("", "   ", "\t"):
+        resp = client.post(
+            f"/api/hosts/{src_id}/merge",
+            json={"target_host_id": tgt_id, "resolutions": {"nickname": bad}},
+        )
+        assert resp.status_code == 422, f"expected 422 for nickname={bad!r}"

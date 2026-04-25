@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 # ─── Operation ───────────────────────────────────────────────────────────────
@@ -180,6 +180,17 @@ class MergeResolutions(BaseModel):
     nickname: Optional[str] = None
     comment: Optional[str] = None
     status: Optional[Literal["source", "target"]] = None
+
+    @field_validator("nickname")
+    @classmethod
+    def _nickname_not_empty(cls, v: Optional[str]) -> Optional[str]:
+        # Empty / whitespace-only nicknames break downstream UI — reject at
+        # the boundary rather than letting a free-text override land an
+        # empty Host.nickname. The frontend already disables submit, but the
+        # endpoint shouldn't trust that.
+        if v is not None and v.strip() == "":
+            raise ValueError("nickname must not be empty")
+        return v
 
 
 class MergeHostRequest(BaseModel):
