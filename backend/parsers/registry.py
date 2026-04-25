@@ -16,6 +16,7 @@ from parsers.ip_route import IpRouteParser
 from parsers.iptables import IptablesParser
 from parsers.known_hosts import KnownHostsParser
 from parsers.netstat import NetstatParser
+from parsers.nftables import NftablesParser
 from parsers.nmap_xml import NmapXmlParser
 from parsers.passwd import PasswdParser
 from parsers.private_key import PrivateKeyParser
@@ -48,4 +49,5 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "netstat": NetstatParser,
     "ss_output": SsOutputParser,
     "iptables": IptablesParser,
+    "nftables": NftablesParser,
 }
