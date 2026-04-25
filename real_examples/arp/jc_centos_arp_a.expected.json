@@ -1,0 +1,49 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.71.1",
+      "dst_user": null,
+      "raw_line": "? (192.168.71.1) at 00:50:56:c0:00:08 [ether] on ens33",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.71.2",
+      "dst_user": null,
+      "raw_line": "gateway (192.168.71.2) at 00:50:56:f7:4a:fc [ether] on ens33",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.71.254",
+      "dst_user": null,
+      "raw_line": "? (192.168.71.254) at 00:50:56:fe:7a:b4 [ether] on ens33",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "neighbors": 3
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

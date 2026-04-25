@@ -1,0 +1,157 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.1.187",
+      "dst_user": null,
+      "raw_line": "tv.attlocal.net (192.168.1.187) at 50:32:37:d7:f4:9b on en0 ifscope [ethernet]",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.1.217",
+      "dst_user": null,
+      "raw_line": "device.attlocal.net (192.168.1.217) at 3c:37:86:14:ad:f7 on en0 ifscope [ethernet]",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.1.222",
+      "dst_user": null,
+      "raw_line": "mac.attlocal.net (192.168.1.222) at a4:83:e7:2d:63:8f on en0 ifscope permanent [ethernet]",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.1.250",
+      "dst_user": null,
+      "raw_line": "laptop.attlocal.net (192.168.1.250) at fc:ae:34:a1:3a:80 on en0 ifscope [ethernet]",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.1.251",
+      "dst_user": null,
+      "raw_line": "dev2.attlocal.net (192.168.1.251) at 3c:37:86:15:df:b3 on en0 ifscope [ethernet]",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.1.63",
+      "dst_user": null,
+      "raw_line": "xxx.attlocal.net (192.168.1.63) at e0:33:8e:67:38:d6 on en0 ifscope [ethernet]",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.1.74",
+      "dst_user": null,
+      "raw_line": "mbp.attlocal.net (192.168.1.74) at f0:18:98:5:d8:39 on en0 ifscope [ethernet]",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.1.77",
+      "dst_user": null,
+      "raw_line": "tablet.attlocal.net (192.168.1.77) at 4c:56:9d:5f:b8:4c on en0 ifscope [ethernet]",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.1.80",
+      "dst_user": null,
+      "raw_line": "living-room.attlocal.net (192.168.1.80) at c8:d0:83:cd:f3:2d on en0 ifscope [ethernet]",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.1.99",
+      "dst_user": null,
+      "raw_line": "outside.attlocal.net (192.168.1.99) at d0:3:4b:3b:27:d5 on en0 ifscope [ethernet]",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "224.0.0.251",
+      "dst_user": null,
+      "raw_line": "? (224.0.0.251) at 1:0:5e:0:0:fb on en0 ifscope permanent [ethernet]",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "239.255.255.250",
+      "dst_user": null,
+      "raw_line": "? (239.255.255.250) at 1:0:5e:7f:ff:fa on en0 ifscope permanent [ethernet]",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "neighbors": 12
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

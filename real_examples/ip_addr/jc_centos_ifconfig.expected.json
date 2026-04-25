@@ -1,0 +1,22 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [
+    {
+      "aliases": [
+        "192.168.71.137"
+      ],
+      "ip_address": "172.17.0.1",
+      "nickname": null
+    }
+  ],
+  "patterns_found": [],
+  "stats": {
+    "hosts": 1,
+    "ipv4": 2,
+    "ipv6": 0
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}
