@@ -1,0 +1,61 @@
+ifconfig en0
+ifconfig 
+ping 192.168.15.5
+ssh simsong@192.168.15.5
+ssh simsong@192.168.15.15
+ssh simsong@192.168.1.5
+scp /mnt/ubnist1.gen0.raw simsong@192.168.15.62:.
+ls -l
+cd Desktop/
+ls
+cd MyStuff/
+ls -l
+cd SEC\ Documents/
+wget http://www.sec.gov/news/speech/2008/spch121708cc-idata.wmv
+df -h
+df
+su
+sudo bash
+cd
+ls -al .ssh
+cat .ssh/known_hosts 
+df
+mount /dev/sda1 /mnt
+ls /mnt
+suspend
+ls
+find . -exec grep Reuters {} /dev/null \;
+find . -exec grep Reut {} /dev/null \;
+find . -print
+more ./.mozilla/firefox/ylaw3s7x.default/Cache/59E351
+more .mozilla/firefox/ylaw3s7x.default/Cache/59E351
+cd .mozilla/firefox/ylaw3s7x.default/
+ls -l
+more Cache/AA87DA68d01 
+file  Cache/AA87DA68d01 
+cd ..
+ls -l
+cd ..
+cd .mozilla/firefox/ylaw3s7x.default/
+ls -l
+cd Cache/
+ls -alt|more
+date
+ls -alt|more
+grep Reuters *
+strings 23
+strings 234EBF5Bd01 
+file 234EBF5Bd01 
+for i in  * ; gzcat $i ; grep Reuters ; done
+for i in  * ; gunzip < $i ; grep Reuters ; done
+for i in  * ; do gzcat $i ; grep Reuters ; done
+for i in  * ; do echo $i ; gunzip <  $i ; grep Reuters ; done
+for i in  * ; do echo $i ; cat $i | gunzip  ; grep Reuters ; done
+ls
+ls -lt|more
+emacs .&
+ls -alt|more
+for i in * ; do gunzip  < $i ; done
+for i in * ; do gunzip  < $i | grep Reuters ; done
+for i in * ; do echo $i ; gunzip  < $i 2>&1 | grep Reuters ; done
+for i in * ; do echo $i ; gunzip  < $i 2>&1 | grep Gaz ; done

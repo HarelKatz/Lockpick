@@ -1,0 +1,59 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "password",
+      "name": "shadow hash for ubuntu",
+      "relationship_type": "found_on_disk",
+      "username": "ubuntu",
+      "value_length": 13,
+      "value_prefix": "U6aMy0wojraho"
+    }
+  ],
+  "host_users_found": [
+    [
+      "ubuntu",
+      null,
+      null
+    ]
+  ],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "hashes_found": 1,
+    "users_found": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": [
+    "User 'root': account is locked (*) — no hash",
+    "User 'daemon': account is locked (*) — no hash",
+    "User 'bin': account is locked (*) — no hash",
+    "User 'sys': account is locked (*) — no hash",
+    "User 'sync': account is locked (*) — no hash",
+    "User 'games': account is locked (*) — no hash",
+    "User 'man': account is locked (*) — no hash",
+    "User 'lp': account is locked (*) — no hash",
+    "User 'mail': account is locked (*) — no hash",
+    "User 'news': account is locked (*) — no hash",
+    "User 'uucp': account is locked (*) — no hash",
+    "User 'proxy': account is locked (*) — no hash",
+    "User 'www-data': account is locked (*) — no hash",
+    "User 'backup': account is locked (*) — no hash",
+    "User 'list': account is locked (*) — no hash",
+    "User 'irc': account is locked (*) — no hash",
+    "User 'gnats': account is locked (*) — no hash",
+    "User 'nobody': account is locked (*) — no hash",
+    "User 'libuuid': account is locked (!) — no hash",
+    "User 'syslog': account is locked (*) — no hash",
+    "User 'klog': account is locked (*) — no hash",
+    "User 'hplip': account is locked (*) — no hash",
+    "User 'avahi-autoipd': account is locked (*) — no hash",
+    "User 'gdm': account is locked (*) — no hash",
+    "User 'pulse': account is locked (*) — no hash",
+    "User 'saned': account is locked (*) — no hash",
+    "User 'messagebus': account is locked (*) — no hash",
+    "User 'polkituser': account is locked (*) — no hash",
+    "User 'avahi': account is locked (*) — no hash",
+    "User 'haldaemon': account is locked (*) — no hash"
+  ]
+}

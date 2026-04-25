@@ -1,0 +1,61 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.1.5",
+      "dst_user": "simsong",
+      "raw_line": "ssh simsong@192.168.1.5",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.15.15",
+      "dst_user": "simsong",
+      "raw_line": "ssh simsong@192.168.15.15",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.15.5",
+      "dst_user": "simsong",
+      "raw_line": "ssh simsong@192.168.15.5",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "scp",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.15.62",
+      "dst_user": "simsong",
+      "raw_line": "scp /mnt/ubnist1.gen0.raw simsong@192.168.15.62:.",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "commands_parsed": 4
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

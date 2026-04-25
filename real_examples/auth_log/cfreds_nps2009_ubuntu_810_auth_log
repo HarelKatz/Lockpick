@@ -1,0 +1,194 @@
+Dec 28 13:11:46 ubuntu gdm[8057]: pam_unix(gdm-autologin:session): session opened for user ubuntu by (uid=0)
+Dec 28 13:11:46 ubuntu gdm[8057]: pam_ck_connector(gdm-autologin:session): nox11 mode, ignoring PAM_TTY :0
+Dec 28 13:11:48 ubuntu login[8341]: pam_unix(login:session): session opened for user ubuntu by (uid=0)
+Dec 28 21:17:01 ubuntu CRON[8731]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 28 21:17:01 ubuntu CRON[8731]: pam_unix(cron:session): session closed for user root
+Dec 28 21:33:50 ubuntu gdm[8057]: pam_unix(gdm-autologin:session): session closed for user ubuntu
+Dec 28 21:07:19 ubuntu gdm[7746]: pam_unix(gdm-autologin:session): session opened for user ubuntu by (uid=0)
+Dec 28 21:07:19 ubuntu gdm[7746]: pam_ck_connector(gdm-autologin:session): nox11 mode, ignoring PAM_TTY :0
+Dec 28 21:07:20 ubuntu login[8030]: pam_unix(login:session): session opened for user ubuntu by (uid=0)
+Dec 29 05:17:01 ubuntu CRON[8354]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 29 05:17:01 ubuntu CRON[8354]: pam_unix(cron:session): session closed for user root
+Dec 29 05:24:19 ubuntu su[8595]: pam_unix(su:auth): authentication failure; logname=ubuntu uid=999 euid=0 tty=pts/0 ruser=ubuntu rhost=  user=root
+Dec 29 05:24:21 ubuntu su[8595]: pam_authenticate: Authentication failure
+Dec 29 05:24:21 ubuntu su[8595]: FAILED su for root by ubuntu
+Dec 29 05:24:21 ubuntu su[8595]: - pts/0 ubuntu:root
+Dec 29 05:24:27 ubuntu su[8596]: pam_unix(su:auth): auth could not identify password for [root]
+Dec 29 05:24:27 ubuntu su[8596]: pam_authenticate: Authentication failure
+Dec 29 05:24:27 ubuntu su[8596]: FAILED su for root by ubuntu
+Dec 29 05:24:27 ubuntu su[8596]: - pts/0 ubuntu:root
+Dec 29 05:24:31 ubuntu sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/bin/bash
+Dec 29 05:42:35 ubuntu gdm[7746]: pam_unix(gdm-autologin:session): session closed for user ubuntu
+Dec 29 21:32:15 ubuntu gdm[7740]: pam_unix(gdm-autologin:session): session opened for user ubuntu by (uid=0)
+Dec 29 21:32:15 ubuntu gdm[7740]: pam_ck_connector(gdm-autologin:session): nox11 mode, ignoring PAM_TTY :0
+Dec 29 21:32:16 ubuntu login[8034]: pam_unix(login:session): session opened for user ubuntu by (uid=0)
+Dec 30 05:35:11 ubuntu sudo:   ubuntu : TTY=unknown ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/sbin/gnome-app-install-helper -e universe
+Dec 30 05:35:12 ubuntu sudo:   ubuntu : TTY=unknown ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/sbin/synaptic --hide-main-window --non-interactive --update-at-startup
+Dec 30 05:44:31 ubuntu sudo:   ubuntu : TTY=unknown ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/sbin/synaptic --hide-main-window --non-interactive --set-selections-file /tmp/tmpuKmvrC
+Dec 30 06:17:01 ubuntu CRON[11125]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 30 06:17:01 ubuntu CRON[11125]: pam_unix(cron:session): session closed for user root
+Dec 30 06:25:01 ubuntu CRON[11140]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 30 06:40:18 ubuntu sudo:     root : TTY=unknown ; PWD=/ ; USER=ubuntu ; COMMAND=/usr/bin/gconftool --get /system/http_proxy/use_http_proxy
+Dec 30 06:40:18 ubuntu sudo:     root : TTY=unknown ; PWD=/ ; USER=ubuntu ; COMMAND=/usr/bin/gconftool --get /system/http_proxy/host
+Dec 30 06:40:18 ubuntu sudo:     root : TTY=unknown ; PWD=/ ; USER=ubuntu ; COMMAND=/usr/bin/gconftool --get /system/http_proxy/port
+Dec 30 06:55:38 ubuntu CRON[11140]: pam_unix(cron:session): session closed for user root
+Dec 30 07:17:01 ubuntu CRON[11569]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 30 07:17:02 ubuntu CRON[11569]: pam_unix(cron:session): session closed for user root
+Dec 30 07:30:01 ubuntu CRON[11583]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 30 07:30:01 ubuntu CRON[11583]: pam_unix(cron:session): session closed for user root
+Dec 30 08:17:01 ubuntu CRON[11815]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 30 08:17:01 ubuntu CRON[11815]: pam_unix(cron:session): session closed for user root
+Dec 30 09:17:01 ubuntu CRON[12031]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 30 09:17:01 ubuntu CRON[12031]: pam_unix(cron:session): session closed for user root
+Dec 30 10:17:01 ubuntu CRON[12045]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 30 10:17:01 ubuntu CRON[12045]: pam_unix(cron:session): session closed for user root
+Dec 30 11:17:01 ubuntu CRON[12261]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 30 11:17:01 ubuntu CRON[12261]: pam_unix(cron:session): session closed for user root
+Dec 30 12:17:01 ubuntu CRON[12477]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 30 12:17:01 ubuntu CRON[12477]: pam_unix(cron:session): session closed for user root
+Dec 30 13:17:01 ubuntu CRON[12693]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 30 13:17:01 ubuntu CRON[12693]: pam_unix(cron:session): session closed for user root
+Dec 30 14:17:01 ubuntu CRON[12909]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 30 14:17:01 ubuntu CRON[12909]: pam_unix(cron:session): session closed for user root
+Dec 30 15:17:01 ubuntu CRON[13125]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 30 15:17:01 ubuntu CRON[13125]: pam_unix(cron:session): session closed for user root
+Dec 30 16:17:01 ubuntu CRON[13139]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 30 16:17:01 ubuntu CRON[13139]: pam_unix(cron:session): session closed for user root
+Dec 30 17:17:01 ubuntu CRON[13355]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 30 17:17:01 ubuntu CRON[13355]: pam_unix(cron:session): session closed for user root
+Dec 30 17:45:55 ubuntu gdm[7740]: pam_unix(gdm-autologin:session): session closed for user ubuntu
+Dec 30 20:21:25 ubuntu gdm[7686]: pam_unix(gdm-autologin:session): session opened for user ubuntu by (uid=0)
+Dec 30 20:21:25 ubuntu gdm[7686]: pam_ck_connector(gdm-autologin:session): nox11 mode, ignoring PAM_TTY :0
+Dec 30 20:21:26 ubuntu login[7980]: pam_unix(login:session): session opened for user ubuntu by (uid=0)
+Dec 31 05:17:01 ubuntu CRON[8412]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 05:17:01 ubuntu CRON[8412]: pam_unix(cron:session): session closed for user root
+Dec 31 06:17:01 ubuntu CRON[8633]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 06:17:01 ubuntu CRON[8633]: pam_unix(cron:session): session closed for user root
+Dec 31 06:25:01 ubuntu CRON[8849]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 06:31:47 ubuntu sudo:     root : TTY=unknown ; PWD=/ ; USER=ubuntu ; COMMAND=/usr/bin/gconftool --get /system/http_proxy/use_http_proxy
+Dec 31 06:31:48 ubuntu sudo:     root : TTY=unknown ; PWD=/ ; USER=ubuntu ; COMMAND=/usr/bin/gconftool --get /system/http_proxy/host
+Dec 31 06:31:48 ubuntu sudo:     root : TTY=unknown ; PWD=/ ; USER=ubuntu ; COMMAND=/usr/bin/gconftool --get /system/http_proxy/port
+Dec 31 06:38:43 ubuntu CRON[8849]: pam_unix(cron:session): session closed for user root
+Dec 31 07:17:01 ubuntu CRON[9300]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 07:17:01 ubuntu CRON[9300]: pam_unix(cron:session): session closed for user root
+Dec 31 07:30:01 ubuntu CRON[9315]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 07:30:01 ubuntu CRON[9315]: pam_unix(cron:session): session closed for user root
+Dec 31 08:17:01 ubuntu CRON[9548]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 08:17:01 ubuntu CRON[9548]: pam_unix(cron:session): session closed for user root
+Dec 31 09:17:01 ubuntu CRON[9766]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 09:17:01 ubuntu CRON[9766]: pam_unix(cron:session): session closed for user root
+Dec 31 10:17:01 ubuntu CRON[9984]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 10:17:01 ubuntu CRON[9984]: pam_unix(cron:session): session closed for user root
+Dec 31 11:17:01 ubuntu CRON[10202]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 11:17:01 ubuntu CRON[10202]: pam_unix(cron:session): session closed for user root
+Dec 31 12:17:01 ubuntu CRON[10420]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 12:17:01 ubuntu CRON[10420]: pam_unix(cron:session): session closed for user root
+Dec 31 13:17:01 ubuntu CRON[10436]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 13:17:01 ubuntu CRON[10436]: pam_unix(cron:session): session closed for user root
+Dec 31 14:17:01 ubuntu CRON[10452]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 14:17:01 ubuntu CRON[10452]: pam_unix(cron:session): session closed for user root
+Dec 31 15:17:01 ubuntu CRON[10670]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 15:17:01 ubuntu CRON[10670]: pam_unix(cron:session): session closed for user root
+Dec 31 16:17:01 ubuntu CRON[10888]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 16:17:01 ubuntu CRON[10888]: pam_unix(cron:session): session closed for user root
+Dec 31 17:17:01 ubuntu CRON[11106]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 17:17:01 ubuntu CRON[11106]: pam_unix(cron:session): session closed for user root
+Dec 31 18:17:01 ubuntu CRON[11324]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 18:17:02 ubuntu CRON[11324]: pam_unix(cron:session): session closed for user root
+Dec 31 19:17:01 ubuntu CRON[11542]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 19:17:01 ubuntu CRON[11542]: pam_unix(cron:session): session closed for user root
+Dec 31 20:17:01 ubuntu CRON[11760]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 20:17:01 ubuntu CRON[11760]: pam_unix(cron:session): session closed for user root
+Dec 31 21:17:01 ubuntu CRON[11777]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 21:17:01 ubuntu CRON[11777]: pam_unix(cron:session): session closed for user root
+Dec 31 22:17:01 ubuntu CRON[11995]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 22:17:01 ubuntu CRON[11995]: pam_unix(cron:session): session closed for user root
+Dec 31 23:17:01 ubuntu CRON[12213]: pam_unix(cron:session): session opened for user root by (uid=0)
+Dec 31 23:17:01 ubuntu CRON[12213]: pam_unix(cron:session): session closed for user root
+Jan  1 00:17:01 ubuntu CRON[12434]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 00:17:01 ubuntu CRON[12434]: pam_unix(cron:session): session closed for user root
+Jan  1 01:17:01 ubuntu CRON[12651]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 01:17:01 ubuntu CRON[12651]: pam_unix(cron:session): session closed for user root
+Jan  1 02:17:01 ubuntu CRON[12869]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 02:17:01 ubuntu CRON[12869]: pam_unix(cron:session): session closed for user root
+Jan  1 03:17:01 ubuntu CRON[13087]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 03:17:01 ubuntu CRON[13087]: pam_unix(cron:session): session closed for user root
+Jan  1 04:17:01 ubuntu CRON[13103]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 04:17:01 ubuntu CRON[13103]: pam_unix(cron:session): session closed for user root
+Jan  1 05:17:01 ubuntu CRON[13321]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 05:17:01 ubuntu CRON[13321]: pam_unix(cron:session): session closed for user root
+Jan  1 06:17:01 ubuntu CRON[13540]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 06:17:01 ubuntu CRON[13540]: pam_unix(cron:session): session closed for user root
+Jan  1 06:25:01 ubuntu CRON[13757]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 06:37:57 ubuntu sudo:     root : TTY=unknown ; PWD=/ ; USER=ubuntu ; COMMAND=/usr/bin/gconftool --get /system/http_proxy/use_http_proxy
+Jan  1 06:37:57 ubuntu sudo:     root : TTY=unknown ; PWD=/ ; USER=ubuntu ; COMMAND=/usr/bin/gconftool --get /system/http_proxy/host
+Jan  1 06:37:58 ubuntu sudo:     root : TTY=unknown ; PWD=/ ; USER=ubuntu ; COMMAND=/usr/bin/gconftool --get /system/http_proxy/port
+Jan  1 06:50:57 ubuntu CRON[13757]: pam_unix(cron:session): session closed for user root
+Jan  1 06:52:01 ubuntu CRON[14181]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 06:52:01 ubuntu CRON[14181]: pam_unix(cron:session): session closed for user root
+Jan  1 07:17:01 ubuntu CRON[14399]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 07:17:02 ubuntu CRON[14399]: pam_unix(cron:session): session closed for user root
+Jan  1 07:30:01 ubuntu CRON[14616]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 07:30:01 ubuntu CRON[14616]: pam_unix(cron:session): session closed for user root
+Jan  1 08:17:01 ubuntu CRON[14849]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 08:17:01 ubuntu CRON[14849]: pam_unix(cron:session): session closed for user root
+Jan  1 09:17:01 ubuntu CRON[15067]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 09:17:01 ubuntu CRON[15067]: pam_unix(cron:session): session closed for user root
+Jan  1 10:17:01 ubuntu CRON[15285]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 10:17:01 ubuntu CRON[15285]: pam_unix(cron:session): session closed for user root
+Jan  1 11:17:01 ubuntu CRON[15503]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 11:17:01 ubuntu CRON[15503]: pam_unix(cron:session): session closed for user root
+Jan  1 12:17:01 ubuntu CRON[15721]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 12:17:01 ubuntu CRON[15721]: pam_unix(cron:session): session closed for user root
+Jan  1 13:17:01 ubuntu CRON[15939]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 13:17:01 ubuntu CRON[15939]: pam_unix(cron:session): session closed for user root
+Jan  1 14:17:01 ubuntu CRON[16157]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 14:17:01 ubuntu CRON[16157]: pam_unix(cron:session): session closed for user root
+Jan  1 15:17:01 ubuntu CRON[16375]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 15:17:01 ubuntu CRON[16375]: pam_unix(cron:session): session closed for user root
+Jan  1 16:17:01 ubuntu CRON[16593]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 16:17:01 ubuntu CRON[16593]: pam_unix(cron:session): session closed for user root
+Jan  1 17:17:01 ubuntu CRON[16811]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 17:17:01 ubuntu CRON[16811]: pam_unix(cron:session): session closed for user root
+Jan  1 18:17:01 ubuntu CRON[17029]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 18:17:01 ubuntu CRON[17029]: pam_unix(cron:session): session closed for user root
+Jan  1 19:17:01 ubuntu CRON[17247]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  1 19:17:01 ubuntu CRON[17247]: pam_unix(cron:session): session closed for user root
+Jan  1 19:46:46 ubuntu gdm[7686]: pam_unix(gdm-autologin:session): session closed for user ubuntu
+Jan  6 19:00:33 ubuntu gdm[7741]: pam_unix(gdm-autologin:session): session opened for user ubuntu by (uid=0)
+Jan  6 19:00:33 ubuntu gdm[7741]: pam_ck_connector(gdm-autologin:session): nox11 mode, ignoring PAM_TTY :0
+Jan  6 19:00:34 ubuntu login[8025]: pam_unix(login:session): session opened for user ubuntu by (uid=0)
+Jan  7 03:17:01 ubuntu CRON[8385]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  7 03:17:01 ubuntu CRON[8385]: pam_unix(cron:session): session closed for user root
+Jan  7 04:17:01 ubuntu CRON[8605]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  7 04:17:01 ubuntu CRON[8605]: pam_unix(cron:session): session closed for user root
+Jan  7 05:17:01 ubuntu CRON[8624]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  7 05:17:01 ubuntu CRON[8624]: pam_unix(cron:session): session closed for user root
+Jan  7 06:17:01 ubuntu CRON[8642]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  7 06:17:01 ubuntu CRON[8642]: pam_unix(cron:session): session closed for user root
+Jan  7 06:25:01 ubuntu CRON[8656]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  7 06:39:30 ubuntu sudo:     root : TTY=unknown ; PWD=/ ; USER=ubuntu ; COMMAND=/usr/bin/gconftool --get /system/http_proxy/use_http_proxy
+Jan  7 06:39:30 ubuntu sudo:     root : TTY=unknown ; PWD=/ ; USER=ubuntu ; COMMAND=/usr/bin/gconftool --get /system/http_proxy/host
+Jan  7 06:39:30 ubuntu sudo:     root : TTY=unknown ; PWD=/ ; USER=ubuntu ; COMMAND=/usr/bin/gconftool --get /system/http_proxy/port
+Jan  7 06:54:12 ubuntu CRON[8656]: pam_unix(cron:session): session closed for user root
+Jan  7 07:17:01 ubuntu CRON[9122]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  7 07:17:01 ubuntu CRON[9122]: pam_unix(cron:session): session closed for user root
+Jan  7 07:30:01 ubuntu CRON[9136]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  7 07:30:01 ubuntu CRON[9136]: pam_unix(cron:session): session closed for user root
+Jan  7 08:17:01 ubuntu CRON[9372]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  7 08:17:01 ubuntu CRON[9372]: pam_unix(cron:session): session closed for user root
+Jan  7 09:17:01 ubuntu CRON[9389]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  7 09:17:01 ubuntu CRON[9389]: pam_unix(cron:session): session closed for user root
+Jan  7 10:17:01 ubuntu CRON[9607]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  7 10:17:01 ubuntu CRON[9607]: pam_unix(cron:session): session closed for user root
+Jan  7 11:17:01 ubuntu CRON[9624]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  7 11:17:01 ubuntu CRON[9624]: pam_unix(cron:session): session closed for user root
+Jan  7 12:17:01 ubuntu CRON[9842]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  7 12:17:01 ubuntu CRON[9842]: pam_unix(cron:session): session closed for user root
+Jan  7 13:17:01 ubuntu CRON[10059]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  7 13:17:01 ubuntu CRON[10059]: pam_unix(cron:session): session closed for user root
+Jan  7 14:17:01 ubuntu CRON[10278]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  7 14:17:01 ubuntu CRON[10278]: pam_unix(cron:session): session closed for user root
+Jan  7 15:17:01 ubuntu CRON[10495]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan  7 15:17:01 ubuntu CRON[10495]: pam_unix(cron:session): session closed for user root
+Jan  7 15:59:34 ubuntu gdm[7741]: pam_unix(gdm-autologin:session): session closed for user ubuntu

