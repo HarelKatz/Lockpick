@@ -37,7 +37,12 @@ from models import (
 )
 from parsers import UploadMetadata
 from parsers.registry import PARSER_REGISTRY
-from services.ip_resolver import _infer_addr_type, _is_routable_address, resolve_ip
+from services.ip_resolver import (
+    _infer_addr_type,
+    _is_routable_address,
+    is_unresolved_host,
+    resolve_ip,
+)
 from services.key_utils import infer_key_info
 from services.ssh_pattern import ssh_match
 
@@ -268,8 +273,18 @@ def process_single_file(
             new_hosts += 1
             existing_host_ids.add(resolved_id)
         if hd.nickname:
-            resolved_host = db.query(Host).filter(Host.id == resolved_id).first()
-            if resolved_host and resolved_host.comment and "Auto-created" in resolved_host.comment:
+            resolved_host = (
+                db.query(Host)
+                .options(
+                    selectinload(Host.users),
+                    selectinload(Host.credential_links),
+                    selectinload(Host.notes),
+                    selectinload(Host.sudo_rules),
+                )
+                .filter(Host.id == resolved_id)
+                .first()
+            )
+            if resolved_host and is_unresolved_host(resolved_host):
                 resolved_host.nickname = hd.nickname
 
         # Aliases: additional identifiers (IPs / hostnames) for the same

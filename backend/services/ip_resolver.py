@@ -57,6 +57,34 @@ def _is_routable_address(ip_or_hostname: str) -> bool:
     return not (ip_obj.is_multicast or ip_obj.is_reserved or ip_obj.is_unspecified)
 
 
+def is_unresolved_host(host: Host) -> bool:
+    """Return True iff *host* has no user-authored content.
+
+    "Unresolved" means the row exists only as a placeholder for an IP or
+    hostname seen in evidence — no users, no credential links, no notes,
+    no sudo rules. Two callers gate behavior on this predicate:
+
+    * The upload pipeline's nickname-clobber path: a parser-supplied nickname
+      replaces an auto-created nickname only when the host is still
+      unresolved. Once an operator has attached anything (a credential link,
+      a note, etc.) the nickname is treated as deliberate.
+    * Phase 15 auto-merge: when a new alias collides with an unresolved host,
+      the unresolved host is merged into the resolved host silently. Hosts
+      that fail this predicate require an explicit operator merge instead.
+
+    The caller MUST eager-load `host.users`, `host.credential_links`,
+    `host.notes`, and `host.sudo_rules` (the first three are
+    `lazy="raise_on_sql"` per Architecture Rule #19). Pass them through
+    `selectinload()` on the query that produced *host*.
+    """
+    return (
+        len(host.users) == 0
+        and len(host.credential_links) == 0
+        and len(host.notes) == 0
+        and len(host.sudo_rules) == 0
+    )
+
+
 def resolve_ip(
     db: Session,
     op_id: str,

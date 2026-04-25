@@ -1,9 +1,18 @@
-"""Unit tests for services/ip_resolver.py — resolve_ip()."""
+"""Unit tests for services/ip_resolver.py — resolve_ip(), is_unresolved_host()."""
 import pytest
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
-from models import Host, HostIP, Operation
-from services.ip_resolver import resolve_ip
+from models import (
+    Credential,
+    CredentialLink,
+    Host,
+    HostIP,
+    HostNote,
+    HostUser,
+    Operation,
+    SudoRule,
+)
+from services.ip_resolver import is_unresolved_host, resolve_ip
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -234,3 +243,81 @@ def test_unique_local_ipv6_still_resolved(db_session):
     op = _make_op(db_session)
     result = resolve_ip(db_session, op.id, "fd12:3456::1", create_if_missing=True)
     assert result is not None
+
+
+# ─── is_unresolved_host predicate ─────────────────────────────────────────────
+
+def _eager_host(db: Session, host_id: str) -> Host:
+    """Re-fetch a host with the four relationships is_unresolved_host requires."""
+    return (
+        db.query(Host)
+        .options(
+            selectinload(Host.users),
+            selectinload(Host.credential_links),
+            selectinload(Host.notes),
+            selectinload(Host.sudo_rules),
+        )
+        .filter(Host.id == host_id)
+        .one()
+    )
+
+
+def test_is_unresolved_host_pure_placeholder(db_session):
+    """A bare host with only IPs and no user-authored content is unresolved."""
+    op = _make_op(db_session)
+    host = _make_host(db_session, op.id, "10.0.0.1", ip="10.0.0.1")
+    assert is_unresolved_host(_eager_host(db_session, host.id)) is True
+
+
+def test_is_unresolved_host_with_user_returns_false(db_session):
+    op = _make_op(db_session)
+    host = _make_host(db_session, op.id, "web01", ip="10.0.0.5")
+    db_session.add(HostUser(host_id=host.id, username="root"))
+    db_session.flush()
+    assert is_unresolved_host(_eager_host(db_session, host.id)) is False
+
+
+def test_is_unresolved_host_with_credential_link_returns_false(db_session):
+    op = _make_op(db_session)
+    host = _make_host(db_session, op.id, "web01", ip="10.0.0.5")
+    cred = Credential(op_id=op.id, cred_type="password", value="hunter2")
+    db_session.add(cred)
+    db_session.flush()
+    db_session.add(CredentialLink(
+        credential_id=cred.id, host_id=host.id,
+        username="root", relationship_type="accepted_password",
+    ))
+    db_session.flush()
+    assert is_unresolved_host(_eager_host(db_session, host.id)) is False
+
+
+def test_is_unresolved_host_with_note_returns_false(db_session):
+    op = _make_op(db_session)
+    host = _make_host(db_session, op.id, "web01", ip="10.0.0.5")
+    db_session.add(HostNote(op_id=op.id, host_id=host.id, content="Operator note"))
+    db_session.flush()
+    assert is_unresolved_host(_eager_host(db_session, host.id)) is False
+
+
+def test_is_unresolved_host_with_sudo_rule_returns_false(db_session):
+    op = _make_op(db_session)
+    host = _make_host(db_session, op.id, "web01", ip="10.0.0.5")
+    db_session.add(SudoRule(
+        host_id=host.id, op_id=op.id,
+        subject="alice", subject_type="user",
+        run_as="root", commands="ALL", nopasswd=False,
+    ))
+    db_session.flush()
+    assert is_unresolved_host(_eager_host(db_session, host.id)) is False
+
+
+def test_is_unresolved_host_with_multiple_ips_still_true(db_session):
+    """A host with several HostIP rows but no users/links/notes/rules is still unresolved."""
+    op = _make_op(db_session)
+    host = _make_host(db_session, op.id, "10.0.0.1", ip="10.0.0.1")
+    db_session.add(HostIP(host_id=host.id, ip_address="db1.corp",
+                          source="parsed", addr_type="hostname"))
+    db_session.add(HostIP(host_id=host.id, ip_address="10.0.0.2",
+                          source="parsed", addr_type="ipv4"))
+    db_session.flush()
+    assert is_unresolved_host(_eager_host(db_session, host.id)) is True
