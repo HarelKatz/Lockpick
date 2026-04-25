@@ -10,6 +10,7 @@ from parsers.auth_log import AuthLogParser
 from parsers.bash_history import BashHistoryParser
 from parsers.etc_hosts import EtcHostsParser
 from parsers.ip_addr import IpAddrParser
+from parsers.ip_neigh import IpNeighParser
 from parsers.ip_route import IpRouteParser
 from parsers.known_hosts import KnownHostsParser
 from parsers.nmap_xml import NmapXmlParser
@@ -38,4 +39,5 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "sudoers": SudoersParser,
     "ip_addr": IpAddrParser,
     "ip_route": IpRouteParser,
+    "ip_neigh": IpNeighParser,
 }

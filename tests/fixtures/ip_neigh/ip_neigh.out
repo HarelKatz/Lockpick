@@ -1,0 +1,4 @@
+10.0.0.1 dev eth0 lladdr aa:bb:cc:dd:ee:ff REACHABLE
+10.0.0.5 dev eth0 lladdr aa:bb:cc:dd:ee:01 STALE
+10.0.0.10 dev eth0 lladdr aa:bb:cc:dd:ee:02 REACHABLE
+fe80::1 dev eth0 lladdr aa:bb:cc:dd:ee:03 router STALE
