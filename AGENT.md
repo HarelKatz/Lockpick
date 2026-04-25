@@ -14,9 +14,9 @@ A web-based tool for red teams to collaboratively organize SSH credentials, host
 
 > **Edit rules:** ≤5 lines. Last completed · Next · Any blocker. Nothing else — detail belongs in commit messages.
 
-**Last completed: Phases 1–15 — full stack, 14 parsers, WS live push, host notes, status enum, addr_type, SudoRule, one-click collection script + bulk archive import, host merge (auto + manual) with conflict-resolution UI**
+**Last completed: Phases 1–17 — full stack, parsers (SSH, system, command-output) including ifconfig/route/neigh, arp, netstat/ss, iptables/nftables, ps cmdline secret harvest, env-var harvest, docker_ps; WS live push, host notes, host merge (auto + manual), one-click collection script + bulk archive import**
 
-**Next: Phase 16 — System File Parsers**
+**Next: Phase 18 — Secret & Credential File Parsers**
 
 ---
 
@@ -70,21 +70,9 @@ AGENT.md is the project roadmap and architecture reference — the current sourc
 
 > Detail tracks imminence: the next phase gets a full spec, 1–2 phases out get a short summary + invariants, and anything further is a one-liner heading. Expand a phase when it becomes next.
 
-### Phases 1–15 — Complete
+### Phases 1–17 — Complete
 
-Full stack built and tested: CRUD APIs, graph visualization, file upload + 14 parsers (8 original + nmap_xml, shadow, sshd_config, etc_hosts, sudoers, public_key alias), BFS pivot analysis, global search, export/import, activity log, operational command generation, WS live push, host notes, Host.status enum, HostIP addr_type, SudoRule table with sudoers CRUD; one-click collection via bash snapshot script + bulk archive import; host merge (atomic relation-mover with HostIP/CredentialLink dedup, structured `merge_candidates` per-file response field, manual merge dialog, and auto-merge of unresolved placeholder hosts on alias conflict).
-
----
-
-### Phase 16 — System File Parsers
-
-Static files — RHEL/CentOS log aliases (`secure`/`syslog`/`messages` → `AuthLogParser`), binary login records (`lastlog`, `last`), shell configs/histories (`bashrc`, `zshrc`, `zsh_history`, `fish_history`), and network configs (`/etc/network/interfaces`, netplan, ifcfg). No schema changes. Network config parsers emit the upload host's own IPs and gateways only — no connection records.
-
----
-
-### Phase 17 — Command Output Parsers
-
-Captured command output — network state (`ip addr`/`route`/`neigh`, `arp`), connections (`netstat`, `ss`), firewall (`iptables`, `nftables`), process/env (`ps aux`, `env`), containers (`docker ps`/`network`, `kubectl get pods`). No schema changes. Firewall parsers emit indicator-confidence edges at best.
+Full stack built and tested: CRUD APIs, graph visualization, file upload + parsers (8 original + nmap_xml, shadow, sshd_config, etc_hosts, sudoers, public_key alias + Phase 16 system files + Phase 17 command output), BFS pivot analysis, global search, export/import, activity log, operational command generation, WS live push, host notes, Host.status enum, HostIP addr_type, SudoRule table with sudoers CRUD; one-click collection via bash snapshot script + bulk archive import; host merge (atomic relation-mover with HostIP/CredentialLink dedup, structured `merge_candidates` per-file response field, manual merge dialog, and auto-merge of unresolved placeholder hosts on alias conflict). Phase 17 added command-output parsers for network state (`ip addr`/`route`/`neigh`, `arp`), connections (`netstat`, `ss`), firewall (`iptables`, `nftables`), processes (`ps` with cmdline secret harvest), env vars (aggressive `*_KEY`/`*_TOKEN`/`*_PASSWORD` harvest), and Docker container inventory; `docker_network` and `kubectl_pods` deferred (no samples).
 
 ---
 
