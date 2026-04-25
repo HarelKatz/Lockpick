@@ -11,6 +11,7 @@ from parsers.aws_config import AwsConfigParser
 from parsers.aws_credentials import AwsCredentialsParser
 from parsers.bash_history import BashHistoryParser
 from parsers.boto import BotoParser
+from parsers.env_file import EnvFileParser
 from parsers.etc_hosts import EtcHostsParser
 from parsers.gcloud_credentials import GcloudCredentialsParser
 from parsers.known_hosts import KnownHostsParser
@@ -50,4 +51,5 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "boto": BotoParser,
     "gcloud_credentials": GcloudCredentialsParser,
     "kubeconfig": KubeconfigParser,
+    "env_file": EnvFileParser,
 }

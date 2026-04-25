@@ -1,0 +1,25 @@
+# app config
+APP_NAME=my-service
+PORT=3000
+
+# database
+DATABASE_URL="postgres://user:pass@db.example.com:5432/app"
+REDIS_URL=redis://redis.example.com:6379
+
+# auth secrets
+NEXTAUTH_SECRET='topsecret'
+GITHUB_CLIENT_SECRET=ghs_secret
+GITHUB_CLIENT_ID=ghs_id
+SESSION_PASSWORD=
+
+# stripe
+STRIPE_SECRET_KEY=sk_live_abcdef
+STRIPE_WEBHOOK_SECRET=whsec_xyz
+
+# AWS
+export AWS_ACCESS_KEY_ID=AKIAEXAMPLE
+export AWS_SECRET_ACCESS_KEY=secretsauce
+
+# misc
+SENTRY_DSN=https://abc@sentry.io/1
+LOG_LEVEL=info  # not a secret, has inline comment
