@@ -11,6 +11,7 @@ from parsers.bash_history import BashHistoryParser
 from parsers.etc_hosts import EtcHostsParser
 from parsers.known_hosts import KnownHostsParser
 from parsers.lastlog import LastlogParser
+from parsers.last_output import LastOutputParser
 from parsers.nmap_xml import NmapXmlParser
 from parsers.passwd import PasswdParser
 from parsers.private_key import PrivateKeyParser
@@ -33,6 +34,7 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "messages": AuthLogParser,
     "wtmp": WtmpParser,
     "lastlog": LastlogParser,
+    "last_output": LastOutputParser,
     "bash_history": BashHistoryParser,
     "passwd": PasswdParser,
     "nmap_xml": NmapXmlParser,

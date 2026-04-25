@@ -1,0 +1,8 @@
+root     pts/0        10.0.0.5         Tue Jan  5 20:03:51 2021   still logged in
+alice    pts/1        jumpbox.corp     Tue Jan  5 14:55 - 16:30  (01:35)
+bob      pts/2        192.168.1.42     Mon Jan  4 09:12 - 09:50  (00:38)
+kbrazil  ttyS0                         Fri Feb 28 13:49 - 14:52  (01:56)
+reboot   system boot  5.8.0-34-generic Tue Jan  5 00:08:28 2021   still running
+shutdown system down  5.8.0-34-generic Tue Jan  5 00:08:00 2021 - 00:08:28  (00:00)
+
+wtmp begins Tue Jan  5 00:08:28 2021
