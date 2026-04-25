@@ -5,6 +5,7 @@ parser modules.  Adding a new parser means updating this file only — no
 changes required in the router.
 """
 from parsers import BaseParser
+from parsers.arp_output import ArpParser
 from parsers.authorized_keys import AuthorizedKeysParser
 from parsers.auth_log import AuthLogParser
 from parsers.bash_history import BashHistoryParser
@@ -40,4 +41,5 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "ip_addr": IpAddrParser,
     "ip_route": IpRouteParser,
     "ip_neigh": IpNeighParser,
+    "arp": ArpParser,
 }
