@@ -12,6 +12,8 @@ import type {
   UpdateHostRequest,
   CreateHostIPRequest,
   CreateHostUserRequest,
+  MergeHostRequest,
+  MergeHostResponse,
 } from '../types'
 
 export async function listHosts(opId: string): Promise<Host[]> {
@@ -64,4 +66,8 @@ export async function createHostNote(hostId: string, content: string): Promise<H
 
 export async function deleteHostNote(hostId: string, noteId: string): Promise<void> {
   return api.delete(`/hosts/${hostId}/notes/${noteId}`)
+}
+
+export async function mergeHost(sourceId: string, body: MergeHostRequest): Promise<MergeHostResponse> {
+  return api.post<MergeHostResponse>(`/hosts/${sourceId}/merge`, body)
 }
