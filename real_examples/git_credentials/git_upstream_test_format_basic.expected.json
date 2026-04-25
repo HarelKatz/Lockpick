@@ -1,0 +1,29 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "password",
+      "name": "git:example.com",
+      "relationship_type": "found_on_disk",
+      "username": "home-user",
+      "value_length": 9,
+      "value_prefix": "home-pass"
+    },
+    {
+      "cred_type": "password",
+      "name": "git:example.com",
+      "relationship_type": "found_on_disk",
+      "username": "xdg-user",
+      "value_length": 8,
+      "value_prefix": "xdg-pass"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "credentials": 2
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

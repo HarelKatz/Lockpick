@@ -1,0 +1,29 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "password",
+      "name": "env:DATABASE_URL",
+      "relationship_type": "found_on_disk",
+      "username": null,
+      "value_length": 56,
+      "value_prefix": "postgresql://postgres:postgres@localhost"
+    },
+    {
+      "cred_type": "password",
+      "name": "env:NEXTAUTH_SECRET",
+      "relationship_type": "found_on_disk",
+      "username": null,
+      "value_length": 44,
+      "value_prefix": "al2osAbJ+ati5apWKzgHE7v2JHp3Hjb1sBz88XSM"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "credentials": 2
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

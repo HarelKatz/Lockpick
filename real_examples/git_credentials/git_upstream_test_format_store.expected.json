@@ -1,0 +1,29 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "password",
+      "name": "git:example.com",
+      "relationship_type": "found_on_disk",
+      "username": "home-user",
+      "value_length": 9,
+      "value_prefix": "home-pass"
+    },
+    {
+      "cred_type": "password",
+      "name": "git:example.com",
+      "relationship_type": "found_on_disk",
+      "username": "store-user",
+      "value_length": 10,
+      "value_prefix": "store-pass"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "credentials": 2
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

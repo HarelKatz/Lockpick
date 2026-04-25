@@ -1,0 +1,45 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "password",
+      "name": "netrc:api.github.com:somebody",
+      "relationship_type": "found_on_disk",
+      "username": "somebody",
+      "value_length": 9,
+      "value_prefix": "something"
+    },
+    {
+      "cred_type": "password",
+      "name": "netrc:api.heroku.com:my@email.com",
+      "relationship_type": "found_on_disk",
+      "username": "my@email.com",
+      "value_length": 32,
+      "value_prefix": "01230123012301230123012301230123"
+    },
+    {
+      "cred_type": "password",
+      "name": "netrc:default:anonymous",
+      "relationship_type": "found_on_disk",
+      "username": "anonymous",
+      "value_length": 12,
+      "value_prefix": "my@email.com"
+    },
+    {
+      "cred_type": "password",
+      "name": "netrc:ftp.server:abc",
+      "relationship_type": "found_on_disk",
+      "username": "abc",
+      "value_length": 3,
+      "value_prefix": "def"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "credentials": 4
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}
