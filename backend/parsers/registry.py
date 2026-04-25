@@ -14,6 +14,7 @@ from parsers.lastlog import LastlogParser
 from parsers.last_output import LastOutputParser
 from parsers.shell_rc import ShellRcParser
 from parsers.zsh_history import ZshHistoryParser
+from parsers.fish_history import FishHistoryParser
 from parsers.nmap_xml import NmapXmlParser
 from parsers.passwd import PasswdParser
 from parsers.private_key import PrivateKeyParser
@@ -40,6 +41,7 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "bashrc": ShellRcParser,
     "zshrc": ShellRcParser,
     "zsh_history": ZshHistoryParser,
+    "fish_history": FishHistoryParser,
     "bash_history": BashHistoryParser,
     "passwd": PasswdParser,
     "nmap_xml": NmapXmlParser,
