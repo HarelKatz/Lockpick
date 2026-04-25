@@ -19,6 +19,7 @@ from parsers.nmap_xml import NmapXmlParser
 from parsers.passwd import PasswdParser
 from parsers.private_key import PrivateKeyParser
 from parsers.shadow import ShadowParser
+from parsers.ss_output import SsOutputParser
 from parsers.ssh_config import SshConfigParser
 from parsers.sshd_config import SshdConfigParser
 from parsers.sudoers import SudoersParser
@@ -44,4 +45,5 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "ip_neigh": IpNeighParser,
     "arp": ArpParser,
     "netstat": NetstatParser,
+    "ss_output": SsOutputParser,
 }
