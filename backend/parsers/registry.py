@@ -7,7 +7,10 @@ changes required in the router.
 from parsers import BaseParser
 from parsers.authorized_keys import AuthorizedKeysParser
 from parsers.auth_log import AuthLogParser
+from parsers.aws_config import AwsConfigParser
+from parsers.aws_credentials import AwsCredentialsParser
 from parsers.bash_history import BashHistoryParser
+from parsers.boto import BotoParser
 from parsers.etc_hosts import EtcHostsParser
 from parsers.known_hosts import KnownHostsParser
 from parsers.mysql_config import MysqlConfigParser
@@ -40,4 +43,7 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "netrc": NetrcParser,
     "pgpass": PgpassParser,
     "mysql_config": MysqlConfigParser,
+    "aws_config": AwsConfigParser,
+    "aws_credentials": AwsCredentialsParser,
+    "boto": BotoParser,
 }
