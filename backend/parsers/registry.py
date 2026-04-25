@@ -15,6 +15,7 @@ from parsers.docker_config import DockerConfigParser
 from parsers.env_file import EnvFileParser
 from parsers.etc_hosts import EtcHostsParser
 from parsers.gcloud_credentials import GcloudCredentialsParser
+from parsers.git_credentials import GitCredentialsParser
 from parsers.known_hosts import KnownHostsParser
 from parsers.kubeconfig import KubeconfigParser
 from parsers.mysql_config import MysqlConfigParser
@@ -54,4 +55,5 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "kubeconfig": KubeconfigParser,
     "env_file": EnvFileParser,
     "docker_config": DockerConfigParser,
+    "git_credentials": GitCredentialsParser,
 }
