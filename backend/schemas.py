@@ -167,6 +167,31 @@ class HostRead(BaseModel):
     notes: list[HostNoteRead] = []
 
 
+# ─── Merge ────────────────────────────────────────────────────────────────────
+
+class MergeResolutions(BaseModel):
+    """Per-field conflict resolution for a manual host merge.
+
+    Each entry is one of: ``"source"`` (use the source host's value),
+    ``"target"`` (keep the target host's value), or — for ``nickname`` and
+    ``comment`` only — any other string used as a free-text override.
+    Missing keys mean "no conflict — keep target's existing value."
+    """
+    nickname: Optional[str] = None
+    comment: Optional[str] = None
+    status: Optional[Literal["source", "target"]] = None
+
+
+class MergeHostRequest(BaseModel):
+    target_host_id: str
+    resolutions: MergeResolutions = MergeResolutions()
+
+
+class MergeHostResponse(BaseModel):
+    target: HostRead
+    counts: dict[str, int]
+
+
 # ─── Credential ───────────────────────────────────────────────────────────────
 
 class CredentialCreate(BaseModel):
