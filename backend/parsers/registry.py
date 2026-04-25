@@ -14,6 +14,7 @@ from parsers.ip_addr import IpAddrParser
 from parsers.ip_neigh import IpNeighParser
 from parsers.ip_route import IpRouteParser
 from parsers.known_hosts import KnownHostsParser
+from parsers.netstat import NetstatParser
 from parsers.nmap_xml import NmapXmlParser
 from parsers.passwd import PasswdParser
 from parsers.private_key import PrivateKeyParser
@@ -42,4 +43,5 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "ip_route": IpRouteParser,
     "ip_neigh": IpNeighParser,
     "arp": ArpParser,
+    "netstat": NetstatParser,
 }
