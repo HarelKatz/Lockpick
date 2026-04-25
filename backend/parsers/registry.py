@@ -10,6 +10,7 @@ from parsers.auth_log import AuthLogParser
 from parsers.bash_history import BashHistoryParser
 from parsers.etc_hosts import EtcHostsParser
 from parsers.known_hosts import KnownHostsParser
+from parsers.netrc import NetrcParser
 from parsers.nmap_xml import NmapXmlParser
 from parsers.passwd import PasswdParser
 from parsers.private_key import PrivateKeyParser
@@ -34,4 +35,5 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "sshd_config": SshdConfigParser,
     "etc_hosts": EtcHostsParser,
     "sudoers": SudoersParser,
+    "netrc": NetrcParser,
 }

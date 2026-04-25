@@ -1,0 +1,7 @@
+machine github.com
+  login alice
+  password ghp_TopSecret123
+
+machine api.example.com login bob password pw2
+
+default login anonymous password guest@example.com

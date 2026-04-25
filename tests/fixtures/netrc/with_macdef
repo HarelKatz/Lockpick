@@ -1,0 +1,8 @@
+machine ftp.example.com login carol password ftpsecret account billing macdef somemacro
+cd /pub
+get file
+binary
+
+machine other.example.org
+login dave
+password pw
