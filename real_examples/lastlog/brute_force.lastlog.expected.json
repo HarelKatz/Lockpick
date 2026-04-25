@@ -1,0 +1,98 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "uid:1000",
+      "raw_line": "lastlog: uid=1000 from 10.0.1.101 on pts/1",
+      "src_ip": "10.0.1.101",
+      "src_user": null,
+      "timestamp": "2026-03-27T13:22:00+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "uid:0",
+      "raw_line": "lastlog: uid=0 from 194.26.29.113 on pts/0",
+      "src_ip": "194.26.29.113",
+      "src_user": null,
+      "timestamp": "2026-03-28T05:44:00+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "uid:1001",
+      "raw_line": "lastlog: uid=1001 from 194.26.29.113 on pts/2",
+      "src_ip": "194.26.29.113",
+      "src_user": null,
+      "timestamp": "2026-03-28T05:33:00+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "uid:1002",
+      "raw_line": "lastlog: uid=1002 from 194.26.29.113 on pts/3",
+      "src_ip": "194.26.29.113",
+      "src_user": null,
+      "timestamp": "2026-03-28T05:35:00+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "uid:1003",
+      "raw_line": "lastlog: uid=1003 from 194.26.29.113 on pts/4",
+      "src_ip": "194.26.29.113",
+      "src_user": null,
+      "timestamp": "2026-03-28T05:38:00+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "uid:1004",
+      "raw_line": "lastlog: uid=1004 from 194.26.29.113 on pts/5",
+      "src_ip": "194.26.29.113",
+      "src_user": null,
+      "timestamp": "2026-03-28T05:41:00+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "uid:33",
+      "raw_line": "lastlog: uid=33 from 194.26.29.113 on pts/1",
+      "src_ip": "194.26.29.113",
+      "src_user": null,
+      "timestamp": "2026-03-28T05:31:00+00:00"
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "records_parsed": 7,
+    "uids_with_login": 7
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

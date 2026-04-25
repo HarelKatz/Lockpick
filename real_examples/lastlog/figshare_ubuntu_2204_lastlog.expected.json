@@ -1,0 +1,26 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "uid:1000",
+      "raw_line": "lastlog: uid=1000 from 10.24.44.1 on pts/0",
+      "src_ip": "10.24.44.1",
+      "src_user": null,
+      "timestamp": "2024-06-01T12:53:27+00:00"
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "records_parsed": 1,
+    "uids_with_login": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

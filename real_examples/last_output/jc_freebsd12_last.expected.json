@@ -1,0 +1,61 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "kbrazil",
+      "raw_line": "kbrazil    pts/0    192.168.71.1           Thu May 28 04:13 - 21:29  (17:16)",
+      "src_ip": "192.168.71.1",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "kbrazil",
+      "raw_line": "kbrazil    pts/0    192.168.71.1           Thu May 28 21:29   still logged in",
+      "src_ip": "192.168.71.1",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "kbrazil",
+      "raw_line": "kbrazil    pts/0    192.168.71.1           Wed May 27 12:47 - 16:09  (03:22)",
+      "src_ip": "192.168.71.1",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "kbrazil",
+      "raw_line": "kbrazil    pts/0    192.168.71.1           Wed May 27 16:09 - 04:13  (12:03)",
+      "src_ip": "192.168.71.1",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "records_parsed": 4
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

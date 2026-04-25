@@ -1,0 +1,21 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [
+    {
+      "aliases": [
+        "3001:abba::3234"
+      ],
+      "ip_address": "2001:abba::2234",
+      "nickname": null
+    }
+  ],
+  "patterns_found": [],
+  "stats": {
+    "addresses": 2,
+    "gateways": 0
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}
