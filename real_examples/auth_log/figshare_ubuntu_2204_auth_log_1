@@ -1,0 +1,1097 @@
+May 26 00:09:01 shop CRON[347216]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 00:09:01 shop CRON[347216]: pam_unix(cron:session): session closed for user root
+May 26 00:17:01 shop CRON[349785]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 00:17:01 shop CRON[349785]: pam_unix(cron:session): session closed for user root
+May 26 00:39:01 shop CRON[353401]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 00:39:01 shop CRON[353401]: pam_unix(cron:session): session closed for user root
+May 26 01:09:01 shop CRON[356114]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 01:09:01 shop CRON[356114]: pam_unix(cron:session): session closed for user root
+May 26 01:17:01 shop CRON[356637]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 01:17:01 shop CRON[356637]: pam_unix(cron:session): session closed for user root
+May 26 01:39:01 shop CRON[357963]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 01:39:01 shop CRON[357963]: pam_unix(cron:session): session closed for user root
+May 26 02:09:01 shop CRON[359383]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 02:09:01 shop CRON[359383]: pam_unix(cron:session): session closed for user root
+May 26 02:17:01 shop CRON[359757]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 02:17:01 shop CRON[359757]: pam_unix(cron:session): session closed for user root
+May 26 02:39:01 shop CRON[360628]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 02:39:01 shop CRON[360628]: pam_unix(cron:session): session closed for user root
+May 26 03:09:01 shop CRON[361656]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 03:09:01 shop CRON[361656]: pam_unix(cron:session): session closed for user root
+May 26 03:10:01 shop CRON[361688]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 03:10:01 shop CRON[361688]: pam_unix(cron:session): session closed for user root
+May 26 03:17:01 shop CRON[361907]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 03:17:01 shop CRON[361907]: pam_unix(cron:session): session closed for user root
+May 26 03:30:01 shop CRON[362297]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 03:30:01 shop CRON[362297]: pam_unix(cron:session): session closed for user root
+May 26 03:39:01 shop CRON[362550]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 03:39:01 shop CRON[362550]: pam_unix(cron:session): session closed for user root
+May 26 04:09:01 shop CRON[363420]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 04:09:01 shop CRON[363420]: pam_unix(cron:session): session closed for user root
+May 26 04:17:01 shop CRON[363677]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 04:17:01 shop CRON[363677]: pam_unix(cron:session): session closed for user root
+May 26 04:39:01 shop CRON[364210]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 04:39:01 shop CRON[364210]: pam_unix(cron:session): session closed for user root
+May 26 05:09:01 shop CRON[364988]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 05:09:01 shop CRON[364988]: pam_unix(cron:session): session closed for user root
+May 26 05:17:01 shop CRON[365155]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 05:17:01 shop CRON[365155]: pam_unix(cron:session): session closed for user root
+May 26 05:39:01 shop CRON[365595]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 05:39:01 shop CRON[365595]: pam_unix(cron:session): session closed for user root
+May 26 06:09:01 shop CRON[366262]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 06:09:01 shop CRON[366262]: pam_unix(cron:session): session closed for user root
+May 26 06:17:01 shop CRON[366457]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 06:17:01 shop CRON[366457]: pam_unix(cron:session): session closed for user root
+May 26 06:25:01 shop CRON[366598]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 06:25:01 shop CRON[366598]: pam_unix(cron:session): session closed for user root
+May 26 06:39:01 shop CRON[366829]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 06:39:01 shop CRON[366829]: pam_unix(cron:session): session closed for user root
+May 26 06:47:01 shop CRON[367009]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 06:47:01 shop CRON[367009]: pam_unix(cron:session): session closed for user root
+May 26 07:09:01 shop CRON[367355]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 07:09:01 shop CRON[367355]: pam_unix(cron:session): session closed for user root
+May 26 07:17:01 shop CRON[367538]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 07:17:01 shop CRON[367538]: pam_unix(cron:session): session closed for user root
+May 26 07:39:01 shop CRON[367859]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 07:39:01 shop CRON[367859]: pam_unix(cron:session): session closed for user root
+May 26 08:09:01 shop CRON[368352]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 08:09:01 shop CRON[368352]: pam_unix(cron:session): session closed for user root
+May 26 08:17:01 shop CRON[368513]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 08:17:01 shop CRON[368513]: pam_unix(cron:session): session closed for user root
+May 26 08:39:01 shop CRON[368838]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 08:39:01 shop CRON[368838]: pam_unix(cron:session): session closed for user root
+May 26 09:09:01 shop CRON[369182]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 09:09:01 shop CRON[369182]: pam_unix(cron:session): session closed for user root
+May 26 09:17:01 shop CRON[369328]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 09:17:01 shop CRON[369328]: pam_unix(cron:session): session closed for user root
+May 26 09:39:01 shop CRON[369572]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 09:39:01 shop CRON[369572]: pam_unix(cron:session): session closed for user root
+May 26 10:09:01 shop CRON[369940]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 10:09:01 shop CRON[369940]: pam_unix(cron:session): session closed for user root
+May 26 10:17:01 shop CRON[370080]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 10:17:01 shop CRON[370080]: pam_unix(cron:session): session closed for user root
+May 26 10:39:01 shop CRON[370298]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 10:39:01 shop CRON[370298]: pam_unix(cron:session): session closed for user root
+May 26 11:09:01 shop CRON[370644]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 11:09:01 shop CRON[370644]: pam_unix(cron:session): session closed for user root
+May 26 11:17:01 shop CRON[370782]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 11:17:01 shop CRON[370782]: pam_unix(cron:session): session closed for user root
+May 26 11:39:01 shop CRON[371058]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 11:39:01 shop CRON[371058]: pam_unix(cron:session): session closed for user root
+May 26 12:09:01 shop CRON[371333]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 12:09:01 shop CRON[371333]: pam_unix(cron:session): session closed for user root
+May 26 12:17:01 shop CRON[371467]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 12:17:01 shop CRON[371467]: pam_unix(cron:session): session closed for user root
+May 26 12:39:01 shop CRON[371664]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 12:39:01 shop CRON[371664]: pam_unix(cron:session): session closed for user root
+May 26 13:09:01 shop CRON[371989]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 13:09:01 shop CRON[371989]: pam_unix(cron:session): session closed for user root
+May 26 13:17:01 shop CRON[372117]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 13:17:01 shop CRON[372117]: pam_unix(cron:session): session closed for user root
+May 26 13:39:01 shop CRON[372295]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 13:39:01 shop CRON[372295]: pam_unix(cron:session): session closed for user root
+May 26 14:09:01 shop CRON[372616]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 14:09:01 shop CRON[372616]: pam_unix(cron:session): session closed for user root
+May 26 14:17:01 shop CRON[372749]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 14:17:01 shop CRON[372749]: pam_unix(cron:session): session closed for user root
+May 26 14:39:01 shop CRON[373023]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 14:39:01 shop CRON[373023]: pam_unix(cron:session): session closed for user root
+May 26 15:09:01 shop CRON[373269]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 15:09:01 shop CRON[373269]: pam_unix(cron:session): session closed for user root
+May 26 15:17:01 shop CRON[373399]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 15:17:01 shop CRON[373399]: pam_unix(cron:session): session closed for user root
+May 26 15:39:01 shop CRON[373596]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 15:39:01 shop CRON[373596]: pam_unix(cron:session): session closed for user root
+May 26 16:09:01 shop CRON[373918]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 16:09:01 shop CRON[373918]: pam_unix(cron:session): session closed for user root
+May 26 16:17:01 shop CRON[374044]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 16:17:01 shop CRON[374044]: pam_unix(cron:session): session closed for user root
+May 26 16:39:01 shop CRON[374191]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 16:39:01 shop CRON[374191]: pam_unix(cron:session): session closed for user root
+May 26 17:09:02 shop CRON[374494]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 17:09:02 shop CRON[374494]: pam_unix(cron:session): session closed for user root
+May 26 17:17:01 shop CRON[374632]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 17:17:01 shop CRON[374632]: pam_unix(cron:session): session closed for user root
+May 26 17:39:01 shop CRON[374787]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 17:39:01 shop CRON[374787]: pam_unix(cron:session): session closed for user root
+May 26 18:09:02 shop CRON[375060]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 18:09:02 shop CRON[375060]: pam_unix(cron:session): session closed for user root
+May 26 18:17:01 shop CRON[375175]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 18:17:01 shop CRON[375175]: pam_unix(cron:session): session closed for user root
+May 26 18:39:01 shop CRON[375327]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 18:39:01 shop CRON[375327]: pam_unix(cron:session): session closed for user root
+May 26 19:09:02 shop CRON[375649]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 19:09:02 shop CRON[375649]: pam_unix(cron:session): session closed for user root
+May 26 19:17:01 shop CRON[375772]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 19:17:01 shop CRON[375772]: pam_unix(cron:session): session closed for user root
+May 26 19:39:02 shop CRON[375915]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 19:39:02 shop CRON[375915]: pam_unix(cron:session): session closed for user root
+May 26 20:09:01 shop CRON[376160]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 20:09:01 shop CRON[376160]: pam_unix(cron:session): session closed for user root
+May 26 20:17:01 shop CRON[376254]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 20:17:01 shop CRON[376254]: pam_unix(cron:session): session closed for user root
+May 26 20:39:01 shop CRON[376354]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 20:39:01 shop CRON[376354]: pam_unix(cron:session): session closed for user root
+May 26 21:09:01 shop CRON[376542]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 21:09:01 shop CRON[376542]: pam_unix(cron:session): session closed for user root
+May 26 21:17:01 shop CRON[376630]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 21:17:01 shop CRON[376630]: pam_unix(cron:session): session closed for user root
+May 26 21:39:01 shop CRON[376710]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 21:39:01 shop CRON[376710]: pam_unix(cron:session): session closed for user root
+May 26 22:09:01 shop CRON[376863]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 22:09:01 shop CRON[376863]: pam_unix(cron:session): session closed for user root
+May 26 22:17:01 shop CRON[376936]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 22:17:01 shop CRON[376936]: pam_unix(cron:session): session closed for user root
+May 26 22:39:01 shop CRON[376999]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 22:39:01 shop CRON[376999]: pam_unix(cron:session): session closed for user root
+May 26 23:09:02 shop CRON[377192]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 23:09:02 shop CRON[377192]: pam_unix(cron:session): session closed for user root
+May 26 23:17:01 shop CRON[377208]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 23:17:01 shop CRON[377208]: pam_unix(cron:session): session closed for user root
+May 26 23:39:01 shop CRON[377259]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 26 23:39:01 shop CRON[377259]: pam_unix(cron:session): session closed for user root
+May 27 00:09:01 shop CRON[377402]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 00:09:01 shop CRON[377402]: pam_unix(cron:session): session closed for user root
+May 27 00:17:01 shop CRON[377468]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 00:17:01 shop CRON[377468]: pam_unix(cron:session): session closed for user root
+May 27 00:39:01 shop CRON[377545]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 00:39:02 shop CRON[377545]: pam_unix(cron:session): session closed for user root
+May 27 01:09:01 shop CRON[377717]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 01:09:01 shop CRON[377717]: pam_unix(cron:session): session closed for user root
+May 27 01:17:01 shop CRON[377734]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 01:17:02 shop CRON[377734]: pam_unix(cron:session): session closed for user root
+May 27 01:39:01 shop CRON[377779]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 01:39:01 shop CRON[377779]: pam_unix(cron:session): session closed for user root
+May 27 02:09:01 shop CRON[377883]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 02:09:01 shop CRON[377883]: pam_unix(cron:session): session closed for user root
+May 27 02:17:01 shop CRON[377960]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 02:17:01 shop CRON[377960]: pam_unix(cron:session): session closed for user root
+May 27 02:39:01 shop CRON[378001]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 02:39:01 shop CRON[378001]: pam_unix(cron:session): session closed for user root
+May 27 03:09:01 shop CRON[378115]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 03:09:01 shop CRON[378115]: pam_unix(cron:session): session closed for user root
+May 27 03:10:01 shop CRON[378172]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 03:10:02 shop CRON[378172]: pam_unix(cron:session): session closed for user root
+May 27 03:17:01 shop CRON[378187]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 03:17:01 shop CRON[378187]: pam_unix(cron:session): session closed for user root
+May 27 03:39:01 shop CRON[378233]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 03:39:02 shop CRON[378233]: pam_unix(cron:session): session closed for user root
+May 27 04:09:01 shop CRON[378351]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 04:09:01 shop CRON[378351]: pam_unix(cron:session): session closed for user root
+May 27 04:17:01 shop CRON[378420]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 04:17:01 shop CRON[378420]: pam_unix(cron:session): session closed for user root
+May 27 04:39:01 shop CRON[378464]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 04:39:01 shop CRON[378464]: pam_unix(cron:session): session closed for user root
+May 27 05:09:01 shop CRON[378625]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 05:09:01 shop CRON[378625]: pam_unix(cron:session): session closed for user root
+May 27 05:17:01 shop CRON[378647]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 05:17:01 shop CRON[378647]: pam_unix(cron:session): session closed for user root
+May 27 05:39:01 shop CRON[378693]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 05:39:01 shop CRON[378693]: pam_unix(cron:session): session closed for user root
+May 27 06:09:01 shop CRON[378806]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 06:09:01 shop CRON[378806]: pam_unix(cron:session): session closed for user root
+May 27 06:17:01 shop CRON[378876]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 06:17:01 shop CRON[378876]: pam_unix(cron:session): session closed for user root
+May 27 06:25:01 shop CRON[378897]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 06:25:01 shop CRON[378897]: pam_unix(cron:session): session closed for user root
+May 27 06:39:02 shop CRON[379056]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 06:39:02 shop CRON[379056]: pam_unix(cron:session): session closed for user root
+May 27 07:09:01 shop CRON[379117]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 07:09:02 shop CRON[379117]: pam_unix(cron:session): session closed for user root
+May 27 07:17:02 shop CRON[379190]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 07:17:02 shop CRON[379190]: pam_unix(cron:session): session closed for user root
+May 27 07:39:01 shop CRON[379237]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 07:39:01 shop CRON[379237]: pam_unix(cron:session): session closed for user root
+May 27 08:09:01 shop CRON[379379]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 08:09:01 shop CRON[379379]: pam_unix(cron:session): session closed for user root
+May 27 08:17:01 shop CRON[379454]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 08:17:01 shop CRON[379454]: pam_unix(cron:session): session closed for user root
+May 27 08:39:01 shop CRON[379514]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 08:39:01 shop CRON[379514]: pam_unix(cron:session): session closed for user root
+May 27 09:09:01 shop CRON[379655]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 09:09:02 shop CRON[379655]: pam_unix(cron:session): session closed for user root
+May 27 09:17:01 shop CRON[379741]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 09:17:01 shop CRON[379741]: pam_unix(cron:session): session closed for user root
+May 27 09:39:01 shop CRON[379811]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 09:39:01 shop CRON[379811]: pam_unix(cron:session): session closed for user root
+May 27 10:09:01 shop CRON[379951]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 10:09:01 shop CRON[379951]: pam_unix(cron:session): session closed for user root
+May 27 10:17:01 shop CRON[380038]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 10:17:01 shop CRON[380038]: pam_unix(cron:session): session closed for user root
+May 27 10:39:01 shop CRON[380118]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 10:39:01 shop CRON[380118]: pam_unix(cron:session): session closed for user root
+May 27 11:09:01 shop CRON[380294]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 11:09:01 shop CRON[380294]: pam_unix(cron:session): session closed for user root
+May 27 11:17:01 shop CRON[380379]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 11:17:02 shop CRON[380379]: pam_unix(cron:session): session closed for user root
+May 27 11:39:01 shop CRON[380496]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 11:39:01 shop CRON[380496]: pam_unix(cron:session): session closed for user root
+May 27 12:09:01 shop CRON[380657]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 12:09:01 shop CRON[380657]: pam_unix(cron:session): session closed for user root
+May 27 12:17:01 shop CRON[380762]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 12:17:01 shop CRON[380762]: pam_unix(cron:session): session closed for user root
+May 27 12:39:01 shop CRON[380885]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 12:39:01 shop CRON[380885]: pam_unix(cron:session): session closed for user root
+May 27 13:09:01 shop CRON[381156]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 13:09:01 shop CRON[381156]: pam_unix(cron:session): session closed for user root
+May 27 13:17:01 shop CRON[381193]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 13:17:01 shop CRON[381193]: pam_unix(cron:session): session closed for user root
+May 27 13:39:02 shop CRON[381326]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 13:39:02 shop CRON[381326]: pam_unix(cron:session): session closed for user root
+May 27 14:09:01 shop CRON[381591]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 14:09:01 shop CRON[381591]: pam_unix(cron:session): session closed for user root
+May 27 14:17:01 shop CRON[381677]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 14:17:01 shop CRON[381677]: pam_unix(cron:session): session closed for user root
+May 27 14:39:01 shop CRON[381800]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 14:39:01 shop CRON[381800]: pam_unix(cron:session): session closed for user root
+May 27 15:09:01 shop CRON[382014]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 15:09:01 shop CRON[382014]: pam_unix(cron:session): session closed for user root
+May 27 15:17:01 shop CRON[382129]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 15:17:01 shop CRON[382129]: pam_unix(cron:session): session closed for user root
+May 27 15:39:01 shop CRON[382282]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 15:39:01 shop CRON[382282]: pam_unix(cron:session): session closed for user root
+May 27 16:09:01 shop CRON[382533]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 16:09:01 shop CRON[382533]: pam_unix(cron:session): session closed for user root
+May 27 16:17:01 shop CRON[382646]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 16:17:01 shop CRON[382646]: pam_unix(cron:session): session closed for user root
+May 27 16:39:01 shop CRON[382781]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 16:39:01 shop CRON[382781]: pam_unix(cron:session): session closed for user root
+May 27 17:09:01 shop CRON[383103]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 17:09:01 shop CRON[383103]: pam_unix(cron:session): session closed for user root
+May 27 17:17:01 shop CRON[383211]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 17:17:02 shop CRON[383211]: pam_unix(cron:session): session closed for user root
+May 27 17:39:01 shop CRON[383349]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 17:39:01 shop CRON[383349]: pam_unix(cron:session): session closed for user root
+May 27 18:09:01 shop CRON[383574]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 18:09:01 shop CRON[383574]: pam_unix(cron:session): session closed for user root
+May 27 18:17:01 shop CRON[383693]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 18:17:01 shop CRON[383693]: pam_unix(cron:session): session closed for user root
+May 27 18:39:01 shop CRON[383834]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 18:39:01 shop CRON[383834]: pam_unix(cron:session): session closed for user root
+May 27 19:09:01 shop CRON[384063]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 19:09:01 shop CRON[384063]: pam_unix(cron:session): session closed for user root
+May 27 19:17:02 shop CRON[384174]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 19:17:02 shop CRON[384174]: pam_unix(cron:session): session closed for user root
+May 27 19:39:01 shop CRON[384286]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 19:39:01 shop CRON[384286]: pam_unix(cron:session): session closed for user root
+May 27 20:09:01 shop CRON[385005]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 20:09:01 shop CRON[385005]: pam_unix(cron:session): session closed for user root
+May 27 20:17:01 shop CRON[385140]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 20:17:01 shop CRON[385140]: pam_unix(cron:session): session closed for user root
+May 27 20:39:01 shop CRON[385287]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 20:39:01 shop CRON[385287]: pam_unix(cron:session): session closed for user root
+May 27 21:09:01 shop CRON[385457]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 21:09:01 shop CRON[385457]: pam_unix(cron:session): session closed for user root
+May 27 21:17:01 shop CRON[385544]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 21:17:01 shop CRON[385544]: pam_unix(cron:session): session closed for user root
+May 27 21:39:01 shop CRON[385658]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 21:39:01 shop CRON[385658]: pam_unix(cron:session): session closed for user root
+May 27 22:09:02 shop CRON[385733]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 22:09:02 shop CRON[385733]: pam_unix(cron:session): session closed for user root
+May 27 22:17:01 shop CRON[385804]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 22:17:01 shop CRON[385804]: pam_unix(cron:session): session closed for user root
+May 27 22:39:01 shop CRON[385867]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 22:39:01 shop CRON[385867]: pam_unix(cron:session): session closed for user root
+May 27 23:09:01 shop CRON[385963]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 23:09:01 shop CRON[385963]: pam_unix(cron:session): session closed for user root
+May 27 23:17:01 shop CRON[386031]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 23:17:01 shop CRON[386031]: pam_unix(cron:session): session closed for user root
+May 27 23:39:01 shop CRON[386051]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 27 23:39:01 shop CRON[386051]: pam_unix(cron:session): session closed for user root
+May 28 00:09:01 shop CRON[386220]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 00:09:01 shop CRON[386220]: pam_unix(cron:session): session closed for user root
+May 28 00:17:01 shop CRON[386231]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 00:17:01 shop CRON[386231]: pam_unix(cron:session): session closed for user root
+May 28 00:39:01 shop CRON[386259]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 00:39:01 shop CRON[386259]: pam_unix(cron:session): session closed for user root
+May 28 01:09:01 shop CRON[386342]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 01:09:01 shop CRON[386342]: pam_unix(cron:session): session closed for user root
+May 28 01:17:02 shop CRON[386404]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 01:17:02 shop CRON[386404]: pam_unix(cron:session): session closed for user root
+May 28 01:39:01 shop CRON[386426]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 01:39:01 shop CRON[386426]: pam_unix(cron:session): session closed for user root
+May 28 02:09:01 shop CRON[386507]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 02:09:01 shop CRON[386507]: pam_unix(cron:session): session closed for user root
+May 28 02:17:01 shop CRON[386569]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 02:17:01 shop CRON[386569]: pam_unix(cron:session): session closed for user root
+May 28 02:39:02 shop CRON[386591]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 02:39:02 shop CRON[386591]: pam_unix(cron:session): session closed for user root
+May 28 03:09:01 shop CRON[386675]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 03:09:01 shop CRON[386675]: pam_unix(cron:session): session closed for user root
+May 28 03:10:01 shop CRON[386731]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 03:10:01 shop CRON[386731]: pam_unix(cron:session): session closed for user root
+May 28 03:17:01 shop CRON[386739]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 03:17:01 shop CRON[386739]: pam_unix(cron:session): session closed for user root
+May 28 03:39:01 shop CRON[386761]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 03:39:01 shop CRON[386761]: pam_unix(cron:session): session closed for user root
+May 28 04:09:01 shop CRON[386840]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 04:09:01 shop CRON[386840]: pam_unix(cron:session): session closed for user root
+May 28 04:17:01 shop CRON[386904]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 04:17:01 shop CRON[386904]: pam_unix(cron:session): session closed for user root
+May 28 04:39:01 shop CRON[386927]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 04:39:01 shop CRON[386927]: pam_unix(cron:session): session closed for user root
+May 28 05:09:01 shop CRON[387006]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 05:09:01 shop CRON[387006]: pam_unix(cron:session): session closed for user root
+May 28 05:17:01 shop CRON[387070]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 05:17:01 shop CRON[387070]: pam_unix(cron:session): session closed for user root
+May 28 05:39:01 shop CRON[387171]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 05:39:01 shop CRON[387171]: pam_unix(cron:session): session closed for user root
+May 28 06:09:01 shop CRON[387250]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 06:09:01 shop CRON[387250]: pam_unix(cron:session): session closed for user root
+May 28 06:17:01 shop CRON[387310]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 06:17:01 shop CRON[387310]: pam_unix(cron:session): session closed for user root
+May 28 06:25:02 shop CRON[387364]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 06:25:02 shop CRON[387364]: pam_unix(cron:session): session closed for user root
+May 28 06:39:01 shop CRON[387464]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 06:39:01 shop CRON[387464]: pam_unix(cron:session): session closed for user root
+May 28 07:09:01 shop CRON[387492]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 07:09:01 shop CRON[387492]: pam_unix(cron:session): session closed for user root
+May 28 07:17:01 shop CRON[387559]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 07:17:01 shop CRON[387559]: pam_unix(cron:session): session closed for user root
+May 28 07:39:01 shop CRON[387585]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 07:39:01 shop CRON[387585]: pam_unix(cron:session): session closed for user root
+May 28 08:09:01 shop CRON[387705]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 08:09:01 shop CRON[387705]: pam_unix(cron:session): session closed for user root
+May 28 08:17:01 shop CRON[387772]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 08:17:01 shop CRON[387772]: pam_unix(cron:session): session closed for user root
+May 28 08:39:01 shop CRON[387804]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 08:39:01 shop CRON[387804]: pam_unix(cron:session): session closed for user root
+May 28 09:09:01 shop CRON[387908]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 09:09:01 shop CRON[387908]: pam_unix(cron:session): session closed for user root
+May 28 09:17:01 shop CRON[387978]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 09:17:01 shop CRON[387978]: pam_unix(cron:session): session closed for user root
+May 28 09:39:01 shop CRON[388018]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 09:39:01 shop CRON[388018]: pam_unix(cron:session): session closed for user root
+May 28 10:09:01 shop CRON[388127]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 10:09:01 shop CRON[388127]: pam_unix(cron:session): session closed for user root
+May 28 10:17:01 shop CRON[388206]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 10:17:01 shop CRON[388206]: pam_unix(cron:session): session closed for user root
+May 28 10:39:01 shop CRON[388311]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 10:39:01 shop CRON[388311]: pam_unix(cron:session): session closed for user root
+May 28 11:09:01 shop CRON[388441]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 11:09:01 shop CRON[388441]: pam_unix(cron:session): session closed for user root
+May 28 11:17:01 shop CRON[388519]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 11:17:01 shop CRON[388519]: pam_unix(cron:session): session closed for user root
+May 28 11:39:01 shop CRON[388581]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 11:39:01 shop CRON[388581]: pam_unix(cron:session): session closed for user root
+May 28 12:09:01 shop CRON[388790]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 12:09:01 shop CRON[388790]: pam_unix(cron:session): session closed for user root
+May 28 12:17:01 shop CRON[388811]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 12:17:01 shop CRON[388811]: pam_unix(cron:session): session closed for user root
+May 28 12:39:01 shop CRON[388889]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 12:39:01 shop CRON[388889]: pam_unix(cron:session): session closed for user root
+May 28 13:09:01 shop CRON[389151]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 13:09:01 shop CRON[389151]: pam_unix(cron:session): session closed for user root
+May 28 13:17:01 shop CRON[389173]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 13:17:01 shop CRON[389173]: pam_unix(cron:session): session closed for user root
+May 28 13:39:01 shop CRON[389251]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 13:39:01 shop CRON[389251]: pam_unix(cron:session): session closed for user root
+May 28 14:09:01 shop CRON[389479]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 14:09:01 shop CRON[389479]: pam_unix(cron:session): session closed for user root
+May 28 14:17:01 shop CRON[389529]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 14:17:01 shop CRON[389529]: pam_unix(cron:session): session closed for user root
+May 28 14:39:01 shop CRON[389621]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 14:39:01 shop CRON[389621]: pam_unix(cron:session): session closed for user root
+May 28 15:09:01 shop CRON[389810]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 15:09:01 shop CRON[389810]: pam_unix(cron:session): session closed for user root
+May 28 15:10:14 shop sshd[389874]: Accepted password for administrator from 10.24.44.100 port 60888 ssh2
+May 28 15:10:14 shop sshd[389874]: pam_unix(sshd:session): session opened for user administrator(uid=1000) by (uid=0)
+May 28 15:10:14 shop systemd-logind[720]: New session 2075 of user administrator.
+May 28 15:10:15 shop sshd[389975]: Received disconnect from 10.24.44.100 port 60888:11: disconnected by user
+May 28 15:10:15 shop sshd[389975]: Disconnected from user administrator 10.24.44.100 port 60888
+May 28 15:10:15 shop systemd-logind[720]: Session 2075 logged out. Waiting for processes to exit.
+May 28 15:10:15 shop sshd[389874]: pam_unix(sshd:session): session closed for user administrator
+May 28 15:10:31 shop systemd-logind[720]: Removed session 2075.
+May 28 15:10:58 shop sudo: administrator : TTY=pts/0 ; PWD=/var/www/html ; USER=root ; COMMAND=/usr/bin/tar xzvf /home/administrator/contact.tgz
+May 28 15:10:58 shop sudo: pam_unix(sudo:session): session opened for user root(uid=0) by administrator(uid=1000)
+May 28 15:10:58 shop sudo: pam_unix(sudo:session): session closed for user root
+May 28 15:11:20 shop sudo: administrator : TTY=pts/0 ; PWD=/var/www/html ; USER=root ; COMMAND=/usr/bin/chown -R apache:apache contact/
+May 28 15:11:20 shop sudo: pam_unix(sudo:session): session opened for user root(uid=0) by administrator(uid=1000)
+May 28 15:11:20 shop sudo: pam_unix(sudo:session): session closed for user root
+May 28 15:12:18 shop sudo: administrator : TTY=pts/0 ; PWD=/var/www/html ; USER=root ; COMMAND=/usr/bin/chmod o+rwx contact/
+May 28 15:12:18 shop sudo: pam_unix(sudo:session): session opened for user root(uid=0) by administrator(uid=1000)
+May 28 15:12:18 shop sudo: pam_unix(sudo:session): session closed for user root
+May 28 15:15:53 shop sudo: administrator : TTY=pts/0 ; PWD=/var/www/html/contact ; USER=root ; COMMAND=/usr/bin/chmod -R o+rwx about.php CHANGELOG.md compose.yml config COPYING.txt database Dockerfile docs dvwa external favicon.ico hackable index.php instructions.php login.php logout.php phpinfo.php php.ini README.ar.md README.es.md README.fa.md README.fr.md README.id.md README.md README.pt.md README.tr.md README.zh.md robots.txt SECURITY.md security.php security.txt setup.php tests vulnerabilities
+May 28 15:15:53 shop sudo: pam_unix(sudo:session): session opened for user root(uid=0) by administrator(uid=1000)
+May 28 15:15:53 shop sudo: pam_unix(sudo:session): session closed for user root
+May 28 15:17:01 shop CRON[390130]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 15:17:01 shop CRON[390130]: pam_unix(cron:session): session closed for user root
+May 28 15:17:01 shop sudo: administrator : TTY=pts/0 ; PWD=/var/www/html/contact ; USER=root ; COMMAND=/usr/bin/nano /etc/php/8.1/apache2/php.ini
+May 28 15:17:01 shop sudo: pam_unix(sudo:session): session opened for user root(uid=0) by administrator(uid=1000)
+May 28 15:17:15 shop sudo: pam_unix(sudo:session): session closed for user root
+May 28 15:17:29 shop sudo: administrator : TTY=pts/0 ; PWD=/var/www/html/contact ; USER=root ; COMMAND=/usr/bin/systemctl reload httpd
+May 28 15:17:29 shop sudo: pam_unix(sudo:session): session opened for user root(uid=0) by administrator(uid=1000)
+May 28 15:17:29 shop sudo: pam_unix(sudo:session): session closed for user root
+May 28 15:17:33 shop sudo: administrator : TTY=pts/0 ; PWD=/var/www/html/contact ; USER=root ; COMMAND=/usr/bin/systemctl reload apache2
+May 28 15:17:33 shop sudo: pam_unix(sudo:session): session opened for user root(uid=0) by administrator(uid=1000)
+May 28 15:17:33 shop sudo: pam_unix(sudo:session): session closed for user root
+May 28 15:39:02 shop CRON[390354]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 15:39:02 shop CRON[390354]: pam_unix(cron:session): session closed for user root
+May 28 16:09:01 shop CRON[390570]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 16:09:01 shop CRON[390570]: pam_unix(cron:session): session closed for user root
+May 28 16:17:01 shop CRON[390615]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 16:17:01 shop CRON[390615]: pam_unix(cron:session): session closed for user root
+May 28 16:39:01 shop CRON[390790]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 16:39:01 shop CRON[390790]: pam_unix(cron:session): session closed for user root
+May 28 17:09:01 shop CRON[391012]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 17:09:01 shop CRON[391012]: pam_unix(cron:session): session closed for user root
+May 28 17:17:01 shop CRON[391059]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 17:17:01 shop CRON[391059]: pam_unix(cron:session): session closed for user root
+May 28 17:39:01 shop CRON[391195]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 17:39:01 shop CRON[391195]: pam_unix(cron:session): session closed for user root
+May 28 18:09:01 shop CRON[391395]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 18:09:01 shop CRON[391395]: pam_unix(cron:session): session closed for user root
+May 28 18:17:01 shop CRON[391504]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 18:17:01 shop CRON[391504]: pam_unix(cron:session): session closed for user root
+May 28 18:39:01 shop CRON[391625]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 18:39:01 shop CRON[391625]: pam_unix(cron:session): session closed for user root
+May 28 19:09:01 shop CRON[391889]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 19:09:01 shop CRON[391889]: pam_unix(cron:session): session closed for user root
+May 28 19:17:01 shop CRON[391996]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 19:17:01 shop CRON[391996]: pam_unix(cron:session): session closed for user root
+May 28 19:39:01 shop CRON[392161]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 19:39:01 shop CRON[392161]: pam_unix(cron:session): session closed for user root
+May 28 20:09:01 shop CRON[392319]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 20:09:01 shop CRON[392319]: pam_unix(cron:session): session closed for user root
+May 28 20:17:01 shop CRON[392438]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 20:17:01 shop CRON[392438]: pam_unix(cron:session): session closed for user root
+May 28 20:39:01 shop CRON[392627]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 20:39:01 shop CRON[392627]: pam_unix(cron:session): session closed for user root
+May 28 21:09:01 shop CRON[392745]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 21:09:01 shop CRON[392745]: pam_unix(cron:session): session closed for user root
+May 28 21:17:02 shop CRON[392838]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 21:17:02 shop CRON[392838]: pam_unix(cron:session): session closed for user root
+May 28 21:39:01 shop CRON[392942]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 21:39:01 shop CRON[392942]: pam_unix(cron:session): session closed for user root
+May 28 22:09:01 shop CRON[393146]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 22:09:01 shop CRON[393146]: pam_unix(cron:session): session closed for user root
+May 28 22:17:01 shop CRON[393237]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 22:17:01 shop CRON[393237]: pam_unix(cron:session): session closed for user root
+May 28 22:39:01 shop CRON[393302]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 22:39:01 shop CRON[393302]: pam_unix(cron:session): session closed for user root
+May 28 23:09:01 shop CRON[393419]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 23:09:01 shop CRON[393419]: pam_unix(cron:session): session closed for user root
+May 28 23:17:01 shop CRON[393495]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 23:17:01 shop CRON[393495]: pam_unix(cron:session): session closed for user root
+May 28 23:39:01 shop CRON[393568]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 28 23:39:01 shop CRON[393568]: pam_unix(cron:session): session closed for user root
+May 29 00:09:01 shop CRON[393772]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 00:09:01 shop CRON[393772]: pam_unix(cron:session): session closed for user root
+May 29 00:17:01 shop CRON[393783]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 00:17:01 shop CRON[393783]: pam_unix(cron:session): session closed for user root
+May 29 00:39:01 shop CRON[393837]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 00:39:01 shop CRON[393837]: pam_unix(cron:session): session closed for user root
+May 29 01:09:01 shop CRON[393970]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 01:09:01 shop CRON[393970]: pam_unix(cron:session): session closed for user root
+May 29 01:17:02 shop CRON[393981]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 01:17:02 shop CRON[393981]: pam_unix(cron:session): session closed for user root
+May 29 01:39:01 shop CRON[394013]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 01:39:01 shop CRON[394013]: pam_unix(cron:session): session closed for user root
+May 29 02:09:01 shop CRON[394100]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 02:09:01 shop CRON[394100]: pam_unix(cron:session): session closed for user root
+May 29 02:17:01 shop CRON[394161]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 02:17:01 shop CRON[394161]: pam_unix(cron:session): session closed for user root
+May 29 02:39:01 shop CRON[394191]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 02:39:01 shop CRON[394191]: pam_unix(cron:session): session closed for user root
+May 29 03:09:01 shop CRON[394279]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 03:09:01 shop CRON[394279]: pam_unix(cron:session): session closed for user root
+May 29 03:10:01 shop CRON[394335]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 03:10:01 shop CRON[394335]: pam_unix(cron:session): session closed for user root
+May 29 03:17:01 shop CRON[394343]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 03:17:01 shop CRON[394343]: pam_unix(cron:session): session closed for user root
+May 29 03:39:01 shop CRON[394477]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 03:39:01 shop CRON[394477]: pam_unix(cron:session): session closed for user root
+May 29 04:09:01 shop CRON[394532]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 04:09:01 shop CRON[394532]: pam_unix(cron:session): session closed for user root
+May 29 04:17:01 shop CRON[394595]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 04:17:01 shop CRON[394595]: pam_unix(cron:session): session closed for user root
+May 29 04:39:01 shop CRON[394671]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 04:39:01 shop CRON[394671]: pam_unix(cron:session): session closed for user root
+May 29 05:09:01 shop CRON[394719]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 05:09:01 shop CRON[394719]: pam_unix(cron:session): session closed for user root
+May 29 05:17:01 shop CRON[394771]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 05:17:01 shop CRON[394771]: pam_unix(cron:session): session closed for user root
+May 29 05:39:01 shop CRON[394815]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 05:39:01 shop CRON[394815]: pam_unix(cron:session): session closed for user root
+May 29 06:09:01 shop CRON[394995]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 06:09:01 shop CRON[394995]: pam_unix(cron:session): session closed for user root
+May 29 06:17:01 shop CRON[395058]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 06:17:01 shop CRON[395058]: pam_unix(cron:session): session closed for user root
+May 29 06:25:01 shop CRON[395069]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 06:25:01 shop CRON[395069]: pam_unix(cron:session): session closed for user root
+May 29 06:39:01 shop CRON[395093]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 06:39:01 shop CRON[395093]: pam_unix(cron:session): session closed for user root
+May 29 07:09:01 shop CRON[395188]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 07:09:01 shop CRON[395188]: pam_unix(cron:session): session closed for user root
+May 29 07:17:02 shop CRON[395255]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 07:17:02 shop CRON[395255]: pam_unix(cron:session): session closed for user root
+May 29 07:39:01 shop CRON[395289]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 07:39:01 shop CRON[395289]: pam_unix(cron:session): session closed for user root
+May 29 08:09:01 shop CRON[395443]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 08:09:01 shop CRON[395443]: pam_unix(cron:session): session closed for user root
+May 29 08:17:01 shop CRON[395515]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 08:17:01 shop CRON[395515]: pam_unix(cron:session): session closed for user root
+May 29 08:39:01 shop CRON[395555]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 08:39:01 shop CRON[395555]: pam_unix(cron:session): session closed for user root
+May 29 09:09:01 shop CRON[395680]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 09:09:01 shop CRON[395680]: pam_unix(cron:session): session closed for user root
+May 29 09:17:01 shop CRON[395757]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 09:17:01 shop CRON[395757]: pam_unix(cron:session): session closed for user root
+May 29 09:39:01 shop CRON[395824]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 09:39:01 shop CRON[395824]: pam_unix(cron:session): session closed for user root
+May 29 10:09:01 shop CRON[395973]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 10:09:01 shop CRON[395973]: pam_unix(cron:session): session closed for user root
+May 29 10:17:01 shop CRON[396069]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 10:17:01 shop CRON[396069]: pam_unix(cron:session): session closed for user root
+May 29 10:39:01 shop CRON[396130]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 10:39:01 shop CRON[396130]: pam_unix(cron:session): session closed for user root
+May 29 11:09:01 shop CRON[396300]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 11:09:01 shop CRON[396300]: pam_unix(cron:session): session closed for user root
+May 29 11:17:01 shop CRON[396384]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 11:17:01 shop CRON[396384]: pam_unix(cron:session): session closed for user root
+May 29 11:39:01 shop CRON[396474]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 11:39:01 shop CRON[396474]: pam_unix(cron:session): session closed for user root
+May 29 12:09:01 shop CRON[396651]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 12:09:01 shop CRON[396651]: pam_unix(cron:session): session closed for user root
+May 29 12:17:01 shop CRON[396743]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 12:17:01 shop CRON[396743]: pam_unix(cron:session): session closed for user root
+May 29 12:39:01 shop CRON[396892]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 12:39:01 shop CRON[396892]: pam_unix(cron:session): session closed for user root
+May 29 13:09:01 shop CRON[397007]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 13:09:01 shop CRON[397007]: pam_unix(cron:session): session closed for user root
+May 29 13:17:01 shop CRON[397103]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 13:17:01 shop CRON[397103]: pam_unix(cron:session): session closed for user root
+May 29 13:39:01 shop CRON[397193]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 13:39:01 shop CRON[397193]: pam_unix(cron:session): session closed for user root
+May 29 14:09:02 shop CRON[397483]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 14:09:02 shop CRON[397483]: pam_unix(cron:session): session closed for user root
+May 29 14:17:01 shop CRON[397530]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 14:17:01 shop CRON[397530]: pam_unix(cron:session): session closed for user root
+May 29 14:39:01 shop CRON[397646]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 14:39:01 shop CRON[397646]: pam_unix(cron:session): session closed for user root
+May 29 15:09:01 shop CRON[397922]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 15:09:01 shop CRON[397922]: pam_unix(cron:session): session closed for user root
+May 29 15:17:01 shop CRON[398055]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 15:17:01 shop CRON[398055]: pam_unix(cron:session): session closed for user root
+May 29 15:39:01 shop CRON[398183]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 15:39:01 shop CRON[398183]: pam_unix(cron:session): session closed for user root
+May 29 16:09:01 shop CRON[398413]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 16:09:01 shop CRON[398413]: pam_unix(cron:session): session closed for user root
+May 29 16:17:01 shop CRON[398528]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 16:17:01 shop CRON[398528]: pam_unix(cron:session): session closed for user root
+May 29 16:39:01 shop CRON[398678]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 16:39:01 shop CRON[398678]: pam_unix(cron:session): session closed for user root
+May 29 17:09:01 shop CRON[398896]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 17:09:01 shop CRON[398896]: pam_unix(cron:session): session closed for user root
+May 29 17:17:01 shop CRON[399010]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 17:17:01 shop CRON[399010]: pam_unix(cron:session): session closed for user root
+May 29 17:39:01 shop CRON[399136]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 17:39:01 shop CRON[399136]: pam_unix(cron:session): session closed for user root
+May 29 18:09:01 shop CRON[399349]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 18:09:01 shop CRON[399349]: pam_unix(cron:session): session closed for user root
+May 29 18:17:01 shop CRON[399457]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 18:17:01 shop CRON[399457]: pam_unix(cron:session): session closed for user root
+May 29 18:39:01 shop CRON[399624]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 18:39:01 shop CRON[399624]: pam_unix(cron:session): session closed for user root
+May 29 19:09:01 shop CRON[399774]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 19:09:01 shop CRON[399774]: pam_unix(cron:session): session closed for user root
+May 29 19:17:01 shop CRON[399886]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 19:17:01 shop CRON[399886]: pam_unix(cron:session): session closed for user root
+May 29 19:39:01 shop CRON[399989]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 19:39:01 shop CRON[399989]: pam_unix(cron:session): session closed for user root
+May 29 20:09:01 shop CRON[400291]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 20:09:01 shop CRON[400291]: pam_unix(cron:session): session closed for user root
+May 29 20:17:01 shop CRON[400320]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 20:17:01 shop CRON[400320]: pam_unix(cron:session): session closed for user root
+May 29 20:39:01 shop CRON[400409]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 20:39:01 shop CRON[400409]: pam_unix(cron:session): session closed for user root
+May 29 21:09:01 shop CRON[400592]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 21:09:01 shop CRON[400592]: pam_unix(cron:session): session closed for user root
+May 29 21:17:01 shop CRON[400678]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 21:17:01 shop CRON[400678]: pam_unix(cron:session): session closed for user root
+May 29 21:39:01 shop CRON[400734]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 21:39:01 shop CRON[400734]: pam_unix(cron:session): session closed for user root
+May 29 22:09:01 shop CRON[400935]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 22:09:01 shop CRON[400935]: pam_unix(cron:session): session closed for user root
+May 29 22:17:01 shop CRON[400958]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 22:17:01 shop CRON[400958]: pam_unix(cron:session): session closed for user root
+May 29 22:39:01 shop CRON[401056]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 22:39:01 shop CRON[401056]: pam_unix(cron:session): session closed for user root
+May 29 23:09:01 shop CRON[401133]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 23:09:01 shop CRON[401133]: pam_unix(cron:session): session closed for user root
+May 29 23:17:01 shop CRON[401195]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 23:17:01 shop CRON[401195]: pam_unix(cron:session): session closed for user root
+May 29 23:39:01 shop CRON[401226]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 29 23:39:01 shop CRON[401226]: pam_unix(cron:session): session closed for user root
+May 30 00:09:01 shop CRON[401454]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 00:09:01 shop CRON[401454]: pam_unix(cron:session): session closed for user root
+May 30 00:17:01 shop CRON[401561]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 00:17:01 shop CRON[401561]: pam_unix(cron:session): session closed for user root
+May 30 00:39:01 shop CRON[401671]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 00:39:01 shop CRON[401671]: pam_unix(cron:session): session closed for user root
+May 30 01:09:01 shop CRON[401892]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 01:09:01 shop CRON[401892]: pam_unix(cron:session): session closed for user root
+May 30 01:17:01 shop CRON[401991]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 01:17:01 shop CRON[401991]: pam_unix(cron:session): session closed for user root
+May 30 01:39:01 shop CRON[402101]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 01:39:01 shop CRON[402101]: pam_unix(cron:session): session closed for user root
+May 30 02:09:01 shop CRON[402316]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 02:09:01 shop CRON[402316]: pam_unix(cron:session): session closed for user root
+May 30 02:17:01 shop CRON[402404]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 02:17:01 shop CRON[402404]: pam_unix(cron:session): session closed for user root
+May 30 02:39:01 shop CRON[402505]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 02:39:01 shop CRON[402505]: pam_unix(cron:session): session closed for user root
+May 30 03:09:01 shop CRON[402754]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 03:09:01 shop CRON[402754]: pam_unix(cron:session): session closed for user root
+May 30 03:10:01 shop CRON[402763]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 03:10:01 shop CRON[402763]: pam_unix(cron:session): session closed for user root
+May 30 03:17:01 shop CRON[402792]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 03:17:01 shop CRON[402792]: pam_unix(cron:session): session closed for user root
+May 30 03:39:01 shop CRON[402893]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 03:39:01 shop CRON[402893]: pam_unix(cron:session): session closed for user root
+May 30 04:09:01 shop CRON[403083]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 04:09:01 shop CRON[403083]: pam_unix(cron:session): session closed for user root
+May 30 04:17:01 shop CRON[403171]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 04:17:01 shop CRON[403171]: pam_unix(cron:session): session closed for user root
+May 30 04:39:02 shop CRON[403284]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 04:39:02 shop CRON[403284]: pam_unix(cron:session): session closed for user root
+May 30 05:09:02 shop CRON[403501]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 05:09:02 shop CRON[403501]: pam_unix(cron:session): session closed for user root
+May 30 05:17:01 shop CRON[403538]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 05:17:01 shop CRON[403538]: pam_unix(cron:session): session closed for user root
+May 30 05:39:02 shop CRON[403717]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 05:39:02 shop CRON[403717]: pam_unix(cron:session): session closed for user root
+May 30 06:09:01 shop CRON[403833]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 06:09:01 shop CRON[403833]: pam_unix(cron:session): session closed for user root
+May 30 06:17:02 shop CRON[403919]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 06:17:02 shop CRON[403919]: pam_unix(cron:session): session closed for user root
+May 30 06:25:01 shop CRON[403953]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 06:25:01 shop CRON[403953]: pam_unix(cron:session): session closed for user root
+May 30 06:39:01 shop CRON[404018]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 06:39:01 shop CRON[404018]: pam_unix(cron:session): session closed for user root
+May 30 07:09:02 shop CRON[404308]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 07:09:02 shop CRON[404308]: pam_unix(cron:session): session closed for user root
+May 30 07:17:01 shop CRON[404341]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 07:17:01 shop CRON[404341]: pam_unix(cron:session): session closed for user root
+May 30 07:39:01 shop CRON[404442]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 07:39:01 shop CRON[404442]: pam_unix(cron:session): session closed for user root
+May 30 08:09:01 shop CRON[404636]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 08:09:01 shop CRON[404636]: pam_unix(cron:session): session closed for user root
+May 30 08:17:02 shop CRON[404716]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 08:17:02 shop CRON[404716]: pam_unix(cron:session): session closed for user root
+May 30 08:39:01 shop CRON[404820]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 08:39:01 shop CRON[404820]: pam_unix(cron:session): session closed for user root
+May 30 09:09:01 shop CRON[405025]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 09:09:01 shop CRON[405025]: pam_unix(cron:session): session closed for user root
+May 30 09:17:01 shop CRON[405107]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 09:17:02 shop CRON[405107]: pam_unix(cron:session): session closed for user root
+May 30 09:39:01 shop CRON[405208]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 09:39:01 shop CRON[405208]: pam_unix(cron:session): session closed for user root
+May 30 10:09:01 shop CRON[405393]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 10:09:01 shop CRON[405393]: pam_unix(cron:session): session closed for user root
+May 30 10:17:01 shop CRON[405488]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 10:17:01 shop CRON[405488]: pam_unix(cron:session): session closed for user root
+May 30 10:39:01 shop CRON[405581]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 10:39:01 shop CRON[405581]: pam_unix(cron:session): session closed for user root
+May 30 11:09:01 shop CRON[405782]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 11:09:01 shop CRON[405782]: pam_unix(cron:session): session closed for user root
+May 30 11:17:01 shop CRON[405864]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 11:17:01 shop CRON[405864]: pam_unix(cron:session): session closed for user root
+May 30 11:39:01 shop CRON[405994]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 11:39:01 shop CRON[405994]: pam_unix(cron:session): session closed for user root
+May 30 12:09:02 shop CRON[406106]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 12:09:02 shop CRON[406106]: pam_unix(cron:session): session closed for user root
+May 30 12:17:01 shop CRON[406215]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 12:17:01 shop CRON[406215]: pam_unix(cron:session): session closed for user root
+May 30 12:39:01 shop CRON[406325]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 12:39:01 shop CRON[406325]: pam_unix(cron:session): session closed for user root
+May 30 13:09:01 shop CRON[406551]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 13:09:01 shop CRON[406551]: pam_unix(cron:session): session closed for user root
+May 30 13:17:02 shop CRON[406657]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 13:17:02 shop CRON[406657]: pam_unix(cron:session): session closed for user root
+May 30 13:39:01 shop CRON[406767]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 13:39:01 shop CRON[406767]: pam_unix(cron:session): session closed for user root
+May 30 14:09:02 shop CRON[407019]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 14:09:02 shop CRON[407019]: pam_unix(cron:session): session closed for user root
+May 30 14:17:01 shop CRON[407116]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 14:17:01 shop CRON[407116]: pam_unix(cron:session): session closed for user root
+May 30 14:39:02 shop CRON[407250]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 14:39:02 shop CRON[407250]: pam_unix(cron:session): session closed for user root
+May 30 15:09:01 shop CRON[407495]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 15:09:01 shop CRON[407495]: pam_unix(cron:session): session closed for user root
+May 30 15:17:01 shop CRON[407591]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 15:17:02 shop CRON[407591]: pam_unix(cron:session): session closed for user root
+May 30 15:39:02 shop CRON[407704]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 15:39:02 shop CRON[407704]: pam_unix(cron:session): session closed for user root
+May 30 16:09:01 shop CRON[407969]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 16:09:01 shop CRON[407969]: pam_unix(cron:session): session closed for user root
+May 30 16:17:01 shop CRON[408089]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 16:17:02 shop CRON[408089]: pam_unix(cron:session): session closed for user root
+May 30 16:39:01 shop CRON[408221]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 16:39:01 shop CRON[408221]: pam_unix(cron:session): session closed for user root
+May 30 17:09:01 shop CRON[408478]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 17:09:01 shop CRON[408478]: pam_unix(cron:session): session closed for user root
+May 30 17:17:01 shop CRON[408624]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 17:17:01 shop CRON[408624]: pam_unix(cron:session): session closed for user root
+May 30 17:39:01 shop CRON[408753]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 17:39:01 shop CRON[408753]: pam_unix(cron:session): session closed for user root
+May 30 18:09:01 shop CRON[409004]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 18:09:01 shop CRON[409004]: pam_unix(cron:session): session closed for user root
+May 30 18:17:02 shop CRON[409126]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 18:17:02 shop CRON[409126]: pam_unix(cron:session): session closed for user root
+May 30 18:39:01 shop CRON[409253]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 18:39:01 shop CRON[409253]: pam_unix(cron:session): session closed for user root
+May 30 19:09:01 shop CRON[409497]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 19:09:01 shop CRON[409497]: pam_unix(cron:session): session closed for user root
+May 30 19:17:01 shop CRON[409608]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 19:17:02 shop CRON[409608]: pam_unix(cron:session): session closed for user root
+May 30 19:39:01 shop CRON[409718]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 19:39:01 shop CRON[409718]: pam_unix(cron:session): session closed for user root
+May 30 20:09:01 shop CRON[409953]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 20:09:01 shop CRON[409953]: pam_unix(cron:session): session closed for user root
+May 30 20:17:01 shop CRON[410060]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 20:17:01 shop CRON[410060]: pam_unix(cron:session): session closed for user root
+May 30 20:39:01 shop CRON[410161]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 20:39:01 shop CRON[410161]: pam_unix(cron:session): session closed for user root
+May 30 21:09:01 shop CRON[410345]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 21:09:01 shop CRON[410345]: pam_unix(cron:session): session closed for user root
+May 30 21:17:02 shop CRON[410435]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 21:17:02 shop CRON[410435]: pam_unix(cron:session): session closed for user root
+May 30 21:39:01 shop CRON[410516]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 21:39:01 shop CRON[410516]: pam_unix(cron:session): session closed for user root
+May 30 22:09:01 shop CRON[410687]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 22:09:01 shop CRON[410687]: pam_unix(cron:session): session closed for user root
+May 30 22:17:01 shop CRON[410772]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 22:17:01 shop CRON[410772]: pam_unix(cron:session): session closed for user root
+May 30 22:39:01 shop CRON[410844]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 22:39:01 shop CRON[410844]: pam_unix(cron:session): session closed for user root
+May 30 23:09:01 shop CRON[411038]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 23:09:01 shop CRON[411038]: pam_unix(cron:session): session closed for user root
+May 30 23:17:01 shop CRON[411051]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 23:17:01 shop CRON[411051]: pam_unix(cron:session): session closed for user root
+May 30 23:39:01 shop CRON[411077]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 30 23:39:01 shop CRON[411077]: pam_unix(cron:session): session closed for user root
+May 31 00:09:01 shop CRON[411258]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 00:09:01 shop CRON[411258]: pam_unix(cron:session): session closed for user root
+May 31 00:17:01 shop CRON[411269]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 00:17:01 shop CRON[411269]: pam_unix(cron:session): session closed for user root
+May 31 00:39:02 shop CRON[411352]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 00:39:02 shop CRON[411352]: pam_unix(cron:session): session closed for user root
+May 31 01:09:01 shop CRON[411429]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 01:09:01 shop CRON[411429]: pam_unix(cron:session): session closed for user root
+May 31 01:17:01 shop CRON[411458]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 01:17:01 shop CRON[411458]: pam_unix(cron:session): session closed for user root
+May 31 01:39:01 shop CRON[411482]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 01:39:01 shop CRON[411482]: pam_unix(cron:session): session closed for user root
+May 31 02:09:01 shop CRON[411589]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 02:09:01 shop CRON[411589]: pam_unix(cron:session): session closed for user root
+May 31 02:17:01 shop CRON[411654]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 02:17:01 shop CRON[411654]: pam_unix(cron:session): session closed for user root
+May 31 02:39:01 shop CRON[411674]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 02:39:01 shop CRON[411674]: pam_unix(cron:session): session closed for user root
+May 31 03:09:01 shop CRON[411763]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 03:09:01 shop CRON[411763]: pam_unix(cron:session): session closed for user root
+May 31 03:10:01 shop CRON[411819]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 03:10:01 shop CRON[411819]: pam_unix(cron:session): session closed for user root
+May 31 03:17:01 shop CRON[411828]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 03:17:01 shop CRON[411828]: pam_unix(cron:session): session closed for user root
+May 31 03:39:01 shop CRON[411854]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 03:39:01 shop CRON[411854]: pam_unix(cron:session): session closed for user root
+May 31 04:09:01 shop CRON[411939]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 04:09:01 shop CRON[411939]: pam_unix(cron:session): session closed for user root
+May 31 04:17:01 shop CRON[412006]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 04:17:01 shop CRON[412006]: pam_unix(cron:session): session closed for user root
+May 31 04:39:01 shop CRON[412030]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 04:39:01 shop CRON[412030]: pam_unix(cron:session): session closed for user root
+May 31 05:09:01 shop CRON[412144]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 05:09:01 shop CRON[412144]: pam_unix(cron:session): session closed for user root
+May 31 05:17:01 shop CRON[412226]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 05:17:01 shop CRON[412226]: pam_unix(cron:session): session closed for user root
+May 31 05:39:01 shop CRON[412270]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 05:39:01 shop CRON[412270]: pam_unix(cron:session): session closed for user root
+May 31 06:09:01 shop CRON[412449]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 06:09:01 shop CRON[412449]: pam_unix(cron:session): session closed for user root
+May 31 06:17:01 shop CRON[412518]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 06:17:01 shop CRON[412518]: pam_unix(cron:session): session closed for user root
+May 31 06:25:01 shop CRON[412600]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 06:25:01 shop CRON[412600]: pam_unix(cron:session): session closed for user root
+May 31 06:39:01 shop CRON[412628]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 06:39:01 shop CRON[412628]: pam_unix(cron:session): session closed for user root
+May 31 07:09:01 shop CRON[412730]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 07:09:01 shop CRON[412730]: pam_unix(cron:session): session closed for user root
+May 31 07:17:01 shop CRON[412803]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 07:17:01 shop CRON[412803]: pam_unix(cron:session): session closed for user root
+May 31 07:39:01 shop CRON[412864]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 07:39:01 shop CRON[412864]: pam_unix(cron:session): session closed for user root
+May 31 08:09:01 shop CRON[412983]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 08:09:01 shop CRON[412983]: pam_unix(cron:session): session closed for user root
+May 31 08:17:01 shop CRON[413053]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 08:17:01 shop CRON[413053]: pam_unix(cron:session): session closed for user root
+May 31 08:39:01 shop CRON[413117]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 08:39:01 shop CRON[413117]: pam_unix(cron:session): session closed for user root
+May 31 09:09:01 shop CRON[413252]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 09:09:01 shop CRON[413252]: pam_unix(cron:session): session closed for user root
+May 31 09:17:01 shop CRON[413334]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 09:17:01 shop CRON[413334]: pam_unix(cron:session): session closed for user root
+May 31 09:39:01 shop CRON[413464]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 09:39:01 shop CRON[413464]: pam_unix(cron:session): session closed for user root
+May 31 10:09:01 shop CRON[413620]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 10:09:01 shop CRON[413620]: pam_unix(cron:session): session closed for user root
+May 31 10:17:01 shop CRON[413710]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 10:17:01 shop CRON[413710]: pam_unix(cron:session): session closed for user root
+May 31 10:39:01 shop CRON[413792]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 10:39:01 shop CRON[413792]: pam_unix(cron:session): session closed for user root
+May 31 11:09:01 shop CRON[414031]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 11:09:01 shop CRON[414031]: pam_unix(cron:session): session closed for user root
+May 31 11:17:02 shop CRON[414082]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 11:17:02 shop CRON[414082]: pam_unix(cron:session): session closed for user root
+May 31 11:39:01 shop CRON[414176]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 11:39:01 shop CRON[414176]: pam_unix(cron:session): session closed for user root
+May 31 12:09:01 shop CRON[414342]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 12:09:01 shop CRON[414342]: pam_unix(cron:session): session closed for user root
+May 31 12:17:01 shop CRON[414445]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 12:17:01 shop CRON[414445]: pam_unix(cron:session): session closed for user root
+May 31 12:39:01 shop CRON[414587]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 12:39:01 shop CRON[414587]: pam_unix(cron:session): session closed for user root
+May 31 13:09:01 shop CRON[414785]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 13:09:01 shop CRON[414785]: pam_unix(cron:session): session closed for user root
+May 31 13:17:01 shop CRON[414900]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 13:17:01 shop CRON[414900]: pam_unix(cron:session): session closed for user root
+May 31 13:39:01 shop CRON[415015]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 13:39:01 shop CRON[415015]: pam_unix(cron:session): session closed for user root
+May 31 14:09:01 shop CRON[415284]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 14:09:01 shop CRON[415284]: pam_unix(cron:session): session closed for user root
+May 31 14:17:01 shop CRON[415393]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 14:17:01 shop CRON[415393]: pam_unix(cron:session): session closed for user root
+May 31 14:39:01 shop CRON[415532]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 14:39:01 shop CRON[415532]: pam_unix(cron:session): session closed for user root
+May 31 15:09:01 shop CRON[415791]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 15:09:01 shop CRON[415791]: pam_unix(cron:session): session closed for user root
+May 31 15:17:01 shop CRON[415906]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 15:17:01 shop CRON[415906]: pam_unix(cron:session): session closed for user root
+May 31 15:39:01 shop CRON[416118]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 15:39:01 shop CRON[416118]: pam_unix(cron:session): session closed for user root
+May 31 16:09:01 shop CRON[416325]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 16:09:01 shop CRON[416325]: pam_unix(cron:session): session closed for user root
+May 31 16:17:01 shop CRON[416447]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 16:17:01 shop CRON[416447]: pam_unix(cron:session): session closed for user root
+May 31 16:39:01 shop CRON[416588]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 16:39:01 shop CRON[416588]: pam_unix(cron:session): session closed for user root
+May 31 17:09:01 shop CRON[416841]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 17:09:01 shop CRON[416841]: pam_unix(cron:session): session closed for user root
+May 31 17:17:01 shop CRON[416973]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 17:17:01 shop CRON[416973]: pam_unix(cron:session): session closed for user root
+May 31 17:39:01 shop CRON[417103]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 17:39:01 shop CRON[417103]: pam_unix(cron:session): session closed for user root
+May 31 18:09:01 shop CRON[417440]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 18:09:01 shop CRON[417440]: pam_unix(cron:session): session closed for user root
+May 31 18:17:01 shop CRON[417486]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 18:17:01 shop CRON[417486]: pam_unix(cron:session): session closed for user root
+May 31 18:39:01 shop CRON[417719]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 18:39:01 shop CRON[417719]: pam_unix(cron:session): session closed for user root
+May 31 19:09:01 shop CRON[417911]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 19:09:01 shop CRON[417911]: pam_unix(cron:session): session closed for user root
+May 31 19:17:01 shop CRON[418028]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 19:17:01 shop CRON[418028]: pam_unix(cron:session): session closed for user root
+May 31 21:25:09 shop sshd[785]: Server listening on 0.0.0.0 port 22.
+May 31 21:25:09 shop sshd[785]: Server listening on :: port 22.
+May 31 21:25:09 shop systemd-logind[723]: New seat seat0.
+May 31 21:25:09 shop systemd-logind[723]: Watching system buttons on /dev/input/event0 (Power Button)
+May 31 21:25:09 shop systemd-logind[723]: Watching system buttons on /dev/input/event1 (Sleep Button)
+May 31 21:25:09 shop systemd-logind[723]: Watching system buttons on /dev/input/event2 (AT Translated Set 2 keyboard)
+May 31 21:34:55 shop sshd[1112]: Accepted password for administrator from 10.24.44.100 port 49686 ssh2
+May 31 21:34:55 shop sshd[1112]: pam_unix(sshd:session): session opened for user administrator(uid=1000) by (uid=0)
+May 31 21:34:55 shop systemd-logind[723]: New session 1 of user administrator.
+May 31 21:34:55 shop systemd: pam_unix(systemd-user:session): session opened for user administrator(uid=1000) by (uid=0)
+May 31 21:39:01 shop CRON[1253]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 21:39:01 shop CRON[1253]: pam_unix(cron:session): session closed for user root
+May 31 22:09:01 shop CRON[1365]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 22:09:01 shop CRON[1365]: pam_unix(cron:session): session closed for user root
+May 31 22:17:01 shop CRON[1423]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 22:17:01 shop CRON[1423]: pam_unix(cron:session): session closed for user root
+May 31 22:30:30 shop sshd[1220]: Received disconnect from 10.24.44.100 port 49686:11: disconnected by user
+May 31 22:30:30 shop sshd[1220]: Disconnected from user administrator 10.24.44.100 port 49686
+May 31 22:30:30 shop sshd[1112]: pam_unix(sshd:session): session closed for user administrator
+May 31 22:30:30 shop systemd-logind[723]: Session 1 logged out. Waiting for processes to exit.
+May 31 22:30:30 shop systemd-logind[723]: Removed session 1.
+May 31 22:32:15 shop sshd[1473]: Accepted password for administrator from 10.24.44.1 port 59122 ssh2
+May 31 22:32:15 shop sshd[1473]: pam_unix(sshd:session): session opened for user administrator(uid=1000) by (uid=0)
+May 31 22:32:15 shop systemd-logind[723]: New session 6 of user administrator.
+May 31 22:32:16 shop systemd: pam_unix(systemd-user:session): session opened for user administrator(uid=1000) by (uid=0)
+May 31 22:39:01 shop CRON[1567]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 22:39:01 shop CRON[1567]: pam_unix(cron:session): session closed for user root
+May 31 23:09:01 shop CRON[1645]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 23:09:01 shop CRON[1645]: pam_unix(cron:session): session closed for user root
+May 31 23:17:01 shop CRON[1755]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 23:17:01 shop CRON[1755]: pam_unix(cron:session): session closed for user root
+May 31 23:39:01 shop CRON[1774]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+May 31 23:39:01 shop CRON[1774]: pam_unix(cron:session): session closed for user root
+Jun  1 00:09:01 shop CRON[1972]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 00:09:01 shop CRON[1972]: pam_unix(cron:session): session closed for user root
+Jun  1 00:17:01 shop CRON[1982]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 00:17:01 shop CRON[1982]: pam_unix(cron:session): session closed for user root
+Jun  1 00:39:01 shop CRON[2003]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 00:39:01 shop CRON[2003]: pam_unix(cron:session): session closed for user root
+Jun  1 01:09:01 shop CRON[2099]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 01:09:01 shop CRON[2099]: pam_unix(cron:session): session closed for user root
+Jun  1 01:17:01 shop CRON[2162]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 01:17:01 shop CRON[2162]: pam_unix(cron:session): session closed for user root
+Jun  1 01:39:01 shop CRON[2254]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 01:39:01 shop CRON[2254]: pam_unix(cron:session): session closed for user root
+Jun  1 02:09:01 shop CRON[2312]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 02:09:01 shop CRON[2312]: pam_unix(cron:session): session closed for user root
+Jun  1 02:17:01 shop CRON[2386]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 02:17:01 shop CRON[2386]: pam_unix(cron:session): session closed for user root
+Jun  1 02:39:01 shop CRON[2459]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 02:39:01 shop CRON[2459]: pam_unix(cron:session): session closed for user root
+Jun  1 03:09:01 shop CRON[2497]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 03:09:01 shop CRON[2497]: pam_unix(cron:session): session closed for user root
+Jun  1 03:10:01 shop CRON[2554]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 03:10:01 shop CRON[2554]: pam_unix(cron:session): session closed for user root
+Jun  1 03:17:01 shop CRON[2564]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 03:17:01 shop CRON[2564]: pam_unix(cron:session): session closed for user root
+Jun  1 03:39:01 shop CRON[2616]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 03:39:01 shop CRON[2616]: pam_unix(cron:session): session closed for user root
+Jun  1 04:09:01 shop CRON[2707]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 04:09:01 shop CRON[2707]: pam_unix(cron:session): session closed for user root
+Jun  1 04:17:01 shop CRON[2794]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 04:17:01 shop CRON[2794]: pam_unix(cron:session): session closed for user root
+Jun  1 04:39:01 shop CRON[2820]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 04:39:01 shop CRON[2820]: pam_unix(cron:session): session closed for user root
+Jun  1 05:09:01 shop CRON[2928]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 05:09:01 shop CRON[2928]: pam_unix(cron:session): session closed for user root
+Jun  1 05:17:01 shop CRON[2994]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 05:17:01 shop CRON[2994]: pam_unix(cron:session): session closed for user root
+Jun  1 05:39:01 shop CRON[3037]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 05:39:01 shop CRON[3037]: pam_unix(cron:session): session closed for user root
+Jun  1 06:09:01 shop CRON[3134]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 06:09:01 shop CRON[3134]: pam_unix(cron:session): session closed for user root
+Jun  1 06:17:01 shop CRON[3183]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 06:17:01 shop CRON[3183]: pam_unix(cron:session): session closed for user root
+Jun  1 06:25:02 shop CRON[3261]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 06:25:02 shop CRON[3261]: pam_unix(cron:session): session closed for user root
+Jun  1 06:39:01 shop CRON[3286]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 06:39:01 shop CRON[3286]: pam_unix(cron:session): session closed for user root
+Jun  1 06:52:01 shop CRON[3357]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 06:52:01 shop CRON[3357]: pam_unix(cron:session): session closed for user root
+Jun  1 07:09:01 shop CRON[3474]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 07:09:01 shop CRON[3474]: pam_unix(cron:session): session closed for user root
+Jun  1 07:17:01 shop CRON[3542]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 07:17:01 shop CRON[3542]: pam_unix(cron:session): session closed for user root
+Jun  1 07:39:01 shop CRON[3569]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 07:39:01 shop CRON[3569]: pam_unix(cron:session): session closed for user root
+Jun  1 08:09:01 shop CRON[3669]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 08:09:01 shop CRON[3669]: pam_unix(cron:session): session closed for user root
+Jun  1 08:17:01 shop CRON[3741]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 08:17:01 shop CRON[3741]: pam_unix(cron:session): session closed for user root
+Jun  1 08:39:01 shop CRON[3778]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 08:39:01 shop CRON[3778]: pam_unix(cron:session): session closed for user root
+Jun  1 09:09:01 shop CRON[3896]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 09:09:01 shop CRON[3896]: pam_unix(cron:session): session closed for user root
+Jun  1 09:17:01 shop CRON[3968]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 09:17:01 shop CRON[3968]: pam_unix(cron:session): session closed for user root
+Jun  1 09:39:01 shop CRON[4081]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 09:39:01 shop CRON[4081]: pam_unix(cron:session): session closed for user root
+Jun  1 10:09:01 shop CRON[4156]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 10:09:01 shop CRON[4156]: pam_unix(cron:session): session closed for user root
+Jun  1 10:17:01 shop CRON[4236]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 10:17:01 shop CRON[4236]: pam_unix(cron:session): session closed for user root
+Jun  1 10:39:01 shop CRON[4301]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 10:39:01 shop CRON[4301]: pam_unix(cron:session): session closed for user root
+Jun  1 11:09:01 shop CRON[4482]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 11:09:01 shop CRON[4482]: pam_unix(cron:session): session closed for user root
+Jun  1 11:17:02 shop CRON[4505]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 11:17:02 shop CRON[4505]: pam_unix(cron:session): session closed for user root
+Jun  1 11:39:01 shop CRON[4615]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 11:39:01 shop CRON[4615]: pam_unix(cron:session): session closed for user root
+Jun  1 12:09:01 shop CRON[4802]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 12:09:01 shop CRON[4802]: pam_unix(cron:session): session closed for user root
+Jun  1 12:17:01 shop CRON[4891]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 12:17:01 shop CRON[4891]: pam_unix(cron:session): session closed for user root
+Jun  1 12:32:03 shop sshd[1541]: Received disconnect from 10.24.44.1 port 59122:11: disconnected by user
+Jun  1 12:32:03 shop sshd[1541]: Disconnected from user administrator 10.24.44.1 port 59122
+Jun  1 12:32:03 shop sshd[1473]: pam_unix(sshd:session): session closed for user administrator
+Jun  1 12:32:03 shop systemd-logind[723]: Session 6 logged out. Waiting for processes to exit.
+Jun  1 12:32:03 shop systemd-logind[723]: Removed session 6.
+Jun  1 12:32:53 shop sshd[4966]: Accepted password for administrator from 10.24.44.100 port 44024 ssh2
+Jun  1 12:32:53 shop sshd[4966]: pam_unix(sshd:session): session opened for user administrator(uid=1000) by (uid=0)
+Jun  1 12:32:54 shop systemd-logind[723]: New session 53 of user administrator.
+Jun  1 12:32:54 shop systemd: pam_unix(systemd-user:session): session opened for user administrator(uid=1000) by (uid=0)
+Jun  1 12:39:01 shop CRON[5097]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 12:39:01 shop CRON[5097]: pam_unix(cron:session): session closed for user root
+Jun  1 12:52:19 shop sshd[5075]: Received disconnect from 10.24.44.100 port 44024:11: disconnected by user
+Jun  1 12:52:19 shop sshd[5075]: Disconnected from user administrator 10.24.44.100 port 44024
+Jun  1 12:52:19 shop sshd[4966]: pam_unix(sshd:session): session closed for user administrator
+Jun  1 12:52:19 shop systemd-logind[723]: Session 53 logged out. Waiting for processes to exit.
+Jun  1 12:52:19 shop systemd-logind[723]: Removed session 53.
+Jun  1 12:52:29 shop systemd: pam_unix(systemd-user:session): session closed for user administrator
+Jun  1 12:53:25 shop sshd[5171]: Accepted password for administrator from 10.24.44.1 port 33066 ssh2
+Jun  1 12:53:25 shop sshd[5171]: pam_unix(sshd:session): session opened for user administrator(uid=1000) by (uid=0)
+Jun  1 12:53:25 shop systemd-logind[723]: New session 56 of user administrator.
+Jun  1 12:53:25 shop systemd: pam_unix(systemd-user:session): session opened for user administrator(uid=1000) by (uid=0)
+Jun  1 13:09:01 shop CRON[5358]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 13:09:01 shop CRON[5358]: pam_unix(cron:session): session closed for user root
+Jun  1 13:17:01 shop CRON[5416]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 13:17:01 shop CRON[5416]: pam_unix(cron:session): session closed for user root
+Jun  1 13:39:01 shop CRON[5620]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 13:39:01 shop CRON[5620]: pam_unix(cron:session): session closed for user root
+Jun  1 14:09:01 shop CRON[5761]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 14:09:01 shop CRON[5761]: pam_unix(cron:session): session closed for user root
+Jun  1 14:17:01 shop CRON[5868]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 14:17:01 shop CRON[5868]: pam_unix(cron:session): session closed for user root
+Jun  1 14:39:01 shop CRON[5987]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 14:39:01 shop CRON[5987]: pam_unix(cron:session): session closed for user root
+Jun  1 15:09:01 shop CRON[6207]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 15:09:01 shop CRON[6207]: pam_unix(cron:session): session closed for user root
+Jun  1 15:17:01 shop CRON[6300]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 15:17:01 shop CRON[6300]: pam_unix(cron:session): session closed for user root
+Jun  1 15:39:01 shop CRON[6421]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 15:39:01 shop CRON[6421]: pam_unix(cron:session): session closed for user root
+Jun  1 16:09:01 shop CRON[6631]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 16:09:01 shop CRON[6631]: pam_unix(cron:session): session closed for user root
+Jun  1 16:17:01 shop CRON[6735]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 16:17:01 shop CRON[6735]: pam_unix(cron:session): session closed for user root
+Jun  1 16:39:01 shop CRON[6844]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 16:39:01 shop CRON[6844]: pam_unix(cron:session): session closed for user root
+Jun  1 17:09:01 shop CRON[7135]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 17:09:01 shop CRON[7135]: pam_unix(cron:session): session closed for user root
+Jun  1 17:17:01 shop CRON[7178]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 17:17:01 shop CRON[7178]: pam_unix(cron:session): session closed for user root
+Jun  1 17:39:01 shop CRON[7372]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 17:39:01 shop CRON[7372]: pam_unix(cron:session): session closed for user root
+Jun  1 18:09:02 shop CRON[7591]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 18:09:02 shop CRON[7591]: pam_unix(cron:session): session closed for user root
+Jun  1 18:17:01 shop CRON[7654]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 18:17:01 shop CRON[7654]: pam_unix(cron:session): session closed for user root
+Jun  1 18:39:01 shop CRON[7755]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 18:39:01 shop CRON[7755]: pam_unix(cron:session): session closed for user root
+Jun  1 19:09:01 shop CRON[7974]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 19:09:01 shop CRON[7974]: pam_unix(cron:session): session closed for user root
+Jun  1 19:17:01 shop CRON[8089]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 19:17:01 shop CRON[8089]: pam_unix(cron:session): session closed for user root
+Jun  1 19:39:01 shop CRON[8209]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 19:39:01 shop CRON[8209]: pam_unix(cron:session): session closed for user root
+Jun  1 20:09:01 shop CRON[8402]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 20:09:01 shop CRON[8402]: pam_unix(cron:session): session closed for user root
+Jun  1 20:17:01 shop CRON[8527]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 20:17:01 shop CRON[8527]: pam_unix(cron:session): session closed for user root
+Jun  1 20:39:01 shop CRON[8672]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 20:39:01 shop CRON[8672]: pam_unix(cron:session): session closed for user root
+Jun  1 21:09:01 shop CRON[8827]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 21:09:01 shop CRON[8827]: pam_unix(cron:session): session closed for user root
+Jun  1 21:17:01 shop CRON[8936]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 21:17:01 shop CRON[8936]: pam_unix(cron:session): session closed for user root
+Jun  1 21:39:01 shop CRON[9172]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 21:39:01 shop CRON[9172]: pam_unix(cron:session): session closed for user root
+Jun  1 22:09:01 shop CRON[9342]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 22:09:01 shop CRON[9342]: pam_unix(cron:session): session closed for user root
+Jun  1 22:17:02 shop CRON[9377]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 22:17:02 shop CRON[9377]: pam_unix(cron:session): session closed for user root
+Jun  1 22:39:01 shop CRON[9489]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 22:39:01 shop CRON[9489]: pam_unix(cron:session): session closed for user root
+Jun  1 23:09:01 shop CRON[9642]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 23:09:01 shop CRON[9642]: pam_unix(cron:session): session closed for user root
+Jun  1 23:17:01 shop CRON[9720]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 23:17:01 shop CRON[9720]: pam_unix(cron:session): session closed for user root
+Jun  1 23:39:01 shop CRON[9767]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Jun  1 23:39:01 shop CRON[9767]: pam_unix(cron:session): session closed for user root

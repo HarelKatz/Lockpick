@@ -1,0 +1,74 @@
+sudo apt install apache2 php libapache2-mod-php mariadb-server php-mysql
+systemctl stop apparmor
+systemctl disable apparmor
+exit
+tar tzvf ecommerce-www-backup-20240113.tgz 
+cd /var/www/html
+ls
+sudo tar xzvf /home/administrator/ecommerce-www-backup-20240113.tgz 
+ls
+rm index.html 
+sudo rm index.html 
+cd ecommerce/
+sudo mv * ..
+cd ..
+sudo rm ecommerce/
+sudo rmdir ecommerce/
+ls -lash
+cd ..
+ls -lsa
+cd -
+chmod -Rv o+r *
+sudo chmod -Rv o+r *
+sudo chmod -Rv o+w *
+ls -lsa
+sudo mariadb
+cd ~
+ls
+less ecomm_updated_Luhn_minimal_sales-backup_20240113.sql 
+sudo mysql --help
+sudo mysql -u root < ecomm_updated_Luhn_minimal_sales-backup_20240113.sql 
+sudo mysql -u root ecomm < ecomm_updated_Luhn_minimal_sales-backup_20240113.sql 
+sudo mariadb
+less /var/log/apache2/access.log 
+less /var/log/apache2/error.log 
+nano /etc/hosts
+sudo nano /etc/hosts
+less /var/log/apache2/access.log 
+df --si
+less /var/log/apache2/access.log 
+cd /var/log/apache2/
+ls
+less /var/log/apache2/access.log 
+watch tail -n 30 /var/log/apache2/access.log 
+less /var/log/apache2/access.log 
+less /var/log/apache2/error.log
+nslookup shop.example.org
+less /var/log/apache2/access.log 
+less /var/log/apache2/error.log
+ip a
+ls
+less /var/log/apache2/access.log
+exit
+less /var/log/apache2/access.log
+exit
+less /var/log/apache2/access.log
+exit
+less /var/log/apache2/access.log
+exit
+less /var/log/apache2/access.log
+exit
+less /var/log/apache2/access.log.1
+less /var/log/apache2/access.log
+mount
+less /var/log/apache2/access.log
+ls
+less /var/log/apache2/access.log
+ls /var/log/apache2/
+ls /var/log/apache2/ -lsah
+less /var/log/apache2/access.log
+less +F --follow-name /var/log/apache2/access.log
+w
+less --follow-name /var/log/apache2/access.log
+exit
+less --follow-name /var/log/apache2/access.log

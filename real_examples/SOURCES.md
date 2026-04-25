@@ -10,7 +10,7 @@ Organized by `file_type` (matching `backend/parsers/registry.py` keys).
 
 ## Currently-implemented parsers
 
-### `auth_log/` — 8 files
+### `auth_log/` — 9 files
 - `auth.log` — original user-provided sample (pre-existing)
 - `loghub_linux_2k.log` — logpai/loghub `Linux/Linux_2k.log` (2,000-line anonymized Linux auth corpus)
 - `loghub_openssh_2k.log` — logpai/loghub `OpenSSH/OpenSSH_2k.log` (sshd-focused)
@@ -19,6 +19,7 @@ Organized by `file_type` (matching `backend/parsers/registry.py` keys).
 - `honeynet_scan29_rh72_secure` — Honeynet Project Scan 29 (`linux-suspended.tar.bz2`), extracted from `/var/log/secure` of the compromised Red Hat 7.2 honeypot (Aug 2003). Tiny (179 B, 2 entries) but a genuine RHEL "secure" log fragment — `xinetd[732]: START: telnet pid=15169 from=193.109.122.5` showing the inetd-era telnet service entry, plus an sshd identification-string-failure event. Distinct from the Debian-style `auth.log` formats already in the corpus.
 - `cfreds_nps2009_ubuntu_810_auth_log` — NIST CFReDS `nps-2009-casper-rw` Ubuntu 8.10 USB image, extracted `/var/log/auth.log` (19 KB, 194 lines). Edge case: the parser counts 194 lines parsed but extracts 0 sshd records — the log is dominated by `gdm-autologin`, `pam_unix(cron:session)`, `su[…]: FAILED su for root`, `sudo: ubuntu : … COMMAND=/bin/bash` events, with no actual sshd connections. Locks in current parser scope (sshd-focused).
 - `cado_aws_eks_secure` — Cado Security AWS EKS Cluster Forensics dataset (`cado_cloud_collector_i-0630822f0d30a09ee_20GB_*.dd`), extracted `/var/log/secure` from the compromised Amazon Linux 2 EKS worker node (Jul 2021). 23 KB, 214 lines, **highest-yield auth_log fixture in the corpus**: parser extracts 2 ConnectionData records — a legitimate `Accepted publickey for ec2-user from 172.31.3.135` (AWS-internal admin via the `castle` key) AND `Accepted publickey for root from 3.81.123.81` (the attacker login matching the `kali@kali` key in `authorized_keys/cado_aws_eks_root_with_attacker_kali`). Also captures the AWS EC2 Instance Connect `AuthorizedKeysCommand /opt/aws/bin/eic_run_authorized_keys ... failed, status 22` events, several "Normal Shutdown, Thank you for playing" Hydra-tool fingerprints, `Invalid user pi` Raspberry-Pi-default brute force, and `reverse mapping checking getaddrinfo … POSSIBLE BREAK-IN ATTEMPT!` DNS-spoofing detection.
+- `figshare_ubuntu_2204_auth_log_1` — Donnachie/OU "Defaced web server" Figshare dataset (CC-BY-NC-SA 4.0), extracted `/var/log/auth.log.1` from a simulated-defacement Ubuntu 22.04 e-commerce host (Jun 2024). 105 KB, 1097 lines. **First fixture with `Accepted password` events (vs publickey)** — parser extracts 5 ConnectionData records all with `auth_method=password` for the `administrator` user from 10.24.44.100/.1. Captures the full session-open/session-close pairs and `pam_unix(sshd:session): session opened for user administrator(uid=1000)` lines. Distinct from the other auth_log fixtures which are all publickey- or zero-record-shaped.
 
 ### `authorized_keys/` — 7 files
 - `authorized_keys` — original (pre-existing)
@@ -29,7 +30,7 @@ Organized by `file_type` (matching `backend/parsers/registry.py` keys).
 - `ethos_miner_attacker_dropped` — IOC from a 2020 Cowrie attacker targeting EthOS cryptomining rigs (sweetie-data session `382575d10851`, src 80.229.157.225, login as `user`). Distinct from the other two attacker keys: no comment field, key is appended (not replacing the file), the campaign reads `claymore.stub.conf` / `claymore-zcash.stub.conf` / `sgminer.conf` afterward to steal mining wallet addresses. Companion bash_history fixture: `cowrie_2020_ethos_miner_recon_382575d1`.
 - `cado_aws_eks_root_with_attacker_kali` — Cado Security AWS EKS Cluster Forensics dataset, extracted `/root/.ssh/authorized_keys` from the compromised Amazon Linux 2 EKS worker. **Two-key file** with distinct value per entry: (1) the standard AWS root-deny key (`no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command="echo 'Please login as the user \"ec2-user\"…';sleep 10" ssh-rsa AAAA…`) — exercises the parser's `command="..."` prefix-stripping path while preserving the underlying ssh-rsa key; (2) the **attacker's own key** with comment `kali@kali` (real intrusion evidence — confirmed against the `Accepted publickey for root from 3.81.123.81` event in `auth_log/cado_aws_eks_secure`). Distinct from existing fixtures: only `saltstack_integration_command_prefix` has a `command="…"` prefix, but it's a single-key file without an attacker companion.
 
-### `bash_history/` — 18 files
+### `bash_history/` — 19 files
 
 Benign / numbered-history variant (2):
 - `jc_ubuntu_18_04_history`, `jc_centos_7_7_history` — kellyjonbrazil/jc `tests/fixtures/{ubuntu-18.04,centos-7.7}/history.out`
@@ -61,6 +62,9 @@ Benign-user real bash_history (1):
 Modern attacker post-pwn host bash_history (1):
 - `cado_aws_eks_root_kubelet_tamper` — Cado Security AWS EKS Cluster Forensics dataset, extracted `/root/.bash_history` from the compromised AL2 EKS worker (Jul 2021). 5 lines: `cd /etc/kubernetes/kubelet/`, `vi kubelet-config.json`, `systemctl restart kubelet`, `systemctl status kubelet`, `exit`. Real Kubernetes-tampering attack vector — parser produces `commands_parsed: 0` (raw format, like other host-side bash_history fixtures), but raw content is the testing target.
 
+Benign-admin host setup bash_history (1):
+- `figshare_ubuntu_2204_admin_setup` — Donnachie/OU "Defaced web server" Figshare dataset, extracted `/home/administrator/.bash_history` from the Ubuntu 22.04 e-commerce host. 60+ lines of an actual sysadmin **building a vulnerable e-commerce site from scratch**: `sudo apt install apache2 php libapache2-mod-php mariadb-server`, `systemctl stop/disable apparmor`, untar an `ecommerce-www-backup-20240113.tgz`, restore the MariaDB schema, then dozens of `less /var/log/apache2/access.log` and `less +F` follow-tail invocations as defacement is discovered. Distinct from existing benign bash_history (`cfreds_nps2009_ubuntu_810_real_user`) — that's a forensic-investigator session; this is a sysadmin's day-to-day operations log.
+
 ### `etc_hosts/` — 5 files
 - `centos_hosts` — original (pre-existing)
 - `jc_ubuntu_18_04_hosts`, `jc_centos_7_7_hosts` — kellyjonbrazil/jc `tests/fixtures/{ubuntu-18.04,centos-7.7}/hosts.out`
@@ -80,13 +84,14 @@ Modern attacker post-pwn host bash_history (1):
 - `defectdojo_v6_40` — DefectDojo/sample-scan-files `nmap/nmap_v6.40.xml`
 - `mozilla_minion_v6_40` — mozilla/minion-nmap-plugin `etc/sample-nmap-output.xml`
 
-### `passwd/` — 8 files
+### `passwd/` — 9 files
 - `endlessm_base_passwd_master` — endlessm/base-passwd `passwd.master` (Debian minimal default passwd)
 - `jc_ubuntu_18_04_passwd`, `jc_centos_7_7_passwd`, `jc_osx_10_14_6_passwd` — kellyjonbrazil/jc `tests/fixtures/*/passwd.out`
 - `cowrie_honeyfs_passwd` — cowrie/cowrie `honeyfs/etc/passwd` (honeypot fake passwd served to attackers)
 - `honeynet_scan29_compromised_rh72` — Honeynet Project Scan 29, extracted `/etc/passwd` from the compromised Red Hat 7.2 honeypot (Aug 2003). Real lived-in distro passwd; the attacker added an `admin:x:15:50:User:/var/ftp:/bin/bash` line (gid=50 reusing the `ftp` group, /var/ftp home, bash shell) and altered the existing `ftp` user's gid from 50 → 0 (root group). The parser filters UID < 1000 (rule 7) so neither attacker change is reflected in `host_users_found` — the fixture exercises that filtering on a known-tainted file.
 - `cfreds_nps2009_ubuntu_810_casper` — NIST CFReDS `nps-2009-casper-rw`, `/etc/passwd` from the Ubuntu 8.10 bootable-USB casper-rw overlay. **Boundary-case fixture for the UID < 1000 filter**: the legitimate `ubuntu:x:999:1000:Ubuntu:/home/ubuntu:/bin/bash` user has UID=999 (Ubuntu's pre-2012 default for the live-CD user) so it's *just below* the system-user threshold and gets filtered out — only `root` and `nobody` (the latter via shell-not-nologin) appear in `host_users_found`. Documents the parser's hard 1000 cutoff against a realistic distro that violates it.
 - `cado_aws_eks_amzn_linux_2` — Cado Security AWS EKS Cluster Forensics dataset, extracted `/etc/passwd` from the compromised Amazon Linux 2 EKS worker (Jul 2021). Modern AL2 distro with cloud-specific accounts: `ec2-user:x:1000` (default AWS user), `docker:x:1001:1950` (container daemon user — **first UID > 1000 non-default user in the corpus**), `ec2-instance-connect:x:997` (AWS EC2 Instance Connect daemon — sub-1000 cloud-specific service account, distinct from generic system services). Parser captures 3 users (root, ec2-user, docker).
+- `figshare_ubuntu_2204_defaced` — Donnachie/OU "Defaced web server" Figshare dataset, extracted `/etc/passwd` from the Ubuntu 22.04.3 e-commerce host. 35 lines, modern systemd-era Ubuntu users: `usbmux:x:113`, `fwupd-refresh:x:112`, `mysql:x:114` (added by the MariaDB install), `lxd:x:999` (just below the parser cutoff), `administrator:x:1000:1000` (UID 1000 captured). Parser extracts 2 users (root + administrator).
 
 ### `private_key/` — 25 files
 - `id_rsa`, `dss_key` — original (pre-existing; non-production keys)
@@ -102,7 +107,7 @@ Modern attacker post-pwn host bash_history (1):
 - `openssh_regress_ecdsa_sk_test1`, `openssh_regress_ed25519_sk_test1` — openssh/openssh-portable `regress/unittests/sshkey/testdata/{ecdsa,ed25519}_sk1.pub`. FIDO2 security-key public-key formats (`sk-ecdsa-sha2-nistp256@openssh.com` / `sk-ssh-ed25519@openssh.com`); both parse cleanly as `authorized_key`-style entries. Companion fixtures to the private-key SK pair above.
 - `honeynet_scan29_rootkit_ssh1_host_key_pub` — Honeynet Project Scan 29, companion `/lib/.x/s/s_h_k.pub`. **SSH1-format public key** (`1024 33 <decimal-modulus> root@fred.psiware.net` — note the attacker's hostname leaked in the comment). Distinct from the OpenSSH-format `ssh-rsa AAAA…` keys in the rest of the corpus. Parser warns "Line 1: unrecognised format, skipping" — same regression-locking purpose as the private-key counterpart.
 
-### `shadow/` — 8 files
+### `shadow/` — 9 files
 - `shadow` — original (pre-existing)
 - `jc_ubuntu_18_04_shadow`, `jc_centos_7_7_shadow` — kellyjonbrazil/jc `tests/fixtures/*/shadow.out`
 - `cowrie_honeyfs_shadow` — cowrie/cowrie `honeyfs/etc/shadow` (hashes are fake honeypot bait)
@@ -110,6 +115,7 @@ Modern attacker post-pwn host bash_history (1):
 - `honeynet_scan29_compromised_rh72_backup` — same image, `/etc/shadow-` rotation backup. Captured *before* the attacker set the root password and added the admin user — root's hash field is empty (`root::12247:0:99999:7:::`). Edge case that triggers the parser's locked-account/no-hash filtering on the typically-active `root` line.
 - `cfreds_nps2009_ubuntu_810_casper` — NIST CFReDS `nps-2009-casper-rw`, `/etc/shadow` from the Ubuntu 8.10 bootable-USB casper-rw overlay. Real recoverable hash for the `ubuntu` user with `value_length: 13` — that's **legacy DES `crypt(3)` format** (no `$N$` prefix), distinct from the `$1$`/`$5$`/`$6$` formats already in the corpus. Tests parser handling of pre-2000-era hash format that some embedded/legacy systems still emit. All other accounts including root are `*`-locked (Ubuntu's "no root password" default).
 - `cado_aws_eks_amzn_linux_2` — Cado Security AWS EKS Cluster Forensics dataset, `/etc/shadow` from the AL2 EKS worker. Edge-case fixture: root's password field is the literal string `*LOCK*` (AL2's convention to signal "this account has been administratively locked" — **distinct from the `*`/`!`/`!!` sentinels the parser already filters**). Parser currently treats `*LOCK*` as a real hash with `value_length: 6, value_prefix: *LOCK*` — locks in the false positive for explicit fix later.
+- `figshare_ubuntu_2204_defaced` — Donnachie/OU "Defaced web server" Figshare dataset, `/etc/shadow` from the Ubuntu 22.04.3 e-commerce host. Real $6$ sha512crypt hash for the `administrator` user, surrounded by 33 systemd/snap-era locked accounts (`*` sentinel) — modern Ubuntu service-account inventory distinct from the older Ubuntu 8.10 fixture (which had only 24 locked accounts).
 
 ### `ssh_config/` — 21 files
 - Pre-existing: `config`, `ssh-config-basic`, `ssh-config-patterns`, `ssh-config-proxy`
@@ -118,7 +124,7 @@ Modern attacker post-pwn host bash_history (1):
 - 10 paramiko config edge-case fixtures (`basic`, `canon`, `match-all`, `match-exec`, `match-host-glob`, `match-host-glob-list`, `match-host-negated`, `match-localuser`, `hostname-tokenized`, `invalid`) — paramiko/paramiko `tests/configs/`
 - `honeynet_scan29_rh72_default` — Honeynet Project Scan 29, extracted `/etc/ssh/ssh_config` from the RH 7.2 honeypot. Vintage 2001-era OpenSSH client config (`$OpenBSD: ssh_config,v 1.16`); a single `Host *` block with all settings commented out. Parser captures the wildcard pattern.
 
-### `sshd_config/` — 10 files
+### `sshd_config/` — 12 files
 - `openssh_portable_default.conf` — openssh/openssh-portable `sshd_config` (upstream default)
 - `jc_generic_sshd_config_raw` — kellyjonbrazil/jc `tests/fixtures/generic/sshd_config`
 - `jc_generic_sshd_T`, `jc_generic_sshd_T_2` — kellyjonbrazil/jc `generic/sshd-T.out` (output of `sshd -T`, a config-dump variant)
@@ -128,8 +134,10 @@ Modern attacker post-pwn host bash_history (1):
 - `honeynet_scan29_rh72_default` — Honeynet Project Scan 29, extracted `/etc/ssh/sshd_config` from the RH 7.2 honeypot. Vintage 2001-era settings (`$OpenBSD: sshd_config,v 1.38`): `Protocol 2,1` (SSH1+SSH2 both enabled), `ServerKeyBits 768`, `KeyRegenerationInterval 3600`, `PermitRootLogin yes`. Distinct from modern upstream defaults already in the corpus.
 - `honeynet_scan29_rootkit_dropped` — same image, `/lib/.x/s/sshd_config` — the **attacker's hidden backdoor sshd config**, dropped alongside the rootkit's own `s_h_k` host key. Notable settings: `PermitEmptyPasswords yes`, `RhostsRSAAuthentication yes`, `FascistLogging no`, `QuietMode yes`, `HostKey /lib/.x/s/s_h_k`, `PidFile /lib/.x/s/pid` — a real malware artifact, not a synthesized one.
 - `cado_aws_eks_amzn_linux_2` — Cado Security AWS EKS Cluster Forensics dataset, `/etc/ssh/sshd_config` from the AL2 EKS worker. Modern AWS-managed sshd config: `PasswordAuthentication no`, `GSSAPIAuthentication yes` (RHEL/AL2-specific), and the **AWS-specific `AuthorizedKeysCommand /opt/aws/bin/eic_run_authorized_keys %u %f` + `AuthorizedKeysCommandUser ec2-instance-connect`** (EC2 Instance Connect integration). Distinct from existing fixtures (none of which model the AuthorizedKeysCommand cloud-specific config path).
+- `figshare_ubuntu_2204_main` — Donnachie/OU "Defaced web server" Figshare dataset, `/etc/ssh/sshd_config` from the Ubuntu 22.04 host. Modern minimal config — most settings live in `/etc/ssh/sshd_config.d/*.conf` via the leading `Include` directive. **Edge case: parser produces empty `stats: {}`** because no Port/PermitRootLogin/PasswordAuthentication line appears in the main file. First "settings-via-Include" fixture in the corpus.
+- `figshare_ubuntu_2204_cloud_init_drop_in` — same image, `/etc/ssh/sshd_config.d/50-cloud-init.conf` (single line: `PasswordAuthentication yes`). **First sshd_config drop-in fragment in the corpus.** Cloud-init writes this drop-in to override the upstream "no" default; without it the main config's empty stats are misleading. Useful for testing parsers' handling of multi-file sshd config layouts.
 
-### `sudoers/` — 8 files
+### `sudoers/` — 9 files
 - `sudoers` — original (pre-existing)
 - `official_sudo_project_example` — sudo-project/sudo `examples/sudoers.in` (upstream annotated example)
 - `alitoufighi_ubuntu_default` — gist/alitoufighi/679304d9585304075ba1ad93f80cce0e (Ubuntu 18.04/20.04 default)
@@ -138,6 +146,7 @@ Modern attacker post-pwn host bash_history (1):
 - `cfreds_nps2009_ubuntu_810_casper` — NIST CFReDS `nps-2009-casper-rw`, `/etc/sudoers` from the Ubuntu 8.10 bootable-USB casper-rw overlay. **Real-world drift example**: the standard `%admin ALL=(ALL) NOPASSWD: ALL` line appears 5 times — likely from someone repeatedly editing the file (e.g. `>> /etc/sudoers` or visudo without checking existing content). Parser captures all 6 rules including duplicates; useful for testing dedup-or-not behavior in callers downstream of the parser.
 - `cado_aws_eks_amzn_linux_2_main` — Cado Security AWS EKS Cluster Forensics dataset, `/etc/sudoers` from the AL2 EKS worker. AL2-default sudoers heavy with `Defaults env_keep += ...` directives across 6 lines, terminated by `root ALL=(ALL) ALL` and `%wheel ALL=(ALL) ALL`. Parser captures only the 2 grant rules (env_keep is informational and not surfaced).
 - `cado_aws_eks_cloud_init_users` — same image, `/etc/sudoers.d/90-cloud-init-users`. **Cloud-init drift example**: cloud-init wrote the `ec2-user ALL=(ALL) NOPASSWD:ALL` rule twice on consecutive boots (the dedup-comment header `# User rules for ec2-user` precedes each instance). Distinct provenance — first `sudoers.d/` drop-in fixture in the corpus.
+- `figshare_ubuntu_2204_main` — Donnachie/OU "Defaced web server" Figshare dataset, `/etc/sudoers` from the Ubuntu 22.04 host. Modern Debian/Ubuntu defaults featuring the **explicit `(ALL:ALL)` group component** (vs the simpler `(ALL)` in older fixtures), plus `Defaults use_pty` (forces sudo-attached PTY for session recording — not present in any earlier sudoers fixture), and the `@includedir /etc/sudoers.d` directive. Parser captures 3 rules (root, %admin, %sudo).
 
 ### `wtmp/` — 3 files (binary)
 - `compromised.wtmp` — franckferman/LastLog-Audit `samples/compromised.wtmp`
@@ -159,12 +168,13 @@ RHEL/CentOS auth log — format-identical to `auth_log/` per AGENT.md Phase 17
 ### `messages/` — 1 file
 - `loghub_thunderbird_2k.log` — logpai/loghub `Thunderbird/Thunderbird_2k.log`
 
-### `lastlog/` — 11 files (all binary)
+### `lastlog/` — 12 files (all binary)
 - 9 from franckferman/LastLog-Audit `samples/`: `apt_cozy_bear`, `apt_lazarus`,
 `brute_force`, `clean_server`, `compromised`, `insider_threat`,
 `pentest_engagement`, `supply_chain`, `timestomped`.
 - `cfreds_nps2009_ubuntu_810_lastlog` — NIST CFReDS `nps-2009-casper-rw`, `/var/log/lastlog` from the Ubuntu 8.10 USB image (292 KB). Future-phase fixture: no `lastlog` parser is registered yet (Phase 16), so it sits as forward-staged corpus — `tests/test_real_examples/` skips files whose `file_type` isn't in the registry.
 - `cado_aws_eks_lastlog` — Cado Security AWS EKS Cluster Forensics dataset, `/var/log/lastlog` from the AL2 EKS worker (292 KB, sparse — actual content density is much smaller, file is mostly zeroed out for unused UID slots). Forward-staged for Phase 16 like the CFReDS one.
+- `figshare_ubuntu_2204_lastlog` — Donnachie/OU "Defaced web server" Figshare dataset, `/var/log/lastlog` from the Ubuntu 22.04 host (286 KB). Modern Ubuntu lastlog format. Forward-staged for Phase 16.
 
 ### `last_output/` — 14 files (all from kellyjonbrazil/jc test fixtures)
 - `jc_centos_last`, `jc_centos_last_crash`, `jc_centos_last_wF`, `jc_centos_last_wixF`, `jc_centos_last_w`, `jc_centos_lastb`
@@ -379,6 +389,7 @@ These gaps are genuine — either the file is private by convention (history fil
 - [Honeynet Project — Scan of the Month #29](https://honeynet.onofri.org/scans/scan29/) — Honeynet Project terms permit analysis & redistribution for research. The 102 MB `linux-suspended.tar.bz2` is a VMware-suspended Red Hat 7.2 honeypot compromised on 2003-08-10; the 1 GB ext3 partition was extracted via `qemu-img convert -f vmdk -O raw` + Sleuth Kit (`mmls`/`fls`/`icat`). Files extracted to `passwd/honeynet_scan29_*`, `shadow/honeynet_scan29_*`, `ssh_config/honeynet_scan29_*`, `sshd_config/honeynet_scan29_*` (incl. the rootkit-dropped backdoor config), `bash_history/honeynet_scan29_*` (real post-compromise root shell history), `private_key/` + `public_key/honeynet_scan29_*` (SSH protocol 1 host keys from the rootkit), `auth_log/honeynet_scan29_*` (RHEL `secure` log fragment).
 - [NIST CFReDS — NPS 2009 Casper RW](https://cfreds.nist.gov/) — public-domain US-government forensic reference dataset. The 161 MB `ubnist1.casper-rw.gen3.E01` (downloadable as raw E01 from `digitalcorpora.s3.amazonaws.com`) is the most-used generation of an Ubuntu 8.10 bootable-USB casper-rw overlay (the writable layer over the live-CD), repeatedly booted and used over weeks to browse US-Government websites. Mounted via `ewfmount` → ext3 raw → `fls`/`icat`. Files extracted to `passwd/cfreds_nps2009_*` (uid=999 boundary), `shadow/cfreds_nps2009_*` (legacy DES crypt), `sudoers/cfreds_nps2009_*` (5x duplicated %admin line), `known_hosts/cfreds_nps2009_*` (real `|1|` hashed entry), `bash_history/cfreds_nps2009_*` (first benign-user history fixture, 4 ssh/scp connection records extracted), `auth_log/cfreds_nps2009_*` (Ubuntu auth.log dominated by gdm/cron/su/sudo events), `wtmp/cfreds_nps2009_*` (record-size mismatch edge case), `lastlog/cfreds_nps2009_*` (forward-staged for Phase 16).
 - [Cado Security — AWS EKS Cluster Forensics (SANS DFIR 2021)](https://github.com/cado-security/AWS_EKS_Cluster_Forensics) — Apache-2.0 — 1.1 GB 7z archive containing a 20 GB raw `dd.gz` of a compromised Amazon Linux 2 EKS worker node (Jul 2021). XFS partition, mounted via `losetup -P` + `mount -o ro,norecovery`. Files extracted to `passwd/cado_aws_eks_*` (AL2 with ec2-user/docker/ec2-instance-connect), `shadow/cado_aws_eks_*` (`*LOCK*` literal sentinel edge case), `sudoers/cado_aws_eks_*` (AL2 main + `sudoers.d/90-cloud-init-users` drop-in), `sshd_config/cado_aws_eks_*` (AWS EC2 Instance Connect `AuthorizedKeysCommand` config), `authorized_keys/cado_aws_eks_*` (root file with deny-banner `command="…"` prefix + attacker `kali@kali` key), `bash_history/cado_aws_eks_*` (kubelet config tampering — modern k8s attack), `auth_log/cado_aws_eks_*` (highest-yield secure log fixture: 2 connections incl. attacker root login, plus Hydra/EC2-Instance-Connect/POSSIBLE-BREAK-IN-ATTEMPT events), `wtmp/cado_aws_eks_*`, `lastlog/cado_aws_eks_*` (forward-staged).
+- [Donnachie et al. — Defaced web server (Ubuntu 22.04 simulation)](https://doi.org/10.21954/ou.rd.26038669.v1) — CC-BY-NC-SA-4.0 — 5.97 GB across 4 EnCase E01 segments. Simulated UK e-commerce site running DVWA on Ubuntu 22.04.3, defaced 2024-06-06. ext4-on-LVM root partition: `ewfmount` → loop device → `vgchange -ay ubuntu-vg` → `mount -o ro,noload /dev/ubuntu-vg/ubuntu-lv`. Files extracted to `passwd/figshare_ubuntu_2204_*` (modern Ubuntu 22.04 systemd users), `shadow/figshare_ubuntu_2204_*` (administrator $6$ hash + 33 locked accounts), `sudoers/figshare_ubuntu_2204_*` (modern `(ALL:ALL)` syntax + `use_pty` + `@includedir`), `sshd_config/figshare_ubuntu_2204_main` (empty-stats edge case from `Include` directive) + `figshare_ubuntu_2204_cloud_init_drop_in` (first sshd_config drop-in fragment in the corpus), `bash_history/figshare_ubuntu_2204_*` (benign sysadmin building DVWA + monitoring access logs as defacement is discovered), `auth_log/figshare_ubuntu_2204_*` (first password-auth-Accepted fixture, 5 records), `lastlog/figshare_ubuntu_2204_*` (forward-staged).
 - [canonical/netplan](https://github.com/canonical/netplan) — GPL-3.0 — network YAML examples
 - [sudo-project/sudo](https://github.com/sudo-project/sudo) — ISC — upstream sudoers example
 - [endlessm/base-passwd](https://github.com/endlessm/base-passwd) — GPL-2.0 — Debian passwd.master

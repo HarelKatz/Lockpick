@@ -1,0 +1,75 @@
+{
+  "connections_found": [
+    {
+      "auth_method": "password",
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "administrator",
+      "raw_line": "May 31 22:32:15 shop sshd[1473]: Accepted password for administrator from 10.24.44.1 port 59122 ssh2",
+      "src_ip": "10.24.44.1",
+      "src_user": null,
+      "timestamp": "2026-05-31T22:32:15+00:00"
+    },
+    {
+      "auth_method": "password",
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "administrator",
+      "raw_line": "Jun  1 12:53:25 shop sshd[5171]: Accepted password for administrator from 10.24.44.1 port 33066 ssh2",
+      "src_ip": "10.24.44.1",
+      "src_user": null,
+      "timestamp": "2026-06-01T12:53:25+00:00"
+    },
+    {
+      "auth_method": "password",
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "administrator",
+      "raw_line": "May 28 15:10:14 shop sshd[389874]: Accepted password for administrator from 10.24.44.100 port 60888 ssh2",
+      "src_ip": "10.24.44.100",
+      "src_user": null,
+      "timestamp": "2026-05-28T15:10:14+00:00"
+    },
+    {
+      "auth_method": "password",
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "administrator",
+      "raw_line": "May 31 21:34:55 shop sshd[1112]: Accepted password for administrator from 10.24.44.100 port 49686 ssh2",
+      "src_ip": "10.24.44.100",
+      "src_user": null,
+      "timestamp": "2026-05-31T21:34:55+00:00"
+    },
+    {
+      "auth_method": "password",
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "administrator",
+      "raw_line": "Jun  1 12:32:53 shop sshd[4966]: Accepted password for administrator from 10.24.44.100 port 44024 ssh2",
+      "src_ip": "10.24.44.100",
+      "src_user": null,
+      "timestamp": "2026-06-01T12:32:53+00:00"
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "accepted_logins": 5,
+    "lines_parsed": 1097,
+    "total_records": 5
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

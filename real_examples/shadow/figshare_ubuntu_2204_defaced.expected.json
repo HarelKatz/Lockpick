@@ -1,0 +1,63 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "password",
+      "name": "shadow hash for administrator",
+      "relationship_type": "found_on_disk",
+      "username": "administrator",
+      "value_length": 106,
+      "value_prefix": "$6$o4u.kwZtpoNGkEJg$BTUg0ba8SewP7Z64Qx74"
+    }
+  ],
+  "host_users_found": [
+    [
+      "administrator",
+      null,
+      null
+    ]
+  ],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "hashes_found": 1,
+    "users_found": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": [
+    "User 'root': account is locked (*) — no hash",
+    "User 'daemon': account is locked (*) — no hash",
+    "User 'bin': account is locked (*) — no hash",
+    "User 'sys': account is locked (*) — no hash",
+    "User 'sync': account is locked (*) — no hash",
+    "User 'games': account is locked (*) — no hash",
+    "User 'man': account is locked (*) — no hash",
+    "User 'lp': account is locked (*) — no hash",
+    "User 'mail': account is locked (*) — no hash",
+    "User 'news': account is locked (*) — no hash",
+    "User 'uucp': account is locked (*) — no hash",
+    "User 'proxy': account is locked (*) — no hash",
+    "User 'www-data': account is locked (*) — no hash",
+    "User 'backup': account is locked (*) — no hash",
+    "User 'list': account is locked (*) — no hash",
+    "User 'irc': account is locked (*) — no hash",
+    "User 'gnats': account is locked (*) — no hash",
+    "User 'nobody': account is locked (*) — no hash",
+    "User '_apt': account is locked (*) — no hash",
+    "User 'systemd-network': account is locked (*) — no hash",
+    "User 'systemd-resolve': account is locked (*) — no hash",
+    "User 'messagebus': account is locked (*) — no hash",
+    "User 'systemd-timesync': account is locked (*) — no hash",
+    "User 'pollinate': account is locked (*) — no hash",
+    "User 'sshd': account is locked (*) — no hash",
+    "User 'syslog': account is locked (*) — no hash",
+    "User 'uuidd': account is locked (*) — no hash",
+    "User 'tcpdump': account is locked (*) — no hash",
+    "User 'tss': account is locked (*) — no hash",
+    "User 'landscape': account is locked (*) — no hash",
+    "User 'fwupd-refresh': account is locked (*) — no hash",
+    "User 'usbmux': account is locked (*) — no hash",
+    "User 'lxd': account is locked (!) — no hash",
+    "User 'mysql': account is locked (!) — no hash"
+  ]
+}
