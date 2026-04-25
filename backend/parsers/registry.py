@@ -13,6 +13,7 @@ from parsers.etc_hosts import EtcHostsParser
 from parsers.ip_addr import IpAddrParser
 from parsers.ip_neigh import IpNeighParser
 from parsers.ip_route import IpRouteParser
+from parsers.iptables import IptablesParser
 from parsers.known_hosts import KnownHostsParser
 from parsers.netstat import NetstatParser
 from parsers.nmap_xml import NmapXmlParser
@@ -46,4 +47,5 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "arp": ArpParser,
     "netstat": NetstatParser,
     "ss_output": SsOutputParser,
+    "iptables": IptablesParser,
 }
