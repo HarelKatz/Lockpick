@@ -584,3 +584,27 @@
   border-color: var(--accent);
   color: var(--accent);
 }
+
+.archiveMergeCandidates {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 0 0 16px;
+}
+
+.archiveMergeBtn {
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 4px 8px;
+  text-align: left;
+  transition: background-color 0.15s ease;
+  width: 100%;
+}
+
+.archiveMergeBtn:hover {
+  background: rgba(88, 166, 255, 0.08);
+}

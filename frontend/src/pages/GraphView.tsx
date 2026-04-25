@@ -9,6 +9,7 @@ import type {
   GraphNode,
   GraphResponse,
   Host,
+  MergeCandidate,
   Operation,
   PathResult,
 } from '../types'
@@ -78,7 +79,11 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
   const [lockedIds, setLockedIds] = useState<Set<string>>(new Set())
   const [statusFilters, setStatusFilters] = useState<Set<string>>(new Set())
   const [panelMode, setPanelMode] = useState<'push' | 'overlay'>('overlay')
-  const [mergeOpen, setMergeOpen] = useState(false)
+  // Two-step merge state: { source, targetCandidate? } when the dialog is
+  // open. Set by either the "Merge into…" button on the sidebar (no
+  // targetCandidate) or by a CollectionPanel candidate button (target = the
+  // sidebar's current host).
+  const [mergeState, setMergeState] = useState<{ source: Host; targetCandidate?: Host } | null>(null)
   const canvasAreaRef = useRef<HTMLDivElement>(null)
 
   // Set by loadFullGraph before it updates selectedIds to prevent the selectedIds
@@ -320,7 +325,15 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
         host={allHosts.find(h => h.id === selectedNode.host_id) ?? null}
         onClose={() => setSelectedNode(null)}
         onHostUpdated={loadFullGraph}
-        onMergeRequested={() => setMergeOpen(true)}
+        onMergeRequested={() => {
+          const source = allHosts.find(h => h.id === selectedNode.host_id)
+          if (source) setMergeState({ source })
+        }}
+        onMergeWithCandidate={(c: MergeCandidate) => {
+          const source = allHosts.find(h => h.id === c.conflicting_host_id)
+          const target = allHosts.find(h => h.id === selectedNode.host_id)
+          if (source && target) setMergeState({ source, targetCandidate: target })
+        }}
       />
     )
     : selectedEdge
@@ -508,26 +521,25 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
         />
       )}
 
-      {mergeOpen && selectedNode && (() => {
-        const sourceHost = allHosts.find(h => h.id === selectedNode.host_id)
-        if (!sourceHost) return null
-        return (
-          <MergeHostDialog
-            source={sourceHost}
-            allHosts={allHosts}
-            onClose={() => setMergeOpen(false)}
-            onMerged={() => {
-              // Source host is gone — drop the sidebar pointing at it.
-              // The WS broadcast triggers Workspace.fetchAll which refreshes
-              // allHosts; loadFullGraph runs locally for snappier graph
-              // redraw without waiting for the round-trip.
+      {mergeState && (
+        <MergeHostDialog
+          source={mergeState.source}
+          targetCandidate={mergeState.targetCandidate}
+          allHosts={allHosts}
+          onClose={() => setMergeState(null)}
+          onMerged={() => {
+            // Source host is gone — drop the sidebar if it was pointing
+            // at it. The WS broadcast triggers Workspace.fetchAll which
+            // refreshes allHosts; loadFullGraph runs locally for snappier
+            // graph redraw without waiting for the round-trip.
+            if (selectedNode?.host_id === mergeState.source.id) {
               setSelectedNode(null)
-              setMergeOpen(false)
-              loadFullGraph()
-            }}
-          />
-        )
-      })()}
+            }
+            setMergeState(null)
+            loadFullGraph()
+          }}
+        />
+      )}
     </div>
   )
 }

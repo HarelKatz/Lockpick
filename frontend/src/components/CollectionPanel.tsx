@@ -5,16 +5,17 @@
 import { useRef, useState } from 'react'
 import { downloadCollectionScript, importArchive } from '../api/collection'
 import { ApiError } from '../api/client'
-import type { ArchiveImportResult } from '../types'
+import type { ArchiveImportResult, MergeCandidate } from '../types'
 import styles from './HostDetailSidebar.module.css'
 
 interface Props {
   opId: string
   hostId: string
   onImported?: () => void
+  onMergeRequest?: (candidate: MergeCandidate) => void
 }
 
-export default function CollectionPanel({ opId, hostId, onImported }: Props) {
+export default function CollectionPanel({ opId, hostId, onImported, onMergeRequest }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<ArchiveImportResult | null>(null)
@@ -104,13 +105,19 @@ export default function CollectionPanel({ opId, hostId, onImported }: Props) {
             : 'Drop .tar.gz here or click to browse'}
         </div>
         {error && <p className={styles.noteError}>{error}</p>}
-        {result && <ImportResultView result={result} />}
+        {result && <ImportResultView result={result} onMergeRequest={onMergeRequest} />}
       </div>
     </div>
   )
 }
 
-function ImportResultView({ result }: { result: ArchiveImportResult }) {
+function ImportResultView({
+  result,
+  onMergeRequest,
+}: {
+  result: ArchiveImportResult
+  onMergeRequest?: (candidate: MergeCandidate) => void
+}) {
   return (
     <div className={styles.archiveResult}>
       <div className={styles.archiveSummary}>
@@ -147,6 +154,20 @@ function ImportResultView({ result }: { result: ArchiveImportResult }) {
               <div className={styles.archiveWarnings}>
                 {f.summary.warnings.map((w, j) => (
                   <div key={j} className={styles.archiveWarning}>{w}</div>
+                ))}
+              </div>
+            )}
+            {onMergeRequest && f.summary.merge_candidates && f.summary.merge_candidates.length > 0 && (
+              <div className={styles.archiveMergeCandidates}>
+                {f.summary.merge_candidates.map((mc, j) => (
+                  <button
+                    key={j}
+                    className={styles.archiveMergeBtn}
+                    onClick={() => onMergeRequest(mc)}
+                    title={`Open merge dialog: dissolve host ${mc.conflicting_host_id} into this host via alias '${mc.alias}'`}
+                  >
+                    Merge '{mc.alias}' into this host
+                  </button>
                 ))}
               </div>
             )}
