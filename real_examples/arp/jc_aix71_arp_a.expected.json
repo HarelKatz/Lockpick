@@ -1,0 +1,85 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "1.2.3.4",
+      "dst_user": null,
+      "raw_line": "  ? (1.2.3.4) at 5:6:7:8:9:a [ethernet] permanent published stored in bucket 93",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "9.3.63.1",
+      "dst_user": null,
+      "raw_line": "  v630gw9-3-63-1 (9.3.63.1) at 0:0:5e:0:1:5c [ethernet] stored in bucket 97",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "9.3.63.173",
+      "dst_user": null,
+      "raw_line": "  rock-lp8 (9.3.63.173) at b6:1b:da:7e:1f:2 [ethernet] stored in bucket 120",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "9.3.63.2",
+      "dst_user": null,
+      "raw_line": "  v630vrrp9-3-63-2 (9.3.63.2) at 4c:96:14:59:d7:f0 [ethernet] stored in bucket 98",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "9.3.63.3",
+      "dst_user": null,
+      "raw_line": "  v630vrrp9-3-63-3 (9.3.63.3) at 3c:8a:b0:0:8f:f0 [ethernet] stored in bucket 99",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "9.3.63.4",
+      "dst_user": null,
+      "raw_line": "  caju6 (9.3.63.4) at (incomplete)",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "neighbors": 6
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

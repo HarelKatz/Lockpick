@@ -1,0 +1,28 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [
+    {
+      "aliases": [
+        "192.168.101.1",
+        "192.168.71.1",
+        "2600:1700:bab0:d40:1874:4566:6499:f3d1",
+        "2600:1700:bab0:d40:30d4:c067:a56d:5888",
+        "2600:1700:bab0:d40:342e:1ac7:8bdb:6c3d",
+        "2600:1700:bab0:d40::39",
+        "2600:1700:bab0:d40:fdd1:e943:edd4:5187"
+      ],
+      "ip_address": "192.168.1.221",
+      "nickname": null
+    }
+  ],
+  "patterns_found": [],
+  "stats": {
+    "hosts": 1,
+    "ipv4": 3,
+    "ipv6": 5
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

@@ -1,0 +1,12 @@
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination
+ACCEPT     all  --  anywhere             anywhere
+ACCEPT     all  --  anywhere             anywhere             ctstate RELATED,ESTABLISHED
+DROP       all  --  10.0.0.99            anywhere
+ACCEPT     tcp  --  10.0.0.50            anywhere             tcp dpt:ssh ctstate NEW,ESTABLISHED
+ACCEPT     tcp  --  192.168.1.0/24       anywhere             tcp dpt:ssh
+DROP       all  --  15.15.15.51          anywhere
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination
+ACCEPT     tcp  --  anywhere             10.20.30.40         tcp dpt:443

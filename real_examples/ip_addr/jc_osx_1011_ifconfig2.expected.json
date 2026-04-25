@@ -1,0 +1,24 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [
+    {
+      "aliases": [
+        "2600:1700:bab0:d40:62c5:47ff:fe0a:ce0b",
+        "2600:1700:bab0:d40::2b",
+        "2600:1700:bab0:d40:ad4b:19b2:2ce5:9a1b"
+      ],
+      "ip_address": "192.168.1.65",
+      "nickname": null
+    }
+  ],
+  "patterns_found": [],
+  "stats": {
+    "hosts": 1,
+    "ipv4": 1,
+    "ipv6": 3
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

@@ -1,0 +1,25 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": null,
+      "raw_line": "    0     0 DROP       all  --  lo     *       15.15.15.51          0.0.0.0/0           ",
+      "src_ip": "15.15.15.51",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "rules": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

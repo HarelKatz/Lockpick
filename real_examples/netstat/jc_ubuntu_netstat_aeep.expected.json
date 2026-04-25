@@ -1,0 +1,37 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "localhost",
+      "dst_user": null,
+      "raw_line": "tcp        0      0 localhost:33098         localhost:ssh           ESTABLISHED kbrazil    44625      2321/ssh            ",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "localhost",
+      "dst_user": null,
+      "raw_line": "tcp        0      0 localhost:ssh           localhost:33098         ESTABLISHED root       44626      2322/sshd: kbrazil  ",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "connections": 2
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

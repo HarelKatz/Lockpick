@@ -1,0 +1,25 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.71.1",
+      "dst_user": null,
+      "raw_line": "tcp        0      0 localhost.localdoma:ssh 192.168.71.1:58727      ESTABLISHED -                   ",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "connections": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

@@ -183,7 +183,7 @@ def test_import_archive_unknown_file_type_warning(client):
     op_id = _create_op(client)
     host_id = _create_host(client, op_id)
 
-    tarball = _build_tarball({"iptables__.bin": b"\x00" * 32})
+    tarball = _build_tarball({"unregistered_format__.bin": b"\x00" * 32})
     r = client.post(
         f"/api/ops/{op_id}/hosts/{host_id}/import-archive",
         files={"file": ("test.tar.gz", tarball, "application/gzip")},
@@ -193,7 +193,7 @@ def test_import_archive_unknown_file_type_warning(client):
     assert data["files_processed"] == 0
     assert data["files_skipped"] == 1
     entry = data["per_file"][0]
-    assert entry["filename"] == "iptables__.bin"
+    assert entry["filename"] == "unregistered_format__.bin"
     assert entry["ok"] is False
     assert any("Unsupported file type" in w for w in entry["summary"]["warnings"])
 

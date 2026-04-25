@@ -1,0 +1,7 @@
+Netid State    Recv-Q Send-Q       Local Address:Port      Peer Address:Port
+tcp   LISTEN   0      128                0.0.0.0:ssh             0.0.0.0:*
+tcp   LISTEN   0      128             127.0.0.53%lo:domain         0.0.0.0:*
+tcp   ESTAB    0      0           192.168.1.10:55656             10.10.10.20:443
+tcp   ESTAB    0      0           192.168.1.10:50001             web01.corp:8080
+tcp   ESTAB    0      0           [2001:db8::42]:54321           [2001:db8::1]:443
+udp   UNCONN   0      0                  0.0.0.0:bootpc            0.0.0.0:*

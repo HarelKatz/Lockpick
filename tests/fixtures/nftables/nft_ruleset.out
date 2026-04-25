@@ -1,0 +1,11 @@
+table inet filter {
+    chain input {
+        type filter hook input priority 0
+        ct state established,related accept
+        ip saddr 10.0.0.99 drop
+        ip saddr 10.0.0.50 tcp dport 22 accept
+        ip daddr 10.20.30.40 tcp dport 443 accept
+        ip6 saddr 2001:db8::5 accept
+        ip saddr 192.168.0.0/16 accept
+    }
+}

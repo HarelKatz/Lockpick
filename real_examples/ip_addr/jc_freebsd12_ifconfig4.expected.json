@@ -1,0 +1,22 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [
+    {
+      "aliases": [
+        "2a00:86c0:1026:1026::130"
+      ],
+      "ip_address": "23.246.26.130",
+      "nickname": null
+    }
+  ],
+  "patterns_found": [],
+  "stats": {
+    "hosts": 1,
+    "ipv4": 1,
+    "ipv6": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}
