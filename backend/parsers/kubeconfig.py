@@ -101,7 +101,7 @@ class KubeconfigParser(BaseParser):
                 key_b64 = user.get("client-key-data")
                 if isinstance(key_b64, str) and key_b64.strip():
                     pem = _decode_b64_key(key_b64)
-                    if pem and "PRIVATE KEY" in pem:
+                    if pem and pem.lstrip().startswith("-----BEGIN") and "PRIVATE KEY-----" in pem:
                         result.credentials_found.append(
                             CredentialData(
                                 cred_type="private_key",
