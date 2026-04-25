@@ -26,6 +26,11 @@ _HOSTNAME_RE = re.compile(
     r"^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(?:\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*$"
 )
 
+# Comment string written on placeholder hosts that resolve_ip auto-creates.
+# Used as a "this row was created by the parser" marker; flipped off as soon
+# as the operator edits the comment, which is the desired semantics.
+AUTO_CREATED_COMMENT = "Auto-created by parser (unresolved IP/hostname)"
+
 
 def _infer_addr_type(addr: str) -> str:
     """Infer the addr_type for a given IP address or hostname string."""
@@ -58,25 +63,31 @@ def _is_routable_address(ip_or_hostname: str) -> bool:
 
 
 def is_unresolved_host(host: Host) -> bool:
-    """Return True iff *host* has no user-authored content.
+    """Return True iff *host* is a parser-created placeholder with no content.
 
-    "Unresolved" means the row exists only as a placeholder for an IP or
-    hostname seen in evidence — no users, no credential links, no notes,
-    no sudo rules. Two callers gate behavior on this predicate:
+    "Unresolved" requires BOTH of:
 
-    * The upload pipeline's nickname-clobber path: a parser-supplied nickname
-      replaces an auto-created nickname only when the host is still
-      unresolved. Once an operator has attached anything (a credential link,
-      a note, etc.) the nickname is treated as deliberate.
-    * Phase 15 auto-merge: when a new alias collides with an unresolved host,
-      the unresolved host is merged into the resolved host silently. Hosts
-      that fail this predicate require an explicit operator merge instead.
+    * ``host.comment == AUTO_CREATED_COMMENT`` — the row was auto-created by
+      ``resolve_ip``. As soon as the operator edits the comment (or creates
+      the host themselves with their own comment, or null), the host is
+      considered deliberate and the predicate returns False.
+    * No `HostUser`, `CredentialLink`, `HostNote`, or `SudoRule` attached.
+
+    Two callers gate on this predicate:
+
+    * The upload pipeline's nickname-clobber path — a parser-supplied
+      nickname replaces an existing nickname only when the host is still
+      unresolved.
+    * Phase 15 auto-merge — when a new alias collides with an unresolved
+      host, that host is silently merged into the resolved host.
 
     The caller MUST eager-load `host.users`, `host.credential_links`,
     `host.notes`, and `host.sudo_rules` (the first three are
-    `lazy="raise_on_sql"` per Architecture Rule #19). Pass them through
-    `selectinload()` on the query that produced *host*.
+    ``lazy="raise_on_sql"`` per Architecture Rule #19). Pass them through
+    ``selectinload()`` on the query that produced *host*.
     """
+    if host.comment != AUTO_CREATED_COMMENT:
+        return False
     return (
         len(host.users) == 0
         and len(host.credential_links) == 0
@@ -152,7 +163,7 @@ def resolve_ip(
         id=host_id,
         op_id=op_id,
         nickname=ip,
-        comment="Auto-created by parser (unresolved IP/hostname)",
+        comment=AUTO_CREATED_COMMENT,
         created_at=datetime.now(timezone.utc),
     )
     db.add(host)

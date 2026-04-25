@@ -182,6 +182,7 @@ async def import_archive(
 
         per_file: list[dict] = []
         all_fingerprints: list[str] = []
+        all_auto_merges: list[dict] = []
         files_processed = 0
         files_skipped = 0
         totals = {
@@ -213,6 +214,7 @@ async def import_archive(
                     "new_hosts": 0,
                     "new_sudo_rules": 0,
                     "warnings": [],
+                    "merge_candidates": [],
                 },
             }
 
@@ -250,7 +252,9 @@ async def import_archive(
                 "new_hosts": result["new_hosts"],
                 "new_sudo_rules": result["new_sudo_rules"],
                 "warnings": list(result["warnings"]),
+                "merge_candidates": list(result["merge_candidates"]),
             }
+            all_auto_merges.extend(result["auto_merges"])
 
             # Surface .err sibling contents as a per-file warning
             err_sibling = by_basename.get(basename + _ERR_SUFFIX)
@@ -285,6 +289,20 @@ async def import_archive(
                 f"{totals['new_sudo_rules']} sudo rules"
             ),
         )
+        # One activity entry per auto-merge that fired during the archive
+        # import (Architecture Rule #23 — every merge gets its own audit row).
+        for am in all_auto_merges:
+            c = am["counts"]
+            log_activity(
+                db, op_id, "host.auto_merge", "host", entity_id=am["target_host_id"],
+                detail=(
+                    f"Auto-merged '{am['source_nickname']}' into "
+                    f"'{am['target_nickname']}' via alias '{am['alias']}' "
+                    f"({c['ips_moved']} ips, {c['users_moved']} users, "
+                    f"{c['credential_links_moved']} cred links, "
+                    f"{c['connections_moved']} connections moved)"
+                ),
+            )
         db.commit()
         broadcast_sync(op_id, {"type": "update", "entity_type": "host", "op_id": op_id})
 
