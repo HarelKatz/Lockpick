@@ -1,0 +1,100 @@
+"""Tests for zsh_history parser."""
+import os
+import sys
+from pathlib import Path
+
+import pytest
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
+
+from parsers import UploadMetadata
+from parsers.zsh_history import ZshHistoryParser
+
+FIXTURES = Path(__file__).parent.parent / "fixtures" / "zsh_history"
+
+
+@pytest.fixture
+def metadata():
+    return UploadMetadata(
+        op_id="op1",
+        host_id="host1",
+        file_type="zsh_history",
+        username="alice",
+        filename=".zsh_history",
+    )
+
+
+def test_parses_ssh_commands(metadata):
+    content = (FIXTURES / "typical").read_bytes()
+    result = ZshHistoryParser().parse(content, metadata)
+    # 3 ssh-family commands: ssh root@10.0.0.5, scp, ssh ops@jumpbox.corp, rsync = 4
+    assert len(result.connections_found) == 4
+
+
+def test_dst_ips_correct(metadata):
+    content = (FIXTURES / "typical").read_bytes()
+    result = ZshHistoryParser().parse(content, metadata)
+    dsts = sorted(c.dst_ip for c in result.connections_found)
+    assert dsts == ["10.0.0.5", "archive.example.com", "backup.example.com", "jumpbox.corp"]
+
+
+def test_users_extracted(metadata):
+    content = (FIXTURES / "typical").read_bytes()
+    result = ZshHistoryParser().parse(content, metadata)
+    by_dst = {c.dst_ip: c.dst_user for c in result.connections_found}
+    assert by_dst["10.0.0.5"] == "root"
+    assert by_dst["jumpbox.corp"] == "ops"
+    assert by_dst["backup.example.com"] == "admin"
+    assert by_dst["archive.example.com"] == "user"
+
+
+def test_timestamps_extracted(metadata):
+    content = (FIXTURES / "typical").read_bytes()
+    result = ZshHistoryParser().parse(content, metadata)
+    assert all(c.timestamp is not None for c in result.connections_found)
+
+
+def test_connection_types_classified(metadata):
+    content = (FIXTURES / "typical").read_bytes()
+    result = ZshHistoryParser().parse(content, metadata)
+    types = {c.connection_type for c in result.connections_found}
+    assert "ssh" in types
+    assert "scp" in types
+    assert "rsync" in types
+
+
+def test_stats_populated(metadata):
+    content = (FIXTURES / "typical").read_bytes()
+    result = ZshHistoryParser().parse(content, metadata)
+    assert result.stats["ssh_commands"] == 4
+    # 7 zsh-history headers in fixture
+    assert result.stats["commands_parsed"] == 7
+
+
+def test_empty_file(metadata):
+    result = ZshHistoryParser().parse(b"", metadata)
+    assert result.connections_found == []
+
+
+def test_non_zsh_lines_ignored(metadata):
+    content = b"this is not zsh history\njust some random text\n"
+    result = ZshHistoryParser().parse(content, metadata)
+    assert result.connections_found == []
+    assert result.stats["commands_parsed"] == 0
+
+
+def test_ssh_keygen_family_not_matched(metadata):
+    """ssh-keygen / ssh-add / ssh-agent / ssh-keyscan and the quoted
+    `echo "running ssh tunnel"` must NOT emit ConnectionData.
+
+    Only `sshpass -p ... ssh user@host` and the bare `ssh user@example.com`
+    are real — exactly 2 connections in total.
+    """
+    content = (FIXTURES / "false_positives").read_bytes()
+    result = ZshHistoryParser().parse(content, metadata)
+    assert len(result.connections_found) == 2
+    dsts = sorted(c.dst_ip for c in result.connections_found)
+    assert dsts == ["example.com", "host"]
+    assert "tunnel" not in dsts
+    assert "ed25519" not in dsts
+    assert "secret" not in dsts

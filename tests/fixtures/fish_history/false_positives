@@ -1,0 +1,14 @@
+- cmd: ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519
+  when: 1700000000
+- cmd: ssh-add ~/.ssh/id_rsa
+  when: 1700000010
+- cmd: ssh-agent bash
+  when: 1700000020
+- cmd: ssh-keyscan -t ed25519 example.com
+  when: 1700000030
+- cmd: echo "running ssh tunnel"
+  when: 1700000040
+- cmd: sshpass -p secret ssh user@host
+  when: 1700000050
+- cmd: ssh user@example.com
+  when: 1700000060

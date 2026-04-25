@@ -1,0 +1,49 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "kbrazil",
+      "raw_line": "kbrazil  pts/0        192.168.71.1     Tue Jan  5 00:17:29 2021 - Tue Jan  5 20:03:47 2021  (19:46)",
+      "src_ip": "192.168.71.1",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "kbrazil",
+      "raw_line": "kbrazil  pts/0        192.168.71.1     Tue Jan  5 20:03:51 2021   still logged in",
+      "src_ip": "192.168.71.1",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "root",
+      "raw_line": "root     pts/0        developer-pc.exa Mon Mar 23 16:44:55 2020 - down                      (00:00)",
+      "src_ip": "developer-pc.exa",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "records_parsed": 3
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

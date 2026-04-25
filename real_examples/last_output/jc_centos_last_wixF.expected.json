@@ -1,0 +1,61 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "mark",
+      "raw_line": "mark     tty1         0.0.0.0          Mon Jun 19 16:59:57 2023   still logged in",
+      "src_ip": "0.0.0.0",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "mark",
+      "raw_line": "mark     pts/0        192.168.255.1    Mon Jun 19 14:15:45 2023 - Mon Jun 19 14:15:52 2023  (00:00)",
+      "src_ip": "192.168.255.1",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "mark",
+      "raw_line": "mark     pts/0        192.168.255.1    Mon Jun 19 14:15:57 2023 - Mon Jun 19 14:18:00 2023  (00:02)",
+      "src_ip": "192.168.255.1",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "root",
+      "raw_line": "root     pts/0        192.168.255.1    Mon Jun 19 14:18:13 2023   still logged in",
+      "src_ip": "192.168.255.1",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "records_parsed": 4
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

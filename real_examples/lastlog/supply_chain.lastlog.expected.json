@@ -1,0 +1,74 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "uid:1000",
+      "raw_line": "lastlog: uid=1000 from 10.0.1.101 on pts/1",
+      "src_ip": "10.0.1.101",
+      "src_user": null,
+      "timestamp": "2026-03-27T13:22:00+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "uid:1001",
+      "raw_line": "lastlog: uid=1001 from 10.0.1.102 on pts/2",
+      "src_ip": "10.0.1.102",
+      "src_user": null,
+      "timestamp": "2026-03-26T07:45:00+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "uid:0",
+      "raw_line": "lastlog: uid=0 from 10.0.1.50 on pts/0",
+      "src_ip": "10.0.1.50",
+      "src_user": null,
+      "timestamp": "2026-03-20T08:30:00+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "uid:110",
+      "raw_line": "lastlog: uid=110 from 34.89.172.44 on pts/0",
+      "src_ip": "34.89.172.44",
+      "src_user": null,
+      "timestamp": "2026-03-28T00:17:00+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "uid:111",
+      "raw_line": "lastlog: uid=111 from 35.205.94.18 on pts/1",
+      "src_ip": "35.205.94.18",
+      "src_user": null,
+      "timestamp": "2026-03-28T00:22:00+00:00"
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "records_parsed": 5,
+    "uids_with_login": 5
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

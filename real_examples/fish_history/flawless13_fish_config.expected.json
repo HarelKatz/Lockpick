@@ -1,0 +1,170 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "10.0.1.209",
+      "dst_user": null,
+      "raw_line": "ssh 10.0.1.209",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": "2014-08-08T17:59:20+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "10.0.1.209",
+      "dst_user": "ec2-user",
+      "raw_line": "ssh ec2-user@10.0.1.209",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": "2014-08-08T18:02:41+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "10.0.1.209",
+      "dst_user": "ec2-user",
+      "raw_line": "ssh -i .ssh/dev.pem ec2-user@10.0.1.209",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": "2014-08-08T18:03:12+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "10.0.1.209",
+      "dst_user": "ec2-user",
+      "raw_line": "ssh -i ~/.ssh/dev.pem ec2-user@10.0.1.209",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": "2014-08-08T20:52:07+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.59.103",
+      "dst_user": null,
+      "raw_line": "ssh 192.168.59.103",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": "2014-07-02T20:39:55+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.59.103",
+      "dst_user": "docker",
+      "raw_line": "ssh docker@192.168.59.103",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": "2014-07-02T21:06:15+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "scp",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.59.103",
+      "dst_user": "spencers",
+      "raw_line": "scp ~/Downloads/fish_2.1.0-1~precise_amd64.deb spencers@192.168.59.103:/home/spencers/",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": "2014-07-02T20:37:43+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "192.168.59.103",
+      "dst_user": "spencers",
+      "raw_line": "ssh spencers@192.168.59.103",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": "2014-07-02T20:55:58+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "ip",
+      "dst_user": null,
+      "raw_line": "boot2docker ssh ip addr show dev eth1",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": "2014-07-02T20:16:43+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "pez.cs.utexas.edu",
+      "dst_user": "sas5294",
+      "raw_line": "ssh sas5294@pez.cs.utexas.edu",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": "2014-08-08T15:05:28+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "recomendations-dev",
+      "dst_user": null,
+      "raw_line": "ssh recomendations-dev",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": "2014-08-08T18:15:42+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "recommendations-dev.spice.spiceworks.com",
+      "dst_user": null,
+      "raw_line": "ssh recommendations-dev.spice.spiceworks.com",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": "2014-08-08T18:16:57+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "ubuntu",
+      "dst_user": "spencers",
+      "raw_line": "boot2docker ssh spencers@ubuntu",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": "2014-07-02T20:26:18+00:00"
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "commands_parsed": 1287,
+    "ssh_commands": 13
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

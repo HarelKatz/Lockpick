@@ -1,0 +1,18 @@
+- cmd: ls -la
+  when: 1700000000
+- cmd: ssh root@10.0.0.5
+  when: 1700000010
+- cmd: scp file.txt admin@backup.example.com:/tmp/
+  when: 1700000020
+  paths:
+    - file.txt
+- cmd: cat /etc/passwd
+  when: 1700000030
+- cmd: ssh -p 2222 ops@jumpbox.corp
+  when: 1700000040
+- cmd: rsync -av /data/ user@archive.example.com:/backup/
+  when: 1700000050
+  paths:
+    - /data/
+- cmd: echo done
+  when: 1700000100

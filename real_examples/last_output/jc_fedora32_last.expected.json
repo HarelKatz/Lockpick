@@ -1,0 +1,37 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "kbrazil",
+      "raw_line": "kbrazil  pts/0        192.168.71.1     Fri May  1 15:25    gone - no logout",
+      "src_ip": "192.168.71.1",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "kbrazil",
+      "raw_line": "kbrazil  pts/0        192.168.71.1     Thu Apr 30 15:27 - 15:22  (23:55)",
+      "src_ip": "192.168.71.1",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "records_parsed": 2
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

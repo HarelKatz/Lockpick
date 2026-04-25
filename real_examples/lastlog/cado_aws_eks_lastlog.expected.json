@@ -1,0 +1,38 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "uid:0",
+      "raw_line": "lastlog: uid=0 from ec2-3-81-123-81.compute-1.amazonaws.com on pts/0",
+      "src_ip": "ec2-3-81-123-81.compute-1.amazonaws.com",
+      "src_user": null,
+      "timestamp": "2021-07-07T17:04:36+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "uid:1000",
+      "raw_line": "lastlog: uid=1000 from ip-172-31-3-135.us-east-2.compute.internal on pts/0",
+      "src_ip": "ip-172-31-3-135.us-east-2.compute.internal",
+      "src_user": null,
+      "timestamp": "2021-07-07T16:35:56+00:00"
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "records_parsed": 2,
+    "uids_with_login": 2
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

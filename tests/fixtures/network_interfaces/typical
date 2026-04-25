@@ -1,0 +1,16 @@
+# Loopback interface (must NOT be emitted)
+auto lo
+iface lo inet loopback
+
+# Primary interface
+auto eth0
+iface eth0 inet static
+    address 192.168.1.10
+    netmask 255.255.255.0
+    gateway 192.168.1.1
+
+# Secondary interface, CIDR notation
+auto eth1
+iface eth1 inet static
+    address 10.0.0.5/24
+    netmask 255.255.255.0

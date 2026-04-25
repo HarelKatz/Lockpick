@@ -10,6 +10,14 @@ from parsers.auth_log import AuthLogParser
 from parsers.bash_history import BashHistoryParser
 from parsers.etc_hosts import EtcHostsParser
 from parsers.known_hosts import KnownHostsParser
+from parsers.lastlog import LastlogParser
+from parsers.last_output import LastOutputParser
+from parsers.shell_rc import ShellRcParser
+from parsers.zsh_history import ZshHistoryParser
+from parsers.fish_history import FishHistoryParser
+from parsers.network_interfaces import NetworkInterfacesParser
+from parsers.netplan import NetplanParser
+from parsers.ifcfg import IfcfgParser
 from parsers.nmap_xml import NmapXmlParser
 from parsers.passwd import PasswdParser
 from parsers.private_key import PrivateKeyParser
@@ -26,7 +34,20 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "private_key": PrivateKeyParser,
     "public_key": AuthorizedKeysParser,  # lone public key → same parser
     "auth_log": AuthLogParser,
+    # RHEL/CentOS log aliases — same syslog/sshd format as auth.log
+    "secure": AuthLogParser,
+    "syslog": AuthLogParser,
+    "messages": AuthLogParser,
     "wtmp": WtmpParser,
+    "lastlog": LastlogParser,
+    "last_output": LastOutputParser,
+    "bashrc": ShellRcParser,
+    "zshrc": ShellRcParser,
+    "zsh_history": ZshHistoryParser,
+    "fish_history": FishHistoryParser,
+    "network_interfaces": NetworkInterfacesParser,
+    "netplan": NetplanParser,
+    "ifcfg": IfcfgParser,
     "bash_history": BashHistoryParser,
     "passwd": PasswdParser,
     "nmap_xml": NmapXmlParser,
