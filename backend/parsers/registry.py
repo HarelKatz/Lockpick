@@ -17,6 +17,7 @@ from parsers.zsh_history import ZshHistoryParser
 from parsers.fish_history import FishHistoryParser
 from parsers.network_interfaces import NetworkInterfacesParser
 from parsers.netplan import NetplanParser
+from parsers.ifcfg import IfcfgParser
 from parsers.nmap_xml import NmapXmlParser
 from parsers.passwd import PasswdParser
 from parsers.private_key import PrivateKeyParser
@@ -46,6 +47,7 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "fish_history": FishHistoryParser,
     "network_interfaces": NetworkInterfacesParser,
     "netplan": NetplanParser,
+    "ifcfg": IfcfgParser,
     "bash_history": BashHistoryParser,
     "passwd": PasswdParser,
     "nmap_xml": NmapXmlParser,
