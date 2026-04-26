@@ -7,7 +7,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
-from database import engine
 import models  # noqa: F401 — ensures models are registered before migrations
 
 from routers import activity, collection, connections, credentials, export_import, graph, hosts, operations, search, stats, upload, ws
