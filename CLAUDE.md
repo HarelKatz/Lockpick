@@ -11,6 +11,15 @@ SSH pivot tracker for red teams. Ingests raw evidence (private keys, `authorized
 - **Do not survey the codebase before starting.** Do not open files to "understand the project" — AGENT.md describes everything you need to know upfront.
 - **Read files on-demand only.** Open a source file only when you are about to edit it or need to understand a specific function/interface it provides. Never read a file "just in case."
 
+## Pyright LSP — Tagged-Hint False Positives
+
+Pyright emits "tagged hints" (e.g. `★ "X is not accessed"`) for symbols it considers unused. These **cannot be suppressed per-line** — `# pyright: ignore` only handles rule-based errors, not tagged hints (see [pyright #10132](https://github.com/microsoft/pyright/issues/10132)). The hints are left active globally; treat the following patterns as known false positives and ignore the hint when it fires:
+
+- **Side-effect imports** marked `# noqa: F401` — e.g. `import models` in `main.py` triggers SQLAlchemy `Base.metadata` registration before Alembic runs. The symbol is "unused" by design.
+- **FastAPI lifespan and dependency-injection parameters** — e.g. `lifespan(app: FastAPI)`, route-handler `Depends(...)` params. The contract requires the parameter even when the body doesn't reference it.
+
+Real diagnostics (`reportMissingImports`, type errors, etc.) still surface as ✘/⚠ — pay attention to those. New `★ "X is not accessed"` hints on patterns NOT listed above are worth investigating before dismissing.
+
 ## Git Commits
 
 Commit after every unit of completed work: feature, bug fix, refactor, parser, schema change + migration, test file, or edit to `CLAUDE.md` / `AGENT.md`. Skip only for isolated typos and single-line CSS tweaks. One commit per unit, not batched at end of session — the user should never have to prompt a commit.
