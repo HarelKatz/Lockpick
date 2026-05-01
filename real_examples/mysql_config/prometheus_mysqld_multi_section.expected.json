@@ -1,0 +1,37 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "password",
+      "name": "mysql:client.cleartextPlugin",
+      "relationship_type": "found_on_disk",
+      "username": "test",
+      "value_length": 3,
+      "value_prefix": "foo"
+    },
+    {
+      "cred_type": "password",
+      "name": "mysql:client.server1",
+      "relationship_type": "found_on_disk",
+      "username": "test",
+      "value_length": 3,
+      "value_prefix": "foo"
+    },
+    {
+      "cred_type": "password",
+      "name": "mysql:server2",
+      "relationship_type": "found_on_disk",
+      "username": "root",
+      "value_length": 3,
+      "value_prefix": "abc"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "credentials": 3
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

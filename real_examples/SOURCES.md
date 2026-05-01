@@ -287,21 +287,23 @@ Both round-1 gist entries (`devops_school_kubectl_ref`, `so0k_kubectl_output`) w
 
 ## Phase 19 — Credential file parsers
 
-### `netrc/` — 3 files
+### `netrc/` — 4 files
 - `tpope_sample` — gist/tpope/4247721
 - `technoweenie_github` — gist/technoweenie/1072829
 - `sahilsk_git` — gist/sahilsk/ce21c39a6c2dbc2cd984
+- `git_credential_helper_test` — git/git `contrib/credential/netrc/test.netrc`. **First fixture with the `port` keyword** (`port imaps`, `port 1099` — a mix of numeric and named ports), plus a `multilinetoken anothervalue` non-standard token line under `machine github.com`. Distinct from existing fixtures (which are bare machine/login/password); exercises parser tolerance of extra fields and the `port` keyword.
 
 ### `pgpass/` — 1 file
 - `Fmstrat_aliased` — gist/Fmstrat/ea6287a6d60e3e5f6c73e3bdd2f62331 (uses non-standard `alias:host:port:db:user:pass` prefix but parseable as `host:port:db:user:pass` after prefix strip)
   > Round 2 removed `vielhuber_sample` (tutorial). Round 3 removed `sabman_sample` (blog post intro).
 
-### `mysql_config/` — 5 files
+### `mysql_config/` — 6 files
 - `oinume_mycnf` — gist/oinume/fc9b72bd8b14ab07e94c
 - `fevangelou_optimized` — gist/fevangelou/fb72f36bbe333e059b66
 - `juliandunn_container_default` — gist/juliandunn/7efc161ee2bec4801422d90bab24ad12
 - `byllc_mariadb` — gist/byllc/8871383
 - `rubo77_debian_mysql55` — gist/rubo77/64f64a26bdf9c677ca79
+- `prometheus_mysqld_multi_section` — prometheus/mysqld_exporter `config/testdata/client.cnf`. **First fixture with per-program `[client.SUFFIX]` sections** — `[client]` plus `[client.server1]` and `[client.cleartextPlugin]`. The dotted-suffix syntax is MySQL's documented way to namespace credentials per host/program; none of the existing 5 fixtures exercise it. Also includes `enable-cleartext-plugin = true` (boolean option).
 
 ### `aws_credentials/` — 1 file
 - `mrsarm_multi_profile` — gist/mrsarm/5169b18d47edd4539695964e2e695a18
@@ -396,5 +398,6 @@ These gaps are genuine — either the file is private by convention (history fil
 - [aborrero/nftables-managed-with-git](https://github.com/aborrero/nftables-managed-with-git) — split-file nftables ruleset
 - [DefectDojo/sample-scan-files](https://github.com/DefectDojo/sample-scan-files) — Apache-2.0 — nmap XML v6.40 + v7.12
 - [googleapis/google-auth-library-python](https://github.com/googleapis/google-auth-library-python) — Apache-2.0 — `application_default_credentials.json` test fixtures
-- [git/git](https://github.com/git/git) — GPL-2.0 — `.git-credentials` canonical format (from `t/t0302-credential-store.sh`)
+- [git/git](https://github.com/git/git) — GPL-2.0 — `.git-credentials` canonical format (from `t/t0302-credential-store.sh`); also `contrib/credential/netrc/test.netrc` netrc fixture
+- [prometheus/mysqld_exporter](https://github.com/prometheus/mysqld_exporter) — Apache-2.0 — multi-section `client.cnf` test fixture (`config/testdata/client.cnf`)
 - Various GitHub gists — per-file attribution above
