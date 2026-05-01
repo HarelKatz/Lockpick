@@ -288,6 +288,10 @@ export default function GraphCanvas({
 
     const isStatic = STATIC_LAYOUTS.includes(layout)
 
+    // pauseAnimation() at line 341 kills the rAF loop for static layouts; without
+    // a matching resume, switching back to a force layout leaves the canvas frozen.
+    if (!isStatic) graphRef.current?.resumeAnimation()
+
     const nodes: FGNode[] = graphData.nodes
       .filter(n => visibleSet.has(n.host_id))
       .map(n => {
