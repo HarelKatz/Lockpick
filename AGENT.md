@@ -50,6 +50,26 @@ A web-based tool for red teams to collaboratively organize SSH credentials, host
 
 ---
 
+## Known Bugs
+
+Behavioral defects awaiting a fix. Entries leave this section once the fix ships; any post-fix invariants the fix introduces belong in **Architecture Rules**.
+
+1. **GraphCanvas remount-on-node-set-change race.** `frontend/src/components/GraphCanvas.tsx` keys the `<ForceGraph2D>` element on `nodeSetKey` (sorted join of `host_id`s) to sidestep a `forceLink.initialize()` "node not found" crash from d3-force when the node set grows or shrinks. Every host add/remove unmounts and remounts ForceGraph2D from scratch, then `Effect 1` (line 251) reruns and calls `setFgData(...)` to repopulate. Under rapid back-to-back `setGraphData` calls — bursts of WS-driven `loadFullGraph()` reloads from many writes within a few hundred ms (programmatic API flows, future bulk-add endpoints, integration tests) — the remount/effect/state cycle can interleave such that the freshly-mounted ForceGraph2D never lands on the latest `fgData`, leaving the canvas blank. The auto-fit gate (`fitNeededRef`, line 326-328) only fires when going from empty → non-empty, so subsequent reloads in the empty-canvas state have no recovery path. Symptom: blank canvas with the host sidebar correctly populated; the in-app Refresh button does not unstick it (same `nodeSetKey` → no remount). A full page reload always recovers (fresh mount, single fetch, single render). Normal user flows (file uploads, manual entry) don't reproduce because parser latency / human pace spaces events out. Real fix: replace the keyed-remount workaround with an incremental d3-force update (or a forced `graphRef.current?.refresh()` after each `setFgData`), but the d3-force "node not found" crash that motivated the remount needs to be addressed first.
+
+2. **GraphCanvas pauseAnimation has no matching resume.** `frontend/src/components/GraphCanvas.tsx` line 339-341 calls `graphRef.current?.pauseAnimation()` 50ms after switching **to** a static layout (`grid`, `circle`, `breadthfirst`), to stop the d3 simulation from drifting pinned nodes. There is **no corresponding `resumeAnimation()`** anywhere when switching **away** from a static layout to a force layout (`cola`, `cose-bilkent`). Once paused, ForceGraph2D's internal `requestAnimationFrame` loop is dead — subsequent `setFgData(...)` writes update the React state but the canvas never repaints, and `onEngineStop` (line 577-581) never fires, so the auto-`zoomToFit` flagged by `fitNeededRef = true` (line 326-328) is never executed. Symptom: after one round-trip through a static layout, layout switches still update positions internally but the canvas appears frozen / hosts appear off-screen / "stuck"; clicking "Refresh" recovers because it forces a `nodeSetKey` change → full ForceGraph2D remount with a live rAF loop (see bug #1 above). Real fix: call `graphRef.current?.resumeAnimation()` at the top of Effect 1 (or in a `useEffect([layout])` watcher) when switching from a static to a non-static layout, before `setFgData`. Reproducible by: opening any populated op, switching layout from Force-directed → Organic → Hierarchical (broken on this third switch), or any sequence that goes static-then-non-static.
+
+---
+
+## Known UX Gaps
+
+Frontend deficiencies surfaced during testing — not invariant violations, but missing affordances to address in a later session.
+
+1. **No "Add link" affordance for an existing credential.** The credential card on the Data tab has Edit/Delete/Download for the credential record itself plus Edit/Remove on each existing `CredentialLink`, but no UI path to add a *second* link to the same credential. To attach the same private key as `authorized_key` on a destination host (the configuration that yields a `key_match` evidence type and upgrades the corresponding edge from `observed` to `confirmed`), an operator currently has to re-paste the key value through Add Data → Credential and rely on backend fingerprint dedup — which is not a discoverable or documented flow. Suggested fix: add a `+ Add link` button on each credential card that opens the same host/username/relationship form already used inside Add Data → Credential when its "Link to a host" checkbox is toggled.
+
+2. **Host status not visible on the Data tab host card.** The Edit Host dialog exposes the `status` enum dropdown, and the Graph tab colors the node ring per `theme.statusColors`, but the Data tab host card (`HOSTS` section) shows nickname / IP / users / comment with no surface for status. Operators working on the Data tab can't tell at a glance which hosts are `compromised` vs `target` vs unset. Suggested fix: add a small colored pill (matching the Graph tab's color scheme) next to the host nickname on the Data tab card, rendered only when `host.status !== null`.
+
+---
+
 ## Document Maintenance Rules
 
 AGENT.md is the project roadmap and architecture reference — the current source of truth. Git history is the audit log.
