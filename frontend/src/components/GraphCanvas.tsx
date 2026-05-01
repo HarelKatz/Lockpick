@@ -91,9 +91,13 @@ interface SimNode extends d3Force.SimulationNodeDatum { id: string }
 
 function forceLayout(nodeIds: string[], edgePairs: EdgePair[], spacing: number): PosMap {
   const simNodes: SimNode[] = nodeIds.map(id => ({ id }))
-  const simLinks: d3Force.SimulationLinkDatum<SimNode>[] = edgePairs.map(e => ({
-    source: e.source, target: e.target,
-  }))
+  // Drop edges whose endpoints aren't in the seed sim — d3-force-link's
+  // initialize() does find(nodeById, id) and throws "node not found" otherwise.
+  // Mirrors the guard dagreLayout already has below.
+  const nodeSet = new Set(nodeIds)
+  const simLinks: d3Force.SimulationLinkDatum<SimNode>[] = edgePairs
+    .filter(e => nodeSet.has(e.source) && nodeSet.has(e.target))
+    .map(e => ({ source: e.source, target: e.target }))
   const cx = (nodeIds.length * spacing) / 2
   const sim = d3Force.forceSimulation<SimNode>(simNodes)
     .force('link', d3Force.forceLink<SimNode, d3Force.SimulationLinkDatum<SimNode>>(simLinks)
@@ -195,14 +199,14 @@ export default function GraphCanvas({
   const fitNeededRef = useRef(false)
 
   // ── Remount-on-node-set-change key ──────────────────────────────────────────
-  // ForceGraph2D's internal diff between old and new graphData can call
-  // forceLink.initialize() against stale simulation nodes when the set of
-  // nodes grows or shrinks (throws "node not found: <id>"). Clearing the
-  // link force via ref is not reliable in every ordering. Remounting the
-  // ForceGraph2D component whenever the node SET changes is — a fresh
-  // simulation has no stale refs. The key is derived from a sorted join
-  // of host_ids so data-only changes (rename, status flip) keep the key
-  // stable and preserve camera + simulation continuity.
+  // Originally added as a defense against a suspected ForceGraph2D-internal
+  // d3-force-3d "node not found" crash on incremental graphData diffs. The
+  // crash that was actually surfacing in production turned out to be in our
+  // own forceLayout() seed sim (fixed by the edge-filter at line 96). This
+  // remount key has never been independently reproduced as load-bearing
+  // after that fix landed — kept defensively, cheap. The key is a sorted
+  // join of host_ids so data-only changes (rename, status flip) keep the
+  // key stable and preserve camera + simulation continuity.
   const nodeSetKey = useMemo(
     () => graphData.nodes.map(n => n.host_id).sort().join('|'),
     [graphData.nodes],
@@ -332,9 +336,12 @@ export default function GraphCanvas({
       fitNeededRef.current = true
     }
 
-    // Clear d3's internal link list before updating nodes. d3 mutates link objects
-    // (source/target become node refs). If nodes shrink, forceLink.initialize() on
-    // the old mutated list throws "node not found". Clearing first prevents this.
+    // Defensive: clear d3's internal link list before updating nodes. d3 mutates
+    // link objects in place (source/target become node refs); a shrink-then-init
+    // sequence on the same link instances was once thought to surface a
+    // "node not found" throw from forceLink.initialize(). The actual production
+    // throw was a different bug (forceLayout seed-sim, fixed at line 96), and we
+    // never independently reproduced this one — kept defensively, cheap.
     graphRef.current?.d3Force('link')?.links([])
 
     setFgData({ nodes, links })

@@ -470,9 +470,9 @@ export default function Workspace({ op, onBack }: Props) {
     }
   }, [op.id])
 
-  // Trailing 250 ms debounce: WS bursts (bulk imports, programmatic flows) would
-  // otherwise drive GraphCanvas's keyed-remount workaround into a render-order
-  // race that blanks the canvas. Coalescing collapses the burst into one reload.
+  // Trailing 250 ms debounce: coalesces WS bursts (bulk imports, programmatic
+  // flows) so a 12-event burst triggers one fetchAll + graph reload instead
+  // of twelve. Latency on user-paced single writes is imperceptible.
   const reloadTimerRef = useRef<number | null>(null)
   useEffect(() => () => {
     if (reloadTimerRef.current !== null) {
