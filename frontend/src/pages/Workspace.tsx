@@ -470,6 +470,27 @@ export default function Workspace({ op, onBack }: Props) {
     }
   }, [op.id])
 
+  // Trailing 250 ms debounce: WS bursts (bulk imports, programmatic flows) would
+  // otherwise drive GraphCanvas's keyed-remount workaround into a render-order
+  // race that blanks the canvas. Coalescing collapses the burst into one reload.
+  const reloadTimerRef = useRef<number | null>(null)
+  useEffect(() => () => {
+    if (reloadTimerRef.current !== null) {
+      window.clearTimeout(reloadTimerRef.current)
+      reloadTimerRef.current = null
+    }
+  }, [])
+  const scheduleReload = useCallback(() => {
+    if (reloadTimerRef.current !== null) {
+      window.clearTimeout(reloadTimerRef.current)
+    }
+    reloadTimerRef.current = window.setTimeout(async () => {
+      reloadTimerRef.current = null
+      await fetchAll(true)
+      graphReloadRef.current?.()
+    }, 250)
+  }, [fetchAll])
+
   // WebSocket live push — refetch stats on any event; reload graph+hosts on host changes
   const { status: wsStatus, reconnectIn, reconnect } = useOpWebSocket(
     op.id,
@@ -482,10 +503,9 @@ export default function Workspace({ op, onBack }: Props) {
       }
       const ev = event as { entity_type?: string }
       if (ev?.entity_type === 'host' || ev?.entity_type === 'credential' || ev?.entity_type === 'connection') {
-        await fetchAll(true)
-        graphReloadRef.current?.()
+        scheduleReload()
       }
-    }, [op.id, fetchAll]),
+    }, [op.id, scheduleReload]),
   )
 
   // Fallback: poll every 30s when WS is disconnected
