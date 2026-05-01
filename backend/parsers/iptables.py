@@ -24,6 +24,8 @@ _IP_HOST_RE = re.compile(
 # `iptables-save` style:  `-A INPUT -s 10.0.0.5/32 -p tcp -j ACCEPT`
 _SAVE_S_RE = re.compile(r"-s\s+(?P<ip>\d{1,3}(?:\.\d{1,3}){3})(?:/(?P<pref>\d+))?")
 _SAVE_D_RE = re.compile(r"-d\s+(?P<ip>\d{1,3}(?:\.\d{1,3}){3})(?:/(?P<pref>\d+))?")
+# `iptables-save -c` prefixes each rule with `[pkts:bytes] `.
+_COUNTER_PREFIX_RE = re.compile(r"^\[\d+:\d+\]\s+")
 
 
 def _is_specific_host(addr: str, prefix: int | None = None) -> bool:
@@ -72,6 +74,7 @@ class IptablesParser(BaseParser):
                 continue
             if line.startswith("#"):
                 continue
+            line = _COUNTER_PREFIX_RE.sub("", line)
 
             # `iptables-save` style first — covers IP-with-prefix idioms cleanly.
             if line.startswith(("-A ", "-I ", "-N ", ":")):

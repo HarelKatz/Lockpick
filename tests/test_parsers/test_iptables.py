@@ -66,6 +66,23 @@ def test_iptables_save_format():
     assert len(result.connections_found) == 2
 
 
+def test_iptables_save_with_counter_prefix():
+    """`iptables-save -c` prefixes rules with `[pkts:bytes] `."""
+    content = (
+        b"[1:2] -A INPUT -s 10.0.0.5/32 -p tcp -j ACCEPT\n"
+        b"[0:5] -A INPUT -d 10.20.30.40/32 -p tcp -j DROP\n"
+        b"[100:5000] -A INPUT -s 192.168.0.0/24 -p tcp -j ACCEPT\n"
+    )
+    result = IptablesParser().parse(content, _meta())
+    assert len(result.connections_found) == 2
+    assert result.stats == {"rules": 2}
+    assert result.connections_found[0].src_ip == "10.0.0.5"
+    assert result.connections_found[0].dst_ip == "__upload_host__"
+    assert result.connections_found[1].src_ip == "__upload_host__"
+    assert result.connections_found[1].dst_ip == "10.20.30.40"
+    assert result.connections_found[0].raw_line.startswith("[1:2] -A INPUT")
+
+
 def test_dedup_repeated_rules():
     content = (
         b"Chain INPUT (policy ACCEPT)\n"
