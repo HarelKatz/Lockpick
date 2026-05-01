@@ -26,6 +26,7 @@ import type {
 import { createHost, addHostIP, createHostUser } from '../api/hosts'
 import { createCredential, createCredentialLink } from '../api/credentials'
 import { createConnection } from '../api/connections'
+import { RELATIONSHIP_TYPES } from '../constants/credentialLink'
 import styles from './ManualEntryForm.module.css'
 
 type FormType = 'host' | 'credential' | 'connection'
@@ -276,13 +277,6 @@ const CRED_TYPES: { value: CreateCredentialRequest['cred_type']; label: string }
   { value: 'private_key', label: 'Private Key (SSH)' },
   { value: 'public_key', label: 'Public Key (SSH)' },
   { value: 'password', label: 'Password' },
-]
-
-const RELATIONSHIP_TYPES: { value: CreateCredentialLinkRequest['relationship_type']; label: string }[] = [
-  { value: 'found_on_disk', label: 'Found on disk' },
-  { value: 'authorized_key', label: 'Authorized key (grants access)' },
-  { value: 'accepted_password', label: 'Accepted password' },
-  { value: 'used_in_connection', label: 'Used in connection' },
 ]
 
 function CredentialForm({

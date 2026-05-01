@@ -28,6 +28,7 @@ import EditHostForm from '../components/EditHostForm'
 import EditCredentialForm from '../components/EditCredentialForm'
 import EditCredentialLinkForm from '../components/EditCredentialLinkForm'
 import EditConnectionForm from '../components/EditConnectionForm'
+import AddCredentialLinkForm from '../components/AddCredentialLinkForm'
 import GraphView from './GraphView'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import styles from './Workspace.module.css'
@@ -172,9 +173,11 @@ interface CredentialRowProps {
   onDelete: (c: Credential) => void
   onEditLink: (l: CredentialLink) => void
   onDeleteLink: (l: CredentialLink) => void
+  onLinkAdded: (l: CredentialLink) => void
 }
 
-function CredentialRow({ id, cred, links, hosts, highlighted, onEdit, onDelete, onEditLink, onDeleteLink }: CredentialRowProps) {
+function CredentialRow({ id, cred, links, hosts, highlighted, onEdit, onDelete, onEditLink, onDeleteLink, onLinkAdded }: CredentialRowProps) {
+  const [adding, setAdding] = useState(false)
   return (
     <div id={id} className={`${styles.credRow} ${highlighted ? styles.highlighted : ''}`}>
       <div className={styles.credHeader}>
@@ -207,7 +210,7 @@ function CredentialRow({ id, cred, links, hosts, highlighted, onEdit, onDelete, 
         </div>
       </div>
 
-      {links.length > 0 && (
+      {(links.length > 0 || hosts.length > 0) && (
         <div className={styles.linkList}>
           {links.map(link => {
             const host = hosts.find(h => h.id === link.host_id)
@@ -223,6 +226,23 @@ function CredentialRow({ id, cred, links, hosts, highlighted, onEdit, onDelete, 
               </div>
             )
           })}
+          {adding ? (
+            <AddCredentialLinkForm
+              credentialId={cred.id}
+              hosts={hosts}
+              onAdded={l => { onLinkAdded(l); setAdding(false) }}
+              onCancel={() => setAdding(false)}
+            />
+          ) : (
+            <button
+              className={styles.addLinkBtn}
+              onClick={() => setAdding(true)}
+              disabled={hosts.length === 0}
+              title={hosts.length === 0 ? 'No hosts in this op yet' : 'Add a link to this credential'}
+            >
+              + Add link
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -814,6 +834,7 @@ export default function Workspace({ op, onBack }: Props) {
                       onDelete={setDeleteCredTarget}
                       onEditLink={setEditLink}
                       onDeleteLink={setDeleteLinkTarget}
+                      onLinkAdded={l => { setLinks(prev => [...prev, l]); refreshActivity() }}
                     />
                   ))}
                 </div>

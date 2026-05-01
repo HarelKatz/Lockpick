@@ -5,6 +5,7 @@
 import { useState } from 'react'
 import type { Credential, CredentialLink, Host } from '../types'
 import { updateCredentialLink } from '../api/credentials'
+import { RELATIONSHIP_TYPES } from '../constants/credentialLink'
 import styles from './EditModal.module.css'
 
 interface Props {
@@ -14,13 +15,6 @@ interface Props {
   onSaved: (updated: CredentialLink) => void
   onClose: () => void
 }
-
-const RELATIONSHIP_TYPES: { value: CredentialLink['relationship_type']; label: string }[] = [
-  { value: 'found_on_disk', label: 'Found on disk' },
-  { value: 'authorized_key', label: 'Authorized key (grants access)' },
-  { value: 'accepted_password', label: 'Accepted password' },
-  { value: 'used_in_connection', label: 'Used in connection' },
-]
 
 export default function EditCredentialLinkForm({ link, credential, host, onSaved, onClose }: Props) {
   const [username, setUsername] = useState(link.username ?? '')

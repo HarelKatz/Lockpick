@@ -60,8 +60,6 @@ Behavioral defects awaiting a fix. Entries leave this section once the fix ships
 
 Frontend deficiencies surfaced during testing — not invariant violations, but missing affordances to address in a later session.
 
-1. **No "Add link" affordance for an existing credential.** The credential card on the Data tab has Edit/Delete/Download for the credential record itself plus Edit/Remove on each existing `CredentialLink`, but no UI path to add a *second* link to the same credential. To attach the same private key as `authorized_key` on a destination host (the configuration that yields a `key_match` evidence type and upgrades the corresponding edge from `observed` to `confirmed`), an operator currently has to re-paste the key value through Add Data → Credential and rely on backend fingerprint dedup — which is not a discoverable or documented flow. Suggested fix: add a `+ Add link` button on each credential card that opens the same host/username/relationship form already used inside Add Data → Credential when its "Link to a host" checkbox is toggled.
-
 ---
 
 ## Document Maintenance Rules
