@@ -246,17 +246,21 @@ Original 11 (ubuntu + generic) plus:
 ### `ss_output/` — 4 files (jc)
 `jc_ubuntu_ss_a`, `jc_ubuntu_ss_tulpen`, `jc_generic_ss_wide`, `jc_centos_ss_a`.
 
-### `iptables/` — 13 files (jc only; tutorials removed)
+### `iptables/` — 16 files
 - From jc centos-7.7: `filter`, `filter-nv`, `filter_line_numbers`, `nat`, `mangle`, `raw`
 - From jc ubuntu-18.04: `filter`, `filter_nv`, `filter_line_numbers`, `mangle`, `nat`, `raw`
 - From jc generic: `no_jump`
+- `aosp_fedora27_iptables_save` — netfilter/iptables `tests/shell/testcases/ipt-save/dumps/fedora27-iptables` (downloaded via android.googlesource.com/platform/external/iptables mirror). **First `iptables-save` format fixture in the corpus** — the existing 13 jc files are all `iptables -L` table-by-table-list output; this is the multi-table single-dump format with `*mangle/*raw/*nat/*filter` headers, chain definitions (`:CHAIN POLICY [pkts:bytes]`), and `[N:M] -A CHAIN ...` rule lines including counters. From a Fedora 27 host with firewalld active — captures the zone-based chain naming convention (`PREROUTING_ZONES`, `PRE_FedoraWorkstation`, `_direct` parallel chains) plus libvirt's CHECKSUM rule for `virbr0`. Parser produces `stats.rules: 0` and zero connections — locks in current behavior on this format until parser adds iptables-save support.
+- `aosp_iptables_nft_save_complex` — netfilter/iptables `tests/shell/testcases/nft-only/0010-iptables-nft-save.txt`. iptables-save format produced via the nft backend (xtables-nft-multi). Distinct rule shapes the existing fixtures don't have: `--tcp-flags SYN,ACK SYN`, `! --tcp-flags SYN NONE`, `-m ttl --ttl-eq/gt/lt`, `-m pkttype --pkt-type broadcast`, `-j NFLOG --nflog-prefix/group/size/threshold`, multi-comment rules (`-m comment --comment "..."`). Parser extracts 1 connection from a single `-A INPUT -s 1.2.3.4/32 ... -j ACCEPT` line.
+- `aosp_wireless_pptp_helper_save` — netfilter/iptables `tests/shell/testcases/ipt-save/dumps/wireless.txt`. iptables-save (`v1.4.21`, 2017) from a wireless ISP gateway. Distinct features: `-j CT --helper pptp` (connection-tracking PPTP helper extension — only fixture exercising the `CT` target), per-customer `CUST_I15_IN/OUT`/`CUST_I16_IN/OUT` chain naming, GRE-protocol allow rules with multiple customer source IPs (10.35.167.x). **Highest-yield iptables-save fixture for the parser** — multi-saddr GRE rules produce 6 connection records.
   > Round 2 audit removed 4 gist-sourced entries (`dominicbreuker_firewall` — markdown cheatsheet; `hlissner_default`, `polster_sample` — bash scripts; `pirafrank_basic` — shell command snippets). Only canonical `iptables-save` / `iptables -L` command output belongs here.
 
-### `nftables/` — 8 files
+### `nftables/` — 9 files
 - `arch_example` — archlinux svntogit `nftables.conf`
 - `gaelanlloyd_example` — gist/gaelanlloyd/0677759fd4dc0f58e1e7449784bb8903
 - `yoramvandevelde_init_rules` — yoramvandevelde/nftables-example
 - `aborrero_ruleset`, `aborrero_filter_forward`, `aborrero_filter_input`, `aborrero_filter_output`, `aborrero_filter_sets` — aborrero/nftables-managed-with-git `nft_ruleset/` (split-file production-style ruleset)
+- `aosp_nft_native_advanced` — netfilter/iptables `tests/shell/testcases/nft-only/0010-nft-native.txt`. **First fixture exercising rich nft match expressions** — `ip ttl > 2`, `ip ttl != 255`, `meta pkttype broadcast`/`!= host`, multiple `tcp flags syn / syn,rst,ack,fin` shapes (none of the 8 existing fixtures have `ip ttl` or `meta pkttype`), inline `comment "..."` annotations on rules, and `tcp sport 1024-65535 tcp dport 443 tcp flags syn / syn,ack` multi-clause matches. Parser extracts 1 connection from a `ip saddr 1.2.3.4 tcp dport 23 accept` line.
 
 ### `ps_output/` — 8 files
 - `jc_ubuntu_ps_axu`, `jc_ubuntu_ps_ef`, `jc_centos_ps_axu`, `jc_centos_ps_ef`
@@ -400,4 +404,5 @@ These gaps are genuine — either the file is private by convention (history fil
 - [googleapis/google-auth-library-python](https://github.com/googleapis/google-auth-library-python) — Apache-2.0 — `application_default_credentials.json` test fixtures
 - [git/git](https://github.com/git/git) — GPL-2.0 — `.git-credentials` canonical format (from `t/t0302-credential-store.sh`); also `contrib/credential/netrc/test.netrc` netrc fixture
 - [prometheus/mysqld_exporter](https://github.com/prometheus/mysqld_exporter) — Apache-2.0 — multi-section `client.cnf` test fixture (`config/testdata/client.cnf`)
+- [netfilter/iptables](https://git.netfilter.org/iptables/) (mirrored at android.googlesource.com/platform/external/iptables) — GPL-2.0 — `tests/shell/testcases/{ipt-save/dumps,nft-only}/` real iptables-save and nft-native dumps (firewalld zones, PPTP CT helper, complex --tcp-flags/TTL/NFLOG rules, ip-ttl/meta-pkttype matches)
 - Various GitHub gists — per-file attribution above

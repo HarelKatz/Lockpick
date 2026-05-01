@@ -1,0 +1,85 @@
+{
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": null,
+      "raw_line": "-A INPUT -s 10.35.167.45/32 -p gre -j L_ACCEPT",
+      "src_ip": "10.35.167.45",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": null,
+      "raw_line": "-A INPUT -s 10.35.167.46/32 -p gre -j L_ACCEPT",
+      "src_ip": "10.35.167.46",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": null,
+      "raw_line": "-A INPUT -s 10.78.129.130/32 -p tcp -m tcp --dport 5666 -j L_ACCEPT",
+      "src_ip": "10.78.129.130",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": null,
+      "raw_line": "-A INPUT -s 168.209.255.106/32 -p gre -j L_ACCEPT",
+      "src_ip": "168.209.255.106",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": null,
+      "raw_line": "-A INPUT -s 168.209.255.75/32 -p gre -j L_ACCEPT",
+      "src_ip": "168.209.255.75",
+      "src_user": null,
+      "timestamp": null
+    },
+    {
+      "auth_method": null,
+      "connection_type": "unknown",
+      "credential_fingerprint": null,
+      "direction_context": "from_src_logs",
+      "dst_ip": "154.73.34.12",
+      "dst_user": null,
+      "raw_line": "-A CUST_I16_OUT -d 154.73.34.12/32 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -m multiport --dports 25 -j L_ACCEPT",
+      "src_ip": "__upload_host__",
+      "src_user": null,
+      "timestamp": null
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "rules": 6
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}
