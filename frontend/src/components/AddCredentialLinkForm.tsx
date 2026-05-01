@@ -2,7 +2,7 @@
  * AddCredentialLinkForm — inline form for attaching an existing credential
  * to a host. Rendered directly inside the credential card (no modal).
  */
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { CredentialLink, Host } from '../types'
 import { createCredentialLink } from '../api/credentials'
 import { RELATIONSHIP_TYPES } from '../constants/credentialLink'
@@ -22,13 +22,19 @@ export default function AddCredentialLinkForm({ credentialId, hosts, onAdded, on
   const [fileSource, setFileSource] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  // Synchronous guard against rapid double-submits — React's setLoading is
+  // async, so the button's `disabled` flag isn't reliable between clicks
+  // fired in the same tick.
+  const submittingRef = useRef(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (submittingRef.current) return
     if (!hostId) {
       setError('Select a host.')
       return
     }
+    submittingRef.current = true
     setError(null)
     setLoading(true)
     try {
@@ -43,6 +49,7 @@ export default function AddCredentialLinkForm({ credentialId, hosts, onAdded, on
     } catch {
       setError('Failed to add link.')
     } finally {
+      submittingRef.current = false
       setLoading(false)
     }
   }
