@@ -15,12 +15,22 @@ SSH pivot tracker for red teams. Ingests raw evidence (private keys, `authorized
 
 ## Pyright LSP — Tagged-Hint False Positives
 
-Pyright emits "tagged hints" (e.g. `★ "X is not accessed"`) for symbols it considers unused. These **cannot be suppressed per-line** — `# pyright: ignore` only handles rule-based errors, not tagged hints (see [pyright #10132](https://github.com/microsoft/pyright/issues/10132)). The hints are left active globally; treat the following patterns as known false positives and ignore the hint when it fires:
+**Rule: a `★ "X is not accessed"` hint is not actionable on its own.** It is a tagged hint, not a diagnostic, and cannot be suppressed — `# pyright: ignore` does nothing for tagged hints (see [pyright #10132](https://github.com/microsoft/pyright/issues/10132)). When this hint fires on a protected pattern below, leave the code untouched and do not narrate the hint in your reply.
 
-- **Side-effect imports** marked `# noqa: F401` — e.g. `import models` in `main.py` triggers SQLAlchemy `Base.metadata` registration before Alembic runs. The symbol is "unused" by design.
-- **FastAPI lifespan and dependency-injection parameters** — e.g. `lifespan(app: FastAPI)`, route-handler `Depends(...)` params. The contract requires the parameter even when the body doesn't reference it.
+**Protected patterns — never delete, rename, alias, or "fix" on the basis of a tagged hint:**
 
-Real diagnostics (`reportMissingImports`, type errors, etc.) still surface as ✘/⚠ — pay attention to those. New `★ "X is not accessed"` hints on patterns NOT listed above are worth investigating before dismissing.
+- **Side-effect import** `import models  # noqa: F401` in `backend/main.py` — registers SQLAlchemy `Base.metadata` before Alembic runs. Removing it breaks migrations.
+- **FastAPI lifespan parameter** `lifespan(app: FastAPI)` in `backend/main.py` — required by FastAPI's lifespan contract even when the body doesn't reference `app`.
+- **Route-handler `Depends(...)` parameters** — e.g. `db: Session = Depends(get_db)` in `backend/routers/*.py`. The parameter exists to trigger DI; the body is not required to reference it.
+
+**Forbidden when the only signal is a tagged hint on one of the above:**
+- Deleting the import or parameter
+- Renaming to `_app` / `_db` / any underscore-prefixed alias
+- Adding `del app`, `_ = app`, or any throwaway reference
+- Adding `# pyright: ignore[...]`, `# type: ignore`, or new `# noqa` comments (the existing `# noqa: F401` on `import models` stays — do not add others)
+- Moving the import under `if TYPE_CHECKING:`
+
+Real diagnostics (`reportMissingImports`, type errors — ✘/⚠) still matter. A tagged hint on a pattern NOT listed above is worth a closer look, but it is still not grounds for deletion without confirming at runtime that the symbol is unused.
 
 ## Git Commits
 
