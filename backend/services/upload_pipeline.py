@@ -493,6 +493,7 @@ def process_single_file(
             timestamp=ts,
             raw_line=conn_data.raw_line,
             source_file=safe_name,
+            parser_file_type=metadata.file_type,
             created_at=_now(),
         )
         db.add(conn_rec)
@@ -533,6 +534,7 @@ def process_single_file(
                 direction_context="from_src_logs",
                 raw_line=raw,
                 source_file=safe_name,
+                parser_file_type=metadata.file_type,
                 created_at=_now(),
             ))
             new_connections += 1

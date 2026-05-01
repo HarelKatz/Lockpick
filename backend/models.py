@@ -184,6 +184,7 @@ class ConnectionRecord(Base):
     timestamp = Column(TZDateTime, nullable=True)
     raw_line = Column(Text, nullable=True)
     source_file = Column(String(512), nullable=False)
+    parser_file_type = Column(String(64), nullable=True)
     created_at = Column(TZDateTime, nullable=False, default=_now)
 
     operation = relationship("Operation", back_populates="connection_records")

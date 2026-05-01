@@ -321,6 +321,7 @@ class ConnectionRecordRead(BaseModel):
     timestamp: Optional[datetime]
     raw_line: Optional[str]
     source_file: str
+    parser_file_type: Optional[str] = None
     created_at: datetime
 
 
@@ -337,7 +338,11 @@ class UploadFileInfo(BaseModel):
 # ─── Graph ────────────────────────────────────────────────────────────────────
 
 class EvidenceItem(BaseModel):
-    type: Literal["key_match", "connection_log", "bash_history", "known_hosts"]
+    type: Literal[
+        "key_match", "connection_log",
+        "bash_history", "known_hosts",
+        "arp", "ip_neigh", "iptables", "nftables",
+    ]
     detail: str
     credential_id: Optional[str] = None
     credential_fingerprint: Optional[str] = None
@@ -490,6 +495,7 @@ class ExportConnection(BaseModel):
     timestamp: Optional[datetime]
     raw_line: Optional[str]
     source_file: str
+    parser_file_type: Optional[str] = None
     created_at: datetime
 
 

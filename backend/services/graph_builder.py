@@ -16,21 +16,37 @@ from schemas import (
 # Confidence ranking for comparison
 _CONFIDENCE_RANK = {"confirmed": 2, "observed": 1, "indicator": 0}
 
-# Source-file substrings that mark a connection record as an "indicator" rather
-# than an observed connection (no server-side authentication evidence).
-_INDICATOR_SOURCES = ("bash_history", "known_hosts")
+# Authoritative — registry keys (parsers/registry.py) whose ConnectionRecords
+# represent indicator-only evidence (no proof of an actual SSH connection).
+# See AGENT.md Architecture Rule #25. Note: `ssh_config` is intentionally
+# omitted — pattern-match rows carry parser_file_type="ssh_config" but stay at
+# observed-tier confidence (a config alias does at least imply someone wrote
+# `ssh <name>` in their config, which is stronger than a passive ARP cache).
+_INDICATOR_PARSER_TYPES = frozenset({
+    "bash_history", "known_hosts",
+    "arp", "ip_neigh", "iptables", "nftables",
+})
+
+# Legacy: pre-`parser_file_type` substring fallback for rows persisted before
+# the column existed. Do NOT add new entries — extend `_INDICATOR_PARSER_TYPES`
+# instead.
+_LEGACY_INDICATOR_SOURCES = ("bash_history", "known_hosts")
 
 
 def _classify_connection_evidence(record: ConnectionRecord) -> tuple[str, str]:
     """Return (evidence_type, confidence) for a ConnectionRecord.
 
-    Rules (in priority order):
-    - bash_history / known_hosts source → indicator
-    - from_dst_logs + credential match → confirmed
-    - everything else → observed
+    Priority:
+      1. parser_file_type in _INDICATOR_PARSER_TYPES → indicator (authoritative)
+      2. legacy: source_file substring in _LEGACY_INDICATOR_SOURCES → indicator
+      3. from_dst_logs + credential match → confirmed
+      4. otherwise → observed
     """
+    pft = record.parser_file_type
+    if isinstance(pft, str) and pft in _INDICATOR_PARSER_TYPES:
+        return pft, "indicator"
     source_file = record.source_file or ""
-    for indicator_src in _INDICATOR_SOURCES:
+    for indicator_src in _LEGACY_INDICATOR_SOURCES:
         if indicator_src in source_file:
             return indicator_src, "indicator"
     if record.direction_context == "from_dst_logs" and record.credential_id:

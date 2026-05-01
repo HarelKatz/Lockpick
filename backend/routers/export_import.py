@@ -210,6 +210,7 @@ def import_op(body: ImportRequest, db: Session = Depends(get_db)):
             timestamp=c.timestamp,
             raw_line=c.raw_line,
             source_file=c.source_file,
+            parser_file_type=c.parser_file_type,
             created_at=c.created_at,
         ))
 

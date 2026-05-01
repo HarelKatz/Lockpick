@@ -100,6 +100,7 @@ def apply_patterns_to_host(db: Session, host: Host) -> int:
             direction_context="from_src_logs",
             raw_line=raw,
             source_file="ssh_config_pattern",
+            parser_file_type="ssh_config",
             created_at=datetime.now(timezone.utc),
         ))
         created += 1

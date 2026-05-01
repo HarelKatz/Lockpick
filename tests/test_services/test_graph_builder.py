@@ -65,6 +65,7 @@ def _make_conn(
     direction_context: str = "from_dst_logs",
     source_file: str = "auth.log",
     credential_id: str | None = None,
+    parser_file_type: str | None = None,
 ) -> ConnectionRecord:
     conn = ConnectionRecord(
         op_id=op_id,
@@ -76,6 +77,7 @@ def _make_conn(
         source_file=source_file,
         connection_type="ssh",
         credential_id=credential_id,
+        parser_file_type=parser_file_type,
     )
     db.add(conn)
     db.flush()
@@ -168,6 +170,132 @@ def test_known_hosts_indicator(db_session):
     assert len(result.edges) == 1
     ev = result.edges[0].evidence[0]
     assert ev.type == "known_hosts"
+    assert ev.confidence == "indicator"
+
+
+def test_arp_indicator(db_session):
+    op = _make_op(db_session)
+    host_a = _make_host(db_session, op.id, "hostA")
+    host_b = _make_host(db_session, op.id, "hostB")
+    _make_conn(
+        db_session, op.id, host_a.id, host_b.id,
+        direction_context="from_src_logs",
+        source_file="arp_dump.txt",
+        parser_file_type="arp",
+    )
+
+    result = build_graph(db_session, op.id)
+    assert len(result.edges) == 1
+    ev = result.edges[0].evidence[0]
+    assert ev.type == "arp"
+    assert ev.confidence == "indicator"
+
+
+def test_ip_neigh_indicator(db_session):
+    op = _make_op(db_session)
+    host_a = _make_host(db_session, op.id, "hostA")
+    host_b = _make_host(db_session, op.id, "hostB")
+    _make_conn(
+        db_session, op.id, host_a.id, host_b.id,
+        direction_context="from_src_logs",
+        source_file="ip_neigh.out",
+        parser_file_type="ip_neigh",
+    )
+
+    result = build_graph(db_session, op.id)
+    assert len(result.edges) == 1
+    ev = result.edges[0].evidence[0]
+    assert ev.type == "ip_neigh"
+    assert ev.confidence == "indicator"
+
+
+def test_iptables_indicator(db_session):
+    op = _make_op(db_session)
+    host_a = _make_host(db_session, op.id, "hostA")
+    host_b = _make_host(db_session, op.id, "hostB")
+    _make_conn(
+        db_session, op.id, host_a.id, host_b.id,
+        direction_context="from_src_logs",
+        source_file="iptables.save",
+        parser_file_type="iptables",
+    )
+
+    result = build_graph(db_session, op.id)
+    assert len(result.edges) == 1
+    ev = result.edges[0].evidence[0]
+    assert ev.type == "iptables"
+    assert ev.confidence == "indicator"
+
+
+def test_nftables_indicator(db_session):
+    op = _make_op(db_session)
+    host_a = _make_host(db_session, op.id, "hostA")
+    host_b = _make_host(db_session, op.id, "hostB")
+    _make_conn(
+        db_session, op.id, host_a.id, host_b.id,
+        direction_context="from_src_logs",
+        source_file="nft.list",
+        parser_file_type="nftables",
+    )
+
+    result = build_graph(db_session, op.id)
+    assert len(result.edges) == 1
+    ev = result.edges[0].evidence[0]
+    assert ev.type == "nftables"
+    assert ev.confidence == "indicator"
+
+
+def test_parser_file_type_wins_over_legacy_substring(db_session):
+    """parser_file_type is authoritative; substring match in source_file is ignored when column is set."""
+    op = _make_op(db_session)
+    host_a = _make_host(db_session, op.id, "hostA")
+    host_b = _make_host(db_session, op.id, "hostB")
+    _make_conn(
+        db_session, op.id, host_a.id, host_b.id,
+        direction_context="from_src_logs",
+        source_file="bash_history.txt",   # would match legacy fallback
+        parser_file_type="arp",            # but column wins
+    )
+
+    result = build_graph(db_session, op.id)
+    ev = result.edges[0].evidence[0]
+    assert ev.type == "arp"
+    assert ev.confidence == "indicator"
+
+
+def test_non_indicator_parser_file_type_falls_through(db_session):
+    """A parser_file_type not in _INDICATOR_PARSER_TYPES does not auto-promote to indicator."""
+    op = _make_op(db_session)
+    host_a = _make_host(db_session, op.id, "hostA")
+    host_b = _make_host(db_session, op.id, "hostB")
+    _make_conn(
+        db_session, op.id, host_a.id, host_b.id,
+        direction_context="from_dst_logs",
+        source_file="auth.log",
+        parser_file_type="auth_log",
+    )
+
+    result = build_graph(db_session, op.id)
+    ev = result.edges[0].evidence[0]
+    assert ev.type == "connection_log"
+    assert ev.confidence == "observed"
+
+
+def test_legacy_null_parser_file_type_falls_back_to_source_file(db_session):
+    """Rows persisted before the column existed (parser_file_type IS NULL) keep classifying via source_file substring."""
+    op = _make_op(db_session)
+    host_a = _make_host(db_session, op.id, "hostA")
+    host_b = _make_host(db_session, op.id, "hostB")
+    _make_conn(
+        db_session, op.id, host_a.id, host_b.id,
+        direction_context="from_src_logs",
+        source_file=".bash_history",
+        parser_file_type=None,
+    )
+
+    result = build_graph(db_session, op.id)
+    ev = result.edges[0].evidence[0]
+    assert ev.type == "bash_history"
     assert ev.confidence == "indicator"
 
 
