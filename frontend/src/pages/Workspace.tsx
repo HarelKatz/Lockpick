@@ -11,6 +11,7 @@ import type {
 import { useOpWebSocket } from '../hooks/useOpWebSocket'
 import WsStatusIndicator from '../components/WsStatusIndicator'
 import { listHosts, deleteHost } from '../api/hosts'
+import { statusColors, STATUS_LABELS } from '../theme'
 import { listCredentials, deleteCredential, listCredentialLinks, deleteCredentialLink } from '../api/credentials'
 import { listConnections, deleteConnection } from '../api/connections'
 import { listUploads, uploadFileUrl } from '../api/upload'
@@ -121,6 +122,15 @@ function HostCard({ id, host, highlighted, onEdit, onDelete }: HostCardProps) {
           </button>
         </div>
       </div>
+
+      {host.status && (
+        <span
+          className={styles.statusPill}
+          style={{ borderColor: statusColors[host.status], color: statusColors[host.status] }}
+        >
+          {STATUS_LABELS[host.status]}
+        </span>
+      )}
 
       {host.ips.length > 0 && (
         <div className={styles.hostIPs}>

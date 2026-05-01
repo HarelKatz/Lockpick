@@ -282,6 +282,18 @@
   color: var(--text-primary);
 }
 
+.statusPill {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+
 .badge {
   background: var(--bg-surface-3);
   border: 1px solid var(--border);

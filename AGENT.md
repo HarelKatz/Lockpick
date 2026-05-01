@@ -62,8 +62,6 @@ Frontend deficiencies surfaced during testing — not invariant violations, but 
 
 1. **No "Add link" affordance for an existing credential.** The credential card on the Data tab has Edit/Delete/Download for the credential record itself plus Edit/Remove on each existing `CredentialLink`, but no UI path to add a *second* link to the same credential. To attach the same private key as `authorized_key` on a destination host (the configuration that yields a `key_match` evidence type and upgrades the corresponding edge from `observed` to `confirmed`), an operator currently has to re-paste the key value through Add Data → Credential and rely on backend fingerprint dedup — which is not a discoverable or documented flow. Suggested fix: add a `+ Add link` button on each credential card that opens the same host/username/relationship form already used inside Add Data → Credential when its "Link to a host" checkbox is toggled.
 
-2. **Host status not visible on the Data tab host card.** The Edit Host dialog exposes the `status` enum dropdown, and the Graph tab colors the node ring per `theme.statusColors`, but the Data tab host card (`HOSTS` section) shows nickname / IP / users / comment with no surface for status. Operators working on the Data tab can't tell at a glance which hosts are `compromised` vs `target` vs unset. Suggested fix: add a small colored pill (matching the Graph tab's color scheme) next to the host nickname on the Data tab card, rendered only when `host.status !== null`.
-
 ---
 
 ## Document Maintenance Rules
