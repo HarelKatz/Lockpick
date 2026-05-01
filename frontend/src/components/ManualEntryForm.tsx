@@ -2,7 +2,7 @@
  * ManualEntryForm — three sub-forms for adding data manually.
  * Sub-forms: Host | Credential | Connection
  */
-import { useState, useCallback } from 'react'
+import { useRef, useState, useCallback } from 'react'
 
 function isValidAddress(ip: string, addrType: 'ipv4' | 'ipv6' | 'hostname'): boolean {
   if (addrType === 'hostname') return ip.trim().length > 0
@@ -94,8 +94,11 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
     setUsers(prev => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row))
   }
 
+  const submittingRef = useRef(false)
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (submittingRef.current) return
     if (!nickname.trim()) {
       setError('Nickname is required')
       return
@@ -112,6 +115,7 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
       }
     }
     const validUsers = users.filter(u => u.username.trim())
+    submittingRef.current = true
     setError(null)
     setLoading(true)
     try {
@@ -133,6 +137,7 @@ function HostForm({ opId, onSuccess }: { opId: string; onSuccess: () => void }) 
     } catch {
       setError('Failed to create host. Please try again.')
     } finally {
+      submittingRef.current = false
       setLoading(false)
     }
   }
@@ -300,8 +305,11 @@ function CredentialForm({
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
+  const submittingRef = useRef(false)
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (submittingRef.current) return
     if (!value.trim()) {
       setError('Credential value is required')
       return
@@ -310,6 +318,7 @@ function CredentialForm({
       setError('Select a host for the link')
       return
     }
+    submittingRef.current = true
     setError(null)
     setLoading(true)
     try {
@@ -332,6 +341,7 @@ function CredentialForm({
     } catch {
       setError('Failed to save credential. Please try again.')
     } finally {
+      submittingRef.current = false
       setLoading(false)
     }
   }
@@ -525,8 +535,11 @@ function ConnectionForm({
     setDstIp(h && h.ips.length > 0 ? h.ips[0].ip_address : '')
   }
 
+  const submittingRef = useRef(false)
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (submittingRef.current) return
     const resolvedSrcIp = srcIp.trim() || (srcHostId ? (hosts.find(h => h.id === srcHostId)?.ips[0]?.ip_address ?? '') : '')
     const resolvedDstIp = dstIp.trim() || (dstHostId ? (hosts.find(h => h.id === dstHostId)?.ips[0]?.ip_address ?? '') : '')
 
@@ -538,6 +551,7 @@ function ConnectionForm({
       setError('Destination IP is required (or select a known host with an IP)')
       return
     }
+    submittingRef.current = true
     setError(null)
     setLoading(true)
     try {
@@ -558,6 +572,7 @@ function ConnectionForm({
     } catch {
       setError('Failed to add connection. Please try again.')
     } finally {
+      submittingRef.current = false
       setLoading(false)
     }
   }

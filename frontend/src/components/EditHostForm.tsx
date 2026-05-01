@@ -2,7 +2,7 @@
  * EditHostForm — pre-filled nickname/comment; IPs managed inline with
  * immediate API calls (add/remove without waiting for form submit).
  */
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { statusColors, STATUS_LABELS } from '../theme'
 
 type AddrType = 'ipv4' | 'ipv6' | 'hostname'
@@ -134,12 +134,16 @@ export default function EditHostForm({ host, opId, onSaved, onClose }: Props) {
     }
   }
 
+  const submittingRef = useRef(false)
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (submittingRef.current) return
     if (!nickname.trim()) {
       setError('Nickname is required.')
       return
     }
+    submittingRef.current = true
     setError(null)
     setLoading(true)
     try {
@@ -168,6 +172,7 @@ export default function EditHostForm({ host, opId, onSaved, onClose }: Props) {
     } catch {
       setError(isCreate ? 'Failed to create host.' : 'Failed to save changes.')
     } finally {
+      submittingRef.current = false
       setLoading(false)
     }
   }

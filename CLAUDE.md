@@ -164,6 +164,32 @@ Key variables: `--text-primary`, `--text-muted`, `--bg-surface`, `--bg-surface-2
 
 Use CSS modules (`.module.css` alongside the component) — not global styles.
 
+### Create-form double-submit guard
+
+Forms that POST a non-idempotent create (`createHost`, `createCredential`, `createCredentialLink`, `createConnection`, etc.) must guard their submit handler with a `useRef`-based flag — the `disabled={loading}` attribute is React-state-driven and async, so rapid clicks in the same tick all see `loading=false` and dispatch concurrent POSTs (a stress test confirmed 5 clicks → 5 duplicate links). Pattern:
+
+```tsx
+const submittingRef = useRef(false)
+
+async function handleSubmit(e: React.FormEvent) {
+  e.preventDefault()
+  if (submittingRef.current) return
+  // ...validations that early-return without flipping the ref...
+  submittingRef.current = true
+  setLoading(true)
+  try {
+    await createX(...)
+    onSuccess()
+  } catch { setError(...) }
+  finally {
+    submittingRef.current = false
+    setLoading(false)
+  }
+}
+```
+
+Pure-edit forms (PATCH/PUT only) don't need this — repeated identical updates are idempotent.
+
 ## Repository Layout
 
 ```
