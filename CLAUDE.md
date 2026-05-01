@@ -142,7 +142,7 @@ git diff real_examples/     # skim for unexpected deltas
 git add real_examples/
 ```
 
-Samples for future-phase parsers (Phase 17–19) are staged in `real_examples/` but skipped by both layers until their parser is registered in `backend/parsers/registry.py`. Registering a new parser auto-lights-up its samples.
+Samples for future-phase parsers are staged in `real_examples/` but skipped by both layers until their parser is registered in `backend/parsers/registry.py`. Registering a new parser auto-lights-up its samples.
 
 ## Frontend Conventions
 
@@ -206,6 +206,7 @@ backend/
 │   └── lockpick_collect.sh  # Byte-identical per op (Architecture Rule #21)
 ├── services/        # Graph builder, IP resolver, pivot analysis, shared upload helper
 │   ├── graph_builder.py   # Aggregate CredentialLinks + ConnectionRecords → edge objects
+│   ├── host_merge.py      # merge_hosts() — single relation-mover for manual + auto-merge (Architecture Rule #23)
 │   ├── ip_resolver.py     # Match IPs/hostnames to known hosts (best-effort)
 │   ├── key_utils.py       # Cross-reference fingerprints across an op
 │   ├── pivot_analysis.py  # BFS path finding between hosts
