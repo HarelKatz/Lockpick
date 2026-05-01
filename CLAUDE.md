@@ -4,6 +4,8 @@
 
 SSH pivot tracker for red teams. Ingests raw evidence (private keys, `authorized_keys`, `auth.log`, `known_hosts`, bash history, `/etc/passwd`, `/etc/shadow`, `/etc/ssh/sshd_config`, nmap XML, `/etc/hosts`, sudoers) and builds a relationship graph showing lateral movement paths across an engagement. Runs as a shared web server — single `docker compose up -d`, no external dependencies.
 
+> Human contributors browsing GitHub: see CONTRIBUTING.md for the welcome / commit format / gate.
+
 @AGENT.md
 
 ## Working Style
@@ -47,14 +49,6 @@ scopes: backend, frontend, parsers, docker, schema
 Stage specific files — never `git add .` (risks staging `.env`, keys, or build artifacts).
 
 > AGENT.md maintenance rules live in AGENT.md itself.
-
-## Tech Stack
-
-- **Backend**: Python 3.12, FastAPI, SQLAlchemy ORM, Alembic, uv
-- **Database**: SQLite at `./data/tracker.db`
-- **Frontend**: React 18, Vite, TypeScript, react-force-graph-2d + d3-force (for graph)
-- **Tests**: pytest + httpx (integration tests against real in-memory DB)
-- **Deploy**: Docker Compose (backend + nginx-served frontend)
 
 ## Running Things
 
@@ -194,25 +188,16 @@ Pure-edit forms (PATCH/PUT only) don't need this — repeated identical updates 
 
 ```
 backend/
-├── main.py          # App entry point, CORS, lifespan (runs Alembic on startup)
+├── main.py          # App entry + CORS + lifespan (runs Alembic on startup)
 ├── config.py        # Settings via env vars (pydantic-settings)
 ├── database.py      # SQLAlchemy engine, session factory, Base
 ├── models.py        # ORM models
 ├── schemas.py       # Pydantic request/response models
-├── ws_manager.py    # WebSocket connection manager; broadcast_sync() called after db.commit()
-├── routers/         # One file per resource group (operations, hosts, credentials, connections, graph, upload, collection, search, stats, export_import, activity, ws)
-├── parsers/         # File parsers implementing BaseParser; registry.py maps file_type → class
-├── collection_script/ # Static bash script served by GET /ops/{op_id}/collection-script
-│   └── lockpick_collect.sh  # Byte-identical per op (Architecture Rule #21)
-├── services/        # Graph builder, IP resolver, pivot analysis, shared upload helper
-│   ├── graph_builder.py   # Aggregate CredentialLinks + ConnectionRecords → edge objects
-│   ├── host_merge.py      # merge_hosts() — single relation-mover for manual + auto-merge (Architecture Rule #23)
-│   ├── ip_resolver.py     # Match IPs/hostnames to known hosts (best-effort)
-│   ├── key_utils.py       # Cross-reference fingerprints across an op
-│   ├── pivot_analysis.py  # BFS path finding between hosts
-│   ├── ssh_pattern.py     # ssh_match() SSH glob semantics; apply_patterns_to_host()
-│   ├── upload_pipeline.py # process_single_file() — shared by upload + archive import (Architecture Rule #20)
-│   └── activity.py        # log_activity() — call before db.commit() in all write endpoints
+├── ws_manager.py    # WebSocket manager; broadcast_sync() after db.commit()
+├── routers/         # One file per resource group
+├── parsers/         # File parsers + registry (file_type → class)
+├── collection_script/ # Static bash collection script (Architecture Rule #21)
+├── services/        # graph_builder, ip_resolver, pivot_analysis, upload_pipeline, host_merge, activity, key_utils, ssh_pattern
 └── alembic/         # Migrations
 
 frontend/src/

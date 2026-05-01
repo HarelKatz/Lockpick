@@ -93,7 +93,7 @@ Full interactive docs (Swagger UI + ReDoc) are available at **http://localhost:8
 
 ## Architecture
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for a full architecture overview, data flow diagram, and instructions for adding endpoints and parsers.
+See [AGENT.md](AGENT.md) for architecture rules and the data model. See [CLAUDE.md](CLAUDE.md) for build, test, and contribution conventions.
 
 ## Tech Stack
 
