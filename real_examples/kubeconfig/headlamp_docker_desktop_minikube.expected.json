@@ -1,0 +1,29 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "private_key",
+      "name": "kubeconfig:docker-desktop:client_key",
+      "relationship_type": "found_on_disk",
+      "username": "docker-desktop",
+      "value_length": 1675,
+      "value_prefix": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIB"
+    },
+    {
+      "cred_type": "private_key",
+      "name": "kubeconfig:minikube:client_key",
+      "relationship_type": "found_on_disk",
+      "username": "minikube",
+      "value_length": 1675,
+      "value_prefix": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIB"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "credentials": 2
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "connections_found": [],
+  "credentials_found": [
+    {
+      "cred_type": "password",
+      "name": "kubeconfig:user3:password",
+      "relationship_type": "found_on_disk",
+      "username": "foo",
+      "value_length": 3,
+      "value_prefix": "bar"
+    }
+  ],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "credentials": 1
+  },
+  "sudo_rules_found": [],
+  "warnings": [
+    "User 'user1': client-key-data did not decode to a PEM private key",
+    "User 'user2': client-key-data did not decode to a PEM private key"
+  ]
+}

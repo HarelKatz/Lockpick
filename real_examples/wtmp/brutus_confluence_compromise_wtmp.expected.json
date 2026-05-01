@@ -1,0 +1,14 @@
+{
+  "connections_found": [],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "records_parsed": 0
+  },
+  "sudo_rules_found": [],
+  "warnings": [
+    "File size 11136 is not a multiple of utmp record size 382 — may be truncated or wrong format"
+  ]
+}

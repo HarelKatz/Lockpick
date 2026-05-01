@@ -10,7 +10,7 @@ Organized by `file_type` (matching `backend/parsers/registry.py` keys).
 
 ## Currently-implemented parsers
 
-### `auth_log/` — 9 files
+### `auth_log/` — 10 files
 - `auth.log` — original user-provided sample (pre-existing)
 - `loghub_linux_2k.log` — logpai/loghub `Linux/Linux_2k.log` (2,000-line anonymized Linux auth corpus)
 - `loghub_openssh_2k.log` — logpai/loghub `OpenSSH/OpenSSH_2k.log` (sshd-focused)
@@ -18,8 +18,9 @@ Organized by `file_type` (matching `backend/parsers/registry.py` keys).
 - `masterparser_example` — securityjoes/MasterParser `01-Logs/MasterParser-Example-auth.log`
 - `honeynet_scan29_rh72_secure` — Honeynet Project Scan 29 (`linux-suspended.tar.bz2`), extracted from `/var/log/secure` of the compromised Red Hat 7.2 honeypot (Aug 2003). Tiny (179 B, 2 entries) but a genuine RHEL "secure" log fragment — `xinetd[732]: START: telnet pid=15169 from=193.109.122.5` showing the inetd-era telnet service entry, plus an sshd identification-string-failure event. Distinct from the Debian-style `auth.log` formats already in the corpus.
 - `cfreds_nps2009_ubuntu_810_auth_log` — NIST CFReDS `nps-2009-casper-rw` Ubuntu 8.10 USB image, extracted `/var/log/auth.log` (19 KB, 194 lines). Edge case: the parser counts 194 lines parsed but extracts 0 sshd records — the log is dominated by `gdm-autologin`, `pam_unix(cron:session)`, `su[…]: FAILED su for root`, `sudo: ubuntu : … COMMAND=/bin/bash` events, with no actual sshd connections. Locks in current parser scope (sshd-focused).
-- `cado_aws_eks_secure` — Cado Security AWS EKS Cluster Forensics dataset (`cado_cloud_collector_i-0630822f0d30a09ee_20GB_*.dd`), extracted `/var/log/secure` from the compromised Amazon Linux 2 EKS worker node (Jul 2021). 23 KB, 214 lines, **highest-yield auth_log fixture in the corpus**: parser extracts 2 ConnectionData records — a legitimate `Accepted publickey for ec2-user from 172.31.3.135` (AWS-internal admin via the `castle` key) AND `Accepted publickey for root from 3.81.123.81` (the attacker login matching the `kali@kali` key in `authorized_keys/cado_aws_eks_root_with_attacker_kali`). Also captures the AWS EC2 Instance Connect `AuthorizedKeysCommand /opt/aws/bin/eic_run_authorized_keys ... failed, status 22` events, several "Normal Shutdown, Thank you for playing" Hydra-tool fingerprints, `Invalid user pi` Raspberry-Pi-default brute force, and `reverse mapping checking getaddrinfo … POSSIBLE BREAK-IN ATTEMPT!` DNS-spoofing detection.
+- `cado_aws_eks_secure` — Cado Security AWS EKS Cluster Forensics dataset (`cado_cloud_collector_i-0630822f0d30a09ee_20GB_*.dd`), extracted `/var/log/secure` from the compromised Amazon Linux 2 EKS worker node (Jul 2021). 23 KB, 214 lines: parser extracts 2 ConnectionData records — a legitimate `Accepted publickey for ec2-user from 172.31.3.135` (AWS-internal admin via the `castle` key) AND `Accepted publickey for root from 3.81.123.81` (the attacker login matching the `kali@kali` key in `authorized_keys/cado_aws_eks_root_with_attacker_kali`). Also captures the AWS EC2 Instance Connect `AuthorizedKeysCommand /opt/aws/bin/eic_run_authorized_keys ... failed, status 22` events, several "Normal Shutdown, Thank you for playing" Hydra-tool fingerprints, `Invalid user pi` Raspberry-Pi-default brute force, and `reverse mapping checking getaddrinfo … POSSIBLE BREAK-IN ATTEMPT!` DNS-spoofing detection.
 - `figshare_ubuntu_2204_auth_log_1` — Donnachie/OU "Defaced web server" Figshare dataset (CC-BY-NC-SA 4.0), extracted `/var/log/auth.log.1` from a simulated-defacement Ubuntu 22.04 e-commerce host (Jun 2024). 105 KB, 1097 lines. **First fixture with `Accepted password` events (vs publickey)** — parser extracts 5 ConnectionData records all with `auth_method=password` for the `administrator` user from 10.24.44.100/.1. Captures the full session-open/session-close pairs and `pam_unix(sshd:session): session opened for user administrator(uid=1000)` lines. Distinct from the other auth_log fixtures which are all publickey- or zero-record-shaped.
+- `elastic_examples_aws_ubuntu_filebeat` — elastic/examples `Machine Learning/Security Analytics Recipes/suspicious_login_activity/data/auth.log`. AWS Ubuntu instance (`ip-10-77-20-248`) auth.log capture used as the input dataset for elastic's "suspicious login activity" ML recipe. **Highest-yield auth_log fixture by 45×**: 798 KB, 7121 lines, parser extracts **226 ConnectionData records** across 11 distinct dst_users (`elastic_user_0` through `elastic_user_10` — the dataset is sanitized to anonymize real usernames) and 4 unique src_ips. Mix of `auth_method=publickey` and `auth_method=password`. The dataset captures both the legitimate admin session (with the SSH key fingerprint `RSA SHA256:Kl8kPGZrTiz7g4FO1hyqHdsSBBb5Fge6NWOobN03XJg` in the `Accepted publickey` lines) AND a long invalid-user brute force enumeration (`admin`, `support`, `test`, `ftpuser`, etc).
 
 ### `authorized_keys/` — 7 files
 - `authorized_keys` — original (pre-existing)
@@ -147,10 +148,11 @@ Benign-admin host setup bash_history (1):
 - `cado_aws_eks_cloud_init_users` — same image, `/etc/sudoers.d/90-cloud-init-users`. **Cloud-init drift example**: cloud-init wrote the `ec2-user ALL=(ALL) NOPASSWD:ALL` rule twice on consecutive boots (the dedup-comment header `# User rules for ec2-user` precedes each instance). Distinct provenance — first `sudoers.d/` drop-in fixture in the corpus.
 - `figshare_ubuntu_2204_main` — Donnachie/OU "Defaced web server" Figshare dataset, `/etc/sudoers` from the Ubuntu 22.04 host. Modern Debian/Ubuntu defaults featuring the **explicit `(ALL:ALL)` group component** (vs the simpler `(ALL)` in older fixtures), plus `Defaults use_pty` (forces sudo-attached PTY for session recording — not present in any earlier sudoers fixture), and the `@includedir /etc/sudoers.d` directive. Parser captures 3 rules (root, %admin, %sudo).
 
-### `wtmp/` — 3 files (binary)
+### `wtmp/` — 4 files (binary)
 - `compromised.wtmp` — franckferman/LastLog-Audit `samples/compromised.wtmp`
 - `cfreds_nps2009_ubuntu_810_wtmp` — NIST CFReDS `nps-2009-casper-rw`, `/var/log/wtmp` from the Ubuntu 8.10 USB image. 4608 B — Ubuntu 8.10 wtmp record format is *not* a multiple of the parser's expected 382-byte size (it's a multiple of 384, the libc6 utmp size). Parser produces `records_parsed: 0` with a "may be truncated or wrong format" warning. Locks in current behavior — surfaces a potential parser-record-size discrepancy that future work may want to fix.
 - `cado_aws_eks_wtmp` — Cado Security AWS EKS Cluster Forensics dataset, `/var/log/wtmp` from the AL2 EKS worker. 3456 B — same size as `compromised.wtmp` but different binary content (records don't align with 382-byte boundaries the same way). Parser produces `records_parsed: 0` (vs `compromised.wtmp`'s 1) — the layout differences across distros are themselves a regression test.
+- `brutus_confluence_compromise_wtmp` — lenardjombo/Brutus `wtmp` (HTB Sherlock challenge artifact: SSH brute-force compromise of a Confluence server on AWS, March 2024). 11136 B — **largest wtmp fixture in the corpus** (3× the size of the existing entries). Same `records_parsed: 0` outcome but a distinct file size in the warning, locking in parser behavior on a fourth distro/runtime layout (Ubuntu on AWS Confluence host).
 
 ---
 
@@ -306,8 +308,10 @@ Original 11 (ubuntu + generic) plus:
 - `google_auth_external_account` — `external_account` type (WIF)
 - `google_auth_external_account_non_gdu` — non-GDU variant
 
-### `kubeconfig/` — 1 file
+### `kubeconfig/` — 3 files
 - `devops_school_skeleton` — gist/devops-school/f8956d4ee208b2519b095ad631eac7a0 (canonical YAML with `apiVersion/clusters/contexts/users`)
+- `k8s_client_js_multi_cluster_mixed_auth` — kubernetes-client/javascript `testdata/kubeconfig.yaml`. Multi-cluster (`cluster1` with `proxy-url: socks5://localhost:1181`, `cluster2` with `insecure-skip-tls-verify: true`), 3 contexts, 3 users with mixed auth: `user1`/`user2` use cert+key data (placeholder strings), `user3` uses bare `username: foo` / `password: bar`. **First kubeconfig fixture exercising the password-auth user path** — parser extracts 1 password credential plus 2 warnings on the placeholder cert-key data.
+- `headlamp_docker_desktop_minikube` — kubernetes-sigs/headlamp `backend/pkg/kubeconfig/test_data/kubeconfig1`. Real local-development kubeconfig with **two genuine RSA private keys** (1675 B each, full PEM-encoded) for the `docker-desktop` and `minikube` users. Parser extracts 2 `private_key` credentials. Also has `extensions:` blocks with `last-update`/`provider`/`version` metadata (minikube convention) — **first fixture exercising the kubeconfig credential-extraction path** (devops_school skeleton has no key data).
 
 ### `boto/` — 2 files
 - `garnaat_eucalyptus_credentials` — gist/garnaat/1284158 (Eucalyptus-flavored `[Credentials]` block)
@@ -358,4 +362,8 @@ Original 11 (ubuntu + generic) plus:
 - [git/git](https://github.com/git/git) — GPL-2.0 — `.git-credentials` canonical format (from `t/t0302-credential-store.sh`); also `contrib/credential/netrc/test.netrc` netrc fixture
 - [prometheus/mysqld_exporter](https://github.com/prometheus/mysqld_exporter) — Apache-2.0 — multi-section `client.cnf` test fixture (`config/testdata/client.cnf`)
 - [netfilter/iptables](https://git.netfilter.org/iptables/) (mirrored at android.googlesource.com/platform/external/iptables) — GPL-2.0 — `tests/shell/testcases/{ipt-save/dumps,nft-only}/` real iptables-save and nft-native dumps (firewalld zones, PPTP CT helper, complex --tcp-flags/TTL/NFLOG rules, ip-ttl/meta-pkttype matches)
+- [elastic/examples](https://github.com/elastic/examples) — Apache-2.0 — AWS Ubuntu auth.log capture used as input data for the "suspicious login activity" ML recipe (`Machine Learning/Security Analytics Recipes/suspicious_login_activity/data/auth.log`)
+- [kubernetes-client/javascript](https://github.com/kubernetes-client/javascript) — Apache-2.0 — kubeconfig YAML test fixtures with multi-cluster + mixed-auth shapes (`testdata/kubeconfig.yaml`)
+- [kubernetes-sigs/headlamp](https://github.com/kubernetes-sigs/headlamp) — Apache-2.0 — kubeconfig fixtures with real PEM-encoded RSA private keys (`backend/pkg/kubeconfig/test_data/kubeconfig1`)
+- [lenardjombo/Brutus](https://github.com/lenardjombo/Brutus) — HTB Sherlock challenge artifact: AWS Confluence host wtmp from a real SSH brute-force compromise scenario
 - Various GitHub gists — per-file attribution above
