@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A web-based tool for red teams to collaboratively organize SSH credentials, host relationships, and pivot paths during operations. Runs as a shared server — the entire team accesses it, and any data one person adds is visible to everyone on their next query. The core value is **visualizing lateral movement opportunities** by correlating SSH keys, connection logs, and host data across an engagement.
+A web-based tool for red teams to collaboratively organize SSH credentials, host relationships, and pivot paths during operations. Runs as a shared server — the entire team accesses it, and any data one person adds is visible to everyone on their next query. The core value is **credential + pivot intelligence**: correlating SSH keys, harvested credentials (cloud, database, and application secrets), connection logs, and host data into a graph that surfaces lateral-movement opportunities across an engagement.
 
 **Portability:** This tool may run on a VPS for a week, get zipped up, moved to another box, and resumed. All state lives in `./data/` — the only thing to back up or move. No external dependencies.
 
@@ -93,7 +93,12 @@ Full stack: CRUD APIs, force-graph visualization, BFS pivot analysis, global sea
 
 ### Phase 20 — Graph Path Highlight + Time Slider
 
-Shift+click a second node dims everything not on a BFS path between the two selected hosts (uses existing `POST /ops/{op_id}/graph/paths`). Time slider at the bottom of GraphView filters edges by `ConnectionRecord.timestamp`; key-match edges always shown. Pure frontend state — no API changes.
+Path highlighting **already shipped** via the PathFinder panel (`PathFinder.tsx` → `GraphView.handleHighlightPath` → `pathFilter`/`pathHighlight` dimming in `GraphCanvas`, using `POST /ops/{op_id}/graph/paths`). Two pieces remain:
+
+- **Shift+click trigger** — selecting a second node with Shift held highlights the BFS path between the two selected hosts; a second entry path to the existing PathFinder highlight (no new API).
+- **Time slider** — a slider at the bottom of GraphView filters edges by `ConnectionRecord.timestamp`; key-match edges always shown.
+
+Pure frontend state — no API changes.
 
 ---
 
