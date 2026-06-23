@@ -54,7 +54,7 @@ A web-based tool for red teams to collaboratively organize SSH credentials, host
 
 Behavioral defects awaiting a fix. Entries leave this section once the fix ships; any post-fix invariants the fix introduces belong in **Architecture Rules**.
 
-*(none currently)*
+- **`createHostNote` double-submit race** — the "Add note" action in `HostDetailSidebar` (onClick + Ctrl/Cmd+Enter) is a non-idempotent create guarded only by React state (`setNoteAdding`), not a `useRef` flag. Rapid double-activation in the same tick dispatches concurrent POSTs → duplicate notes. Fix: apply the `useRef` double-submit guard per CLAUDE.md → Frontend Conventions.
 
 ---
 
