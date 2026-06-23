@@ -87,7 +87,7 @@ Full stack: CRUD APIs, force-graph visualization, BFS pivot analysis, global sea
 
 ### Phase 19 — Engagement Report Export
 
-`GET /ops/{op_id}/report?format=markdown|html` — structured engagement summary (op metadata, host inventory, credential inventory, pivot paths via `find_paths`, sudo escalation summary, activity timeline). Markdown primary; HTML wraps it in a minimal printable template. Password hashes and private key material redacted to first 8 chars + `...`; fingerprints shown in full.
+`GET /ops/{op_id}/report?format=markdown|html` — structured engagement summary (op metadata, host inventory, credential inventory, pivot paths via `find_paths`, sudo escalation summary, activity timeline). Markdown primary; HTML wraps it in a minimal printable template. Full credential values are shown — Lockpick never redacts, including in reports (trusted-network / no-auth model, Rule #4).
 
 ---
 
