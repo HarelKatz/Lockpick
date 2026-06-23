@@ -2,25 +2,11 @@
 
 Lockpick is a single-team-internal red team tool — PRs are welcome, but the canonical engineering reference lives in [CLAUDE.md](CLAUDE.md) (build, test, conventions) and [AGENT.md](AGENT.md) (architecture invariants, data model, roadmap).
 
-## Commit format
+## Commit format & pre-commit gate
 
-```
-type(scope): short description
-
-types: feat, fix, refactor, test, docs, chore
-scopes: backend, frontend, parsers, docker, schema
-```
+Both are defined canonically in **[CLAUDE.md → Git Commits](CLAUDE.md#git-commits)**: the conventional `type(scope): …` format, and the gate (`make test` must pass; `cd frontend && npm run build` must succeed for code changes; `.md`-only changes may skip the build gate).
 
 Stage specific files — never `git add .` (risks staging `.env`, keys, or build artifacts).
-
-## Pre-commit gate
-
-```bash
-make test                       # must pass
-cd frontend && npm run build    # must succeed
-```
-
-Doc-only changes (`.md`) can skip the build gate.
 
 ## Where to look
 
