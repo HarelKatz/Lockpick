@@ -10,6 +10,16 @@ It is designed to run as a shared server in a trusted network. Every operator re
 
 **Core value:** visualizing lateral movement opportunities by correlating SSH keys, connection logs, and host data across an engagement.
 
+## Features
+
+- **One-click evidence collection** — generate a sudo-free bash collector (`GET /ops/{op_id}/collection-script`), run it on a host, and upload the resulting tarball (`POST .../import-archive`) for bulk ingest
+- **44 parsers across 49 evidence file types** — SSH artifacts, system files (`passwd`/`shadow`/`sshd_config`/…), command output (`netstat`/`ss`/`iptables`/…), and credential files (cloud, database, and app secrets)
+- **Key-fingerprint pivot detection** — correlates private keys, `authorized_keys`, and connection logs into confirmed pivots
+- **BFS pivot path-finding** — shortest credential-backed path between two hosts (`POST /ops/{op_id}/graph/paths`)
+- **Host merge** — collapse duplicate or placeholder hosts, manually or automatically
+- **Search, activity log, live updates** — global search, an audit timeline, and WebSocket push so the whole team sees new data instantly
+- **Export / import** — snapshot an operation and move it between servers
+
 ## Quick Start
 
 ```bash
@@ -20,6 +30,8 @@ This builds images, starts containers in the background, and attaches to logs. `
 
 - Frontend: **http://localhost:3000**
 - Backend API: **http://localhost:8000**
+
+> **buildx/bake error?** If `make run` fails with a Docker buildx or bake error, run `cp .env.example .env` (sets `COMPOSE_BAKE=false`) and retry.
 
 ### Other commands
 
@@ -44,7 +56,6 @@ make test     # run the pytest suite
 ```bash
 cd backend
 uv sync
-mkdir -p ../data
 uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
 # or: make dev-backend
 ```
@@ -94,6 +105,10 @@ Full interactive docs (Swagger UI + ReDoc) are available at **http://localhost:8
 ## Architecture
 
 See [AGENT.md](AGENT.md) for architecture rules and the data model. See [CLAUDE.md](CLAUDE.md) for build, test, and contribution conventions.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the commit format and the pre-commit gate.
 
 ## Tech Stack
 
