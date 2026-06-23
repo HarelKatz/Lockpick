@@ -156,11 +156,11 @@ Benign-admin host setup bash_history (1):
 
 ---
 
-## Phase 17 — System file parsers
+## System file parsers
 
 ### `secure/` — 2 symlinks
-RHEL/CentOS auth log — format-identical to `auth_log/` per AGENT.md Phase 17
-(parser is a pure alias). Directory contains symlinks to `../auth_log/` files.
+RHEL/CentOS auth log — format-identical to `auth_log/` (the `secure` parser is a
+pure alias). Directory contains symlinks to `../auth_log/` files.
 
 ### `syslog/` — 2 files
 - `loghub_linux_2k.log` — logpai/loghub `Linux/Linux_2k.log`
@@ -173,9 +173,9 @@ RHEL/CentOS auth log — format-identical to `auth_log/` per AGENT.md Phase 17
 - 9 from franckferman/LastLog-Audit `samples/`: `apt_cozy_bear`, `apt_lazarus`,
 `brute_force`, `clean_server`, `compromised`, `insider_threat`,
 `pentest_engagement`, `supply_chain`, `timestomped`.
-- `cfreds_nps2009_ubuntu_810_lastlog` — NIST CFReDS `nps-2009-casper-rw`, `/var/log/lastlog` from the Ubuntu 8.10 USB image (292 KB). Future-phase fixture: no `lastlog` parser is registered yet (Phase 16), so it sits as forward-staged corpus — `tests/test_real_examples/` skips files whose `file_type` isn't in the registry.
-- `cado_aws_eks_lastlog` — Cado Security AWS EKS Cluster Forensics dataset, `/var/log/lastlog` from the AL2 EKS worker (292 KB, sparse — actual content density is much smaller, file is mostly zeroed out for unused UID slots). Forward-staged for Phase 16 like the CFReDS one.
-- `figshare_ubuntu_2204_lastlog` — Donnachie/OU "Defaced web server" Figshare dataset, `/var/log/lastlog` from the Ubuntu 22.04 host (286 KB). Modern Ubuntu lastlog format. Forward-staged for Phase 16.
+- `cfreds_nps2009_ubuntu_810_lastlog` — NIST CFReDS `nps-2009-casper-rw`, `/var/log/lastlog` from the Ubuntu 8.10 USB image (292 KB). The `lastlog` parser is registered; this image is almost entirely sparse/zeroed (unused UID slots), so it parses to `records_parsed: 0, uids_with_login: 0` — a zero-record edge case for the binary lastlog format.
+- `cado_aws_eks_lastlog` — Cado Security AWS EKS Cluster Forensics dataset, `/var/log/lastlog` from the AL2 EKS worker (292 KB, sparse — mostly zeroed out for unused UID slots). Parses to `records_parsed: 2, uids_with_login: 2` (two real logins survive the sparse layout).
+- `figshare_ubuntu_2204_lastlog` — Donnachie/OU "Defaced web server" Figshare dataset, `/var/log/lastlog` from the Ubuntu 22.04 host (286 KB). Modern Ubuntu lastlog format; parses to `records_parsed: 1, uids_with_login: 1`.
 
 ### `last_output/` — 14 files (all from kellyjonbrazil/jc test fixtures)
 - `jc_centos_last`, `jc_centos_last_crash`, `jc_centos_last_wF`, `jc_centos_last_wixF`, `jc_centos_last_w`, `jc_centos_lastb`
@@ -207,14 +207,14 @@ All from canonical/netplan upstream `examples/`: `bridge`, `vlan`, `bonding`, `s
 
 ---
 
-## Phase 18 — Command output parsers
+## Command output parsers
 
 Most of these come from kellyjonbrazil/jc (`tests/fixtures/`), a CLI-output-to-JSON
 parser library that maintains clean real-command-output fixtures per distro.
 
 ### `ip_addr/` — 11 files
-- `jc_ubuntu_ifconfig`, `jc_centos_ifconfig` — AGENT.md Phase 18 says the `ip_addr`
-  parser accepts `ip addr show` OR `ifconfig -a`. These are the `ifconfig` variant.
+- `jc_ubuntu_ifconfig`, `jc_centos_ifconfig` — the `ip_addr` parser accepts
+  `ip addr show` OR `ifconfig -a`. These are the `ifconfig` variant.
 - `jc_ubuntu_1604_ifconfig` — kellyjonbrazil/jc `ubuntu-16.04/ifconfig.out`
 - `jc_osx_1014_ifconfig`, `jc_osx_1014_ifconfig2`, `jc_osx_1011_ifconfig`, `jc_osx_1011_ifconfig2` — jc macOS variants
 - `jc_freebsd12_ifconfig`, `jc_freebsd12_ifconfig2`, `jc_freebsd12_ifconfig3`, `jc_freebsd12_ifconfig4` — jc FreeBSD 12 (tests extra-field handling)
@@ -243,7 +243,7 @@ Original 11 (ubuntu + generic) plus:
 - From jc centos-7.7: `filter`, `filter-nv`, `filter_line_numbers`, `nat`, `mangle`, `raw`
 - From jc ubuntu-18.04: `filter`, `filter_nv`, `filter_line_numbers`, `mangle`, `nat`, `raw`
 - From jc generic: `no_jump`
-- `aosp_fedora27_iptables_save` — netfilter/iptables `tests/shell/testcases/ipt-save/dumps/fedora27-iptables` (downloaded via android.googlesource.com/platform/external/iptables mirror). **First `iptables-save -c` (counter-preserved) fixture in the corpus** — every `-A` rule is prefixed with `[pkts:bytes]` packet/byte counters. From a Fedora 27 host with firewalld active — captures the zone-based chain naming convention (`PREROUTING_ZONES`, `PRE_FedoraWorkstation`, `_direct` parallel chains) plus libvirt's CHECKSUM rule for `virbr0`. Parser produces `stats.rules: 0` because of the counter-prefix dispatch bug tracked as Known Bug #3 in AGENT.md — the bug fix should restore non-zero rule extraction here.
+- `aosp_fedora27_iptables_save` — netfilter/iptables `tests/shell/testcases/ipt-save/dumps/fedora27-iptables` (downloaded via android.googlesource.com/platform/external/iptables mirror). **First `iptables-save -c` (counter-preserved) fixture in the corpus** — every `-A` rule is prefixed with `[pkts:bytes]` packet/byte counters. From a Fedora 27 host with firewalld active — captures the zone-based chain naming convention (`PREROUTING_ZONES`, `PRE_FedoraWorkstation`, `_direct` parallel chains) plus libvirt's CHECKSUM rule for `virbr0`. Parser produces `stats.rules: 0`, which is correct here: the `[pkts:bytes]` counter prefix is stripped before dispatch (`_COUNTER_PREFIX_RE` in `iptables.py`), and no rule names a single specific peer IP (only a /24 subnet and a multicast address, both skipped by the specific-host filter).
 - `aosp_iptables_nft_save_complex` — netfilter/iptables `tests/shell/testcases/nft-only/0010-iptables-nft-save.txt`. iptables-save format produced via the nft backend (xtables-nft-multi). Distinct rule shapes the existing fixtures don't have: `--tcp-flags SYN,ACK SYN`, `! --tcp-flags SYN NONE`, `-m ttl --ttl-eq/gt/lt`, `-m pkttype --pkt-type broadcast`, `-j NFLOG --nflog-prefix/group/size/threshold`, multi-comment rules (`-m comment --comment "..."`). Parser extracts 1 connection from a single `-A INPUT -s 1.2.3.4/32 ... -j ACCEPT` line.
 - `aosp_wireless_pptp_helper_save` — netfilter/iptables `tests/shell/testcases/ipt-save/dumps/wireless.txt`. iptables-save (`v1.4.21`, 2017) from a wireless ISP gateway. Distinct features: `-j CT --helper pptp` (connection-tracking PPTP helper extension — only fixture exercising the `CT` target), per-customer `CUST_I15_IN/OUT`/`CUST_I16_IN/OUT` chain naming, GRE-protocol allow rules with multiple customer source IPs (10.35.167.x). **Highest-yield iptables-save fixture for the parser** — multi-saddr GRE rules produce 6 connection records.
 
@@ -264,18 +264,12 @@ Original 11 (ubuntu + generic) plus:
 ### `docker_ps/` — 1 file
 - `deanpeterson_ps_a_output` — 97-line real `docker ps -a` output (with `[root@host ~]#` prompt prefix) from an openshift host
 
-### `docker_network/` — 0 files
-
 ### `ip_neigh/` — 1 file
 - `wsl_live_capture.out` — live capture of `ip neigh show` from this WSL2 environment (RFC1918 only: Docker bridge + WSL gateway; no hostnames, no public IPs)
 
-### `kubectl_pods/` — 2 files
-- `so0k_kubectl_output` — gist/so0k/42313dbb3b547a0f51a547bb968696ba
-- `devops_school_kubectl_ref` — gist/devops-school/98e78b62b0cca22158aef9ef90daa6af
-
 ---
 
-## Phase 19 — Credential file parsers
+## Credential file parsers
 
 ### `netrc/` — 4 files
 - `tpope_sample` — gist/tpope/4247721
@@ -350,9 +344,9 @@ Original 11 (ubuntu + generic) plus:
 - [EfeEmirYuce/Cowrie-Honeypot-Log-Analysis-Engine](https://github.com/EfeEmirYuce/Cowrie-Honeypot-Log-Analysis-Engine) — ~130 MB of 2024 Cowrie JSON logs from a South Africa sensor (selected sessions extracted to `bash_history/cowrie_2024_*`)
 - [0xsha/sweetie-data](https://github.com/0xsha/sweetie-data) — MIT — multi-honeypot capture covering Dec 2019–Feb 2020 (~2.9 GB cowrie JSON across 105 daily logs); selected attacker sessions extracted to `bash_history/cowrie_2020_*` and `authorized_keys/ethos_miner_*`
 - [Honeynet Project — Scan of the Month #29](https://honeynet.onofri.org/scans/scan29/) — Honeynet Project terms permit analysis & redistribution for research. The 102 MB `linux-suspended.tar.bz2` is a VMware-suspended Red Hat 7.2 honeypot compromised on 2003-08-10; the 1 GB ext3 partition was extracted via `qemu-img convert -f vmdk -O raw` + Sleuth Kit (`mmls`/`fls`/`icat`). Files extracted to `passwd/honeynet_scan29_*`, `shadow/honeynet_scan29_*`, `ssh_config/honeynet_scan29_*`, `sshd_config/honeynet_scan29_*` (incl. the rootkit-dropped backdoor config), `bash_history/honeynet_scan29_*` (real post-compromise root shell history), `private_key/` + `public_key/honeynet_scan29_*` (SSH protocol 1 host keys from the rootkit), `auth_log/honeynet_scan29_*` (RHEL `secure` log fragment).
-- [NIST CFReDS — NPS 2009 Casper RW](https://cfreds.nist.gov/) — public-domain US-government forensic reference dataset. The 161 MB `ubnist1.casper-rw.gen3.E01` (downloadable as raw E01 from `digitalcorpora.s3.amazonaws.com`) is the most-used generation of an Ubuntu 8.10 bootable-USB casper-rw overlay (the writable layer over the live-CD), repeatedly booted and used over weeks to browse US-Government websites. Mounted via `ewfmount` → ext3 raw → `fls`/`icat`. Files extracted to `passwd/cfreds_nps2009_*` (uid=999 boundary), `shadow/cfreds_nps2009_*` (legacy DES crypt), `sudoers/cfreds_nps2009_*` (5x duplicated %admin line), `known_hosts/cfreds_nps2009_*` (real `|1|` hashed entry), `bash_history/cfreds_nps2009_*` (first benign-user history fixture, 4 ssh/scp connection records extracted), `auth_log/cfreds_nps2009_*` (Ubuntu auth.log dominated by gdm/cron/su/sudo events), `wtmp/cfreds_nps2009_*` (record-size mismatch edge case), `lastlog/cfreds_nps2009_*` (forward-staged for Phase 16).
-- [Cado Security — AWS EKS Cluster Forensics (SANS DFIR 2021)](https://github.com/cado-security/AWS_EKS_Cluster_Forensics) — Apache-2.0 — 1.1 GB 7z archive containing a 20 GB raw `dd.gz` of a compromised Amazon Linux 2 EKS worker node (Jul 2021). XFS partition, mounted via `losetup -P` + `mount -o ro,norecovery`. Files extracted to `passwd/cado_aws_eks_*` (AL2 with ec2-user/docker/ec2-instance-connect), `shadow/cado_aws_eks_*` (`*LOCK*` literal sentinel edge case), `sudoers/cado_aws_eks_*` (AL2 main + `sudoers.d/90-cloud-init-users` drop-in), `sshd_config/cado_aws_eks_*` (AWS EC2 Instance Connect `AuthorizedKeysCommand` config), `authorized_keys/cado_aws_eks_*` (root file with deny-banner `command="…"` prefix + attacker `kali@kali` key), `bash_history/cado_aws_eks_*` (kubelet config tampering — modern k8s attack), `auth_log/cado_aws_eks_*` (highest-yield secure log fixture: 2 connections incl. attacker root login, plus Hydra/EC2-Instance-Connect/POSSIBLE-BREAK-IN-ATTEMPT events), `wtmp/cado_aws_eks_*`, `lastlog/cado_aws_eks_*` (forward-staged).
-- [Donnachie et al. — Defaced web server (Ubuntu 22.04 simulation)](https://doi.org/10.21954/ou.rd.26038669.v1) — CC-BY-NC-SA-4.0 — 5.97 GB across 4 EnCase E01 segments. Simulated UK e-commerce site running DVWA on Ubuntu 22.04.3, defaced 2024-06-06. ext4-on-LVM root partition: `ewfmount` → loop device → `vgchange -ay ubuntu-vg` → `mount -o ro,noload /dev/ubuntu-vg/ubuntu-lv`. Files extracted to `passwd/figshare_ubuntu_2204_*` (modern Ubuntu 22.04 systemd users), `shadow/figshare_ubuntu_2204_*` (administrator $6$ hash + 33 locked accounts), `sudoers/figshare_ubuntu_2204_*` (modern `(ALL:ALL)` syntax + `use_pty` + `@includedir`), `sshd_config/figshare_ubuntu_2204_main` (empty-stats edge case from `Include` directive) + `figshare_ubuntu_2204_cloud_init_drop_in` (first sshd_config drop-in fragment in the corpus), `bash_history/figshare_ubuntu_2204_*` (benign sysadmin building DVWA + monitoring access logs as defacement is discovered), `auth_log/figshare_ubuntu_2204_*` (first password-auth-Accepted fixture, 5 records), `lastlog/figshare_ubuntu_2204_*` (forward-staged).
+- [NIST CFReDS — NPS 2009 Casper RW](https://cfreds.nist.gov/) — public-domain US-government forensic reference dataset. The 161 MB `ubnist1.casper-rw.gen3.E01` (downloadable as raw E01 from `digitalcorpora.s3.amazonaws.com`) is the most-used generation of an Ubuntu 8.10 bootable-USB casper-rw overlay (the writable layer over the live-CD), repeatedly booted and used over weeks to browse US-Government websites. Mounted via `ewfmount` → ext3 raw → `fls`/`icat`. Files extracted to `passwd/cfreds_nps2009_*` (uid=999 boundary), `shadow/cfreds_nps2009_*` (legacy DES crypt), `sudoers/cfreds_nps2009_*` (5x duplicated %admin line), `known_hosts/cfreds_nps2009_*` (real `|1|` hashed entry), `bash_history/cfreds_nps2009_*` (first benign-user history fixture, 4 ssh/scp connection records extracted), `auth_log/cfreds_nps2009_*` (Ubuntu auth.log dominated by gdm/cron/su/sudo events), `wtmp/cfreds_nps2009_*` (record-size mismatch edge case), `lastlog/cfreds_nps2009_*` (sparse/zeroed image → 0 login records).
+- [Cado Security — AWS EKS Cluster Forensics (SANS DFIR 2021)](https://github.com/cado-security/AWS_EKS_Cluster_Forensics) — Apache-2.0 — 1.1 GB 7z archive containing a 20 GB raw `dd.gz` of a compromised Amazon Linux 2 EKS worker node (Jul 2021). XFS partition, mounted via `losetup -P` + `mount -o ro,norecovery`. Files extracted to `passwd/cado_aws_eks_*` (AL2 with ec2-user/docker/ec2-instance-connect), `shadow/cado_aws_eks_*` (`*LOCK*` literal sentinel edge case), `sudoers/cado_aws_eks_*` (AL2 main + `sudoers.d/90-cloud-init-users` drop-in), `sshd_config/cado_aws_eks_*` (AWS EC2 Instance Connect `AuthorizedKeysCommand` config), `authorized_keys/cado_aws_eks_*` (root file with deny-banner `command="…"` prefix + attacker `kali@kali` key), `bash_history/cado_aws_eks_*` (kubelet config tampering — modern k8s attack), `auth_log/cado_aws_eks_*` (highest-yield secure log fixture: 2 connections incl. attacker root login, plus Hydra/EC2-Instance-Connect/POSSIBLE-BREAK-IN-ATTEMPT events), `wtmp/cado_aws_eks_*`, `lastlog/cado_aws_eks_*` (2 login records).
+- [Donnachie et al. — Defaced web server (Ubuntu 22.04 simulation)](https://doi.org/10.21954/ou.rd.26038669.v1) — CC-BY-NC-SA-4.0 — 5.97 GB across 4 EnCase E01 segments. Simulated UK e-commerce site running DVWA on Ubuntu 22.04.3, defaced 2024-06-06. ext4-on-LVM root partition: `ewfmount` → loop device → `vgchange -ay ubuntu-vg` → `mount -o ro,noload /dev/ubuntu-vg/ubuntu-lv`. Files extracted to `passwd/figshare_ubuntu_2204_*` (modern Ubuntu 22.04 systemd users), `shadow/figshare_ubuntu_2204_*` (administrator $6$ hash + 33 locked accounts), `sudoers/figshare_ubuntu_2204_*` (modern `(ALL:ALL)` syntax + `use_pty` + `@includedir`), `sshd_config/figshare_ubuntu_2204_main` (empty-stats edge case from `Include` directive) + `figshare_ubuntu_2204_cloud_init_drop_in` (first sshd_config drop-in fragment in the corpus), `bash_history/figshare_ubuntu_2204_*` (benign sysadmin building DVWA + monitoring access logs as defacement is discovered), `auth_log/figshare_ubuntu_2204_*` (first password-auth-Accepted fixture, 5 records), `lastlog/figshare_ubuntu_2204_*` (1 login record).
 - [canonical/netplan](https://github.com/canonical/netplan) — GPL-3.0 — network YAML examples
 - [sudo-project/sudo](https://github.com/sudo-project/sudo) — ISC — upstream sudoers example
 - [endlessm/base-passwd](https://github.com/endlessm/base-passwd) — GPL-2.0 — Debian passwd.master
