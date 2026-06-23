@@ -117,7 +117,7 @@ Parsers in `backend/parsers/` implement `BaseParser` — see `parsers/__init__.p
 **Parser guidelines (must follow):**
 - Never crash on bad input — catch exceptions, append to `warnings`, and continue
 - Decode bytes with `errors='replace'` to handle corrupt input
-- Check for gzip magic bytes (`content[:2] == b'\x1f\x8b'`) and decompress before parsing
+- Decompress gzip when applicable: command-output and log parsers that may arrive gzipped (auth.log, ps, netstat, ip/iptables/nft output, etc.) must check gzip magic bytes (`content[:2] == b'\x1f\x8b'`) and decompress before parsing. Parsers for artifacts that never arrive gzipped need not.
 - Use `metadata.host_id` as the source host for all emitted records
 - Return counts in `result.stats` (e.g. `{"hosts": 3, "connections": 12}`) — the UI shows this summary
 - IP matching: use `resolve_ip()` from `services/ip_resolver.py` to map raw IPs to existing hosts
@@ -127,7 +127,7 @@ Parsers in `backend/parsers/` implement `BaseParser` — see `parsers/__init__.p
 - System/service user filtering: when emitting `host_users_found`, only include accounts that can actually log in. For passwd: skip UID < 1000 (except root) and nologin/false shells. For shadow: skip entries with `x`, `!!`, `""`, `*`, `!` password sentinels — only emit users with a real recoverable hash
 - Shell rc secret harvest: `ShellRcParser` (bashrc/zshrc) aggressively flags exported env vars whose names match `*_PASSWORD`/`*_TOKEN`/`*_SECRET`/`*_API_KEY`/`*_DSN`/`AWS_*` as `CredentialData` with `cred_type=password`. Common shell-internal vars (PATH, EDITOR, SSH_AUTH_SOCK, etc) are denylisted; dynamic values (`$VAR`, `$(cmd)`, backticks) are skipped — they don't carry a literal secret.
 - Network config parsers (`network_interfaces`, `netplan`, `ifcfg`): emit only the upload host's own IPs as one `HostData` (first IP primary, rest aliases). Gateways are counted in `stats` but never emitted as host records — they belong to other hosts on the network and would create phantoms.
-- Local-side sentinel `__upload_host__`: command-output parsers that observe a connection from the upload host's perspective (`netstat`, `ss_output`, `ip_neigh`, `arp`, `ps_output`, `iptables`, `nftables`) emit `__upload_host__` as `src_ip` instead of a literal local hostname/IP. The pipeline (`_resolve_ip_side` in `services/upload_pipeline.py`) routes this sentinel to the upload host, same path as loopback (Architecture Rule #15). Avoids creating phantom hosts from truncated `localhost.localdom` strings or shifting local IPs.
+- Local-side sentinel `__upload_host__`: command-output parsers that observe a connection from the upload host's perspective emit `__upload_host__` for the local side instead of a literal local hostname/IP. Most (`netstat`, `ss_output`, `ip_neigh`, `arp`, `ps_output`) place it in `src_ip`; `iptables`/`nftables` place it on whichever side (`src_ip` or `dst_ip`) lacks a specific host. The pipeline (`_resolve_ip_side` in `services/upload_pipeline.py`) routes this sentinel to the upload host, same path as loopback (Architecture Rule #15). Avoids creating phantom hosts from truncated `localhost.localdom` strings or shifting local IPs.
 
 Fixture files for parser tests live in `tests/fixtures/`.
 
@@ -164,13 +164,13 @@ border: 1px solid var(--border);
 color: #c9d1d9;
 ```
 
-Key variables: `--text-primary`, `--text-muted`, `--bg-surface`, `--bg-surface-2`, `--border`, `--accent`, `--success` (confirmed), `--warning` (observed).
+Key variables: `--text-primary`, `--text-muted`, `--bg-surface`, `--bg-surface-2`, `--border`, `--accent`, `--success` (confirmed), `--warning` (observed). The third confidence level (indicator) has **no** CSS custom property — graph-canvas confidence colors live as JS constants in `frontend/src/theme.ts` (`CONFIDENCE_*`) because the Canvas API cannot read CSS variables.
 
 Use CSS modules (`.module.css` alongside the component) — not global styles.
 
 ### Create-form double-submit guard
 
-Forms that POST a non-idempotent create (`createHost`, `createCredential`, `createCredentialLink`, `createConnection`, etc.) must guard their submit handler with a `useRef`-based flag — the `disabled={loading}` attribute is React-state-driven and async, so rapid clicks in the same tick all see `loading=false` and dispatch concurrent POSTs (a stress test confirmed 5 clicks → 5 duplicate links). Pattern:
+Any handler that POSTs a non-idempotent create (`createHost`, `createCredential`, `createCredentialLink`, `createConnection`, `createHostNote`, etc.) — whether triggered by `<form onSubmit>`, an `onClick` button, or a keyboard shortcut — must guard with a `useRef`-based flag. The `disabled={loading}` attribute is React-state-driven and async, so rapid clicks in the same tick all see `loading=false` and dispatch concurrent POSTs (a stress test confirmed 5 clicks → 5 duplicate links). Pattern:
 
 ```tsx
 const submittingRef = useRef(false)
@@ -211,12 +211,15 @@ backend/
 └── alembic/         # Migrations
 
 frontend/src/
+├── main.tsx         # Vite entrypoint (mounts App.tsx)
 ├── App.tsx          # Root component + page routing
 ├── theme.ts         # Dark theme color constants (source of truth)
 ├── index.css        # Global styles + CSS custom properties
 ├── types/           # TypeScript interfaces matching backend schemas
 ├── api/             # Typed API client functions
 ├── components/      # Shared UI components
+├── hooks/           # Shared React hooks (e.g. useOpWebSocket.ts)
+├── constants/       # Shared constants (e.g. credentialLink.ts)
 ├── utils/           # Shared utility functions
 └── pages/           # Top-level page components
 
@@ -225,7 +228,9 @@ tests/
 ├── fixtures/        # Sample files for parser tests
 ├── test_api/        # API integration tests
 ├── test_parsers/    # Parser unit tests
-└── test_services/   # Service layer tests
+├── test_services/   # Service layer tests
+├── test_real_examples/  # Parser regression vs real_examples/ corpus (make test-real-examples)
+└── test_scenario_*.py   # Network scenario tests (make test-scenarios)
 ```
 
 ## Environment Variables (backend)
