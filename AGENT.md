@@ -114,6 +114,26 @@ Standalone `mcp/` package (does **not** import from `backend/`) exposes op data 
 
 ---
 
+## Backlog
+
+Non-phase enhancement tasks. Pick up out of band; not gated on the phase order.
+
+### Extend `auth_log` parser with plaso's failed/opened SSH events
+
+**What.** plaso (`text_plugins/syslog.py`, Apache-2.0) grammars exactly three sshd events: accepted-login, failed-connection (`Failed password for root from 10.0.0.9 port 40112`), and opened-connection (`Connection from 10.0.0.5 port 12345`). Lockpick's `AuthLogParser` already covers accepted-login — and more modernly than plaso (tolerant method token + `SHA256:` fingerprint vs plaso's legacy `RSA <colon-hex>`). The genuine, verified delta is the other two events: failed-connection and opened-connection. Adopt plaso's *event coverage + field set* (auth_method, username, ip, port) but keep Lockpick's tolerant-regex style — do **not** copy plaso's anchored pyparsing (its `RSA <colon-hex>` fingerprint rejects `SHA256:` lines; its `Failed…StringEnd()` rejects real OpenSSH lines ending in `ssh2`; `Word(alphanums)` drops users with `-_.$` and all "invalid user" phrasing).
+
+**Why / honest scope.** Low priority. accepted-login is the only pivot-relevant event and it is done. Failed and opened connections are *non-successes* — they prove no pivot. Lockpick centers on successful pivots, and `tests/test_parsers/test_auth_log.py::test_failed_logins_not_in_connections` asserts failed lines are excluded *by design*.
+
+**Blocker (decide before coding).** `ConnectionData`/`ConnectionRecord` has no success/result field, and `graph_builder._classify_connection_evidence` auto-rates any `from_dst_logs` row as `observed`/`confirmed`. Emitting failed/opened as a plain `ConnectionData` would forge a successful "observed" edge and spawn phantom hosts from scan-traffic source IPs. Representing them honestly as **indicator**-only needs a per-row marker (new success/confidence field, or a dedicated `parser_file_type`) wired through `_INDICATOR_PARSER_TYPES` + the `EvidenceItem.type` Literal in `schemas.py` (Rule #25) — i.e. schema + graph + migration, not parser-only. Default recommendation if unfunded: count failed/opened in `stats` only, emit no edges, leave the exclusion test intact.
+
+**Scope.** (1) Add failed-connection + opened-connection regexes (tolerant: optional trailing `ssh2`, allow `invalid user`, users with `-_.$`). (2) Choose representation per the blocker; if edges, route as indicator and update `test_failed_logins_not_in_connections`. (3) Optional additive: capture src_port/protocol on the existing accepted path (needs a new `ConnectionData.src_port` field — currently parsed then discarded). (4) Fixtures + snapshot regen.
+
+**Acceptance.** Failed/opened lines in `real_examples/auth_log/loghub_openssh_2k.log` are counted and never produce an `observed`/`confirmed` edge; accepted-login behavior and its snapshot are unchanged.
+
+**Attribution.** Add this comment to the parser: `SSH syslog event grammar adapted from plaso (log2timeline), plaso/parsers/text_plugins/syslog.py, Apache License 2.0, Copyright The Plaso Project Authors (https://github.com/log2timeline/plaso).`
+
+---
+
 ## Data Model
 
 > `backend/models.py` is authoritative for exact fields and types. This section documents *relationships* and *pivot semantics* — the "why" that isn't in the ORM. Read on demand; update only when relationship semantics change.
