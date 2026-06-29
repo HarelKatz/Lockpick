@@ -114,6 +114,14 @@ Standalone `mcp/` package (does **not** import from `backend/`) exposes op data 
 
 ---
 
+## Backlog (nice-to-have, uncommitted)
+
+Optional ideas, not scheduled. Promote to a phase only if/when chosen.
+
+- **`systemd_journal` parser** — on journald-only hosts (no rsyslog / no text `auth.log`), the sshd Accepted-login, sudo, key-fingerprint and source-IP evidence Lockpick already mines from `auth.log` lives **only** in the binary journal (`/var/log/journal/<machine-id>/*.journal`), so Lockpick is currently blind to the auth/connection graph on those boxes. A journal parser would extend the existing pivot extraction to modern distros — same `ConnectionData` record shape as `AuthLogParser`, just a new input format. Collection: `.journal` is `0640 root:systemd-journal` (same privilege tier as `auth.log`'s `root:adm`, and usually `adm`-readable via tmpfiles ACL), so the sudo-free collector can typically `cp` the raw files. Build cost is real — binary format with object compression (LZ4/XZ) + optional FSS sealing; reference plaso's `systemd_journal.py` for the on-disk layout only (Apache-2.0; format reference, never an import — see the closed plaso/dissect parser-source evaluation).
+
+---
+
 ## Data Model
 
 > `backend/models.py` is authoritative for exact fields and types. This section documents *relationships* and *pivot semantics* — the "why" that isn't in the ORM. Read on demand; update only when relationship semantics change.
