@@ -66,9 +66,11 @@ def merge_hosts(
 
     Missing keys leave the target's existing value unchanged.
 
-    Dedup keys (Architecture Rule #23):
-    * ``HostIP``        — `(host_id, ip_address)`
-    * ``CredentialLink``— `(credential_id, host_id, relationship_type, username)`
+    Dedup keys at merge time (Architecture Rule #23) — ``host_id`` is dropped
+    versus the upload-time keys because both sides' rows already sit on the
+    target host, so it is constant:
+    * ``HostIP``        — `ip_address`
+    * ``CredentialLink``— `(credential_id, relationship_type, username)`
     Other relations (``HostUser``, ``SudoRule``) are NOT deduped.
     ``ConnectionRecord`` self-loops (src=dst=target after merge) are preserved.
 
