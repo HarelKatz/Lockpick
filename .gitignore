@@ -56,6 +56,9 @@ frontend/.vite/
 # Claude Code (machine-specific settings and transient agent worktrees)
 .claude/
 
+# Superpowers design specs (local working docs, not part of the repo)
+docs/superpowers/
+
 # OS
 .DS_Store
 Thumbs.db
