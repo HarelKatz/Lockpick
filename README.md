@@ -104,7 +104,7 @@ Full interactive docs (Swagger UI + ReDoc) are available at **http://localhost:8
 
 ## Architecture
 
-See [AGENT.md](AGENT.md) for architecture rules and the data model. See [CLAUDE.md](CLAUDE.md) for build, test, and contribution conventions.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for architecture rules and [DATA_MODEL.md](DATA_MODEL.md) for the data model. See [CLAUDE.md](CLAUDE.md) for build, test, and contribution conventions.
 
 ## Contributing
 
