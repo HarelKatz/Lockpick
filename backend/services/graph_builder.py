@@ -18,7 +18,7 @@ _CONFIDENCE_RANK = {"confirmed": 2, "observed": 1, "indicator": 0}
 
 # Authoritative — registry keys (parsers/registry.py) whose ConnectionRecords
 # represent indicator-only evidence (no proof of an actual SSH connection).
-# See AGENT.md Architecture Rule #25. Note: `ssh_config` is intentionally
+# See ARCHITECTURE.md Architecture Rule #25. Note: `ssh_config` is intentionally
 # omitted — pattern-match rows carry parser_file_type="ssh_config" but stay at
 # observed-tier confidence (a config alias does at least imply someone wrote
 # `ssh <name>` in their config, which is stronger than a passive ARP cache).

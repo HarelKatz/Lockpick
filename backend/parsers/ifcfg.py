@@ -13,7 +13,7 @@ Gateway keys (counted but not emitted as hosts):
 
 * `GATEWAY`, `IPV6_DEFAULTGW`
 
-Per AGENT.md Phase 16: emits one HostData with the first IP as primary,
+Per CLAUDE.md Parser guidelines (Network config parsers): emits one HostData with the first IP as primary,
 rest as aliases. No ConnectionData.
 """
 from __future__ import annotations

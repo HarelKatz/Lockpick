@@ -430,7 +430,7 @@ def test_import_archive_alias_same_host_no_warning(client):
 def test_import_archive_alias_conflict_surfaces_warning(client):
     """When an /etc/hosts line's hostname already belongs to a DIFFERENT
     *non-unresolved* host (one with operator content), the pipeline skips
-    the add and surfaces it as a manual merge candidate — Phase 15 only
+    the add and surfaces it as a manual merge candidate — auto-merge (ARCHITECTURE.md Rule #24) only
     auto-merges placeholder hosts."""
     op_id = _create_op(client)
     host_id = _create_host(client, op_id)
@@ -445,7 +445,7 @@ def test_import_archive_alias_conflict_surfaces_warning(client):
     )
     assert r1.status_code == 200
     # Find the placeholder and attach a HostUser so it stops being unresolved
-    # (Phase 15 would otherwise auto-merge it on the next conflict).
+    # (auto-merge, ARCHITECTURE.md Rule #24, would otherwise dissolve it on the next conflict).
     hosts = client.get(f"/api/ops/{op_id}/hosts").json()
     placeholder_id = next(h["id"] for h in hosts if h["nickname"] == "10.0.0.1")
     r_user = client.post(f"/api/hosts/{placeholder_id}/users", json={"username": "root"})
@@ -469,7 +469,7 @@ def test_import_archive_alias_conflict_surfaces_warning(client):
 
 def test_import_archive_alias_conflict_auto_merges_unresolved(client):
     """When the conflicting host is an unresolved placeholder, the alias
-    triggers a silent auto-merge (Phase 15) instead of a manual candidate."""
+    triggers a silent auto-merge (ARCHITECTURE.md Rule #24) instead of a manual candidate."""
     op_id = _create_op(client)
     host_id = _create_host(client, op_id)
 

@@ -43,7 +43,7 @@ def create_connection(
         timestamp=body.timestamp,
         raw_line=body.raw_line,
         source_file=body.source_file,
-        parser_file_type=None,  # manual create — see AGENT.md Architecture Rule #25
+        parser_file_type=None,  # manual create — see ARCHITECTURE.md Architecture Rule #25
     )
     db.add(record)
     src = body.src_ip or "?"

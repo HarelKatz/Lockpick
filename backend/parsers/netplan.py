@@ -16,7 +16,7 @@ Walks every interface section (`ethernets`, `wifis`, `bonds`, `bridges`,
 `vlans`, `vrfs`, `modems`, `tunnels`) and harvests `addresses` entries
 plus any `gateway4` / `gateway6` / `routes[*].via` values.
 
-Per AGENT.md Phase 16: emits one HostData with the first IP as primary
+Per CLAUDE.md Parser guidelines (Network config parsers): emits one HostData with the first IP as primary
 and the rest as aliases. Gateways are NOT emitted as hosts. No
 ConnectionData.
 """

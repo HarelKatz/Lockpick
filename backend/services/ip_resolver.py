@@ -78,7 +78,7 @@ def is_unresolved_host(host: Host) -> bool:
     * The upload pipeline's nickname-clobber path — a parser-supplied
       nickname replaces an existing nickname only when the host is still
       unresolved.
-    * Phase 15 auto-merge — when a new alias collides with an unresolved
+    * Auto-merge (ARCHITECTURE.md Rule #24) — when a new alias collides with an unresolved
       host, that host is silently merged into the resolved host.
 
     The caller MUST eager-load `host.users`, `host.credential_links`,

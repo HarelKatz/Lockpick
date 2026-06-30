@@ -13,7 +13,7 @@ Format:
 
 CIDR notation in `address` is also accepted.
 
-Per AGENT.md Phase 16: network config parsers emit only the upload host's
+Per CLAUDE.md Parser guidelines (Network config parsers): emit only the upload host's
 own IPs and gateways. The first IP becomes the HostData primary; the rest
 go into `aliases`. No ConnectionData is emitted.
 """
@@ -90,7 +90,7 @@ class NetworkInterfacesParser(BaseParser):
 
         # Emit ONE HostData with the first address as primary, rest as aliases.
         # Gateways are NOT emitted as host IPs (they belong to other hosts on
-        # the same network — Phase 16 explicitly forbids that).
+        # the same network — the Network config parsers guideline forbids that).
         all_addrs = list(dict.fromkeys(addrs))  # preserve order, dedupe
         if all_addrs:
             primary = all_addrs[0]

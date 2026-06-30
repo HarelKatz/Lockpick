@@ -3,14 +3,14 @@
 Moves all relations from a *source* `Host` onto a *target* `Host`, then
 deletes the source row. Used by:
 
-- Phase 15 manual merge (`POST /hosts/{source_id}/merge`).
-- Phase 15 auto-merge from the upload pipeline's alias-conflict branch
+- Manual merge (`POST /hosts/{source_id}/merge`) — ARCHITECTURE.md Rule #23.
+- Auto-merge from the upload pipeline's alias-conflict branch — ARCHITECTURE.md Rule #24.
   (when an alias collides with an unresolved host).
 
 The helper does **not** call `db.commit()`, `log_activity()`, or
 `broadcast_sync()` — the caller owns those (mirrors `process_single_file`,
 Architecture Rule #20). Architecture Rule #23 fixes the dedup keys and
-the relations-moved set; see AGENT.md.
+the relations-moved set; see ARCHITECTURE.md Rule #23.
 """
 from __future__ import annotations
 

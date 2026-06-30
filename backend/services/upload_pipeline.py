@@ -304,7 +304,7 @@ def process_single_file(
         # Aliases: additional identifiers (IPs / hostnames) for the same
         # host. Add each as a HostIP on the resolved host, unless it:
         #   - is non-routable (multicast, garbage, spaces, etc.),
-        #   - already points to a different host (Phase 15 host-merge
+        #   - already points to a different host (host-merge, ARCHITECTURE.md Rule #23
         #     will handle conflict resolution; silently merging here would
         #     be destructive),
         #   - is already a HostIP on our host.
