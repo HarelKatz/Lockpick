@@ -6,11 +6,21 @@ SSH pivot tracker for red teams. Ingests raw evidence (private keys, `authorized
 
 > Human contributors browsing GitHub: see CONTRIBUTING.md for the welcome / commit format / gate.
 
-@AGENT.md
+@ARCHITECTURE.md
+
+## Project docs
+
+- **ARCHITECTURE.md** — runtime invariants / cross-file contracts (the Architecture Rules). Auto-loaded with this file.
+- **DATA_MODEL.md** — entity relationships, edge aggregation, pivot/confidence semantics. Read on demand.
+- **TODO.md** — near-term task pool (what to work on next). Read on demand.
+- **BACKLOG.md** — future / conditional work. Read on demand.
+- **README.md** — what Lockpick is + how to run it. **CONTRIBUTING.md** — contributor pointer.
+
+> These docs are the current source of truth; git history is the audit log.
 
 ## Working Style
 
-- **Do not survey the codebase before starting.** Do not open files to "understand the project" — AGENT.md describes everything you need to know upfront.
+- **Do not survey the codebase before starting.** Do not open files to "understand the project" — ARCHITECTURE.md (invariants), DATA_MODEL.md (relationships), and TODO.md (what's next) describe everything you need upfront.
 - **Read files on-demand only.** Open a source file only when you are about to edit it or need to understand a specific function/interface it provides. Never read a file "just in case."
 
 ## Pyright LSP — Tagged-Hint False Positives
@@ -34,9 +44,9 @@ Real diagnostics (`reportMissingImports`, type errors — ✘/⚠) still matter.
 
 ## Git Commits
 
-Commit after every unit of completed work: feature, bug fix, refactor, parser, schema change + migration, test file, or edit to `CLAUDE.md` / `AGENT.md`. Skip only for isolated typos and single-line CSS tweaks. One commit per unit, not batched at end of session — the user should never have to prompt a commit.
+Commit after every unit of completed work: feature, bug fix, refactor, parser, schema change + migration, test file, or edit to `CLAUDE.md` / `ARCHITECTURE.md` / `DATA_MODEL.md` / `TODO.md` / `BACKLOG.md`. Skip only for isolated typos and single-line CSS tweaks. One commit per unit, not batched at end of session — the user should never have to prompt a commit.
 
-**Before the pre-commit gate, ask:** did this change introduce a runtime-enforced invariant or cross-file contract (a new `lazy="raise_on_sql"`, a new required-call-before-commit, a new structural rule)? If yes, add an Architecture Rule to AGENT.md in the same commit — the gate catches violations, but the rule is what tells the next contributor the invariant exists before they trip it.
+**Before the pre-commit gate, ask:** did this change introduce a runtime-enforced invariant or cross-file contract (a new `lazy="raise_on_sql"`, a new required-call-before-commit, a new structural rule)? If yes, add an Architecture Rule to ARCHITECTURE.md in the same commit — the gate catches violations, but the rule is what tells the next contributor the invariant exists before they trip it.
 
 **Pre-commit gate (code changes):**
 
@@ -58,7 +68,7 @@ scopes: backend, frontend, parsers, docker, schema
 
 Stage specific files — never `git add .` (risks staging `.env`, keys, or build artifacts).
 
-> AGENT.md maintenance rules live in AGENT.md itself.
+> Doc-maintenance rules live in each task doc's header (TODO.md / BACKLOG.md).
 
 ## Running Things
 
