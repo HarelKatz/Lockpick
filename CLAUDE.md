@@ -2,7 +2,7 @@
 
 ## What this project is
 
-SSH pivot tracker for red teams. Ingests raw evidence (private keys, `authorized_keys`, `auth.log`, `known_hosts`, bash history, `/etc/passwd`, `/etc/shadow`, `/etc/ssh/sshd_config`, nmap XML, `/etc/hosts`, sudoers) and builds a relationship graph showing lateral movement paths across an engagement. Runs as a shared web server — single `docker compose up -d`, no external dependencies.
+SSH pivot tracker for red teams: ingests raw evidence (keys, `authorized_keys`, `auth.log`, `known_hosts`, bash history, system files, nmap, credential files) and builds a relationship graph of lateral-movement paths. Runs as a shared web server — single `docker compose up -d`, no external dependencies. See **README.md** for the full overview.
 
 > Human contributors browsing GitHub: see CONTRIBUTING.md for the welcome / commit format / gate.
 
@@ -137,7 +137,7 @@ Parsers in `backend/parsers/` implement `BaseParser` — see `parsers/__init__.p
 - System/service user filtering: when emitting `host_users_found`, only include accounts that can actually log in. For passwd: skip UID < 1000 (except root) and nologin/false shells. For shadow: skip entries with `x`, `!!`, `""`, `*`, `!` password sentinels — only emit users with a real recoverable hash
 - Shell rc secret harvest: `ShellRcParser` (bashrc/zshrc) aggressively flags exported env vars whose names match `*_PASSWORD`/`*_TOKEN`/`*_SECRET`/`*_API_KEY`/`*_DSN`/`AWS_*` as `CredentialData` with `cred_type=password`. Common shell-internal vars (PATH, EDITOR, SSH_AUTH_SOCK, etc) are denylisted; dynamic values (`$VAR`, `$(cmd)`, backticks) are skipped — they don't carry a literal secret.
 - Network config parsers (`network_interfaces`, `netplan`, `ifcfg`): emit only the upload host's own IPs as one `HostData` (first IP primary, rest aliases). Gateways are counted in `stats` but never emitted as host records — they belong to other hosts on the network and would create phantoms.
-- Local-side sentinel `__upload_host__`: command-output parsers that observe a connection from the upload host's perspective emit `__upload_host__` for the local side instead of a literal local hostname/IP. Most (`netstat`, `ss_output`, `ip_neigh`, `arp`, `ps_output`) place it in `src_ip`; `iptables`/`nftables` place it on whichever side (`src_ip` or `dst_ip`) lacks a specific host. The pipeline (`_resolve_ip_side` in `services/upload_pipeline.py`) routes this sentinel to the upload host, same path as loopback (Architecture Rule #15). Avoids creating phantom hosts from truncated `localhost.localdom` strings or shifting local IPs.
+- Local-side sentinel `__upload_host__`: command-output parsers that observe a connection from the upload host's perspective emit `__upload_host__` for the local side instead of a literal local hostname/IP. Most (`netstat`, `ss_output`, `ip_neigh`, `arp`, `ps_output`) place it in `src_ip`; `iptables`/`nftables` place it on whichever side (`src_ip` or `dst_ip`) lacks a specific host (routed to the upload host by `_resolve_ip_side`; see ARCHITECTURE.md Rule #15).
 
 Fixture files for parser tests live in `tests/fixtures/`.
 
