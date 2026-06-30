@@ -6,6 +6,16 @@ projects (mostly MIT, Apache 2.0, or CC0-equivalent).
 
 Organized by `file_type` (matching `backend/parsers/registry.py` keys).
 
+## Index
+
+**Currently-implemented parsers:** [auth_log](#auth_log--10-files) · [authorized_keys](#authorized_keys--7-files) · [bash_history](#bash_history--19-files) · [etc_hosts](#etc_hosts--5-files) · [known_hosts](#known_hosts--5-files) · [nmap_xml](#nmap_xml--5-files) · [passwd](#passwd--9-files) · [private_key](#private_key--25-files) · [public_key](#public_key--12-files) · [shadow](#shadow--9-files) · [ssh_config](#ssh_config--21-files) · [sshd_config](#sshd_config--12-files) · [sudoers](#sudoers--9-files) · [wtmp](#wtmp--4-files-binary)
+
+**System file parsers:** [secure](#secure--2-symlinks) · [syslog](#syslog--2-files) · [messages](#messages--1-file) · [lastlog](#lastlog--12-files-all-binary) · [last_output](#last_output--14-files-all-from-kellyjonbraziljc-test-fixtures) · [zsh_history](#zsh_history--1-file) · [fish_history](#fish_history--1-file) · [bashrc](#bashrc--6-files) · [zshrc](#zshrc--4-files) · [network_interfaces](#network_interfaces--4-files) · [netplan](#netplan--8-files) · [ifcfg](#ifcfg--9-files)
+
+**Command output parsers:** [ip_addr](#ip_addr--11-files) · [ip_route](#ip_route--7-files-jc) · [arp](#arp--12-files-jc) · [netstat](#netstat--21-files) · [ss_output](#ss_output--4-files-jc) · [iptables](#iptables--16-files) · [nftables](#nftables--9-files) · [ps_output](#ps_output--8-files) · [env_output](#env_output--3-files-jc) · [docker_ps](#docker_ps--1-file) · [ip_neigh](#ip_neigh--1-file)
+
+**Credential file parsers:** [netrc](#netrc--4-files) · [pgpass](#pgpass--1-file) · [mysql_config](#mysql_config--6-files) · [aws_credentials](#aws_credentials--1-file) · [aws_config](#aws_config--1-file) · [gcloud_credentials](#gcloud_credentials--6-files-all-from-googleapisgoogle-auth-library-python-testsdata) · [kubeconfig](#kubeconfig--3-files) · [boto](#boto--2-files) · [env_file](#env_file--2-files) · [docker_config](#docker_config--1-file) · [git_credentials](#git_credentials--2-files) · [rclone_config](#rclone_config--1-file)
+
 ---
 
 ## Currently-implemented parsers
