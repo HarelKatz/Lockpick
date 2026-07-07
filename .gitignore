@@ -46,6 +46,13 @@ node_modules/
 frontend/dist/
 frontend/.vite/
 
+# Playwright e2e (throwaway seed DB/uploads + reports)
+frontend/e2e/.data/
+frontend/e2e/.op-id
+frontend/playwright-report/
+frontend/test-results/
+frontend/.last-run.json
+
 # IDE
 .vscode/
 .idea/
@@ -53,8 +60,10 @@ frontend/.vite/
 *.swo
 *~
 
-# Claude Code (machine-specific settings and transient agent worktrees)
-.claude/
+# Claude Code (machine-specific settings and transient agent worktrees).
+# Committed exception: project skills under .claude/skills/ are shared team tooling.
+.claude/*
+!.claude/skills/
 
 # Superpowers design specs (local working docs, not part of the repo)
 docs/superpowers/

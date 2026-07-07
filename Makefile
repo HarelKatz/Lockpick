@@ -1,4 +1,4 @@
-.PHONY: run up down logs backup dev-backend dev-frontend test test-api test-parsers test-services test-scenarios test-real-examples
+.PHONY: run up down logs backup dev-backend dev-frontend test test-api test-parsers test-services test-scenarios test-real-examples test-e2e
 
 run:
 	docker compose up -d --build && docker compose logs -f
@@ -38,3 +38,9 @@ test-scenarios:
 
 test-real-examples:
 	cd backend && uv run pytest ../tests/test_real_examples/ -q --tb=short
+
+# Frontend end-to-end tests (Playwright). Spins up an isolated backend + dev
+# frontend on dedicated ports and seeds a deterministic graph — see
+# frontend/playwright.config.ts and the frontend-verify skill.
+test-e2e:
+	cd frontend && npm run test:e2e
