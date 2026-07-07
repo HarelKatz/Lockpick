@@ -90,9 +90,15 @@ make test-parsers   # parser unit tests (~0.1s)
 make test-services  # service layer tests (~0.7s)
 make test-scenarios # scenario tests (~4.5s)
 make test-real-examples  # parser regression vs real_examples/ corpus (~0.5s)
+
+# Frontend end-to-end (Playwright) — isolated stack + deterministic seed.
+# Verifies canvas UI (graph) by asserting on window.__lockpick_graph__, not pixels.
+make test-e2e       # spins up its own backend+frontend on dedicated ports (~10s startup)
 ```
 
 **Always use `uv run` for Python — never `python` directly.**
+
+**Verifying frontend changes:** use the **frontend-verify** skill — it's the standard for testing UI/graph features (committed Playwright specs via `make test-e2e` + live Playwright-MCP checks). See ARCHITECTURE.md Rule #26 for the `window.__lockpick_graph__` canvas-verification hook.
 
 ## Adding a New Endpoint
 
