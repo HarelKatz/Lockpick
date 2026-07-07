@@ -11,7 +11,6 @@
 
 ## Next
 
-- **Graph shift+click path highlight** — selecting a second node with Shift held highlights the BFS path between the two selected hosts; a second entry path into the existing PathFinder highlight (no new API). Pure frontend state.
 - **Graph time slider** — a slider at the bottom of GraphView filters edges by `ConnectionRecord.timestamp`; key-match edges always shown. Pure frontend state, no API change.
 
 ## Later
