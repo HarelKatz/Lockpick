@@ -610,6 +610,28 @@ export default function GraphCanvas({
     return true
   }, [pathFilter, credFilter])
 
+  // ── Dev-only render-state hook (e2e / agent verification) ────────────────────
+  // Publishes a serializable snapshot of what the canvas is ACTUALLY rendering —
+  // node set, active path-highlight, and currently-visible edges. That state
+  // lives in the <canvas> bitmap and is invisible to the DOM/accessibility tree,
+  // so tests read it here instead of guessing from pixels. Gated to dev builds
+  // (never shipped to prod). Contract: ARCHITECTURE.md → window.__lockpick_graph__.
+  useEffect(() => {
+    if (!import.meta.env.DEV) return
+    const w = window as unknown as { __lockpick_graph__?: Record<string, unknown> }
+    w.__lockpick_graph__ = {
+      nodeIds: fgData.nodes.map(n => n.id),
+      highlightedNodeIds: fgData.nodes.filter(n => n.pathHighlight).map(n => n.id),
+      visibleEdgeKeys: fgData.links
+        .filter(l => linkVisible(l))
+        .map(l => `${l._edge.src_host_id}__${l._edge.dst_host_id}`),
+      // Filled in by later features (Phase 1: path anchor, Phase 2: time slider).
+      pathAnchorId: null,
+      timeWindow: null,
+      timeDomain: null,
+    }
+  }, [fgData, pathFilter, credFilter, linkVisible])
+
   // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
