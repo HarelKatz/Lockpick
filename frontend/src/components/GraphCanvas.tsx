@@ -15,6 +15,7 @@ import {
   theme, statusColors,
   CONFIDENCE_CONFIRMED, CONFIDENCE_OBSERVED, CONFIDENCE_MUTED,
   NODE_FILL_HOSTILE, NODE_FILL_FRIENDLY, NODE_FILL_SELECTED, NODE_LABEL_COLOR,
+  NODE_BORDER_ANCHOR,
 } from '../theme'
 import styles from './GraphCanvas.module.css'
 
@@ -161,6 +162,8 @@ interface Props {
   onNodeContextMenu: (node: GraphNode, x: number, y: number) => void
   onEdgeContextMenu: (edge: GraphEdge, x: number, y: number) => void
   onCanvasTap: () => void
+  onNodeShiftClick: (node: GraphNode) => void
+  pathAnchorId?: string | null
 }
 
 // ── Component ───────────────────────────────────────────────────────────────────
@@ -180,6 +183,8 @@ export default function GraphCanvas({
   onNodeContextMenu,
   onEdgeContextMenu,
   onCanvasTap,
+  onNodeShiftClick,
+  pathAnchorId,
 }: Props) {
   // Container dimensions — ForceGraph2D needs explicit px width/height
   const containerRef = useRef<HTMLDivElement>(null)
@@ -222,6 +227,13 @@ export default function GraphCanvas({
 
   // Selected node — tracked internally for visual highlight; not in props
   const selectedNodeIdRef = useRef<string | null>(null)
+  // Pending BFS-path anchor (first shift-selected host) — ref so drawNode reads
+  // the latest value without re-registering the draw callback.
+  const pathAnchorIdRef = useRef<string | null>(null)
+  useEffect(() => { pathAnchorIdRef.current = pathAnchorId ?? null }, [pathAnchorId])
+  // Currently hovered node id — exposed via the dev hook so tests can wait for
+  // react-force-graph to register a hover before pressing (deterministic clicks).
+  const hoveredNodeIdRef = useRef<string | null>(null)
   // Double-click detection — ForceGraph2D has no onNodeDoubleClick prop
   const lastClickRef = useRef<{ id: string; time: number } | null>(null)
   // Pending single-click timer — delayed so double-click can preempt it
@@ -460,6 +472,17 @@ export default function GraphCanvas({
     ctx.strokeStyle = borderColor
     ctx.stroke()
 
+    // Pending path-anchor: dashed outer ring, distinct from selection/lock.
+    if (pathAnchorIdRef.current === n.id) {
+      ctx.beginPath()
+      ctx.arc(x, y, r + 4, 0, 2 * Math.PI)
+      ctx.setLineDash([4, 3])
+      ctx.lineWidth = 2.5 / globalScale
+      ctx.strokeStyle = NODE_BORDER_ANCHOR
+      ctx.stroke()
+      ctx.setLineDash([])
+    }
+
     // Label below circle
     const fontSize = Math.max(10, 13 / globalScale)
     ctx.font = `${fontSize}px sans-serif`
@@ -539,6 +562,15 @@ export default function GraphCanvas({
   // Single-click is delayed 250 ms so double-click can preempt it.
   const handleNodeClick = useCallback((node: object, evt: MouseEvent) => {
     const n = node as FGNode
+    if (evt.shiftKey) {
+      // Shift+click drives BFS path selection — dispatch immediately, bypassing
+      // the 250ms single-click timer (Rule #12 timing untouched, since shift has
+      // no double-click semantics).
+      if (clickTimerRef.current) { clearTimeout(clickTimerRef.current); clickTimerRef.current = null }
+      lastClickRef.current = null
+      onNodeShiftClick(n._node)
+      return
+    }
     selectedNodeIdRef.current = n.id
     const now = Date.now()
     const last = lastClickRef.current
@@ -555,7 +587,7 @@ export default function GraphCanvas({
         onNodeClick(n._node, cx)
       }, 250)
     }
-  }, [onNodeClick, onNodeDoubleClick])
+  }, [onNodeClick, onNodeDoubleClick, onNodeShiftClick])
 
   const handleNodeRightClick = useCallback((node: object, evt: MouseEvent) => {
     onNodeContextMenu((node as FGNode)._node, evt.clientX, evt.clientY)
@@ -589,6 +621,10 @@ export default function GraphCanvas({
     if (!fitNeededRef.current) return
     fitNeededRef.current = false
     graphRef.current?.zoomToFit(0, 80)
+  }, [])
+
+  const handleNodeHover = useCallback((node: object | null) => {
+    hoveredNodeIdRef.current = node ? (node as FGNode).id : null
   }, [])
 
   // ── Node visibility (pathFilter hides out-of-path nodes) ─────────────────────
@@ -625,12 +661,25 @@ export default function GraphCanvas({
       visibleEdgeKeys: fgData.links
         .filter(l => linkVisible(l))
         .map(l => `${l._edge.src_host_id}__${l._edge.dst_host_id}`),
-      // Filled in by later features (Phase 1: path anchor, Phase 2: time slider).
-      pathAnchorId: null,
+      pathAnchorId: pathAnchorId ?? null,
+      // Filled in by Phase 2 (time slider).
       timeWindow: null,
       timeDomain: null,
+      // Locator helper (not part of the serialized snapshot): current viewport
+      // coords of a host's node, for tests that click canvas nodes.
+      screenPos: (hostId: string): { x: number; y: number } | null => {
+        const g = graphRef.current
+        const cont = containerRef.current
+        const node = fgData.nodes.find(n => n.id === hostId)
+        if (!g || !cont || node?.x == null || node?.y == null) return null
+        const s = g.graph2ScreenCoords(node.x, node.y)
+        const rect = cont.getBoundingClientRect()
+        return { x: rect.left + s.x, y: rect.top + s.y }
+      },
+      // Live-read helper: the node react-force-graph currently reports as hovered.
+      hoveredNodeId: (): string | null => hoveredNodeIdRef.current,
     }
-  }, [fgData, pathFilter, credFilter, linkVisible])
+  }, [fgData, pathFilter, credFilter, linkVisible, pathAnchorId])
 
   // ── Render ────────────────────────────────────────────────────────────────────
 
@@ -653,6 +702,7 @@ export default function GraphCanvas({
           linkVisibility={linkVisible}
           linkHoverPrecision={6}
           onNodeClick={handleNodeClick}
+          onNodeHover={handleNodeHover}
           onNodeRightClick={handleNodeRightClick}
           onLinkClick={handleLinkClick}
           onLinkRightClick={handleLinkRightClick}

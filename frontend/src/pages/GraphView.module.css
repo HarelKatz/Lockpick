@@ -36,6 +36,23 @@
   position: relative;
 }
 
+/* Transient banner for shift+click path feedback (e.g. "no path found"). */
+.pathNotice {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 11;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: var(--font-size-xs);
+  padding: 6px 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
 .graphToolbar {
   align-items: center;
   background: var(--bg-surface);

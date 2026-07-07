@@ -59,6 +59,9 @@ export const NODE_FILL_HOSTILE   = '#2d1f1f'   // path-highlighted node fill (wa
 export const NODE_FILL_FRIENDLY  = '#1a2332'   // default node fill (cool dark)
 export const NODE_FILL_SELECTED  = '#1f2d3d'   // selected node fill (lighter than default)
 
+// Dashed ring on the first shift-selected host while a BFS path anchor is pending
+export const NODE_BORDER_ANCHOR  = '#79c0ff'   // = theme.accentHover
+
 // Node label color
 export const NODE_LABEL_COLOR = '#e6edf3'      // slightly brighter than textPrimary for canvas legibility
 

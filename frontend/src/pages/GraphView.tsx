@@ -13,7 +13,7 @@ import type {
   Operation,
   PathResult,
 } from '../types'
-import { fetchGraph, expandHost } from '../api/graph'
+import { fetchGraph, expandHost, findPaths } from '../api/graph'
 import GraphCanvas, { type CredFilter, type PathFilter, type LayoutName } from '../components/GraphCanvas'
 import HostSelector from '../components/HostSelector'
 import HostDetailSidebar from '../components/HostDetailSidebar'
@@ -75,6 +75,9 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
   const [pathFilter, setPathFilter] = useState<PathFilter | null>(null)
   const [credFilter, setCredFilter] = useState<CredFilter | null>(null)
   const [selectedPath, setSelectedPath] = useState<PathResult | null>(null)
+  // First shift-selected host; the second shift-click resolves the BFS path.
+  const [pathAnchorId, setPathAnchorId] = useState<string | null>(null)
+  const [pathNotice, setPathNotice] = useState<string | null>(null)
   const [layout, setLayout] = useState<LayoutName>('cola')
   const [lockedIds, setLockedIds] = useState<Set<string>>(new Set())
   const [statusFilters, setStatusFilters] = useState<Set<string>>(new Set())
@@ -166,6 +169,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
     setSelectedEdge(null)
     setNodeCtxMenu(null)
     setEdgeCtxMenu(null)
+    setPathAnchorId(null)   // a plain click abandons a pending path anchor
   }
 
   function handleEdgeClick(edge: GraphEdge, clientX: number) {
@@ -202,6 +206,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
   function handleCanvasTap() {
     setNodeCtxMenu(null)
     setEdgeCtxMenu(null)
+    setPathAnchorId(null)   // background tap clears a pending path anchor
   }
 
   async function handleExpand(node: GraphNode, evidenceType: 'all' | 'key_match' | 'connection_log' | 'indicator') {
@@ -245,9 +250,16 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
   useEffect(() => { selectedNodeRef.current = selectedNode }, [selectedNode])
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key !== 'Delete' && e.key !== 'Backspace') return
       const tag = (e.target as HTMLElement).tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if (e.key === 'Escape') {
+        // Clear a pending path anchor and any active path highlight.
+        setPathAnchorId(null)
+        setPathFilter(null)
+        setSelectedPath(null)
+        return
+      }
+      if (e.key !== 'Delete' && e.key !== 'Backspace') return
       const node = selectedNodeRef.current
       if (node) {
         e.preventDefault()
@@ -262,6 +274,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
   }, [])
 
   function handleHighlightPath(path: PathResult | null) {
+    setPathAnchorId(null)
     if (path) {
       // Ensure all path nodes are loaded onto the graph
       setSelectedIds(prev => {
@@ -281,6 +294,36 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
       setPathFilter(null)
       setSelectedPath(null)
     }
+  }
+
+  // Shift+click two hosts → highlight the BFS path between them. Reuses the
+  // existing shortest-path API and the PathFinder highlight — no new endpoint.
+  async function handleNodeShiftClick(node: GraphNode) {
+    if (!pathAnchorId) {                          // first host → set the anchor
+      setPathAnchorId(node.host_id)
+      setPathNotice(null)
+      return
+    }
+    if (pathAnchorId === node.host_id) {          // same host → cancel the anchor
+      setPathAnchorId(null)
+      return
+    }
+    const src = pathAnchorId                       // second host → resolve the path
+    setPathAnchorId(null)
+    try {
+      const resp = await findPaths(op.id, {
+        src_host_id: src, dst_host_id: node.host_id, mode: 'shortest', waypoints: [],
+      })
+      if (resp.paths.length > 0) handleHighlightPath(resp.paths[0])
+      else showPathNotice('No path found between the two hosts')
+    } catch {
+      showPathNotice('Path search failed')
+    }
+  }
+
+  function showPathNotice(msg: string) {
+    setPathNotice(msg)
+    window.setTimeout(() => setPathNotice(null), 2500)
   }
 
   function handleCredentialFilter(credId: string | null) {
@@ -453,6 +496,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
         </div>
 
         <div className={styles.canvasWrapper}>
+          {pathNotice && <div className={styles.pathNotice}>{pathNotice}</div>}
           {error && (
             <div className={styles.error}>
               {error}
@@ -483,6 +527,8 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
             onNodeContextMenu={handleNodeContextMenu}
             onEdgeContextMenu={handleEdgeContextMenu}
             onCanvasTap={handleCanvasTap}
+            onNodeShiftClick={handleNodeShiftClick}
+            pathAnchorId={pathAnchorId}
           />
         </div>
 
