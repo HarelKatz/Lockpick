@@ -17,6 +17,12 @@ test.describe('shift+click BFS path highlight', () => {
     await waitForGraphSettled(page)
     const id = await nickToId(page, op.id)
     const expectedPath = [id.attackbox, id.jumpbox, id.dbserver, id.internal].sort()
+    // Directional edge keys pin the exact hops (attackbox→jumpbox→dbserver→internal).
+    const expectedEdges = [
+      `${id.attackbox}__${id.jumpbox}`,
+      `${id.jumpbox}__${id.dbserver}`,
+      `${id.dbserver}__${id.internal}`,
+    ].sort()
 
     // First shift+click → anchor set, nothing highlighted yet.
     await shiftClickNode(page, id.attackbox)
@@ -28,6 +34,9 @@ test.describe('shift+click BFS path highlight', () => {
     await expect
       .poll(async () => [...(await graphState(page)).highlightedNodeIds].sort())
       .toEqual(expectedPath)
+    // pathFilter narrows visible edges to exactly the path edges — asserts the hops,
+    // not just the endpoints (an edge-level regression would otherwise slip through).
+    expect([...(await graphState(page)).visibleEdgeKeys].sort()).toEqual(expectedEdges)
     expect((await graphState(page)).pathAnchorId).toBeNull()
   })
 
