@@ -170,6 +170,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
     setNodeCtxMenu(null)
     setEdgeCtxMenu(null)
     setPathAnchorId(null)   // a plain click abandons a pending path anchor
+    pathReqSeq.current++    // and supersedes any in-flight path search
   }
 
   function handleEdgeClick(edge: GraphEdge, clientX: number) {
@@ -207,6 +208,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
     setNodeCtxMenu(null)
     setEdgeCtxMenu(null)
     setPathAnchorId(null)   // background tap clears a pending path anchor
+    pathReqSeq.current++    // and supersedes any in-flight path search
   }
 
   async function handleExpand(node: GraphNode, evidenceType: 'all' | 'key_match' | 'connection_log' | 'indicator') {
@@ -248,12 +250,21 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
   // Del key hides the currently selected node
   const selectedNodeRef = useRef(selectedNode)
   useEffect(() => { selectedNodeRef.current = selectedNode }, [selectedNode])
+
+  // Monotonic token so a slow/out-of-order findPaths response can't clobber newer
+  // UI state (a later shift-click, plain click, canvas tap, or Escape supersedes it).
+  const pathReqSeq = useRef(0)
+  // Timer for the transient path-notice banner — tracked so overlapping notices
+  // don't blank each other early, and cleared on unmount.
+  const pathNoticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => { if (pathNoticeTimer.current) clearTimeout(pathNoticeTimer.current) }, [])
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement).tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
       if (e.key === 'Escape') {
         // Clear a pending path anchor and any active path highlight.
+        pathReqSeq.current++   // discard any in-flight path search
         setPathAnchorId(null)
         setPathFilter(null)
         setSelectedPath(null)
@@ -310,20 +321,27 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
     }
     const src = pathAnchorId                       // second host → resolve the path
     setPathAnchorId(null)
+    const seq = ++pathReqSeq.current
     try {
       const resp = await findPaths(op.id, {
         src_host_id: src, dst_host_id: node.host_id, mode: 'shortest', waypoints: [],
       })
+      if (seq !== pathReqSeq.current) return        // superseded by a newer interaction
       if (resp.paths.length > 0) handleHighlightPath(resp.paths[0])
       else showPathNotice('No path found between the two hosts')
     } catch {
+      if (seq !== pathReqSeq.current) return
       showPathNotice('Path search failed')
     }
   }
 
   function showPathNotice(msg: string) {
     setPathNotice(msg)
-    window.setTimeout(() => setPathNotice(null), 2500)
+    if (pathNoticeTimer.current) clearTimeout(pathNoticeTimer.current)
+    pathNoticeTimer.current = setTimeout(() => {
+      pathNoticeTimer.current = null
+      setPathNotice(null)
+    }, 2500)
   }
 
   function handleCredentialFilter(credId: string | null) {
