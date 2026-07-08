@@ -164,6 +164,11 @@ interface Props {
   onCanvasTap: () => void
   onNodeShiftClick: (node: GraphNode) => void
   pathAnchorId?: string | null
+  // Time slider (Phase 2). timeHiddenKeys = edge keys excluded by the current
+  // window; timeWindow/timeDomain are published verbatim on the dev hook.
+  timeHiddenKeys?: Set<string>
+  timeWindow?: { start: number; end: number } | null
+  timeDomain?: { min: number; max: number } | null
 }
 
 // ── Component ───────────────────────────────────────────────────────────────────
@@ -185,6 +190,9 @@ export default function GraphCanvas({
   onCanvasTap,
   onNodeShiftClick,
   pathAnchorId,
+  timeHiddenKeys,
+  timeWindow,
+  timeDomain,
 }: Props) {
   // Container dimensions — ForceGraph2D needs explicit px width/height
   const containerRef = useRef<HTMLDivElement>(null)
@@ -636,15 +644,19 @@ export default function GraphCanvas({
 
   const linkVisible = useCallback((link: object) => {
     const l = link as FGLink
+    const edgeKey = `${l._edge.src_host_id}__${l._edge.dst_host_id}`
     if (pathFilter) {
-      const edgeKey = `${l._edge.src_host_id}__${l._edge.dst_host_id}`
       return pathFilter.edgeKeys.has(edgeKey)
     }
-    if (credFilter?.mode === 'filter') {
-      return l._edge.evidence.some(ev => ev.credential_id === credFilter.credId)
+    if (credFilter?.mode === 'filter' &&
+        !l._edge.evidence.some(ev => ev.credential_id === credFilter.credId)) {
+      return false
     }
+    // Time slider hides out-of-window edges (key-match / undated exempt — the
+    // exemptions are decided upstream in GraphView's timeHiddenKeys memo).
+    if (timeHiddenKeys?.has(edgeKey)) return false
     return true
-  }, [pathFilter, credFilter])
+  }, [pathFilter, credFilter, timeHiddenKeys])
 
   // ── Dev-only render-state hook (e2e / agent verification) ────────────────────
   // Publishes a serializable snapshot of what the canvas is ACTUALLY rendering —
@@ -662,9 +674,8 @@ export default function GraphCanvas({
         .filter(l => linkVisible(l))
         .map(l => `${l._edge.src_host_id}__${l._edge.dst_host_id}`),
       pathAnchorId: pathAnchorId ?? null,
-      // Filled in by Phase 2 (time slider).
-      timeWindow: null,
-      timeDomain: null,
+      timeWindow: timeWindow ?? null,
+      timeDomain: timeDomain ?? null,
       // Locator helper (not part of the serialized snapshot): current viewport
       // coords of a host's node, for tests that click canvas nodes.
       screenPos: (hostId: string): { x: number; y: number } | null => {
@@ -679,7 +690,7 @@ export default function GraphCanvas({
       // Live-read helper: the node react-force-graph currently reports as hovered.
       hoveredNodeId: (): string | null => hoveredNodeIdRef.current,
     }
-  }, [fgData, pathFilter, credFilter, linkVisible, pathAnchorId])
+  }, [fgData, pathFilter, credFilter, linkVisible, pathAnchorId, timeWindow, timeDomain])
 
   // ── Render ────────────────────────────────────────────────────────────────────
 

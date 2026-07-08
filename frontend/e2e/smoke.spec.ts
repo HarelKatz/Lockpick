@@ -15,6 +15,7 @@ test('seeded graph loads and exposes render state', async ({ page }) => {
   expect(s.highlightedNodeIds).toEqual([])
   expect(s.pathAnchorId).toBeNull()
   expect(s.visibleEdgeKeys.length).toBeGreaterThan(0)
-  // pathAnchorId/timeWindow/timeDomain are placeholders until Phases 1–2 land.
-  expect(s.timeWindow).toBeNull()
+  // Time slider (Phase 2): the window initializes to the full dated domain.
+  expect(s.timeDomain).not.toBeNull()
+  expect(s.timeWindow).toEqual({ start: s.timeDomain!.min, end: s.timeDomain!.max })
 })

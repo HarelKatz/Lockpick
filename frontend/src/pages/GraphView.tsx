@@ -34,6 +34,11 @@ interface Props {
   onRegisterReload?: (reload: () => void) => void
 }
 
+/** Format an epoch-ms instant as a compact UTC label for the time slider. */
+function fmtInstant(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 16).replace('T', ' ')
+}
+
 /** Human-readable label for a credential, used in sidebar and panel displays. */
 function credLabel(c: Credential): string {
   const type = c.key_type
@@ -81,6 +86,9 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
   const [layout, setLayout] = useState<LayoutName>('cola')
   const [lockedIds, setLockedIds] = useState<Set<string>>(new Set())
   const [statusFilters, setStatusFilters] = useState<Set<string>>(new Set())
+  // Time slider: [start,end] epoch-ms window filtering connection edges by
+  // evidence timestamp. null until a dated domain exists (see timeDomain).
+  const [timeWindow, setTimeWindow] = useState<{ start: number; end: number } | null>(null)
   const [panelMode, setPanelMode] = useState<'push' | 'overlay'>('overlay')
   // Two-step merge state: { source, targetCandidate? } when the dialog is
   // open. Set by either the "Merge into…" button on the sidebar (no
@@ -154,6 +162,64 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
     for (const n of graphData.nodes) map.set(n.host_id, { id: n.host_id, nickname: n.nickname })
     return Array.from(map.values())
   }, [allHosts, graphData.nodes])
+
+  // ── Time slider: filter connection edges by evidence timestamp ────────────────
+  // Per-edge dated timestamps (epoch ms) from connection-log evidence. key_match
+  // evidence carries no timestamp, so key-match-only edges never appear here.
+  const edgeTimes = useMemo(() => {
+    const map = new Map<string, number[]>()
+    for (const e of graphData.edges) {
+      const times: number[] = []
+      for (const ev of e.evidence) {
+        if (!ev.timestamp) continue
+        const t = Date.parse(ev.timestamp)
+        if (!Number.isNaN(t)) times.push(t)
+      }
+      if (times.length) map.set(`${e.src_host_id}__${e.dst_host_id}`, times)
+    }
+    return map
+  }, [graphData.edges])
+
+  // Draggable domain = span of all dated evidence. Null (bar hidden) when there
+  // are no dated edges, or when every date is identical (min===max → nothing to
+  // drag) — the feature self-disables rather than showing a dead slider.
+  const timeDomain = useMemo(() => {
+    let min = Infinity, max = -Infinity
+    for (const times of edgeTimes.values()) {
+      for (const t of times) { if (t < min) min = t; if (t > max) max = t }
+    }
+    return min === Infinity || min === max ? null : { min, max }
+  }, [edgeTimes])
+
+  // Edge keys the current window hides. An edge is hidden iff it has dated
+  // evidence AND none of its dates fall inside the window. Two exemptions keep a
+  // real pivot from ever being concealed: key-match edges (structural, not
+  // time-bound) and undated edges (no basis to hide) are always shown.
+  const timeHiddenKeys = useMemo(() => {
+    const hidden = new Set<string>()
+    if (!timeWindow) return hidden
+    for (const e of graphData.edges) {
+      if (e.evidence.some(ev => ev.type === 'key_match')) continue   // always shown
+      const key = `${e.src_host_id}__${e.dst_host_id}`
+      const times = edgeTimes.get(key)
+      if (!times) continue                                           // undated → always shown
+      if (!times.some(t => t >= timeWindow.start && t <= timeWindow.end)) hidden.add(key)
+    }
+    return hidden
+  }, [graphData.edges, edgeTimes, timeWindow])
+
+  // Initialize / re-clamp the window whenever the domain changes (a host-selection
+  // change or data reload can shift it). A fresh domain resets to full; an existing
+  // window is clamped into the new bounds so it never drifts outside them.
+  useEffect(() => {
+    if (!timeDomain) { setTimeWindow(null); return }
+    setTimeWindow(prev => {
+      if (!prev) return { start: timeDomain.min, end: timeDomain.max }
+      const start = Math.min(Math.max(prev.start, timeDomain.min), timeDomain.max)
+      const end = Math.max(Math.min(prev.end, timeDomain.max), timeDomain.min)
+      return { start: Math.min(start, end), end: Math.max(start, end) }
+    })
+  }, [timeDomain])
 
   // ── Event handlers ────────────────────────────────────────────────────────
 
@@ -366,7 +432,18 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
     })
   }
 
+  // Range handles clamp against each other so start never crosses end.
+  function handleTimeStart(v: number) {
+    setTimeWindow(w => (w ? { start: Math.min(v, w.end), end: w.end } : w))
+  }
+  function handleTimeEnd(v: number) {
+    setTimeWindow(w => (w ? { start: w.start, end: Math.max(v, w.start) } : w))
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
+
+  // ~500 draggable increments across the domain, whatever its span.
+  const timeStep = timeDomain ? Math.max(1, Math.floor((timeDomain.max - timeDomain.min) / 500)) : 1
 
   const rightPanel = selectedPath
     ? (
@@ -547,8 +624,50 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
             onCanvasTap={handleCanvasTap}
             onNodeShiftClick={handleNodeShiftClick}
             pathAnchorId={pathAnchorId}
+            timeHiddenKeys={timeHiddenKeys}
+            timeWindow={timeWindow}
+            timeDomain={timeDomain}
           />
         </div>
+
+        {timeDomain && timeWindow && (
+          <div className={styles.timeBar}>
+            <span className={styles.toolbarLabel}>Time:</span>
+            <span className={styles.timeValue}>{fmtInstant(timeWindow.start)}</span>
+            <div className={styles.timeSlider}>
+              <div className={styles.timeTrack} />
+              <input
+                type="range"
+                data-testid="time-start"
+                aria-label="Start of time window"
+                min={timeDomain.min}
+                max={timeDomain.max}
+                step={timeStep}
+                value={timeWindow.start}
+                onChange={e => handleTimeStart(Number(e.target.value))}
+              />
+              <input
+                type="range"
+                data-testid="time-end"
+                aria-label="End of time window"
+                min={timeDomain.min}
+                max={timeDomain.max}
+                step={timeStep}
+                value={timeWindow.end}
+                onChange={e => handleTimeEnd(Number(e.target.value))}
+              />
+            </div>
+            <span className={styles.timeValue}>{fmtInstant(timeWindow.end)}</span>
+            {(timeWindow.start > timeDomain.min || timeWindow.end < timeDomain.max) && (
+              <button
+                className={styles.clearFilterBtn}
+                onClick={() => setTimeWindow({ start: timeDomain.min, end: timeDomain.max })}
+              >
+                Reset
+              </button>
+            )}
+          </div>
+        )}
 
         <PathFinder
           nodes={allSelectableHosts}
