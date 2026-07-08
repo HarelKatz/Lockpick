@@ -1,16 +1,17 @@
 import { test, expect, type Page } from '@playwright/test'
 import { gotoGraph, graphState, waitForGraphSettled } from './helpers'
 
-// Time slider: filters connection edges by evidence timestamp. Two exemptions
-// are never hidden — key-match edges (structural pivots) and undated edges.
-// Seeded dated edges (see tests/e2e/seed_e2e.py + the topology fixtures):
+// Time slider: filters connection edges by evidence timestamp. Two exemptions are
+// NEVER hidden — key-match edges (structural pivots) and undated edges. Seeded graph
+// (tests/e2e/seed_e2e.py + the topology fixtures) = 13 edges:
 //   6 key-match edges           @ 2026-03-15T14:20  (attackbox/jumpbox/… mesh)
 //   pentest_vm→citrix           @ 2026-03-15T14:20
 //   citrix→fileserver           @ 2026-03-15T14:20
-//   monitoring→jumpbox          @ 2026-03-10T09:00  (manual)
+//   monitoring→jumpbox          @ 2026-03-10T09:00  (manual, = domain min)
 //   webserver→dbserver          @ 2026-03-13T11:30  (manual)
 //   fileserver→internal         @ 2026-03-17T15:45  (manual)
-//   backup→monitoring           @ 2026-03-21T20:15  (manual)
+//   backup→monitoring           @ 2026-03-21T20:15  (manual, = domain max)
+//   monitoring→webserver        (manual, NO timestamp → the undated exemption)
 
 /** Drive a controlled range input so React's onChange fires (native value setter
  *  defeats React's value tracking; a plain .value = x would be ignored). */
@@ -63,7 +64,7 @@ test.describe('graph time slider', () => {
     expect(new Set(s.visibleEdgeKeys).size).toBe(m.edgeCount)
   })
 
-  test('narrowing the end keeps key-match edges even when their date is out of window', async ({ page }) => {
+  test('narrowing the end keeps key-match + undated edges even when their date is out of window', async ({ page }) => {
     const op = await gotoGraph(page)
     await waitForGraphSettled(page)
     const m = await edgeModel(page, op.id)
@@ -72,16 +73,19 @@ test.describe('graph time slider', () => {
     // Window → [03-10 09:00, ~03-11 12:00]: excludes the 03-15 key-match dates.
     await setRange(page, 'time-end', T('2026-03-11T12:00:00Z'))
 
+    // 6 key-match + 1 undated (both exempt) + monitoring→jumpbox (03-10, in window) = 8.
     await expect
       .poll(async () => (await graphState(page)).visibleEdgeKeys.length)
-      .toBe(7)
+      .toBe(8)
 
     const visible = new Set((await graphState(page)).visibleEdgeKeys)
-    // All 6 key-match edges survive despite being dated 03-15 (outside the window)
-    // — proves the exemption, not just an in-window coincidence.
+    // Key-match edges survive despite being dated 03-15 (outside the window) — proves
+    // the exemption, not an in-window coincidence.
     for (const k of m.keyMatchKeys) expect(visible).toContain(k)
+    // The undated edge is shown regardless of the window (the second exemption).
+    expect(visible).toContain(m.key('monitoring', 'webserver'))
     // The one in-window dated edge stays; later-dated ones drop out.
-    expect(visible).toContain(m.key('monitoring', 'jumpbox'))   // 03-10, in window
+    expect(visible).toContain(m.key('monitoring', 'jumpbox'))       // 03-10, in window
     expect(visible).not.toContain(m.key('webserver', 'dbserver'))   // 03-13
     expect(visible).not.toContain(m.key('pentest_vm', 'citrix'))    // 03-15
     expect(visible).not.toContain(m.key('citrix', 'fileserver'))    // 03-15
@@ -95,7 +99,7 @@ test.describe('graph time slider', () => {
       .toBe(m.edgeCount)
   })
 
-  test('narrowing the start hides early-dated edges', async ({ page }) => {
+  test('narrowing the start hides early-dated edges but keeps exempt edges', async ({ page }) => {
     const op = await gotoGraph(page)
     await waitForGraphSettled(page)
     const m = await edgeModel(page, op.id)
@@ -103,16 +107,67 @@ test.describe('graph time slider', () => {
     // Window → [~03-14 12:00, 03-21 20:15]: drops the 03-10 and 03-13 edges.
     await setRange(page, 'time-start', T('2026-03-14T12:00:00Z'))
 
+    // 6 key-match + 1 undated + 4 in-window dated (03-15,03-15,03-17,03-21) = 11.
     await expect
       .poll(async () => (await graphState(page)).visibleEdgeKeys.length)
-      .toBe(10)
+      .toBe(11)
 
     const visible = new Set((await graphState(page)).visibleEdgeKeys)
     for (const k of m.keyMatchKeys) expect(visible).toContain(k)
+    expect(visible).toContain(m.key('monitoring', 'webserver'))     // undated exemption
     expect(visible).not.toContain(m.key('monitoring', 'jumpbox'))   // 03-10
     expect(visible).not.toContain(m.key('webserver', 'dbserver'))   // 03-13
     expect(visible).toContain(m.key('pentest_vm', 'citrix'))        // 03-15
     expect(visible).toContain(m.key('fileserver', 'internal'))      // 03-17
     expect(visible).toContain(m.key('backup', 'monitoring'))        // 03-21
+  })
+
+  test('a window collapsed onto the top instant can still be widened (no soft-lock)', async ({ page }) => {
+    const op = await gotoGraph(page)
+    await waitForGraphSettled(page)
+    const m = await edgeModel(page, op.id)
+
+    // Drive one handle fully right → window collapses to [max, max] (both handles pile
+    // onto the max edge). The reachable (DOM-top) handle must still widen it, not no-op.
+    await setRange(page, 'time-start', m.domainMax)
+    await expect.poll(async () => (await graphState(page)).timeWindow!.start).toBe(m.domainMax)
+
+    await setRange(page, 'time-end', m.domainMin)
+    await expect.poll(async () => (await graphState(page)).timeWindow!.start).toBe(m.domainMin)
+    expect(await graphState(page).then(s => s.timeWindow)).toEqual({ start: m.domainMin, end: m.domainMax })
+  })
+
+  test('the latest-dated edge stays reachable at the top of the range (step snap)', async ({ page }) => {
+    const op = await gotoGraph(page)
+    await waitForGraphSettled(page)
+    const m = await edgeModel(page, op.id)
+
+    // A drag lands one ms short of max (browsers snap to a grid point below max). The
+    // handler must snap up to max so the edge dated exactly at max isn't dropped.
+    await setRange(page, 'time-end', m.domainMax - 1)
+    await expect.poll(async () => (await graphState(page)).timeWindow!.end).toBe(m.domainMax)
+    expect(new Set((await graphState(page)).visibleEdgeKeys)).toContain(m.key('backup', 'monitoring'))
+  })
+
+  test('a domain shift disjoint from the window resets to the full new domain', async ({ page }) => {
+    const op = await gotoGraph(page)
+    await waitForGraphSettled(page)
+    const s0 = await graphState(page)
+    const oldMax = s0.timeDomain!.max
+
+    // Collapse the window onto the latest instant.
+    await setRange(page, 'time-start', oldMax)
+    await expect.poll(async () => (await graphState(page)).timeWindow!.start).toBe(oldMax)
+
+    // Deselect the host owning the latest-dated edge → the domain shrinks below the
+    // window, which is now entirely disjoint from the new domain.
+    await page.locator('label', { hasText: 'backup' }).getByRole('checkbox').uncheck()
+    await expect
+      .poll(async () => (await graphState(page)).timeDomain?.max ?? oldMax, { timeout: 15_000 })
+      .toBeLessThan(oldMax)
+
+    // The clamp resets to the full new domain rather than collapsing to a zero-width point.
+    const s1 = await graphState(page)
+    expect(s1.timeWindow).toEqual({ start: s1.timeDomain!.min, end: s1.timeDomain!.max })
   })
 })

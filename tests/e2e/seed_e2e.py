@@ -7,7 +7,9 @@ but pointed at a running server instead of an in-process ``TestClient``. It then
 adds a handful of manual SSH connections with spread-out timestamps so the graph
 **time slider** has a real, draggable date range: every generated fixture shares
 one hardcoded timestamp (``Mar 15 14:20:00``), so without these the slider domain
-collapses to ``min == max`` and cannot be exercised.
+collapses to ``min == max`` and cannot be exercised. It also adds one connection
+with *no* timestamp, yielding an entirely-undated edge that exercises the slider's
+"undated edges are always shown" exemption.
 
 Usage::
 
@@ -36,6 +38,14 @@ MANUAL_CONNECTIONS = [
     ("webserver", "dbserver", "www-data", "deploy", "2026-03-13T11:30:00Z"),
     ("fileserver", "internal", "ops", "deploy", "2026-03-17T15:45:00Z"),
     ("backup", "monitoring", "backup", "svc", "2026-03-21T20:15:00Z"),
+]
+
+# One connection with NO timestamp, between a fresh host pair with no other edge.
+# It yields an entirely-undated edge, exercising the time slider's "undated edges
+# are always shown" exemption (the dated edges above cannot — they all have a date).
+# (src_nick, dst_nick, src_user, dst_user)
+UNDATED_CONNECTIONS = [
+    ("monitoring", "webserver", "svc", "www-data"),
 ]
 
 
@@ -116,6 +126,27 @@ def main() -> int:
             )
             r.raise_for_status()
         _log(f"manual connections added: {len(MANUAL_CONNECTIONS)}")
+
+        # 4b. Undated connection(s) — no timestamp → an always-shown undated edge
+        for src, dst, su, du in UNDATED_CONNECTIONS:
+            r = c.post(
+                f"/api/ops/{op_id}/connections",
+                json={
+                    "src_host_id": host_ids[src],
+                    "src_ip": host_ips[src],
+                    "src_user": su,
+                    "dst_host_id": host_ids[dst],
+                    "dst_ip": host_ips[dst],
+                    "dst_user": du,
+                    "connection_type": "ssh",
+                    "direction_context": "from_dst_logs",
+                    "auth_method": "password",
+                    "timestamp": None,
+                    "source_file": "seed_manual",
+                },
+            )
+            r.raise_for_status()
+        _log(f"undated connections added: {len(UNDATED_CONNECTIONS)}")
 
         # 5. Sanity: fetch graph, report edge counts
         r = c.get(f"/api/ops/{op_id}/graph")
