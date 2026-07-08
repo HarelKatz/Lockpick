@@ -86,9 +86,11 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
   const [layout, setLayout] = useState<LayoutName>('cola')
   const [lockedIds, setLockedIds] = useState<Set<string>>(new Set())
   const [statusFilters, setStatusFilters] = useState<Set<string>>(new Set())
-  // Time slider: [start,end] epoch-ms window filtering connection edges by
-  // evidence timestamp. null until a dated domain exists (see timeDomain).
-  const [timeWindow, setTimeWindow] = useState<{ start: number; end: number } | null>(null)
+  // Time slider: two independent handle positions (epoch ms). The window is
+  // derived as [min,max] of the two (see timeWindow). Independent handles — rather
+  // than a mutually clamped {start,end} — prevent the dual-range soft-lock where
+  // both thumbs pile onto one domain edge and neither can be dragged back.
+  const [timeSel, setTimeSel] = useState<{ a: number; b: number } | null>(null)
   const [panelMode, setPanelMode] = useState<'push' | 'overlay'>('overlay')
   // Two-step merge state: { source, targetCandidate? } when the dialog is
   // open. Set by either the "Merge into…" button on the sidebar (no
@@ -191,6 +193,18 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
     return min === Infinity || min === max ? null : { min, max }
   }, [edgeTimes])
 
+  // ~500 draggable increments across the domain, whatever its span.
+  const timeStep = useMemo(
+    () => (timeDomain ? Math.max(1, Math.floor((timeDomain.max - timeDomain.min) / 500)) : 1),
+    [timeDomain],
+  )
+
+  // The window the rest of the UI consumes: [earlier handle, later handle].
+  const timeWindow = useMemo(
+    () => (timeSel ? { start: Math.min(timeSel.a, timeSel.b), end: Math.max(timeSel.a, timeSel.b) } : null),
+    [timeSel],
+  )
+
   // Edge keys the current window hides. An edge is hidden iff it has dated
   // evidence AND none of its dates fall inside the window. Two exemptions keep a
   // real pivot from ever being concealed: key-match edges (structural, not
@@ -208,16 +222,19 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
     return hidden
   }, [graphData.edges, edgeTimes, timeWindow])
 
-  // Initialize / re-clamp the window whenever the domain changes (a host-selection
-  // change or data reload can shift it). A fresh domain resets to full; an existing
-  // window is clamped into the new bounds so it never drifts outside them.
+  // Initialize / re-clamp the handles whenever the domain changes (a host-selection
+  // change or data reload can shift it). Fresh domain → full range. A selection that
+  // still overlaps the new domain → clamp each handle into it. A selection now
+  // entirely outside the new domain → reset to full, rather than collapsing onto a
+  // domain edge (which would strand the graph near-empty after a routine change).
   useEffect(() => {
-    if (!timeDomain) { setTimeWindow(null); return }
-    setTimeWindow(prev => {
-      if (!prev) return { start: timeDomain.min, end: timeDomain.max }
-      const start = Math.min(Math.max(prev.start, timeDomain.min), timeDomain.max)
-      const end = Math.max(Math.min(prev.end, timeDomain.max), timeDomain.min)
-      return { start: Math.min(start, end), end: Math.max(start, end) }
+    if (!timeDomain) { setTimeSel(null); return }
+    setTimeSel(prev => {
+      if (!prev) return { a: timeDomain.min, b: timeDomain.max }
+      const lo = Math.min(prev.a, prev.b), hi = Math.max(prev.a, prev.b)
+      if (hi < timeDomain.min || lo > timeDomain.max) return { a: timeDomain.min, b: timeDomain.max }
+      const clamp = (x: number) => Math.min(Math.max(x, timeDomain.min), timeDomain.max)
+      return { a: clamp(prev.a), b: clamp(prev.b) }
     })
   }, [timeDomain])
 
@@ -432,18 +449,21 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
     })
   }
 
-  // Range handles clamp against each other so start never crosses end.
-  function handleTimeStart(v: number) {
-    setTimeWindow(w => (w ? { start: Math.min(v, w.end), end: w.end } : w))
+  // A drag landing within one step of a domain edge snaps exactly to it, so the
+  // earliest/latest-dated edge is always reachable despite range-input step
+  // quantization (browsers snap a full-swing drag to a grid point short of the max).
+  function snapTimeHandle(v: number): number {
+    if (!timeDomain) return v
+    if (v <= timeDomain.min + timeStep) return timeDomain.min
+    if (v >= timeDomain.max - timeStep) return timeDomain.max
+    return v
   }
-  function handleTimeEnd(v: number) {
-    setTimeWindow(w => (w ? { start: w.start, end: Math.max(v, w.start) } : w))
-  }
+  // Handles move independently (no cross-clamp); the window derives from min/max,
+  // so a handle dragged past its sibling simply swaps roles — never a soft-lock.
+  function handleTimeA(v: number) { setTimeSel(s => (s ? { ...s, a: snapTimeHandle(v) } : s)) }
+  function handleTimeB(v: number) { setTimeSel(s => (s ? { ...s, b: snapTimeHandle(v) } : s)) }
 
   // ── Render ─────────────────────────────────────────────────────────────────
-
-  // ~500 draggable increments across the domain, whatever its span.
-  const timeStep = timeDomain ? Math.max(1, Math.floor((timeDomain.max - timeDomain.min) / 500)) : 1
 
   const rightPanel = selectedPath
     ? (
@@ -630,7 +650,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
           />
         </div>
 
-        {timeDomain && timeWindow && (
+        {timeDomain && timeSel && timeWindow && (
           <div className={styles.timeBar}>
             <span className={styles.toolbarLabel}>Time:</span>
             <span className={styles.timeValue}>{fmtInstant(timeWindow.start)}</span>
@@ -643,8 +663,8 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
                 min={timeDomain.min}
                 max={timeDomain.max}
                 step={timeStep}
-                value={timeWindow.start}
-                onChange={e => handleTimeStart(Number(e.target.value))}
+                value={timeSel.a}
+                onChange={e => handleTimeA(Number(e.target.value))}
               />
               <input
                 type="range"
@@ -653,15 +673,15 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
                 min={timeDomain.min}
                 max={timeDomain.max}
                 step={timeStep}
-                value={timeWindow.end}
-                onChange={e => handleTimeEnd(Number(e.target.value))}
+                value={timeSel.b}
+                onChange={e => handleTimeB(Number(e.target.value))}
               />
             </div>
             <span className={styles.timeValue}>{fmtInstant(timeWindow.end)}</span>
             {(timeWindow.start > timeDomain.min || timeWindow.end < timeDomain.max) && (
               <button
                 className={styles.clearFilterBtn}
-                onClick={() => setTimeWindow({ start: timeDomain.min, end: timeDomain.max })}
+                onClick={() => setTimeSel({ a: timeDomain.min, b: timeDomain.max })}
               >
                 Reset
               </button>
