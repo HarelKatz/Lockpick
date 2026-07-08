@@ -9,10 +9,6 @@
 - **Fix `createHostNote` double-submit race** — the "Add note" action in `HostDetailSidebar` (onClick + Ctrl/Cmd+Enter) is guarded only by React state (`setNoteAdding`), not a `useRef` flag, so rapid double-activation in the same tick dispatches concurrent POSTs → duplicate notes. Apply the `useRef` double-submit guard per CLAUDE.md → Frontend Conventions.
 - **Engagement report export** — `GET /ops/{op_id}/report?format=markdown|html`: structured engagement summary (op metadata, host inventory, credential inventory, pivot paths via `find_paths`, sudo escalation summary, activity timeline). Markdown primary; HTML wraps it in a minimal printable template. Full credential values are shown — Lockpick never redacts, including in reports (ARCHITECTURE.md Rule #4).
 
-## Next
-
-- **Graph time slider** — a slider at the bottom of GraphView filters edges by `ConnectionRecord.timestamp`; key-match edges always shown. Pure frontend state, no API change.
-
 ## Later
 
 - **Credential blast-radius rollup** — per-credential "unlocks N hosts across Y users", surfaced in the credential detail panel and list row, derived from existing `CredentialLink` data (no schema change).
