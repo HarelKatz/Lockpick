@@ -21,7 +21,7 @@ layers, always both:
 on `window.__lockpick_graph__` (see ARCHITECTURE.md Rule #26):
 
 ```ts
-{ nodeIds, highlightedNodeIds, visibleEdgeKeys, pathAnchorId, timeWindow, timeDomain }
+{ nodeIds, visibleNodeIds, highlightedNodeIds, visibleEdgeKeys, pathAnchorId, timeWindow, timeDomain }
 ```
 
 Read it with `page.evaluate(() => window.__lockpick_graph__)` (specs) or

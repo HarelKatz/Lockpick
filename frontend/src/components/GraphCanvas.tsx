@@ -165,8 +165,10 @@ interface Props {
   onNodeShiftClick: (node: GraphNode) => void
   pathAnchorId?: string | null
   // Time slider (Phase 2). timeHiddenKeys = edge keys excluded by the current
-  // window; timeWindow/timeDomain are published verbatim on the dev hook.
+  // window; timeHiddenNodeIds = hosts left with no visible edge by it;
+  // timeWindow/timeDomain are published verbatim on the dev hook.
   timeHiddenKeys?: Set<string>
+  timeHiddenNodeIds?: Set<string>
   timeWindow?: { start: number; end: number } | null
   timeDomain?: { min: number; max: number } | null
 }
@@ -191,6 +193,7 @@ export default function GraphCanvas({
   onNodeShiftClick,
   pathAnchorId,
   timeHiddenKeys,
+  timeHiddenNodeIds,
   timeWindow,
   timeDomain,
 }: Props) {
@@ -639,8 +642,10 @@ export default function GraphCanvas({
   const nodeVisible = useCallback((node: object) => {
     const n = node as FGNode
     if (pathFilter && !pathFilter.nodeIds.has(n.id)) return false
+    // Time slider: hide hosts the window leaves with no visible edge.
+    if (timeHiddenNodeIds?.has(n.id)) return false
     return true
-  }, [pathFilter])
+  }, [pathFilter, timeHiddenNodeIds])
 
   const linkVisible = useCallback((link: object) => {
     const l = link as FGLink
@@ -669,6 +674,7 @@ export default function GraphCanvas({
     const w = window as unknown as { __lockpick_graph__?: Record<string, unknown> }
     w.__lockpick_graph__ = {
       nodeIds: fgData.nodes.map(n => n.id),
+      visibleNodeIds: fgData.nodes.filter(n => nodeVisible(n)).map(n => n.id),
       highlightedNodeIds: fgData.nodes.filter(n => n.pathHighlight).map(n => n.id),
       visibleEdgeKeys: fgData.links
         .filter(l => linkVisible(l))
@@ -690,7 +696,7 @@ export default function GraphCanvas({
       // Live-read helper: the node react-force-graph currently reports as hovered.
       hoveredNodeId: (): string | null => hoveredNodeIdRef.current,
     }
-  }, [fgData, pathFilter, credFilter, linkVisible, pathAnchorId, timeWindow, timeDomain])
+  }, [fgData, pathFilter, credFilter, linkVisible, nodeVisible, pathAnchorId, timeWindow, timeDomain])
 
   // ── Render ────────────────────────────────────────────────────────────────────
 

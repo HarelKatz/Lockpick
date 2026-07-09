@@ -222,6 +222,26 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
     return hidden
   }, [graphData.edges, edgeTimes, timeWindow])
 
+  // Nodes the time filter hides: hosts left with no visible edge once the window
+  // narrows (all their connections are out-of-window). Key-match / undated edges
+  // keep their endpoints visible. Empty when the window isn't narrowing anything,
+  // so isolated hosts still show at rest.
+  const timeHiddenNodeIds = useMemo(() => {
+    const hidden = new Set<string>()
+    if (timeHiddenKeys.size === 0) return hidden
+    const connected = new Set<string>()
+    for (const e of graphData.edges) {
+      if (!timeHiddenKeys.has(`${e.src_host_id}__${e.dst_host_id}`)) {
+        connected.add(e.src_host_id)
+        connected.add(e.dst_host_id)
+      }
+    }
+    for (const n of graphData.nodes) {
+      if (!connected.has(n.host_id)) hidden.add(n.host_id)
+    }
+    return hidden
+  }, [graphData.nodes, graphData.edges, timeHiddenKeys])
+
   // Initialize / re-clamp the handles whenever the domain changes (a host-selection
   // change or data reload can shift it). Fresh domain → full range. A selection that
   // still overlaps the new domain → clamp each handle into it. A selection now
@@ -645,6 +665,7 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
             onNodeShiftClick={handleNodeShiftClick}
             pathAnchorId={pathAnchorId}
             timeHiddenKeys={timeHiddenKeys}
+            timeHiddenNodeIds={timeHiddenNodeIds}
             timeWindow={timeWindow}
             timeDomain={timeDomain}
           />

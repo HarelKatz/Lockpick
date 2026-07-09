@@ -48,6 +48,7 @@ export async function gotoGraph(page: Page) {
  */
 export async function graphState(page: Page): Promise<{
   nodeIds: string[]
+  visibleNodeIds: string[]
   highlightedNodeIds: string[]
   visibleEdgeKeys: string[]
   pathAnchorId: string | null

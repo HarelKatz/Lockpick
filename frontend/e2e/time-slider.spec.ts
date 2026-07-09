@@ -42,6 +42,7 @@ async function edgeModel(page: Page, opId: string) {
     .map(t => Date.parse(t))
   return {
     key,
+    id: (nick: string) => idOf[nick],
     keyMatchKeys,
     edgeCount: graph.edges.length as number,
     domainMin: Math.min(...allTimes),
@@ -120,6 +121,32 @@ test.describe('graph time slider', () => {
     expect(visible).toContain(m.key('pentest_vm', 'citrix'))        // 03-15
     expect(visible).toContain(m.key('fileserver', 'internal'))      // 03-17
     expect(visible).toContain(m.key('backup', 'monitoring'))        // 03-21
+  })
+
+  test('narrowing hides hosts left with no in-window connection', async ({ page }) => {
+    const op = await gotoGraph(page)
+    await waitForGraphSettled(page)
+    const m = await edgeModel(page, op.id)
+
+    // Full window: every host visible.
+    expect((await graphState(page)).visibleNodeIds.length).toBe(10)
+
+    // Window → [03-10 09:00, ~03-11 12:00]: pentest_vm/citrix/fileserver connect only
+    // via 03-15/03-17 edges, so they lose every visible edge and must disappear.
+    await setRange(page, 'time-end', T('2026-03-11T12:00:00Z'))
+    await expect.poll(async () => (await graphState(page)).visibleNodeIds.length).toBe(7)
+
+    const vis = new Set((await graphState(page)).visibleNodeIds)
+    expect(vis.has(m.id('pentest_vm'))).toBe(false)
+    expect(vis.has(m.id('citrix'))).toBe(false)
+    expect(vis.has(m.id('fileserver'))).toBe(false)
+    // Key-match-connected hosts stay put.
+    expect(vis.has(m.id('jumpbox'))).toBe(true)
+    expect(vis.has(m.id('backup'))).toBe(true)
+
+    // Reset brings every host back.
+    await page.getByRole('button', { name: 'Reset' }).click()
+    await expect.poll(async () => (await graphState(page)).visibleNodeIds.length).toBe(10)
   })
 
   test('a window collapsed onto the top instant can still be widened (no soft-lock)', async ({ page }) => {
