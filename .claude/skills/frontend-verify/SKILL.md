@@ -30,6 +30,25 @@ force-layout node positions vary run-to-run, so `toHaveScreenshot` on the graph 
 flaky. Reserve `toHaveScreenshot` for **stable chrome** (toolbar, the time-slider
 bar, detail panels) if you need visual regression at all.
 
+### What the data hook CANNOT see (verify these separately)
+
+The hook reports the graph's *data model*, not how it's laid out or drawn. Two
+whole classes of bug are invisible to it — both have shipped green before:
+
+- **Layout / CSS reflow** (scrollbars, jitter, a control resizing, overflow). Assert
+  real geometry: `expect((await page.getByTestId(x).boundingBox()).width)…`, check
+  `document.scrollingElement.scrollHeight`, or `toHaveScreenshot` on the chrome.
+  A regression that visibly breaks the page can leave every hook assertion passing.
+- **Interaction-specific behavior.** Setting an input's value programmatically
+  (`el.value = …; dispatch('input')`) exercises the onChange path but **not** a real
+  drag. Bugs that only appear while dragging (a thumb jumping, mid-gesture reflow)
+  need a real gesture: `page.mouse.down()` → stepped `page.mouse.move()` → `up()`,
+  sampling layout at each step. Reproduce the user's actual gesture, not a shortcut.
+
+When a user reports something "broken" that the suite is green on, reach for a live
+browser (Playwright MCP, or a throwaway `chromium.launch()` script) and measure the
+thing they described before writing any fix.
+
 ## Run the committed suite
 
 ```bash
