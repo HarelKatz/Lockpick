@@ -699,14 +699,23 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
               />
             </div>
             <span className={styles.timeValue}>{fmtInstant(timeWindow.end)}</span>
-            {(timeWindow.start > timeDomain.min || timeWindow.end < timeDomain.max) && (
-              <button
-                className={styles.clearFilterBtn}
-                onClick={() => setTimeSel({ a: timeDomain.min, b: timeDomain.max })}
-              >
-                Reset
-              </button>
-            )}
+            {/* Always mounted (visibility, not conditional render) so appearing/
+                disappearing never resizes the track or bar height mid-drag — that
+                reflow made the thumb jump and the canvas jitter at the boundary. */}
+            {(() => {
+              const narrowed = timeWindow.start > timeDomain.min || timeWindow.end < timeDomain.max
+              return (
+                <button
+                  className={styles.clearFilterBtn}
+                  style={{ visibility: narrowed ? 'visible' : 'hidden' }}
+                  tabIndex={narrowed ? 0 : -1}
+                  aria-hidden={!narrowed}
+                  onClick={() => setTimeSel({ a: timeDomain.min, b: timeDomain.max })}
+                >
+                  Reset
+                </button>
+              )
+            })()}
           </div>
         )}
 

@@ -149,6 +149,21 @@ test.describe('graph time slider', () => {
     await expect.poll(async () => (await graphState(page)).visibleNodeIds.length).toBe(10)
   })
 
+  test('the Reset control never resizes the slider track (no drag jitter)', async ({ page }) => {
+    const op = await gotoGraph(page)
+    await waitForGraphSettled(page)
+    const m = await edgeModel(page, op.id)
+    const trackWidth = async () => (await page.getByTestId('time-start').boundingBox())!.width
+
+    // At full range the Reset button is hidden but its space is reserved.
+    const full = await trackWidth()
+    // Narrowing reveals Reset; the track must keep the SAME width, otherwise the
+    // dragged thumb's pixel↔value mapping shifts under the cursor and the bar jitters.
+    await setRange(page, 'time-end', T('2026-03-13T00:00:00Z'))
+    await expect.poll(async () => (await graphState(page)).timeWindow!.end).toBeLessThan(m.domainMax)
+    expect(Math.abs((await trackWidth()) - full)).toBeLessThan(1)
+  })
+
   test('a window collapsed onto the top instant can still be widened (no soft-lock)', async ({ page }) => {
     const op = await gotoGraph(page)
     await waitForGraphSettled(page)
