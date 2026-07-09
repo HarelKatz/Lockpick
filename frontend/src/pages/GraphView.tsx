@@ -222,22 +222,25 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
     return hidden
   }, [graphData.edges, edgeTimes, timeWindow])
 
-  // Nodes the time filter hides: hosts left with no visible edge once the window
-  // narrows (all their connections are out-of-window). Key-match / undated edges
-  // keep their endpoints visible. Empty when the window isn't narrowing anything,
-  // so isolated hosts still show at rest.
+  // Nodes the time filter hides: hosts the window *disconnected* — they have edges,
+  // but all of them are out-of-window. Key-match / undated edges keep their
+  // endpoints visible. Genuinely isolated hosts (no edges at all) are never hidden:
+  // with no connection they have no timestamp, so nothing places them in a window.
   const timeHiddenNodeIds = useMemo(() => {
     const hidden = new Set<string>()
     if (timeHiddenKeys.size === 0) return hidden
+    const hasEdge = new Set<string>()
     const connected = new Set<string>()
     for (const e of graphData.edges) {
+      hasEdge.add(e.src_host_id)
+      hasEdge.add(e.dst_host_id)
       if (!timeHiddenKeys.has(`${e.src_host_id}__${e.dst_host_id}`)) {
         connected.add(e.src_host_id)
         connected.add(e.dst_host_id)
       }
     }
     for (const n of graphData.nodes) {
-      if (!connected.has(n.host_id)) hidden.add(n.host_id)
+      if (hasEdge.has(n.host_id) && !connected.has(n.host_id)) hidden.add(n.host_id)
     }
     return hidden
   }, [graphData.nodes, graphData.edges, timeHiddenKeys])

@@ -128,13 +128,14 @@ test.describe('graph time slider', () => {
     await waitForGraphSettled(page)
     const m = await edgeModel(page, op.id)
 
-    // Full window: every host visible.
-    expect((await graphState(page)).visibleNodeIds.length).toBe(10)
+    // Full window: every host visible (10 connected + 1 isolated).
+    expect((await graphState(page)).visibleNodeIds.length).toBe(11)
 
     // Window → [03-10 09:00, ~03-11 12:00]: pentest_vm/citrix/fileserver connect only
     // via 03-15/03-17 edges, so they lose every visible edge and must disappear.
+    // 7 connected hosts survive + the isolated host is always kept = 8.
     await setRange(page, 'time-end', T('2026-03-11T12:00:00Z'))
-    await expect.poll(async () => (await graphState(page)).visibleNodeIds.length).toBe(7)
+    await expect.poll(async () => (await graphState(page)).visibleNodeIds.length).toBe(8)
 
     const vis = new Set((await graphState(page)).visibleNodeIds)
     expect(vis.has(m.id('pentest_vm'))).toBe(false)
@@ -143,10 +144,12 @@ test.describe('graph time slider', () => {
     // Key-match-connected hosts stay put.
     expect(vis.has(m.id('jumpbox'))).toBe(true)
     expect(vis.has(m.id('backup'))).toBe(true)
+    // The isolated host (no connections → no timestamp) is never hidden by the window.
+    expect(vis.has(m.id('workstation'))).toBe(true)
 
     // Reset brings every host back.
     await page.getByRole('button', { name: 'Reset' }).click()
-    await expect.poll(async () => (await graphState(page)).visibleNodeIds.length).toBe(10)
+    await expect.poll(async () => (await graphState(page)).visibleNodeIds.length).toBe(11)
   })
 
   test('the Reset control never resizes the slider track (no drag jitter)', async ({ page }) => {

@@ -10,8 +10,9 @@ test('seeded graph loads and exposes render state', async ({ page }) => {
   await gotoGraph(page)
   const s = await graphState(page)
 
-  // 10 hosts seeded; all edges visible; nothing highlighted or anchored yet.
-  expect(s.nodeIds.length).toBe(10)
+  // 11 hosts seeded (10 in the topology + 1 isolated); all edges visible; nothing
+  // highlighted or anchored yet.
+  expect(s.nodeIds.length).toBe(11)
   expect(s.highlightedNodeIds).toEqual([])
   expect(s.pathAnchorId).toBeNull()
   expect(s.visibleEdgeKeys.length).toBeGreaterThan(0)

@@ -9,7 +9,8 @@ adds a handful of manual SSH connections with spread-out timestamps so the graph
 one hardcoded timestamp (``Mar 15 14:20:00``), so without these the slider domain
 collapses to ``min == max`` and cannot be exercised. It also adds one connection
 with *no* timestamp, yielding an entirely-undated edge that exercises the slider's
-"undated edges are always shown" exemption.
+"undated edges are always shown" exemption, plus one isolated host (no connections)
+that the slider must never hide.
 
 Usage::
 
@@ -47,6 +48,11 @@ MANUAL_CONNECTIONS = [
 UNDATED_CONNECTIONS = [
     ("monitoring", "webserver", "svc", "www-data"),
 ]
+
+# A host with NO connections at all → an isolated graph node. With no connection it
+# has no timestamp, so the time slider must never hide it however the window narrows.
+# (nickname, ip)
+ISOLATED_HOST = ("workstation", "10.10.9.9")
 
 
 def _log(msg: str) -> None:
@@ -147,6 +153,13 @@ def main() -> int:
             )
             r.raise_for_status()
         _log(f"undated connections added: {len(UNDATED_CONNECTIONS)}")
+
+        # 4c. An isolated host — no connections, so the slider must never hide it
+        r = c.post(f"/api/ops/{op_id}/hosts", json={"nickname": ISOLATED_HOST[0]})
+        r.raise_for_status()
+        iso_id = r.json()["id"]
+        c.post(f"/api/hosts/{iso_id}/ips", json={"ip_address": ISOLATED_HOST[1]}).raise_for_status()
+        _log("isolated host added: 1")
 
         # 5. Sanity: fetch graph, report edge counts
         r = c.get(f"/api/ops/{op_id}/graph")
