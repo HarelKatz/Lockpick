@@ -15,6 +15,10 @@ import type {
 } from '../types'
 import { fetchGraph, expandHost, findPaths } from '../api/graph'
 import { mergeGraphResponses } from '../utils/graphMerge'
+import {
+  computeEdgeTimes, computeTimeDomain, computeTimeStep, deriveWindow,
+  computeHiddenEdgeKeys, computeHiddenNodeIds, snapTimeHandle, reclampWindow,
+} from '../utils/timeWindow'
 import GraphCanvas, { type CredFilter, type PathFilter, type LayoutName } from '../components/GraphCanvas'
 import HostSelector from '../components/HostSelector'
 import HostDetailSidebar from '../components/HostDetailSidebar'
@@ -149,100 +153,24 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
     return Array.from(map.values())
   }, [allHosts, graphData.nodes])
 
-  // ── Time slider: filter connection edges by evidence timestamp ────────────────
-  // Per-edge dated timestamps (epoch ms) from connection-log evidence. key_match
-  // evidence carries no timestamp, so key-match-only edges never appear here.
-  const edgeTimes = useMemo(() => {
-    const map = new Map<string, number[]>()
-    for (const e of graphData.edges) {
-      const times: number[] = []
-      for (const ev of e.evidence) {
-        if (!ev.timestamp) continue
-        const t = Date.parse(ev.timestamp)
-        if (!Number.isNaN(t)) times.push(t)
-      }
-      if (times.length) map.set(`${e.src_host_id}__${e.dst_host_id}`, times)
-    }
-    return map
-  }, [graphData.edges])
-
-  // Draggable domain = span of all dated evidence. Null (bar hidden) when there
-  // are no dated edges, or when every date is identical (min===max → nothing to
-  // drag) — the feature self-disables rather than showing a dead slider.
-  const timeDomain = useMemo(() => {
-    let min = Infinity, max = -Infinity
-    for (const times of edgeTimes.values()) {
-      for (const t of times) { if (t < min) min = t; if (t > max) max = t }
-    }
-    return min === Infinity || min === max ? null : { min, max }
-  }, [edgeTimes])
-
-  // ~500 draggable increments across the domain, whatever its span.
-  const timeStep = useMemo(
-    () => (timeDomain ? Math.max(1, Math.floor((timeDomain.max - timeDomain.min) / 500)) : 1),
-    [timeDomain],
+  // ── Time slider: filter connection edges by evidence timestamp (see utils/timeWindow) ──
+  const edgeTimes = useMemo(() => computeEdgeTimes(graphData.edges), [graphData.edges])
+  const timeDomain = useMemo(() => computeTimeDomain(edgeTimes), [edgeTimes])
+  const timeStep = useMemo(() => computeTimeStep(timeDomain), [timeDomain])
+  const timeWindow = useMemo(() => deriveWindow(timeSel), [timeSel])
+  const timeHiddenKeys = useMemo(
+    () => computeHiddenEdgeKeys(graphData.edges, edgeTimes, timeWindow),
+    [graphData.edges, edgeTimes, timeWindow],
+  )
+  const timeHiddenNodeIds = useMemo(
+    () => computeHiddenNodeIds(graphData.nodes, graphData.edges, timeHiddenKeys),
+    [graphData.nodes, graphData.edges, timeHiddenKeys],
   )
 
-  // The window the rest of the UI consumes: [earlier handle, later handle].
-  const timeWindow = useMemo(
-    () => (timeSel ? { start: Math.min(timeSel.a, timeSel.b), end: Math.max(timeSel.a, timeSel.b) } : null),
-    [timeSel],
-  )
-
-  // Edge keys the current window hides. An edge is hidden iff it has dated
-  // evidence AND none of its dates fall inside the window. Two exemptions keep a
-  // real pivot from ever being concealed: key-match edges (structural, not
-  // time-bound) and undated edges (no basis to hide) are always shown.
-  const timeHiddenKeys = useMemo(() => {
-    const hidden = new Set<string>()
-    if (!timeWindow) return hidden
-    for (const e of graphData.edges) {
-      if (e.evidence.some(ev => ev.type === 'key_match')) continue   // always shown
-      const key = `${e.src_host_id}__${e.dst_host_id}`
-      const times = edgeTimes.get(key)
-      if (!times) continue                                           // undated → always shown
-      if (!times.some(t => t >= timeWindow.start && t <= timeWindow.end)) hidden.add(key)
-    }
-    return hidden
-  }, [graphData.edges, edgeTimes, timeWindow])
-
-  // Nodes the time filter hides: hosts the window *disconnected* — they have edges,
-  // but all of them are out-of-window. Key-match / undated edges keep their
-  // endpoints visible. Genuinely isolated hosts (no edges at all) are never hidden:
-  // with no connection they have no timestamp, so nothing places them in a window.
-  const timeHiddenNodeIds = useMemo(() => {
-    const hidden = new Set<string>()
-    if (timeHiddenKeys.size === 0) return hidden
-    const hasEdge = new Set<string>()
-    const connected = new Set<string>()
-    for (const e of graphData.edges) {
-      hasEdge.add(e.src_host_id)
-      hasEdge.add(e.dst_host_id)
-      if (!timeHiddenKeys.has(`${e.src_host_id}__${e.dst_host_id}`)) {
-        connected.add(e.src_host_id)
-        connected.add(e.dst_host_id)
-      }
-    }
-    for (const n of graphData.nodes) {
-      if (hasEdge.has(n.host_id) && !connected.has(n.host_id)) hidden.add(n.host_id)
-    }
-    return hidden
-  }, [graphData.nodes, graphData.edges, timeHiddenKeys])
-
-  // Initialize / re-clamp the handles whenever the domain changes (a host-selection
-  // change or data reload can shift it). Fresh domain → full range. A selection that
-  // still overlaps the new domain → clamp each handle into it. A selection now
-  // entirely outside the new domain → reset to full, rather than collapsing onto a
-  // domain edge (which would strand the graph near-empty after a routine change).
+  // Initialize / re-clamp the handles whenever the domain changes (see utils/timeWindow).
   useEffect(() => {
     if (!timeDomain) { setTimeSel(null); return }
-    setTimeSel(prev => {
-      if (!prev) return { a: timeDomain.min, b: timeDomain.max }
-      const lo = Math.min(prev.a, prev.b), hi = Math.max(prev.a, prev.b)
-      if (hi < timeDomain.min || lo > timeDomain.max) return { a: timeDomain.min, b: timeDomain.max }
-      const clamp = (x: number) => Math.min(Math.max(x, timeDomain.min), timeDomain.max)
-      return { a: clamp(prev.a), b: clamp(prev.b) }
-    })
+    setTimeSel(prev => reclampWindow(prev, timeDomain))
   }, [timeDomain])
 
   // ── Event handlers ────────────────────────────────────────────────────────
@@ -456,19 +384,11 @@ export default function GraphView({ op, allHosts, credentials, focusHostId, onRe
     })
   }
 
-  // A drag landing within one step of a domain edge snaps exactly to it, so the
-  // earliest/latest-dated edge is always reachable despite range-input step
-  // quantization (browsers snap a full-swing drag to a grid point short of the max).
-  function snapTimeHandle(v: number): number {
-    if (!timeDomain) return v
-    if (v <= timeDomain.min + timeStep) return timeDomain.min
-    if (v >= timeDomain.max - timeStep) return timeDomain.max
-    return v
-  }
   // Handles move independently (no cross-clamp); the window derives from min/max,
   // so a handle dragged past its sibling simply swaps roles — never a soft-lock.
-  function handleTimeA(v: number) { setTimeSel(s => (s ? { ...s, a: snapTimeHandle(v) } : s)) }
-  function handleTimeB(v: number) { setTimeSel(s => (s ? { ...s, b: snapTimeHandle(v) } : s)) }
+  // snapTimeHandle keeps the earliest/latest-dated edge reachable (see utils/timeWindow).
+  function handleTimeA(v: number) { setTimeSel(s => (s ? { ...s, a: snapTimeHandle(v, timeDomain, timeStep) } : s)) }
+  function handleTimeB(v: number) { setTimeSel(s => (s ? { ...s, b: snapTimeHandle(v, timeDomain, timeStep) } : s)) }
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
