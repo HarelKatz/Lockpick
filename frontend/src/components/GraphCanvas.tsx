@@ -13,11 +13,11 @@ import dagre from '@dagrejs/dagre'
 import type { GraphEdge, GraphNode, GraphResponse } from '../types'
 import {
   theme, statusColors,
-  CONFIDENCE_CONFIRMED, CONFIDENCE_OBSERVED, CONFIDENCE_MUTED,
   NODE_FILL_HOSTILE, NODE_FILL_FRIENDLY, NODE_FILL_SELECTED, NODE_LABEL_COLOR,
   NODE_BORDER_ANCHOR,
 } from '../theme'
 import styles from './GraphCanvas.module.css'
+import { computeEdgeLabel, confidenceColor } from '../utils/edgeDisplay'
 
 // ── Exported types (consumed by GraphView) ─────────────────────────────────────
 export type LayoutName = 'cola' | 'cose-bilkent' | 'breadthfirst' | 'grid' | 'circle'
@@ -48,24 +48,6 @@ interface FGLink {
   dimmed: boolean
   edgeLabel: string
   _edge: GraphEdge
-}
-
-// ── Edge helpers ────────────────────────────────────────────────────────────────
-
-function computeEdgeLabel(e: GraphEdge): string {
-  for (const ev of e.evidence) {
-    if (ev.type === 'connection_log' && ev.connection_type) return ev.connection_type.toUpperCase()
-  }
-  if (e.evidence.some(ev => ev.type === 'key_match'))    return 'key match'
-  if (e.evidence.some(ev => ev.type === 'bash_history')) return 'bash history'
-  if (e.evidence.some(ev => ev.type === 'known_hosts'))  return 'known hosts'
-  return 'connection'
-}
-
-function confidenceColor(conf: string): string {
-  if (conf === 'confirmed') return CONFIDENCE_CONFIRMED
-  if (conf === 'observed')  return CONFIDENCE_OBSERVED
-  return CONFIDENCE_MUTED
 }
 
 // ── Layout algorithms ───────────────────────────────────────────────────────────
