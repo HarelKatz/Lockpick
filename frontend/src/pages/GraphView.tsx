@@ -14,6 +14,7 @@ import type {
   PathResult,
 } from '../types'
 import { fetchGraph, expandHost, findPaths } from '../api/graph'
+import { mergeGraphResponses } from '../utils/graphMerge'
 import GraphCanvas, { type CredFilter, type PathFilter, type LayoutName } from '../components/GraphCanvas'
 import HostSelector from '../components/HostSelector'
 import HostDetailSidebar from '../components/HostDetailSidebar'
@@ -48,23 +49,6 @@ function credLabel(c: Credential): string {
     || c.comment
     || (c.fingerprint ? c.fingerprint.slice(7, 23) + '…' : c.id.slice(0, 8))
   return `${type}: ${label}`
-}
-
-/**
- * Merge two GraphResponse objects, with `incoming` winning on conflicts.
- * Node and edge maps are keyed by host_id and "src__dst" respectively.
- */
-function mergeGraphResponses(existing: GraphResponse, incoming: GraphResponse): GraphResponse {
-  const nodeMap = new Map(existing.nodes.map(n => [n.host_id, n]))
-  for (const n of incoming.nodes) nodeMap.set(n.host_id, n)
-
-  const edgeMap = new Map(existing.edges.map(e => [`${e.src_host_id}__${e.dst_host_id}`, e]))
-  for (const e of incoming.edges) edgeMap.set(`${e.src_host_id}__${e.dst_host_id}`, e)
-
-  return {
-    nodes: Array.from(nodeMap.values()),
-    edges: Array.from(edgeMap.values()),
-  }
 }
 
 export default function GraphView({ op, allHosts, credentials, focusHostId, onRegisterReload }: Props) {
