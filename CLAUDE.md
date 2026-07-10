@@ -100,6 +100,44 @@ make test-e2e       # spins up its own backend+frontend on dedicated ports (~10s
 
 **Verifying frontend changes:** use the **frontend-verify** skill — it's the standard for testing UI/graph features (committed Playwright specs via `make test-e2e` + live Playwright-MCP checks). See ARCHITECTURE.md Rule #26 for the `window.__lockpick_graph__` canvas-verification hook.
 
+## Feature Design Pre-flight Checklist
+
+Before building or reshaping a feature, answer these four blind-spot questions. Each "always/never" answer you land on is an invariant — write it as a test. The classes come from real misses (see the Misses log), not speculation.
+
+1. **Interaction modes** — does it hold under *click* AND *drag* AND *keyboard*? An `onChange`/`setState` path is **not** a real drag — a controlled `setRange()` can pass green while a pointer drag jitters. Drive the real input.
+2. **Layout / rendering** — does toggling it resize a neighbor, add a scrollbar, overflow, or jitter on reflow? The `window.__lockpick_graph__` hook is **blind to CSS/layout** — assert `boundingBox()` / `scrollHeight`, not just the data model.
+3. **Model completeness** — does it hold for empty / one-host / undated / isolated / self-loop / null-host / long-nickname ops? Every "always"/"never" you claim must survive these shapes.
+4. **Data profiles** — does it hold at 5 hosts AND 200? Run it over `profiles.normal()` and `profiles.scale(N)`.
+
+### Misses log
+
+When a bug ships green, add one line: the blind-spot class + the invariant/test that now covers it. Grows from real misses.
+
+- **Interaction modes** — time-slider drag-only jitter (Reset button reflow) → e2e `time-slider.spec.ts` "the Reset control never resizes the slider track (no drag jitter)".
+- **Model completeness** — isolated host hidden as the window narrowed → e2e "narrowing hides hosts left with no in-window connection" (+ the genuinely-isolated-host visibility fix).
+- **Model completeness** — undated edge must never be hidden → e2e "narrowing the end keeps key-match + undated edges even when their date is out of window".
+- **Layout / rendering** — floating nodes after filtering → *pending:* the frontend graph invariant suite (BACKLOG); no invariant covers it yet.
+
+## Test-Layering Doctrine
+
+**The loop:** design (with the pre-flight checklist) → build + test together → verify across layers → use/explore a `normal()` op → feed every discovery back as a regression test **and** a Misses-log row. The point is that *using the app produces a failing test*, so features ship freely.
+
+**Layers, cheapest first** (cheap ones gate every change; heavier ones run on demand):
+
+1. **Unit** — pure logic, no I/O (frontend `vitest`, backend function tests). Milliseconds.
+2. **Property / invariant** — general properties over generated ops (backend `hypothesis`; BACKLOG).
+3. **Scenario** — a known topology through the real REST API (`make test-scenarios`).
+4. **E2E invariants** — the `window.__lockpick_graph__` hook + `boundingBox` + console capture over `normal()` / `scale(N)` (`make test-e2e`).
+5. **Agentic explore** — an agent drives the real browser to hunt the "looks/feels right" wall; a bug-FINDER that distills findings into deterministic specs, **never the gate** (BACKLOG).
+
+**Default substrate:** `tests/opbuilder/profiles.normal()` is the standard op every layer builds on; edge-case shapes and `scale(N)` layer on as learned. `OpBuilder` is the one REST substrate — the same builder drives the pytest `TestClient` and the live-server `httpx.Client`.
+
+**Accepted walls** (don't fight these — assert around them):
+
+- **Canvas pixels** — the graph is a `<canvas>`, invisible to the DOM; assert render *state* via `window.__lockpick_graph__` (Rule #26), never screenshot-diff force-layout positions.
+- **Aesthetic judgment** — "does it look right" isn't automatable; that's the agentic layer's job, feeding deterministic specs.
+- **Headless ≠ real browser** — headless rendering can diverge; reserve screenshots for stable chrome.
+
 ## Adding a New Endpoint
 
 1. ORM model in `backend/models.py` (if new table)
