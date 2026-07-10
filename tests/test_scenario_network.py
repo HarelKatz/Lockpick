@@ -16,6 +16,8 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
 
+from tests.opbuilder import OpBuilder
+
 NET = Path(__file__).parent / "fixtures" / "network"
 TOPOLOGY = NET / "topology.json"
 
@@ -28,73 +30,13 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-# ─── Helpers ──────────────────────────────────────────────────────────────────
-
-def _create_op(client) -> str:
-    r = client.post("/api/ops", json={"name": "ScenarioOp"})
-    assert r.status_code == 201
-    return r.json()["id"]
-
-
-def _create_host(client, op_id: str, nickname: str) -> str:
-    r = client.post(f"/api/ops/{op_id}/hosts", json={"nickname": nickname})
-    assert r.status_code == 201
-    return r.json()["id"]
-
-
-def _register_ip(client, host_id: str, ip: str) -> None:
-    r = client.post(f"/api/hosts/{host_id}/ips", json={"ip_address": ip})
-    assert r.status_code == 201
-
-
-def _upload_file(client, op_id: str, host_id: str, file_entry: dict) -> dict:
-    path = NET / file_entry["path"]
-    content = path.read_bytes()
-    data = {
-        "file_type": file_entry["file_type"],
-        "host_id": host_id,
-    }
-    if file_entry.get("username"):
-        data["username"] = file_entry["username"]
-    r = client.post(
-        f"/api/ops/{op_id}/upload",
-        data=data,
-        files={"file": (path.name, content, "application/octet-stream")},
-    )
-    assert r.status_code == 200, f"Upload failed for {file_entry['path']}: {r.text}"
-    return r.json()
-
-
 # ─── Main fixture: upload all 10 hosts ────────────────────────────────────────
 
 @pytest.fixture(scope="function")
 def loaded_op(client):
     """Create the operation, upload all network fixture files, return context."""
     topology = json.loads(TOPOLOGY.read_text())
-    op_id = _create_op(client)
-
-    # Create all hosts and register IPs first
-    host_ids: dict[str, str] = {}  # nickname → id
-    for h in topology["hosts"]:
-        hid = _create_host(client, op_id, h["nickname"])
-        host_ids[h["nickname"]] = hid
-        _register_ip(client, hid, h["ip"])
-
-    # Upload all files in manifest order (private keys before authorized_keys within each host)
-    for h in topology["hosts"]:
-        hid = host_ids[h["nickname"]]
-        for f in h["files"]:
-            _upload_file(client, op_id, hid, f)
-
-    graph_resp = client.get(f"/api/ops/{op_id}/graph")
-    assert graph_resp.status_code == 200
-
-    return {
-        "op_id": op_id,
-        "host_ids": host_ids,
-        "topology": topology,
-        "graph": graph_resp.json(),
-    }
+    return OpBuilder(client).apply_topology(topology, fixtures_root=NET)
 
 
 # ─── Tests ────────────────────────────────────────────────────────────────────
@@ -226,15 +168,18 @@ def test_upload_returns_ok_for_all_files(client):
         pytest.skip("fixtures not generated")
 
     topology = json.loads(TOPOLOGY.read_text())
-    op_id = _create_op(client)
+    b = OpBuilder(client)
+    op_id = b.op("ScenarioOp")
     host_ids: dict[str, str] = {}
     for h in topology["hosts"]:
-        hid = _create_host(client, op_id, h["nickname"])
+        hid = b.host(op_id, h["nickname"])
         host_ids[h["nickname"]] = hid
-        _register_ip(client, hid, h["ip"])
+        if h.get("ip"):
+            b.ip(hid, h["ip"])
 
     for h in topology["hosts"]:
         hid = host_ids[h["nickname"]]
         for f in h["files"]:
-            result = _upload_file(client, op_id, hid, f)
+            path = NET / f["path"]
+            result = b.upload(op_id, hid, f["file_type"], path.read_bytes(), path.name, f.get("username"))
             assert result["ok"] is True, f"Upload not ok for {f['path']}: {result}"
