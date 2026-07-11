@@ -4,7 +4,7 @@ Lockpick is a single-team-internal red team tool — PRs are welcome, but the ca
 
 ## Commit format & pre-commit gate
 
-Both are defined canonically in **[CLAUDE.md → Git Commits](CLAUDE.md#git-commits)**: the conventional `type(scope): …` format, and the gate (`make test-backend` must pass; `cd frontend && npm run build` must succeed for code changes; `.md`-only changes may skip the build gate). `make test-full` runs every layer (backend + frontend unit + e2e).
+Both are defined canonically in **[CLAUDE.md → Git Commits](CLAUDE.md#git-commits)**: the conventional `type(scope): …` format, and the gate (`make test-backend` + `make test-unit` must pass; `cd frontend && npm run build` must succeed for code changes; `.md`-only changes may skip the build gate). `make test-full` runs every layer (backend + frontend unit + e2e).
 
 Stage specific files — never `git add .` (risks staging `.env`, keys, or build artifacts).
 

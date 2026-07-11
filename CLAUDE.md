@@ -51,11 +51,12 @@ Commit after every unit of completed work: feature, bug fix, refactor, parser, s
 **Pre-commit gate (code changes):**
 
 ```bash
-make test-backend               # must pass
-cd frontend && npm run build    # must succeed
+make test-backend               # backend — must pass
+cd frontend && npm run build    # frontend typecheck + build — must succeed
+make test-unit                  # frontend unit tests — must pass (fast, ~0.2s)
 ```
 
-(`make test-full` runs every layer — backend + frontend unit + e2e — for a pre-PR / agent check.)
+e2e stays out of the per-commit gate (too slow); run `make test-full` before a PR or as an agent check.
 
 Doc-only changes (`.md`) can skip the build gate.
 
