@@ -63,6 +63,22 @@ export async function graphState(page: Page): Promise<{
   return page.evaluate(() => (window as unknown as { __lockpick_graph__: unknown }).__lockpick_graph__ as never)
 }
 
+/**
+ * Drive a controlled range input so React's onChange fires. Setting `.value = x`
+ * directly is ignored — React's value tracking defeats it — so we go through the
+ * native value setter, then dispatch input+change. (Kept in lockstep with the
+ * local copy in time-slider.spec.ts.)
+ */
+export async function setRange(page: Page, testid: string, value: number): Promise<void> {
+  await page.getByTestId(testid).evaluate((el, v) => {
+    const input = el as HTMLInputElement
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
+    setter.call(input, String(v))
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+    input.dispatchEvent(new Event('change', { bubbles: true }))
+  }, value)
+}
+
 /** Current viewport coords of a host's canvas node (via the hook's screenPos). */
 export async function nodeScreenPos(page: Page, hostId: string): Promise<{ x: number; y: number }> {
   const pos = await page.evaluate((id) => {
