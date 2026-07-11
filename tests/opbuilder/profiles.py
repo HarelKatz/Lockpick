@@ -106,9 +106,9 @@ def scale(n: int) -> dict:
     """A random op of ``n`` hosts from the seeded generator (deterministic per ``n``).
 
     Delegates to the size-dialable generator's keygen-free in-memory export
-    (`tests/generate_random_network.build_structure_topology`). Safe for any
-    ``n >= 0``; imported lazily so this package stays free of generator internals
-    unless ``scale`` is actually called.
+    (`tests/generate_random_network.build_structure_topology`). Valid for
+    ``0 <= n <= ~65k`` (raises above the generator's IP capacity). Imported lazily
+    so this package stays free of generator internals unless ``scale`` is called.
     """
     from tests.generate_random_network import build_structure_topology
 

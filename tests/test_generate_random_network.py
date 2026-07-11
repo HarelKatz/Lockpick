@@ -11,14 +11,20 @@ import hashlib
 import json
 import random
 
-from tests.generate_random_network import build_random_topology, build_structure_topology
+import pytest
+
+from tests.generate_random_network import (
+    _IP_CAPACITY,
+    build_random_topology,
+    build_structure_topology,
+)
 from tests.opbuilder import OpBuilder
 
 # Golden hash of the structural topology for a pinned (seed, n_hosts). Regenerate
 # intentionally (and review the diff) if the generator's structure changes.
 _GOLDEN_SEED = 1234
 _GOLDEN_N = 20
-_GOLDEN_HASH = "1d2868cce349eb94421661ebf175de781c746e93bce7604e3f4be19144ac0e2f"
+_GOLDEN_HASH = "3d3ce3a7b18bc86dd48718891fe7731f0eb2e859257a6bfd4faa06b6c157172b"
 
 
 def _hash(topo: dict) -> str:
@@ -78,6 +84,19 @@ def test_host_ips_are_unique():
 def test_small_n_is_safe():
     assert len(build_structure_topology(random.Random(1), n_hosts=1)["hosts"]) == 1
     assert build_structure_topology(random.Random(1), n_hosts=0)["hosts"] == []
+
+
+def test_large_n_does_not_deadlock():
+    """Regression: n beyond the old 1524-address space used to spin forever."""
+    topo = build_structure_topology(random.Random(1), n_hosts=2000)
+    ips = [h["ip"] for h in topo["hosts"]]
+    assert len(topo["hosts"]) == 2000
+    assert len(set(ips)) == 2000
+
+
+def test_exceeding_ip_capacity_raises_not_hangs():
+    with pytest.raises(ValueError):
+        build_structure_topology(random.Random(1), n_hosts=_IP_CAPACITY + 1)
 
 
 # ── Integration: the structure-only export drives a real graph ──────────────────

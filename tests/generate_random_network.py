@@ -40,6 +40,10 @@ _TS = "Mar 15 14:20:00"
 
 _USERS = ["alice", "root", "deploy", "ops", "svc"]
 
+# Unique host IPs are drawn from 10.20.0-255.1-254 → 65024 distinct addresses.
+# Beyond this the rejection sampler could never find a free IP, so we fail loudly.
+_IP_CAPACITY = 256 * 254
+
 
 # ─── Key helpers (paramiko imported lazily so structure-only runs need no keygen) ──
 
@@ -131,6 +135,8 @@ def _build_structure(rng: random.Random, n_hosts: int, n_keys: int) -> dict:
             "key_names": [], "host_key": {}, "authorized": {},
             "key_pivots": [], "password_connections": [],
         }
+    if n_hosts > _IP_CAPACITY:
+        raise ValueError(f"n_hosts={n_hosts} exceeds the {_IP_CAPACITY}-address IP space")
 
     key_names = [f"key{i}" for i in range(n_keys)]
     names = [f"host{i:02d}" for i in range(n_hosts)]
@@ -139,7 +145,7 @@ def _build_structure(rng: random.Random, n_hosts: int, n_keys: int) -> dict:
     used_ips: set[str] = set()
     for name in names:
         while True:
-            ip = f"10.20.{rng.randint(0, 5)}.{rng.randint(1, 254)}"
+            ip = f"10.20.{rng.randint(0, 255)}.{rng.randint(1, 254)}"
             if ip not in used_ips:
                 used_ips.add(ip)
                 ips[name] = ip
