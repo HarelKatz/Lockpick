@@ -13,6 +13,7 @@ Profiles return topology dicts ready for ``OpBuilder.apply_topology(...)``.
 from __future__ import annotations
 
 import json
+import random
 from pathlib import Path
 from typing import Any
 
@@ -102,12 +103,13 @@ def edge_cases() -> dict:
 
 
 def scale(n: int) -> dict:
-    """A self-contained op of ``n`` hosts (a chain with a few key pivots).
+    """A random op of ``n`` hosts from the seeded generator (deterministic per ``n``).
 
-    A stand-in until Phase 1's size-dialable generator lands, at which point
-    this delegates to it. Deterministic; safe for any ``n >= 0``.
+    Delegates to the size-dialable generator's keygen-free in-memory export
+    (`tests/generate_random_network.build_structure_topology`). Safe for any
+    ``n >= 0``; imported lazily so this package stays free of generator internals
+    unless ``scale`` is actually called.
     """
-    parts = [shapes.linear_chain(n)]
-    for i in range(0, max(0, n - 2), 5):
-        parts.append(shapes.key_pivot(f"n{i}", f"n{i + 2}"))
-    return shapes.assign_ips(shapes.merge(*parts))
+    from tests.generate_random_network import build_structure_topology
+
+    return build_structure_topology(random.Random(n), n_hosts=n)

@@ -58,6 +58,10 @@ def test_scale_produces_n_hosts_with_unique_ips():
     assert len(set(ips)) == 20
 
 
+def test_scale_is_deterministic_per_n():
+    assert profiles.scale(30) == profiles.scale(30)
+
+
 def test_edge_cases_is_superset_of_normal():
     normal_nicks = {h["nickname"] for h in profiles.normal()["hosts"]}
     ec_nicks = {h["nickname"] for h in profiles.edge_cases()["hosts"]}
