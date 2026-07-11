@@ -1,4 +1,4 @@
-.PHONY: run up down logs backup dev-backend dev-frontend test test-api test-parsers test-services test-scenarios test-real-examples test-e2e
+.PHONY: run up down logs backup dev-backend dev-frontend test-full test-backend test-api test-parsers test-services test-scenarios test-real-examples test-unit test-e2e
 
 run:
 	docker compose up -d --build && docker compose logs -f
@@ -21,7 +21,19 @@ dev-backend:
 dev-frontend:
 	cd frontend && npm run dev
 
-test:
+# Full suite across every layer — backend + frontend unit + e2e. Serial + fail-fast:
+# stops at the first red layer and names it, so an agent or CI sees exactly what broke.
+# Layers run serially on purpose: backend pytest already uses every core (-n auto) and
+# the e2e stack is timing-sensitive, so running layers concurrently risks flaky e2e for
+# little gain — within each layer, tests already run in parallel.
+test-full:
+	@$(MAKE) --no-print-directory test-backend || { echo "=== FAIL: backend ==="; exit 1; }
+	@$(MAKE) --no-print-directory test-unit    || { echo "=== FAIL: frontend unit ==="; exit 1; }
+	@$(MAKE) --no-print-directory test-e2e     || { echo "=== FAIL: frontend e2e ==="; exit 1; }
+	@echo "=== PASS: backend + frontend unit + e2e ==="
+
+test-backend:
+	@echo "=== backend: pytest ==="
 	cd backend && uv run pytest ../tests/ -n auto -q --tb=short
 
 test-api:
@@ -39,8 +51,14 @@ test-scenarios:
 test-real-examples:
 	cd backend && uv run pytest ../tests/test_real_examples/ -q --tb=short
 
+# Frontend unit tests (vitest) — pure logic extracted to src/utils/ (node env, fast).
+test-unit:
+	@echo "=== frontend unit: vitest ==="
+	cd frontend && npm run test:unit
+
 # Frontend end-to-end tests (Playwright). Spins up an isolated backend + dev
 # frontend on dedicated ports and seeds a deterministic graph — see
 # frontend/playwright.config.ts and the frontend-verify skill.
 test-e2e:
+	@echo "=== frontend e2e: playwright ==="
 	cd frontend && npm run test:e2e

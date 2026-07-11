@@ -40,7 +40,7 @@ make up       # start without rebuilding
 make down     # stop and remove containers
 make logs     # re-attach to logs
 make backup   # tar ./data/ with a timestamp
-make test     # run the pytest suite
+make test-full # run every test layer (backend + frontend unit + e2e)
 ```
 
 ## Local Development (without Docker)
@@ -76,7 +76,10 @@ Dev server at **http://localhost:5173** — proxies `/api` requests to `localhos
 ### Running Tests
 
 ```bash
-make test
+make test-full     # everything: backend + frontend unit + e2e
+make test-backend  # backend pytest only
+make test-unit     # frontend unit (vitest)
+make test-e2e      # frontend e2e (playwright)
 ```
 
 ## Data Storage

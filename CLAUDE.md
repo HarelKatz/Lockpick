@@ -51,9 +51,11 @@ Commit after every unit of completed work: feature, bug fix, refactor, parser, s
 **Pre-commit gate (code changes):**
 
 ```bash
-make test                       # must pass
+make test-backend               # must pass
 cd frontend && npm run build    # must succeed
 ```
+
+(`make test-full` runs every layer — backend + frontend unit + e2e — for a pre-PR / agent check.)
 
 Doc-only changes (`.md`) can skip the build gate.
 
@@ -81,23 +83,27 @@ docker compose up -d --build
 make dev-backend    # uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
 make dev-frontend   # npm run dev  (dev server: http://localhost:5173)
 
-# Tests (full suite — required before every commit)
-make test           # full suite, parallel, quiet — failures only
+# Everything — backend + frontend unit + e2e. Serial + fail-fast, per-layer banners,
+# non-zero exit on the first red layer (names it). This is the agent/CI command.
+make test-full
 
-# Tests (by group — for fast iteration while working in a specific area)
+# Backend pytest — full backend suite, parallel (-n auto), quiet, failures only.
+# This is the layer the pre-commit gate runs.
+make test-backend
+
+# Backend by group — fast iteration while working in one area
 make test-api       # API integration tests (~14s)
 make test-parsers   # parser unit tests (~0.1s)
 make test-services  # service layer tests (~0.7s)
 make test-scenarios # scenario tests (~4.5s)
 make test-real-examples  # parser regression vs real_examples/ corpus (~0.5s)
 
-# Frontend end-to-end (Playwright) — isolated stack + deterministic seed.
-# Verifies canvas UI (graph) by asserting on window.__lockpick_graph__, not pixels.
-make test-e2e       # spins up its own backend+frontend on dedicated ports (~10s startup)
+# Frontend unit (vitest) — pure logic extracted to src/utils/ (node env, fast)
+make test-unit
 
-# Frontend unit tests (vitest) — pure logic extracted to src/utils/ (node env, fast).
-# Run when touching that logic; the e2e suite gates the extraction itself.
-cd frontend && npm run test:unit
+# Frontend e2e (Playwright) — isolated stack + deterministic seed; asserts on
+# window.__lockpick_graph__ (not pixels). Spins its own backend+frontend (~10s startup)
+make test-e2e
 ```
 
 **Always use `uv run` for Python — never `python` directly.**
