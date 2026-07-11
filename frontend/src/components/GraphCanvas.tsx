@@ -158,6 +158,18 @@ export default function GraphCanvas({
   // Pending single-click timer — delayed so double-click can preempt it
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // ── Dev-only render probe (e2e "drawn == visible" invariant) ─────────────────
+  // Record what the canvas ACTUALLY paints. drawNode/drawLink fire only for items
+  // passing nodeVisibility/linkVisibility (react-force-graph .filter()s first), so
+  // these capture exactly the library's visible set. frameDrawn*Ref accumulate the
+  // in-progress frame; onRenderFramePost swaps them into painted*Ref (the last
+  // COMPLETED frame — what a test reads) and resets. Gated to import.meta.env.DEV
+  // at every write/read site so prod dead-code-eliminates the probe.
+  const frameDrawnNodesRef = useRef<Set<string>>(new Set())
+  const frameDrawnEdgesRef = useRef<Set<string>>(new Set())
+  const paintedNodesRef = useRef<Set<string>>(new Set())
+  const paintedEdgesRef = useRef<Set<string>>(new Set())
+
   // ── Graph data state ─────────────────────────────────────────────────────────
   const [fgData, setFgData] = useState<{ nodes: FGNode[]; links: FGLink[] }>({ nodes: [], links: [] })
   // Ref so Effect 1 can read current dims without taking them as a dependency
@@ -361,6 +373,7 @@ export default function GraphCanvas({
 
   const drawNode = useCallback((node: object, ctx: CanvasRenderingContext2D, globalScale: number) => {
     const n = node as FGNode
+    if (import.meta.env.DEV) frameDrawnNodesRef.current.add(n.id)
     const { x = 0, y = 0, pathHighlight, dimmed, isLocked, hasCredentials, label, status } = n
     const isSelected = n.id === selectedNodeIdRef.current
     const r = 27
@@ -426,6 +439,7 @@ export default function GraphCanvas({
     const src = l.source as FGNode
     const tgt = l.target as FGNode
     if (src.x == null || src.y == null || tgt.x == null || tgt.y == null) return
+    if (import.meta.env.DEV) frameDrawnEdgesRef.current.add(`${l._edge.src_host_id}__${l._edge.dst_host_id}`)
 
     const opacity = l.dimmed ? 0.08 : 1
     ctx.globalAlpha = opacity
@@ -473,6 +487,17 @@ export default function GraphCanvas({
     }
 
     ctx.globalAlpha = 1
+  }, [])
+
+  // Publish the just-completed frame's painted sets (dev-only). Per-frame order is
+  // clear → onRenderFramePre → paint links → paint nodes → onRenderFramePost, so at
+  // this point frameDrawn*Ref holds the full drawn set for the frame. Swap it into
+  // painted*Ref (read by drawnNodeIds()/drawnEdgeKeys()) and start fresh accumulators.
+  const handleRenderFramePost = useCallback(() => {
+    paintedNodesRef.current = frameDrawnNodesRef.current
+    frameDrawnNodesRef.current = new Set()
+    paintedEdgesRef.current = frameDrawnEdgesRef.current
+    frameDrawnEdgesRef.current = new Set()
   }, [])
 
   // ── Event handlers ────────────────────────────────────────────────────────────
@@ -603,6 +628,14 @@ export default function GraphCanvas({
       },
       // Live-read helper: the node react-force-graph currently reports as hovered.
       hoveredNodeId: (): string | null => hoveredNodeIdRef.current,
+      // Live-read render probes: the node/edge sets the canvas ACTUALLY painted on
+      // the last completed frame (published by onRenderFramePost). Specs assert these
+      // set-equal visibleNodeIds/visibleEdgeKeys — the canvas draws exactly what the
+      // model reports visible. Live-read (not serialized) because the painted set
+      // changes every animation frame; the snapshot only refreshes when this effect
+      // re-runs. Mirrors the screenPos/hoveredNodeId accessor pattern.
+      drawnNodeIds: (): string[] => Array.from(paintedNodesRef.current),
+      drawnEdgeKeys: (): string[] => Array.from(paintedEdgesRef.current),
     }
   }, [fgData, pathFilter, credFilter, linkVisible, nodeVisible, pathAnchorId, timeWindow, timeDomain])
 
@@ -642,6 +675,7 @@ export default function GraphCanvas({
           d3AlphaDecay={0.04}
           d3VelocityDecay={0.8}
           autoPauseRedraw={false}
+          onRenderFramePost={import.meta.env.DEV ? handleRenderFramePost : undefined}
         />
       )}
     </div>
