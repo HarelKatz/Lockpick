@@ -69,7 +69,7 @@ def main() -> int:
         )
 
         # Second op: a generated scale(50) fixture for the graph/layout invariant
-        # suite (frontend/e2e/invariants.spec.ts). Its connections are undated, so
+        # suite (frontend/e2e/invariants-scale.spec.ts). Its connections are undated, so
         # this op has NO time slider — the slider-driven checks run only on normal().
         scale_lo = builder.apply_topology(profiles.scale(50), name=f"{args.name} — Scale 50")
         _log(

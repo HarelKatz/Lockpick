@@ -8,13 +8,34 @@ import {
 // window.__lockpick_graph__ DATA hook can't see: canvas bounds, viewport overflow,
 // console cleanliness, neighbor-resize, edge-endpoint closure. Fast (11-host seed),
 // so it stays in the committed `chromium` project / the gate. The heavy scale(50)
-// sweep lives in invariants-scale.spec.ts (nightly `chromium-invariants` only).
+// sweep lives in invariants-scale.spec.ts (the `chromium-invariants` project, excluded
+// from the gate but run by make test-e2e / test-full / test-scale-e2e).
 
 test.describe('graph/layout invariants (normal op)', () => {
-  test('every visible node is painted within the canvas bounds', async ({ page }) => {
+  test('every visible node stays finitely in-canvas (full graph and after filtering)', async ({ page }) => {
     await gotoGraph(page)
     await waitForGraphSettled(page)
+    const full = (await graphState(page)).visibleNodeIds.length
+    expect(full).toBeGreaterThan(0)
     expect(await allNodesInView(page)).toEqual([])
+
+    // After filtering: toggle a host off, forcing a graph remount + reflow (the
+    // "floating node after filtering" regression class). The app does NOT auto-refit
+    // after a host toggle, so a reflowed node may legitimately sit off-canvas — the
+    // real invariant is that no visible node becomes DETACHED (null/NaN position), so
+    // we check requireInCanvas:false. Requiring count == full-1 guards against a
+    // premature pass on a transient empty visible set mid-remount.
+    await page.locator('label', { hasText: 'webserver' }).getByRole('checkbox').uncheck()
+    await expect
+      .poll(
+        async () => {
+          const detached = (await allNodesInView(page, { requireInCanvas: false })).length
+          const count = (await graphState(page)).visibleNodeIds.length
+          return { count, detached }
+        },
+        { timeout: 15_000 },
+      )
+      .toEqual({ count: full - 1, detached: 0 })
   })
 
   test('the page never overflows horizontally', async ({ page }) => {

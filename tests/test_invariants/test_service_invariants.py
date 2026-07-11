@@ -73,8 +73,16 @@ def test_classify_indicator_parser_type_beats_confirmed():
 
 
 def test_classify_confirmed_needs_dst_logs_and_credential():
+    # Both present → confirmed.
     rec = _conn(direction_context="from_dst_logs", credential_id="c1")
     assert _classify_connection_evidence(rec) == ("connection_log", "confirmed")
+    # ...and the credential is REQUIRED: from_dst_logs with NO credential → observed.
+    # This guards the `and record.credential_id` half of the branch — without the
+    # assertion, dropping that clause (mis-classifying a credential-less dst-logs row
+    # as confirmed) would leave the battery green.
+    assert _classify_connection_evidence(_conn(direction_context="from_dst_logs")) == (
+        "connection_log", "observed",
+    )
 
 
 def test_classify_defaults_to_observed():

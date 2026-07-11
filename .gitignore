@@ -49,6 +49,7 @@ frontend/.vite/
 # Playwright e2e (throwaway seed DB/uploads + reports)
 frontend/e2e/.data/
 frontend/e2e/.op-id
+frontend/e2e/.op-id-scale
 frontend/playwright-report/
 frontend/test-results/
 frontend/.last-run.json

@@ -75,12 +75,14 @@ test-invariants:
 	@echo "=== backend invariants: pytest -m property ==="
 	cd backend && uv run pytest ../tests/ -m property -q --tb=short
 
-# Heavy/scale backend tests (scale(N) invariants). Nightly / on-demand.
+# Heavy/scale backend tests (scale(N) invariants). On-demand; excluded from the gate
+# (also runs inside test-full via test-backend). No scheduled runner exists.
 test-scale:
 	@echo "=== backend scale: pytest -m slow ==="
 	cd backend && uv run pytest ../tests/ -m slow -q --tb=short
 
-# Heavy scale(50) e2e layout invariants (chromium-invariants project). Nightly.
+# Heavy scale(50) e2e layout invariants (chromium-invariants project). On-demand;
+# excluded from the gate (also runs inside test-full via test-e2e). No scheduled runner.
 test-scale-e2e:
 	@echo "=== frontend e2e (scale): playwright --project=chromium-invariants ==="
 	cd frontend && npm run test:e2e:invariants
@@ -98,6 +100,6 @@ fast-e2e:
 # Sub-90s pre-PR gate: frontend build + unit + fast backend + fast e2e. Serial +
 # fail-fast (prereq list, cheapest first); add -j for concurrent layers (recommended
 # to stay under 90s — the fast e2e layer dominates). The heavier test-full runs
-# everything; the nightly test-scale / test-scale-e2e run the scale sweeps.
+# everything; the on-demand test-scale / test-scale-e2e run the scale sweeps in isolation.
 gate: build test-unit test-fast fast-e2e
 	@echo "=== PASS: gate ==="

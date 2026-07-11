@@ -179,13 +179,23 @@ export async function waitForGraphSettled(page: Page): Promise<void> {
 }
 
 /**
- * Return the ids of visible nodes whose canvas position falls OUTSIDE the canvas
- * bounds (a "floating node"), or that have no position at all. Empty ⇒ every visible
- * node is painted in-view. Call waitForGraphSettled first — zoomToFit shifts the
- * transform ~1s after engine-stop, before which nodes map off-canvas.
+ * Return the ids of visible nodes with no usable rendered position. `requireInCanvas`
+ * (default true) also flags nodes outside the canvas bounds; set it false to flag ONLY
+ * detached nodes (null / NaN / missing position). Empty ⇒ every visible node is
+ * positioned (and, by default, painted in-view).
+ *
+ * SCOPE: the in-canvas check is only an invariant right after the load-time zoomToFit
+ * (call waitForGraphSettled first — the fit shifts the transform ~1s after engine-stop).
+ * The app does NOT auto-refit after a filter/host-toggle (GraphCanvas only sets
+ * fitNeeded on initial load / layout change), so a reflowed node may legitimately sit
+ * off-canvas until the user re-fits — use requireInCanvas:false there and assert only
+ * that no node became DETACHED. Also note zoomToFit reframes around every FINITE
+ * position, so a far-but-finite node is out of scope either way. The `Number.isFinite`
+ * guards are load-bearing: a NaN coordinate passes every `<`/`>` comparison.
  */
-export async function allNodesInView(page: Page): Promise<string[]> {
-  return page.evaluate(() => {
+export async function allNodesInView(page: Page, opts: { requireInCanvas?: boolean } = {}): Promise<string[]> {
+  const requireInCanvas = opts.requireInCanvas ?? true
+  return page.evaluate((requireInCanvas) => {
     const g = (window as unknown as {
       __lockpick_graph__?: {
         visibleNodeIds: string[]
@@ -198,10 +208,12 @@ export async function allNodesInView(page: Page): Promise<string[]> {
     const out: string[] = []
     for (const id of g.visibleNodeIds) {
       const p = g.screenPos(id)
-      if (!p || p.x < r.left || p.x > r.right || p.y < r.top || p.y > r.bottom) out.push(id)
+      const detached = !p || !Number.isFinite(p.x) || !Number.isFinite(p.y)
+      const outOfCanvas = requireInCanvas && !detached && (p.x < r.left || p.x > r.right || p.y < r.top || p.y > r.bottom)
+      if (detached || outOfCanvas) out.push(id)
     }
     return out
-  })
+  }, requireInCanvas)
 }
 
 /**
