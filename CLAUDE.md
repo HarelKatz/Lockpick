@@ -83,9 +83,11 @@ docker compose up -d --build
 make dev-backend    # uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
 make dev-frontend   # npm run dev  (dev server: http://localhost:5173)
 
-# Everything — backend + frontend unit + e2e. Serial + fail-fast, per-layer banners,
-# non-zero exit on the first red layer (names it). This is the agent/CI command.
-make test-full
+# Everything — backend + frontend unit + e2e. Serial + fail-fast by default (each layer
+# prints a '=== ... ===' banner; a red layer aborts and Make names it). Add -j3 to run the
+# layers concurrently (~30% faster on a multi-core box; e2e shares CPU, so it can slow a bit).
+make test-full                            # serial (default; agent/CI-safe)
+make -j3 --output-sync=target test-full   # parallel, output grouped per layer
 
 # Backend pytest — full backend suite, parallel (-n auto), quiet, failures only.
 # This is the layer the pre-commit gate runs.
