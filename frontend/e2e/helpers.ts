@@ -41,6 +41,14 @@ export async function gotoGraph(page: Page) {
   return op
 }
 
+/** Map of host nickname → host_id for an op's graph (drives canvas clicks by nickname). */
+export async function hostIdsByNickname(page: Page, opId: string): Promise<Record<string, string>> {
+  const graph = await (await page.request.get(`/api/ops/${opId}/graph`)).json()
+  const map: Record<string, string> = {}
+  for (const n of graph.nodes) map[n.nickname] = n.host_id
+  return map
+}
+
 /**
  * Read the dev-only render-state hook the app exposes on window. Available only
  * when the frontend runs in dev mode (import.meta.env.DEV), which the e2e dev

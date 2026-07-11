@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { gotoGraph, graphState, waitForGraphSettled, setRange } from './helpers'
+import { gotoGraph, graphState, waitForGraphSettled, setRange, shiftClickNode, hostIdsByNickname } from './helpers'
 
 // Render-vs-hook invariant: the canvas must PAINT exactly the set the dev hook
 // reports visible (drawn == visible), across time-slider states and a host toggle.
@@ -121,5 +121,24 @@ test.describe('render-vs-hook invariant (canvas draws exactly what the hook repo
     await page.locator('label', { hasText: 'dbserver' }).getByRole('checkbox').uncheck()
     await expect.poll(async () => (await graphState(page)).nodeIds.length).toBeLessThan(fullCount)
     await expectRenderMatchesHook(page, 'host toggled off')
+  })
+
+  test('the canvas paints exactly the hook-visible set when a BFS path filter is active', async ({ page }) => {
+    const op = await gotoGraph(page)
+    await waitForGraphSettled(page)
+    await expectRenderMatchesHook(page, 'full graph')
+
+    // Shift-click an anchor then a reachable host → the BFS path filter narrows
+    // nodeVisible/linkVisible to just the path (a visibility driver independent of
+    // both the time window and host toggles). Seed topology path:
+    // attackbox → jumpbox → dbserver → internal.
+    const id = await hostIdsByNickname(page, op.id)
+    const path = [id.attackbox, id.jumpbox, id.dbserver, id.internal].sort()
+    await shiftClickNode(page, id.attackbox)
+    await expect.poll(async () => (await graphState(page)).pathAnchorId).toBe(id.attackbox)
+    await shiftClickNode(page, id.internal)
+    await expect.poll(async () => [...(await graphState(page)).highlightedNodeIds].sort()).toEqual(path)
+
+    await expectRenderMatchesHook(page, 'BFS path filter active')
   })
 })
