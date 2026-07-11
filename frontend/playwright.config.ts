@@ -33,8 +33,11 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: [
     {
-      // Isolated backend: its own port + throwaway DB/uploads.
-      command: `uv run uvicorn main:app --host 127.0.0.1 --port ${BACKEND_PORT}`,
+      // Isolated backend: its own port + throwaway DB/uploads. --no-access-log is
+      // load-bearing: Playwright pipes the webServer's stdout but does not drain it
+      // during globalSetup, so uvicorn's per-request access lines fill the pipe
+      // buffer mid-seed and the backend blocks on write (a request appears to hang).
+      command: `uv run uvicorn main:app --host 127.0.0.1 --port ${BACKEND_PORT} --no-access-log`,
       cwd: path.join(REPO, 'backend'),
       env: {
         DB_PATH: path.join(E2E_DATA, 'e2e.db'),

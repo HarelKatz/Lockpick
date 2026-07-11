@@ -47,8 +47,13 @@ def main() -> int:
         return 1
 
     base = args.url.rstrip("/")
-    with httpx.Client(base_url=base, timeout=30.0) as c:
-        lo = OpBuilder(c).apply_topology(profiles.normal(), name=args.name)
+    # Generous per-request timeout: this one-time seed runs during Playwright's
+    # concurrent server startup (the Vite dev server's cold-start pre-bundle can
+    # saturate CPU/IO), so a single write can be transiently slow even though the
+    # whole seed is ~2s on an idle box. A tight timeout here flakes the suite.
+    with httpx.Client(base_url=base, timeout=120.0) as c:
+        builder = OpBuilder(c)
+        lo = builder.apply_topology(profiles.normal(), name=args.name)
         graph = lo.graph
         key_match = sum(
             1 for e in graph["edges"] if any(ev["type"] == "key_match" for ev in e["evidence"])
@@ -61,8 +66,19 @@ def main() -> int:
             f"{len(graph['edges'])} edges ({key_match} key-match, {dated} with dated evidence)"
         )
 
-    # FINAL stdout line: the op id (consumed by Playwright global-setup)
+        # Second op: a generated scale(50) fixture for the graph/layout invariant
+        # suite (frontend/e2e/invariants.spec.ts). Its connections are undated, so
+        # this op has NO time slider — the slider-driven checks run only on normal().
+        scale_lo = builder.apply_topology(profiles.scale(50), name=f"{args.name} — Scale 50")
+        _log(
+            f"scale op created: {scale_lo.op_id} — graph: "
+            f"{len(scale_lo.graph['nodes'])} nodes, {len(scale_lo.graph['edges'])} edges"
+        )
+
+    # FINAL two stdout lines: the normal op id, then the scale op id
+    # (consumed by Playwright global-setup, which reads the last two lines).
     print(lo.op_id)
+    print(scale_lo.op_id)
     return 0
 
 

@@ -1,21 +1,26 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { expect, type Page } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 
-/** The op id seeded by global-setup. */
+/** The normal op id seeded by global-setup. */
 export function seededOpId(): string {
   return readFileSync(path.join(HERE, '.op-id'), 'utf8').trim()
 }
 
+/** The generated scale(50) op id seeded by global-setup (for the invariant suite). */
+export function seededScaleOpId(): string {
+  return readFileSync(path.join(HERE, '.op-id-scale'), 'utf8').trim()
+}
+
 /**
- * Land directly on the seeded op's Graph tab, bypassing the OpSelector by
- * injecting the same sessionStorage keys App.tsx reads on boot. Returns the op.
+ * Land directly on a seeded op's Graph tab, bypassing the OpSelector by injecting
+ * the same sessionStorage keys App.tsx reads on boot. Defaults to the normal op;
+ * pass `seededScaleOpId()` for the scale fixture. Returns the op.
  */
-export async function gotoGraph(page: Page) {
-  const opId = seededOpId()
+export async function gotoGraph(page: Page, opId: string = seededOpId()) {
   await page.goto('/')
   const ops = await (await page.request.get('/api/ops')).json()
   const op = ops.find((o: { id: string }) => o.id === opId) ?? ops[0]
@@ -171,4 +176,75 @@ export async function waitForGraphSettled(page: Page): Promise<void> {
       { timeout: 15_000, intervals: [300, 300, 300] },
     )
     .toBe(true)
+}
+
+/**
+ * Return the ids of visible nodes whose canvas position falls OUTSIDE the canvas
+ * bounds (a "floating node"), or that have no position at all. Empty ⇒ every visible
+ * node is painted in-view. Call waitForGraphSettled first — zoomToFit shifts the
+ * transform ~1s after engine-stop, before which nodes map off-canvas.
+ */
+export async function allNodesInView(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const g = (window as unknown as {
+      __lockpick_graph__?: {
+        visibleNodeIds: string[]
+        screenPos?: (id: string) => { x: number; y: number } | null
+      }
+    }).__lockpick_graph__
+    const c = document.querySelector('canvas')
+    if (!g || !g.screenPos || !c) return ['<no-hook-or-canvas>']
+    const r = c.getBoundingClientRect()
+    const out: string[] = []
+    for (const id of g.visibleNodeIds) {
+      const p = g.screenPos(id)
+      if (!p || p.x < r.left || p.x > r.right || p.y < r.top || p.y > r.bottom) out.push(id)
+    }
+    return out
+  })
+}
+
+/**
+ * Capture console.error and uncaught pageerror events. Install BEFORE navigation so
+ * boot-time errors are caught. `assertClean()` fails with the collected messages.
+ */
+export function captureConsole(page: Page): { errors: string[]; assertClean: () => void } {
+  const errors: string[] = []
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') errors.push(`console.error: ${msg.text()}`)
+  })
+  page.on('pageerror', (err) => {
+    errors.push(`pageerror: ${String(err)}`)
+  })
+  return {
+    errors,
+    assertClean: () =>
+      expect(errors, `unexpected console/page errors:\n${errors.join('\n')}`).toEqual([]),
+  }
+}
+
+/**
+ * Assert that running `action` (toggling a control) does not resize a neighboring
+ * element — its width must stay within `tol` px. Generalizes the time-slider "Reset
+ * never resizes the track" test to any control/neighbor pair (most controls have no
+ * testid, so the neighbor is a Locator and the toggle is a caller-supplied action).
+ */
+export async function assertNoNeighborResize(
+  page: Page,
+  neighbor: Locator,
+  action: () => Promise<void>,
+  opts: { tol?: number } = {},
+): Promise<void> {
+  const tol = opts.tol ?? 1
+  const before = (await neighbor.boundingBox())?.width
+  if (before == null) throw new Error('assertNoNeighborResize: neighbor has no bounding box')
+  await action()
+  // Flush a frame so any (buggy) reflow triggered by the action has settled.
+  await page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => r())))
+  const after = (await neighbor.boundingBox())?.width
+  if (after == null) throw new Error('assertNoNeighborResize: neighbor vanished after the action')
+  expect(
+    Math.abs(after - before),
+    `neighbor width changed by ≥${tol}px (${before} → ${after})`,
+  ).toBeLessThan(tol)
 }

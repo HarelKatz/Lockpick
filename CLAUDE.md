@@ -129,7 +129,7 @@ When a bug ships green, add one line: the blind-spot class + the invariant/test 
 - **Interaction modes** — time-slider drag-only jitter (Reset button reflow) → e2e `time-slider.spec.ts` "the Reset control never resizes the slider track (no drag jitter)".
 - **Model completeness** — isolated host hidden as the window narrowed → e2e "narrowing hides hosts left with no in-window connection" (+ the genuinely-isolated-host visibility fix).
 - **Model completeness** — undated edge must never be hidden → e2e "narrowing the end keeps key-match + undated edges even when their date is out of window".
-- **Layout / rendering** — floating nodes after filtering → *pending:* the frontend graph invariant suite (BACKLOG); no invariant covers it yet.
+- **Layout / rendering** — floating nodes after filtering → e2e `invariants.spec.ts` "every visible node is painted within the canvas bounds" (+ `invariants-scale.spec.ts` at scale(50)).
 
 ## Test-Layering Doctrine
 
