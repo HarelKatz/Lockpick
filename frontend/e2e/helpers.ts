@@ -207,15 +207,18 @@ export async function allNodesInView(page: Page): Promise<string[]> {
 /**
  * Capture console.error and uncaught pageerror events. Install BEFORE navigation so
  * boot-time errors are caught. `assertClean()` fails with the collected messages.
+ * Known-benign browser noise is filtered so it can't flake the gate — chiefly
+ * Chromium's intermittent "ResizeObserver loop" message, which fires on legitimate
+ * layout changes (e.g. a canvas remount) and is not an app error.
  */
 export function captureConsole(page: Page): { errors: string[]; assertClean: () => void } {
+  const BENIGN = /ResizeObserver loop/i
   const errors: string[] = []
+  const record = (msg: string) => { if (!BENIGN.test(msg)) errors.push(msg) }
   page.on('console', (msg) => {
-    if (msg.type() === 'error') errors.push(`console.error: ${msg.text()}`)
+    if (msg.type() === 'error') record(`console.error: ${msg.text()}`)
   })
-  page.on('pageerror', (err) => {
-    errors.push(`pageerror: ${String(err)}`)
-  })
+  page.on('pageerror', (err) => record(`pageerror: ${String(err)}`))
   return {
     errors,
     assertClean: () =>

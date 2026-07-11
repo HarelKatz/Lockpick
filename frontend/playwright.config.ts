@@ -39,8 +39,9 @@ export default defineConfig({
       testIgnore: /invariants-scale\.spec\.ts/,
     },
     {
-      // Heavy scale(50) graph/layout invariants — nightly / on-demand only, never
-      // in the gate. `make test-scale-e2e` / `npm run test:e2e:invariants`.
+      // Heavy scale(50) graph/layout invariants. Excluded from the fast gate
+      // (fast-e2e runs --project=chromium), but still runs in the full `make
+      // test-e2e` / `test-full` sweeps and standalone via `make test-scale-e2e`.
       name: 'chromium-invariants',
       use: { ...devices['Desktop Chrome'] },
       testMatch: /invariants-scale\.spec\.ts/,

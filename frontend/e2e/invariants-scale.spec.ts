@@ -6,9 +6,10 @@ import {
 
 // Heavy graph/layout invariants over a generated scale(50) op — the same layout
 // invariants as invariants.spec.ts, but at 50 force-laid-out nodes where floating /
-// overflow bugs actually surface. Nightly / on-demand only: this file is the sole
-// member of the `chromium-invariants` Playwright project (Phase C splits on the
-// `-scale` filename), so it never runs in the fast committed gate.
+// overflow bugs actually surface. This file is the sole member of the
+// `chromium-invariants` Playwright project (Phase C splits on the `-scale`
+// filename), so it is excluded from the fast gate (`make fast-e2e`) but still runs
+// in the full `make test-e2e` / `test-full` sweeps and standalone via `make test-scale-e2e`.
 //
 // scale(50) connections are undated → the op has NO time slider, so there are no
 // slider-driven steps here.

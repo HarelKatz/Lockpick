@@ -97,15 +97,20 @@ def _make_op(db: Session) -> Operation:
 
 
 @given(ip=st.ip_addresses())
-def test_resolve_ip_rejects_iff_non_routable(db_session, ip):
+def test_resolve_ip_creates_a_host_iff_it_accepts(db_session, ip):
+    """resolve_ip creates exactly one host iff it accepts the address (returns an id),
+    and creates none when it rejects (returns None) — a create/return consistency
+    invariant independent of WHICH addresses are routable, so it can't degrade into a
+    mirror of the impl's predicate. The specific reject set (multicast / reserved /
+    unspecified / bad-hostname; loopback allowed) is pinned by the discrete cases in
+    tests/test_services/test_ip_resolver.py."""
     op = _make_op(db_session)
-    non_routable = ip.is_multicast or ip.is_reserved or ip.is_unspecified
     result = resolve_ip(db_session, op.id, str(ip), create_if_missing=True)
-    if non_routable:
-        assert result is None
-        assert db_session.query(Host).filter(Host.op_id == op.id).count() == 0
+    hosts = db_session.query(Host).filter(Host.op_id == op.id).all()
+    if result is None:
+        assert hosts == []  # rejected → no phantom host
     else:
-        assert result is not None
+        assert [h.id for h in hosts] == [result]  # accepted → exactly one host, and it is the returned one
 
 
 # ── merge_hosts: dedup + source deletion ────────────────────────────────────

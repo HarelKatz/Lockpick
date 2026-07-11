@@ -14,8 +14,10 @@ Usage::
 
     uv run --project backend python tests/e2e/seed_e2e.py [--url http://localhost:8000]
 
-The created operation id is printed as the FINAL stdout line (consumed by the
-Playwright global-setup); human-readable progress goes to stderr.
+Seeds two ops — the ``normal()`` graph fixture and a generated ``scale(50)`` op
+for the graph/layout invariant suite — and prints their ids as the FINAL two
+stdout lines (normal, then scale), consumed by the Playwright global-setup.
+Human-readable progress goes to stderr.
 """
 from __future__ import annotations
 
