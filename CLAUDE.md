@@ -94,6 +94,10 @@ make test-real-examples  # parser regression vs real_examples/ corpus (~0.5s)
 # Frontend end-to-end (Playwright) — isolated stack + deterministic seed.
 # Verifies canvas UI (graph) by asserting on window.__lockpick_graph__, not pixels.
 make test-e2e       # spins up its own backend+frontend on dedicated ports (~10s startup)
+
+# Frontend unit tests (vitest) — pure logic extracted to src/utils/ (node env, fast).
+# Run when touching that logic; the e2e suite gates the extraction itself.
+cd frontend && npm run test:unit
 ```
 
 **Always use `uv run` for Python — never `python` directly.**
@@ -274,7 +278,7 @@ frontend/src/
 ├── components/      # Shared UI components
 ├── hooks/           # Shared React hooks (e.g. useOpWebSocket.ts)
 ├── constants/       # Shared constants (e.g. credentialLink.ts)
-├── utils/           # Shared utility functions
+├── utils/           # Shared utils + pure graph/slider logic extracted from components, vitest-tested (co-located *.test.ts)
 └── pages/           # Top-level page components
 
 tests/
@@ -284,7 +288,9 @@ tests/
 ├── test_parsers/    # Parser unit tests
 ├── test_services/   # Service layer tests
 ├── test_real_examples/  # Parser regression vs real_examples/ corpus (make test-real-examples)
-└── test_scenario_*.py   # Network scenario tests (make test-scenarios)
+├── test_scenario_*.py   # Network scenario tests (make test-scenarios)
+├── opbuilder/       # Shared REST op-builder: OpBuilder/shapes/profiles (drives TestClient + httpx)
+└── e2e/             # Playwright seed — seed_e2e.py replays profiles.normal() over a live server
 ```
 
 ## Environment Variables (backend)
