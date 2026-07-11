@@ -105,8 +105,17 @@ make test-real-examples  # parser regression vs real_examples/ corpus (~0.5s)
 make test-unit
 
 # Frontend e2e (Playwright) — isolated stack + deterministic seed; asserts on
-# window.__lockpick_graph__ (not pixels). Spins its own backend+frontend (~10s startup)
+# window.__lockpick_graph__ (not pixels). Spins its own backend+frontend (~10s startup).
+# Runs ALL projects (committed specs + the nightly scale(50) sweep).
 make test-e2e
+
+# Marker-driven tiers + the sub-90s pre-PR gate
+make test-fast        # backend minus the property battery + slow/scale (the gate's backend layer)
+make test-invariants  # the hypothesis property battery (tests/test_invariants/, -m property)
+make test-scale       # slow/scale backend tests (-m slow; nightly/on-demand)
+make fast-e2e         # committed e2e only (chromium project; excludes the scale(50) sweep)
+make test-scale-e2e   # heavy scale(50) e2e layout invariants (chromium-invariants; nightly)
+make -j gate          # build + test-unit + test-fast + fast-e2e — sub-90s pre-PR check (run with -j)
 ```
 
 **Always use `uv run` for Python — never `python` directly.**
@@ -138,9 +147,9 @@ When a bug ships green, add one line: the blind-spot class + the invariant/test 
 **Layers, cheapest first** (cheap ones gate every change; heavier ones run on demand):
 
 1. **Unit** — pure logic, no I/O (frontend `vitest`, backend function tests). Milliseconds.
-2. **Property / invariant** — general properties over generated ops (backend `hypothesis`, `tests/test_invariants/`; each guard demonstrably fail-provable).
+2. **Property / invariant** — general properties over generated ops (backend `hypothesis`, `tests/test_invariants/`; each guard demonstrably fail-provable). `make test-invariants`.
 3. **Scenario** — a known topology through the real REST API (`make test-scenarios`).
-4. **E2E invariants** — the `window.__lockpick_graph__` hook + `boundingBox` + console capture over `normal()` / `scale(N)` (`make test-e2e`).
+4. **E2E invariants** — the `window.__lockpick_graph__` hook + `boundingBox` + console capture over `normal()` / `scale(N)`. Committed specs (incl. `invariants.spec.ts` over `normal`) run in the fast `chromium` project (`make fast-e2e`, in the gate); the heavy `scale(50)` sweep (`invariants-scale.spec.ts`) runs in the nightly `chromium-invariants` project (`make test-scale-e2e`). `make test-e2e` runs both.
 5. **Agentic explore** — an agent drives the real browser to hunt the "looks/feels right" wall; a bug-FINDER that distills findings into deterministic specs, **never the gate** (BACKLOG).
 
 **Default substrate:** `tests/opbuilder/profiles.normal()` is the standard op every layer builds on; edge-case shapes and `scale(N)` layer on as learned. `OpBuilder` is the one REST substrate — the same builder drives the pytest `TestClient` and the live-server `httpx.Client`.

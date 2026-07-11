@@ -1,4 +1,4 @@
-.PHONY: run up down logs backup dev-backend dev-frontend test-full test-backend test-api test-parsers test-services test-scenarios test-real-examples test-unit test-e2e
+.PHONY: run up down logs backup dev-backend dev-frontend test-full test-backend test-api test-parsers test-services test-scenarios test-real-examples test-unit test-e2e test-fast test-invariants test-scale build fast-e2e test-scale-e2e gate
 
 run:
 	docker compose up -d --build && docker compose logs -f
@@ -61,3 +61,43 @@ test-unit:
 test-e2e:
 	@echo "=== frontend e2e: playwright ==="
 	cd frontend && npm run test:e2e
+
+# ── Marker-driven tiers ──────────────────────────────────────────────────────
+# Fast backend layer for the gate: everything except the property battery and
+# slow/scale tests. (Markers are registered in tests/conftest.py — see the note
+# in backend/pyproject.toml.)
+test-fast:
+	@echo "=== backend fast: pytest -m 'not slow and not property' ==="
+	cd backend && uv run pytest ../tests/ -m "not slow and not property" -n auto -q --tb=short
+
+# The hypothesis property/invariant battery (tests/test_invariants/).
+test-invariants:
+	@echo "=== backend invariants: pytest -m property ==="
+	cd backend && uv run pytest ../tests/ -m property -q --tb=short
+
+# Heavy/scale backend tests (scale(N) invariants). Nightly / on-demand.
+test-scale:
+	@echo "=== backend scale: pytest -m slow ==="
+	cd backend && uv run pytest ../tests/ -m slow -q --tb=short
+
+# Heavy scale(50) e2e layout invariants (chromium-invariants project). Nightly.
+test-scale-e2e:
+	@echo "=== frontend e2e (scale): playwright --project=chromium-invariants ==="
+	cd frontend && npm run test:e2e:invariants
+
+# Frontend typecheck + production build.
+build:
+	@echo "=== frontend build: tsc + vite ==="
+	cd frontend && npm run build
+
+# Fast e2e project only (committed specs; excludes the scale(50) sweep).
+fast-e2e:
+	@echo "=== frontend e2e (fast): playwright --project=chromium ==="
+	cd frontend && npm run test:e2e:fast
+
+# Sub-90s pre-PR gate: frontend build + unit + fast backend + fast e2e. Serial +
+# fail-fast (prereq list, cheapest first); add -j for concurrent layers (recommended
+# to stay under 90s — the fast e2e layer dominates). The heavier test-full runs
+# everything; the nightly test-scale / test-scale-e2e run the scale sweeps.
+gate: build test-unit test-fast fast-e2e
+	@echo "=== PASS: gate ==="

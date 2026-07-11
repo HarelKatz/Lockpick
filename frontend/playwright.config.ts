@@ -30,7 +30,22 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    {
+      // Fast committed specs — the gate's e2e layer. Includes invariants.spec.ts
+      // (normal op); excludes the heavy scale(50) sweep.
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+      testIgnore: /invariants-scale\.spec\.ts/,
+    },
+    {
+      // Heavy scale(50) graph/layout invariants — nightly / on-demand only, never
+      // in the gate. `make test-scale-e2e` / `npm run test:e2e:invariants`.
+      name: 'chromium-invariants',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /invariants-scale\.spec\.ts/,
+    },
+  ],
   webServer: [
     {
       // Isolated backend: its own port + throwaway DB/uploads. --no-access-log is

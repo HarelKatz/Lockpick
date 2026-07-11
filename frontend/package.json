@@ -8,6 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test:e2e": "playwright test",
+    "test:e2e:fast": "playwright test --project=chromium",
+    "test:e2e:invariants": "playwright test --project=chromium-invariants",
     "test:e2e:update": "playwright test --update-snapshots",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest"
