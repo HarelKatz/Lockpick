@@ -138,7 +138,7 @@ When a bug ships green, add one line: the blind-spot class + the invariant/test 
 **Layers, cheapest first** (cheap ones gate every change; heavier ones run on demand):
 
 1. **Unit** — pure logic, no I/O (frontend `vitest`, backend function tests). Milliseconds.
-2. **Property / invariant** — general properties over generated ops (backend `hypothesis`; BACKLOG).
+2. **Property / invariant** — general properties over generated ops (backend `hypothesis`, `tests/test_invariants/`; each guard demonstrably fail-provable).
 3. **Scenario** — a known topology through the real REST API (`make test-scenarios`).
 4. **E2E invariants** — the `window.__lockpick_graph__` hook + `boundingBox` + console capture over `normal()` / `scale(N)` (`make test-e2e`).
 5. **Agentic explore** — an agent drives the real browser to hunt the "looks/feels right" wall; a bug-FINDER that distills findings into deterministic specs, **never the gate** (BACKLOG).

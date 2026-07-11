@@ -23,11 +23,17 @@ dev = [
     "pytest-asyncio>=0.23.0",
     "anyio>=4.0.0",
     "pytest-xdist>=3.0.0",
+    "hypothesis>=6.0.0",
 ]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["../tests"]
+# NOTE: markers (slow / property) are registered in tests/conftest.py via
+# pytest_configure, NOT here. The Makefile runs `cd backend && pytest ../tests/`,
+# whose rootdir resolves to the repo root — so this backend/pyproject ini block is
+# not loaded for that invocation. conftest is always loaded, so it is the one place
+# that registers markers for every flow.
 
 [tool.uv]
 package = false

@@ -15,6 +15,23 @@ from database import Base, get_db
 from main import app
 
 
+def pytest_configure(config):
+    """Register custom markers here (not in backend/pyproject.toml).
+
+    The Makefile invokes ``cd backend && pytest ../tests/``, whose rootdir resolves
+    to the repo root, so backend/pyproject.toml's ``[tool.pytest.ini_options]`` is
+    not loaded. conftest.py is always loaded, so it is the reliable home for marker
+    registration used by the tiered Make targets (test-fast / test-invariants /
+    test-scale).
+    """
+    config.addinivalue_line(
+        "markers", "slow: heavy/scale tests (scale(N), large corpora); excluded from the fast gate"
+    )
+    config.addinivalue_line(
+        "markers", "property: hypothesis property/invariant tests over generated ops"
+    )
+
+
 @pytest.fixture(scope="function")
 def db_engine():
     """Create an in-memory SQLite engine for each test.
