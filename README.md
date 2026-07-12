@@ -12,10 +12,10 @@ It is designed to run as a shared server in a trusted network. Every operator re
 
 ## Features
 
-- **One-click evidence collection** — generate a sudo-free bash collector (`GET /ops/{op_id}/collection-script`), run it on a host, and upload the resulting tarball (`POST .../import-archive`) for bulk ingest
+- **One-click evidence collection** — generate a sudo-free bash collector (`GET /api/ops/{op_id}/collection-script`), run it on a host, and upload the resulting tarball (`POST /api/.../import-archive`) for bulk ingest
 - **44 parsers across 49 evidence file types** — SSH artifacts, system files (`passwd`/`shadow`/`sshd_config`/…), command output (`netstat`/`ss`/`iptables`/…), and credential files (cloud, database, and app secrets)
 - **Key-fingerprint pivot detection** — correlates private keys, `authorized_keys`, and connection logs into confirmed pivots
-- **BFS pivot path-finding** — shortest credential-backed path between two hosts (`POST /ops/{op_id}/graph/paths`)
+- **BFS pivot path-finding** — shortest credential-backed path between two hosts (`POST /api/ops/{op_id}/graph/paths`)
 - **Host merge** — collapse duplicate or placeholder hosts, manually or automatically
 - **Search, activity log, live updates** — global search, an audit timeline, and WebSocket push so the whole team sees new data instantly
 - **Export / import** — snapshot an operation and move it between servers
@@ -104,7 +104,7 @@ make run
 
 ## API Documentation
 
-Full interactive docs (Swagger UI + ReDoc) are available at **http://localhost:8000/docs** when the backend is running.
+Full interactive docs are available when the backend is running: Swagger UI at **http://localhost:8000/docs** and ReDoc at **http://localhost:8000/redoc**.
 
 ## Architecture
 

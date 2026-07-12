@@ -90,8 +90,8 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
 
 ```json
 {
-  "src_host": "HostA",
-  "dst_host": "HostB",
+  "src_host_id": "HostA",
+  "dst_host_id": "HostB",
   "evidence": [
     {
       "type": "key_match",
@@ -121,7 +121,7 @@ When the frontend asks "give me the edge between HostA and HostB", the backend r
       "confidence": "indicator"
     }
   ],
-  "overall_confidence": "confirmed",
+  "confidence": "confirmed",
   "pivotable_users": [
     {"src_user": "bob", "dst_user": "root", "method": "key", "credential_id": "..."}
   ]
