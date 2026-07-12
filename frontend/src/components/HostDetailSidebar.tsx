@@ -2,7 +2,7 @@
  * Right sidebar — shows detail for a selected graph node.
  * If a full Host object is provided, shows tabs: Info | Sudo Rules | Notes.
  */
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { GraphEdge, GraphNode, Host, HostNote, MergeCandidate, SudoRule } from '../types'
 import { getSudoRules, deleteSudoRule, getHostNotes, createHostNote, deleteHostNote } from '../api/hosts'
 import { updateHost } from '../api/hosts'
@@ -51,6 +51,10 @@ export default function HostDetailSidebar({ node, edges, host, onClose, onHostUp
   const [notesError, setNotesError] = useState<string | null>(null)
   const [noteText, setNoteText] = useState('')
   const [noteAdding, setNoteAdding] = useState(false)
+  // Synchronous guard against rapid double-submits — setNoteAdding is async, so
+  // the button's `disabled` flag isn't reliable across same-tick activations
+  // (onClick + Ctrl/Cmd+Enter both call handleAddNote).
+  const submittingRef = useRef(false)
 
   const loadSudoRules = useCallback(async () => {
     if (!host) return
@@ -118,7 +122,9 @@ export default function HostDetailSidebar({ node, edges, host, onClose, onHostUp
   }
 
   async function handleAddNote() {
+    if (submittingRef.current) return
     if (!host || !noteText.trim()) return
+    submittingRef.current = true
     setNoteAdding(true)
     setNotesError(null)
     try {
@@ -128,6 +134,7 @@ export default function HostDetailSidebar({ node, edges, host, onClose, onHostUp
     } catch {
       setNotesError('Failed to add note.')
     } finally {
+      submittingRef.current = false
       setNoteAdding(false)
     }
   }
