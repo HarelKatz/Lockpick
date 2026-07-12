@@ -80,6 +80,7 @@ make test-full     # everything: backend + frontend unit + e2e
 make test-backend  # backend pytest only
 make test-unit     # frontend unit (vitest)
 make test-e2e      # frontend e2e (playwright)
+make gate          # fast pre-PR check: build + unit + fast backend + fast e2e (run with -j)
 ```
 
 ## Data Storage
