@@ -98,7 +98,7 @@ For quick exploration before a spec exists:
    cd backend && DB_PATH=/tmp/lp-e2e.db UPLOAD_PATH=/tmp/lp-e2e-uploads \
      uv run uvicorn main:app --host 127.0.0.1 --port 8137 &
    uv run --project backend python tests/e2e/seed_e2e.py --url http://127.0.0.1:8137
-   API_PROXY_TARGET=http://127.0.0.1:8137 cd frontend && npm run dev -- --port 5273
+   cd frontend && API_PROXY_TARGET=http://127.0.0.1:8137 npm run dev -- --port 5273
    ```
 2. Drive with Playwright MCP: `browser_navigate` to `http://127.0.0.1:5273`, inject
    sessionStorage (`lockpick_selected_op` = the op JSON, `lockpick_tab_<id>` = `graph`),
