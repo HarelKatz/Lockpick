@@ -335,3 +335,73 @@ def test_list_connections_filter_both_src_and_dst(client, op, host_a, host_b):
     )
     assert resp3.status_code == 200
     assert resp3.json() == []
+
+
+# ─── Referential integrity: src/dst host + credential op-membership ───────────
+
+def test_create_connection_bad_src_host(client, op):
+    resp = client.post(
+        f"/api/ops/{op['id']}/connections",
+        json={
+            "src_host_id": "nonexistent", "src_ip": "10.0.0.1",
+            "dst_ip": "10.0.0.2", "direction_context": "from_dst_logs",
+            "source_file": "x",
+        },
+    )
+    assert resp.status_code == 400
+
+
+def test_create_connection_cross_op_src_host(client, op, host_a):
+    """A src_host_id that exists but belongs to another op must be rejected."""
+    other_op = client.post("/api/ops", json={"name": "Other"}).json()
+    resp = client.post(
+        f"/api/ops/{other_op['id']}/connections",
+        json={
+            "src_host_id": host_a["id"], "src_ip": "10.0.0.1",
+            "dst_ip": "10.0.0.2", "direction_context": "from_dst_logs",
+            "source_file": "x",
+        },
+    )
+    assert resp.status_code == 400
+
+
+def test_create_connection_bad_dst_host(client, op):
+    resp = client.post(
+        f"/api/ops/{op['id']}/connections",
+        json={
+            "src_ip": "10.0.0.1", "dst_host_id": "nonexistent",
+            "dst_ip": "10.0.0.2", "direction_context": "from_dst_logs",
+            "source_file": "x",
+        },
+    )
+    assert resp.status_code == 400
+
+
+def test_create_connection_valid_hosts_ok(client, op, host_a, host_b):
+    resp = client.post(
+        f"/api/ops/{op['id']}/connections",
+        json={
+            "src_host_id": host_a["id"], "src_ip": "10.0.0.1",
+            "dst_host_id": host_b["id"], "dst_ip": "10.0.0.2",
+            "direction_context": "from_dst_logs", "source_file": "x",
+        },
+    )
+    assert resp.status_code == 201
+
+
+def test_update_connection_bad_src_host(client, conn):
+    resp = client.patch(f"/api/connections/{conn['id']}", json={"src_host_id": "nonexistent"})
+    assert resp.status_code == 400
+
+
+def test_update_connection_credential_wrong_op(client, conn):
+    other_op = client.post("/api/ops", json={"name": "Other"}).json()
+    other_cred = client.post(
+        f"/api/ops/{other_op['id']}/credentials",
+        json={"cred_type": "password", "value": "x"},
+    ).json()
+    resp = client.patch(
+        f"/api/connections/{conn['id']}",
+        json={"credential_id": other_cred["id"]},
+    )
+    assert resp.status_code == 400

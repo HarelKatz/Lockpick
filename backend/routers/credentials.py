@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Credential, CredentialLink, Host
+from models import Credential, CredentialLink, Host, HostUser
 from routers.deps import get_cred_or_404, get_op_or_404
 from schemas import (
     CredentialCreate,
@@ -22,6 +22,14 @@ from ws_manager import broadcast_sync
 log = logging.getLogger(__name__)
 
 router = APIRouter(tags=["credentials"])
+
+
+def _require_host_user_on_host(db: Session, host_user_id, host_id) -> None:
+    """Reject a host_user_id that doesn't belong to the link's host."""
+    if host_user_id is not None and not db.query(HostUser.id).filter(
+        HostUser.id == host_user_id, HostUser.host_id == host_id
+    ).first():
+        raise HTTPException(status_code=400, detail="host_user_id does not belong to host_id")
 
 
 # ─── Credentials ──────────────────────────────────────────────────────────────
@@ -115,6 +123,7 @@ def create_credential_link(body: CredentialLinkCreate, db: Session = Depends(get
         raise HTTPException(status_code=404, detail="Host not found")
     if cred.op_id != host.op_id:
         raise HTTPException(status_code=400, detail="Credential and host belong to different operations")
+    _require_host_user_on_host(db, body.host_user_id, body.host_id)
 
     link = CredentialLink(
         credential_id=body.credential_id,
@@ -150,6 +159,7 @@ def update_credential_link(link_id: str, body: CredentialLinkUpdate, db: Session
     link = db.query(CredentialLink).filter(CredentialLink.id == link_id).first()
     if not link:
         raise HTTPException(status_code=404, detail="Credential link not found")
+    _require_host_user_on_host(db, body.host_user_id, link.host_id)
     if body.username is not None:
         link.username = body.username
     if body.host_user_id is not None:

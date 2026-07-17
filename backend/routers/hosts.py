@@ -7,6 +7,7 @@ from models import Host, HostIP, HostNote, HostUser, SudoRule
 from routers.deps import get_host_or_404, get_op_or_404
 from services.activity import log_activity
 from services.host_merge import merge_hosts
+from services.ip_resolver import _infer_addr_type
 from services.ssh_pattern import apply_patterns_to_host
 from ws_manager import broadcast_sync
 from schemas import (
@@ -153,7 +154,7 @@ def add_host_ip(host_id: str, body: HostIPCreate, db: Session = Depends(get_db))
         host_id=host_id,
         ip_address=body.ip_address,
         source=body.source,
-        addr_type=body.addr_type,
+        addr_type=_infer_addr_type(body.ip_address),
     )
     db.add(ip)
     db.flush()

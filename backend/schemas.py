@@ -88,7 +88,7 @@ class HostUserRead(BaseModel):
 class HostIPCreate(BaseModel):
     ip_address: str
     source: Literal["manual", "parsed"] = "manual"
-    addr_type: Literal["ipv4", "ipv6", "hostname"] = "ipv4"
+    # addr_type is always inferred from ip_address (Architecture Rule #16); not client-supplied.
 
 
 class HostIPRead(BaseModel):

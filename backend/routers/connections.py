@@ -5,13 +5,29 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import ConnectionRecord, Credential
+from models import ConnectionRecord, Credential, Host
 from routers.deps import get_connection_or_404, get_op_or_404
 from services.activity import log_activity
 from schemas import ConnectionRecordCreate, ConnectionRecordRead, ConnectionRecordUpdate
 from ws_manager import broadcast_sync
 
 router = APIRouter(tags=["connections"])
+
+
+def _require_host_in_op(db: Session, host_id, op_id: str, field: str) -> None:
+    """Reject a src/dst host reference that doesn't exist within this operation."""
+    if host_id is not None and not db.query(Host.id).filter(
+        Host.id == host_id, Host.op_id == op_id
+    ).first():
+        raise HTTPException(status_code=400, detail=f"{field} not found in this operation")
+
+
+def _require_credential_in_op(db: Session, credential_id, op_id: str) -> None:
+    """Reject a credential reference that doesn't exist within this operation."""
+    if credential_id is not None and not db.query(Credential.id).filter(
+        Credential.id == credential_id, Credential.op_id == op_id
+    ).first():
+        raise HTTPException(status_code=400, detail="credential_id not found in this operation")
 
 
 @router.post("/ops/{op_id}/connections", response_model=ConnectionRecordRead, status_code=201)
@@ -21,13 +37,9 @@ def create_connection(
     db: Session = Depends(get_db),
 ):
     get_op_or_404(op_id, db)
-    if body.credential_id is not None:
-        cred = db.query(Credential).filter(
-            Credential.id == body.credential_id,
-            Credential.op_id == op_id,
-        ).first()
-        if not cred:
-            raise HTTPException(status_code=400, detail="credential_id not found in this operation")
+    _require_credential_in_op(db, body.credential_id, op_id)
+    _require_host_in_op(db, body.src_host_id, op_id, "src_host_id")
+    _require_host_in_op(db, body.dst_host_id, op_id, "dst_host_id")
     record = ConnectionRecord(
         op_id=op_id,
         src_host_id=body.src_host_id,
@@ -80,6 +92,9 @@ def get_connection(connection_id: str, db: Session = Depends(get_db)):
 @router.patch("/connections/{connection_id}", response_model=ConnectionRecordRead)
 def update_connection(connection_id: str, body: ConnectionRecordUpdate, db: Session = Depends(get_db)):
     record = get_connection_or_404(connection_id, db)
+    _require_host_in_op(db, body.src_host_id, record.op_id, "src_host_id")
+    _require_host_in_op(db, body.dst_host_id, record.op_id, "dst_host_id")
+    _require_credential_in_op(db, body.credential_id, record.op_id)
     old_src = record.src_ip
     old_dst = record.dst_ip
     old_connection_type = record.connection_type

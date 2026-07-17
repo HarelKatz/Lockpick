@@ -286,3 +286,46 @@ def test_create_public_key_credential_gets_fingerprint(client, op):
     data = resp.json()
     assert data["fingerprint"] is not None
     assert data["fingerprint"].startswith("SHA256:")
+
+
+# ─── Referential integrity: host_user_id must belong to host_id ──────────────
+
+def test_create_credential_link_foreign_host_user_rejected(client, op, host, password_cred):
+    """A host_user_id belonging to a different host must be rejected."""
+    other_host = client.post(f"/api/ops/{op['id']}/hosts", json={"nickname": "other"}).json()
+    other_user = client.post(
+        f"/api/hosts/{other_host['id']}/users", json={"username": "eve"}
+    ).json()
+    resp = client.post(
+        "/api/credential-links",
+        json={
+            "credential_id": password_cred["id"], "host_id": host["id"],
+            "host_user_id": other_user["id"], "relationship_type": "found_on_disk",
+        },
+    )
+    assert resp.status_code == 400
+
+
+def test_create_credential_link_matching_host_user_ok(client, op, host, password_cred):
+    user = client.post(f"/api/hosts/{host['id']}/users", json={"username": "root"}).json()
+    resp = client.post(
+        "/api/credential-links",
+        json={
+            "credential_id": password_cred["id"], "host_id": host["id"],
+            "host_user_id": user["id"], "relationship_type": "found_on_disk",
+        },
+    )
+    assert resp.status_code == 201
+    assert resp.json()["host_user_id"] == user["id"]
+
+
+def test_update_credential_link_foreign_host_user_rejected(client, op, host, cred_link):
+    other_host = client.post(f"/api/ops/{op['id']}/hosts", json={"nickname": "other"}).json()
+    other_user = client.post(
+        f"/api/hosts/{other_host['id']}/users", json={"username": "eve"}
+    ).json()
+    resp = client.patch(
+        f"/api/credential-links/{cred_link['id']}",
+        json={"host_user_id": other_user["id"]},
+    )
+    assert resp.status_code == 400

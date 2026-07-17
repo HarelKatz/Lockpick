@@ -270,3 +270,33 @@ def test_merge_rejects_empty_nickname(client, op):
             json={"target_host_id": tgt_id, "resolutions": {"nickname": bad}},
         )
         assert resp.status_code == 422, f"expected 422 for nickname={bad!r}"
+
+
+# ─── addr_type is always inferred from the value (Architecture Rule #16) ──────
+
+def test_add_host_ip_infers_ipv6(client, host):
+    resp = client.post(f"/api/hosts/{host['id']}/ips", json={"ip_address": "2001:db8::1"})
+    assert resp.status_code == 201
+    assert resp.json()["addr_type"] == "ipv6"
+
+
+def test_add_host_ip_infers_hostname(client, host):
+    resp = client.post(f"/api/hosts/{host['id']}/ips", json={"ip_address": "web01.corp.local"})
+    assert resp.status_code == 201
+    assert resp.json()["addr_type"] == "hostname"
+
+
+def test_add_host_ip_infers_ipv4(client, host):
+    resp = client.post(f"/api/hosts/{host['id']}/ips", json={"ip_address": "10.1.2.3"})
+    assert resp.status_code == 201
+    assert resp.json()["addr_type"] == "ipv4"
+
+
+def test_add_host_ip_ignores_client_supplied_addr_type(client, host):
+    """A client-sent addr_type is ignored — the stored type is inferred from the value."""
+    resp = client.post(
+        f"/api/hosts/{host['id']}/ips",
+        json={"ip_address": "2001:db8::2", "addr_type": "ipv4"},
+    )
+    assert resp.status_code == 201
+    assert resp.json()["addr_type"] == "ipv6"
