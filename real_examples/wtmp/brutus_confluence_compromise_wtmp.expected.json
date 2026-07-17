@@ -1,14 +1,109 @@
 {
-  "connections_found": [],
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "root",
+      "raw_line": "wtmp: root from 203.101.190.9",
+      "src_ip": "203.101.190.9",
+      "src_user": null,
+      "timestamp": "2024-01-25T11:15:40+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "root",
+      "raw_line": "wtmp: root from 203.101.190.9",
+      "src_ip": "203.101.190.9",
+      "src_user": null,
+      "timestamp": "2024-02-11T10:33:49+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "root",
+      "raw_line": "wtmp: root from 203.101.190.9",
+      "src_ip": "203.101.190.9",
+      "src_user": null,
+      "timestamp": "2024-02-11T10:41:11+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "root",
+      "raw_line": "wtmp: root from 203.101.190.9",
+      "src_ip": "203.101.190.9",
+      "src_user": null,
+      "timestamp": "2024-02-11T10:54:27+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "root",
+      "raw_line": "wtmp: root from 203.101.190.9",
+      "src_ip": "203.101.190.9",
+      "src_user": null,
+      "timestamp": "2024-03-06T06:19:55+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "ubuntu",
+      "raw_line": "wtmp: ubuntu from 203.101.190.9",
+      "src_ip": "203.101.190.9",
+      "src_user": null,
+      "timestamp": "2024-01-25T11:13:58+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "cyberjunkie",
+      "raw_line": "wtmp: cyberjunkie from 65.2.161.68",
+      "src_ip": "65.2.161.68",
+      "src_user": null,
+      "timestamp": "2024-03-06T06:37:35+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "root",
+      "raw_line": "wtmp: root from 65.2.161.68",
+      "src_ip": "65.2.161.68",
+      "src_user": null,
+      "timestamp": "2024-03-06T06:32:45+00:00"
+    }
+  ],
   "credentials_found": [],
   "host_users_found": [],
   "hosts_found": [],
   "patterns_found": [],
   "stats": {
-    "records_parsed": 0
+    "records_parsed": 8
   },
   "sudo_rules_found": [],
-  "warnings": [
-    "File size 11136 is not a multiple of utmp record size 382 — may be truncated or wrong format"
-  ]
+  "warnings": []
 }

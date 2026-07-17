@@ -1,14 +1,97 @@
 {
-  "connections_found": [],
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "ubuntu",
+      "raw_line": "wtmp: ubuntu from :0",
+      "src_ip": ":0",
+      "src_user": null,
+      "timestamp": "2009-01-06T19:00:33+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "ubuntu",
+      "raw_line": "wtmp: ubuntu from unknown",
+      "src_ip": "unknown",
+      "src_user": null,
+      "timestamp": "2009-01-06T19:00:24+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "ubuntu",
+      "raw_line": "wtmp: ubuntu from unknown",
+      "src_ip": "unknown",
+      "src_user": null,
+      "timestamp": "2009-01-06T19:00:24+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "ubuntu",
+      "raw_line": "wtmp: ubuntu from unknown",
+      "src_ip": "unknown",
+      "src_user": null,
+      "timestamp": "2009-01-06T19:00:24+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "ubuntu",
+      "raw_line": "wtmp: ubuntu from unknown",
+      "src_ip": "unknown",
+      "src_user": null,
+      "timestamp": "2009-01-06T19:00:24+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "ubuntu",
+      "raw_line": "wtmp: ubuntu from unknown",
+      "src_ip": "unknown",
+      "src_user": null,
+      "timestamp": "2009-01-06T19:00:24+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "ubuntu",
+      "raw_line": "wtmp: ubuntu from unknown",
+      "src_ip": "unknown",
+      "src_user": null,
+      "timestamp": "2009-01-06T19:00:34+00:00"
+    }
+  ],
   "credentials_found": [],
   "host_users_found": [],
   "hosts_found": [],
   "patterns_found": [],
   "stats": {
-    "records_parsed": 0
+    "records_parsed": 7
   },
   "sudo_rules_found": [],
-  "warnings": [
-    "File size 4608 is not a multiple of utmp record size 382 — may be truncated or wrong format"
-  ]
+  "warnings": []
 }

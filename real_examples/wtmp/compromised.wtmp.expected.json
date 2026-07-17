@@ -6,11 +6,59 @@
       "credential_fingerprint": null,
       "direction_context": "from_dst_logs",
       "dst_ip": "__upload_host__",
-      "dst_user": "/1admin",
-      "raw_line": "wtmp: /1admin from \u0000\u000010.0.1.101",
-      "src_ip": "\u0000\u000010.0.1.101",
+      "dst_user": "admin",
+      "raw_line": "wtmp: admin from 10.0.1.101",
+      "src_ip": "10.0.1.101",
       "src_user": null,
-      "timestamp": null
+      "timestamp": "2026-03-27T13:22:00+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "dev",
+      "raw_line": "wtmp: dev from 10.0.1.102",
+      "src_ip": "10.0.1.102",
+      "src_user": null,
+      "timestamp": "2026-03-27T07:45:00+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "implant",
+      "raw_line": "wtmp: implant from 185.220.101.34",
+      "src_ip": "185.220.101.34",
+      "src_user": null,
+      "timestamp": "2026-03-28T03:01:00+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "root",
+      "raw_line": "wtmp: root from 185.220.101.34",
+      "src_ip": "185.220.101.34",
+      "src_user": null,
+      "timestamp": "2026-03-28T02:47:00+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "svc_backup",
+      "raw_line": "wtmp: svc_backup from 45.153.160.140",
+      "src_ip": "45.153.160.140",
+      "src_user": null,
+      "timestamp": "2026-03-28T02:52:00+00:00"
     }
   ],
   "credentials_found": [],
@@ -18,10 +66,8 @@
   "hosts_found": [],
   "patterns_found": [],
   "stats": {
-    "records_parsed": 1
+    "records_parsed": 5
   },
   "sudo_rules_found": [],
-  "warnings": [
-    "File size 3456 is not a multiple of utmp record size 382 — may be truncated or wrong format"
-  ]
+  "warnings": []
 }

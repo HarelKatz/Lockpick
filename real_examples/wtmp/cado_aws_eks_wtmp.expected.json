@@ -1,14 +1,37 @@
 {
-  "connections_found": [],
+  "connections_found": [
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "root",
+      "raw_line": "wtmp: root from ec2-3-81-123-81.compute-1.amazonaws.com",
+      "src_ip": "ec2-3-81-123-81.compute-1.amazonaws.com",
+      "src_user": null,
+      "timestamp": "2021-07-07T17:04:36+00:00"
+    },
+    {
+      "auth_method": null,
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "ec2-user",
+      "raw_line": "wtmp: ec2-user from ip-172-31-3-135.us-east-2.compute.internal",
+      "src_ip": "ip-172-31-3-135.us-east-2.compute.internal",
+      "src_user": null,
+      "timestamp": "2021-07-07T16:35:56+00:00"
+    }
+  ],
   "credentials_found": [],
   "host_users_found": [],
   "hosts_found": [],
   "patterns_found": [],
   "stats": {
-    "records_parsed": 0
+    "records_parsed": 2
   },
   "sudo_rules_found": [],
-  "warnings": [
-    "File size 3456 is not a multiple of utmp record size 382 — may be truncated or wrong format"
-  ]
+  "warnings": []
 }
