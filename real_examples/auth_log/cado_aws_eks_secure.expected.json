@@ -10,7 +10,7 @@
       "raw_line": "Jul  7 16:35:56 ip-172-31-44-7 sshd[24423]: Accepted publickey for ec2-user from 172.31.3.135 port 41984 ssh2: RSA SHA256:EqRlNJX4cexDXMm/TlJ4bJW4x8gElgCrD1j6ptMlBTc",
       "src_ip": "172.31.3.135",
       "src_user": null,
-      "timestamp": "2026-07-07T16:35:56+00:00"
+      "timestamp": "2025-07-07T16:35:56+00:00"
     },
     {
       "auth_method": "publickey",
@@ -22,7 +22,7 @@
       "raw_line": "Jul  7 17:04:36 ip-172-31-44-7 sshd[12181]: Accepted publickey for root from 3.81.123.81 port 54736 ssh2: RSA SHA256:vOXRNDL81KRnPckyfgXT7POjxWnKrvLbvgRPYxqbRhs",
       "src_ip": "3.81.123.81",
       "src_user": null,
-      "timestamp": "2026-07-07T17:04:36+00:00"
+      "timestamp": "2025-07-07T17:04:36+00:00"
     }
   ],
   "credentials_found": [],

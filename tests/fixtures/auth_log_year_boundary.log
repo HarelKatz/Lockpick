@@ -1,0 +1,4 @@
+Dec 30 23:50:01 web01 sshd[1]: Accepted password for alice from 10.0.0.1 port 5001 ssh2
+Dec 31 23:59:01 web01 sshd[2]: Accepted publickey for bob from 10.0.0.2 port 5002 ssh2: RSA SHA256:aaa111
+Jan 01 00:05:01 web01 sshd[3]: Accepted password for carol from 10.0.0.3 port 5003 ssh2
+Jan 02 08:00:01 web01 sshd[4]: Accepted publickey for dave from 10.0.0.4 port 5004 ssh2: RSA SHA256:bbb222
