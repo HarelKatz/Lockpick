@@ -1,0 +1,51 @@
+{
+  "connections_found": [
+    {
+      "auth_method": "publickey",
+      "connection_type": "ssh",
+      "credential_fingerprint": "SHA256:8f3Kd2mNqPr5sT7vX9zA1bC3dE5fG7hJ9kL1mN3pQrs",
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "deploy",
+      "raw_line": "Mar 15 09:15:44 prod-app-01 sshd[8130]: Accepted publickey for deploy from 10.20.0.11 port 49512 ssh2: ED25519 SHA256:8f3Kd2mNqPr5sT7vX9zA1bC3dE5fG7hJ9kL1mN3pQrs",
+      "src_ip": "10.20.0.11",
+      "src_user": null,
+      "timestamp": "2026-03-15T09:15:44+00:00"
+    },
+    {
+      "auth_method": "publickey",
+      "connection_type": "ssh",
+      "credential_fingerprint": "SHA256:abc123def456ghi789jkl012mno345pqr678stu90",
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "root",
+      "raw_line": "Mar 15 14:22:31 prod-app-01 sshd[9500]: Accepted publickey for root from 10.20.0.11 port 52001 ssh2: RSA SHA256:abc123def456ghi789jkl012mno345pqr678stu90",
+      "src_ip": "10.20.0.11",
+      "src_user": null,
+      "timestamp": "2026-03-15T14:22:31+00:00"
+    },
+    {
+      "auth_method": "password",
+      "connection_type": "ssh",
+      "credential_fingerprint": null,
+      "direction_context": "from_dst_logs",
+      "dst_ip": "__upload_host__",
+      "dst_user": "ubuntu",
+      "raw_line": "Mar 15 11:47:55 prod-app-01 sshd[9001]: Accepted password for ubuntu from 10.20.0.5 port 51022 ssh2",
+      "src_ip": "10.20.0.5",
+      "src_user": null,
+      "timestamp": "2026-03-15T11:47:55+00:00"
+    }
+  ],
+  "credentials_found": [],
+  "host_users_found": [],
+  "hosts_found": [],
+  "patterns_found": [],
+  "stats": {
+    "accepted_logins": 3,
+    "lines_parsed": 11,
+    "total_records": 3
+  },
+  "sudo_rules_found": [],
+  "warnings": []
+}

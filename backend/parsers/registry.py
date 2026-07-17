@@ -61,6 +61,9 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "secure": AuthLogParser,
     "syslog": AuthLogParser,
     "messages": AuthLogParser,
+    # `journalctl -u ssh` text output — syslog-shaped sshd lines (short / short-iso
+    # / short-full). Not "journal": that key is reserved for the binary .journal format.
+    "journalctl": AuthLogParser,
     "wtmp": WtmpParser,
     "lastlog": LastlogParser,
     "last_output": LastOutputParser,

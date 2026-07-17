@@ -1,0 +1,2 @@
+Fri 2024-03-15 14:20:01 UTC web01 sshd[1234]: Accepted publickey for root from 10.10.0.5 port 52341 ssh2: RSA SHA256:abc123def456
+Fri 2024-03-15 14:21:30 UTC web01 sshd[1240]: Accepted password for alice from 10.10.0.9 port 41200 ssh2

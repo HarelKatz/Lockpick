@@ -16,9 +16,15 @@ _ACCEPTED_RE = re.compile(
 # Fingerprint anywhere on the line after the initial match
 _FP_RE = re.compile(r"(?P<fp>SHA256:[A-Za-z0-9+/=]+)")
 
-# Timestamp at start of syslog lines: "Mar 15 14:22:00" or ISO "2024-03-15T14:22:00"
+# Timestamp at the start of a syslog / journalctl line. Handles:
+#   classic syslog           "Mar 15 14:22:00"              (yearless)
+#   journalctl -o short-iso  "2024-03-15T14:22:00+0000"     (offset ignored)
+#   journalctl -o short-full "Fri 2024-03-15 14:22:00 UTC"  (weekday prefix consumed
+#                                                             outside the capture; zone ignored)
 _SYSLOG_TS_RE = re.compile(
-    r"^(?P<ts>\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})"
+    r"^(?:\w{3}\s+)?"
+    r"(?P<ts>\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}"
+    r"|\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2})"
 )
 
 _AUTH_METHODS = {"publickey", "password", "keyboard-interactive", "hostbased"}
@@ -50,7 +56,7 @@ def _parse_ts_raw(ts_str: str) -> datetime | None:
     _YEARLESS (1900); ISO timestamps carry a real year. Year inference for the
     yearless ones happens later, file-aware, in _resolve_syslog_years.
     """
-    for fmt in ("%b %d %H:%M:%S", "%Y-%m-%dT%H:%M:%S"):
+    for fmt in ("%b %d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"):
         try:
             return datetime.strptime(ts_str.strip(), fmt)
         except ValueError:

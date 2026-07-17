@@ -123,3 +123,44 @@ def test_feb29_non_leap_no_crash(metadata, monkeypatch):
     result = AuthLogParser().parse(content, metadata)
     assert len(result.connections_found) == 1
     assert result.connections_found[0].timestamp is None
+
+
+# ─── journalctl -u ssh coverage (default / short-iso / short-full formats) ──────
+
+def test_journalctl_registered():
+    from parsers.registry import PARSER_REGISTRY
+
+    assert PARSER_REGISTRY["journalctl"] is AuthLogParser
+
+
+def test_journalctl_default_format(metadata, monkeypatch):
+    """Default `journalctl -u ssh` is syslog-shaped — parses via the same path."""
+    monkeypatch.setattr(auth_log, "_now", lambda: datetime(2026, 7, 1, tzinfo=timezone.utc))
+    content = (FIXTURES / "journalctl_default.log").read_bytes()
+    result = AuthLogParser().parse(content, metadata)
+    assert {c.dst_user for c in result.connections_found} == {"root", "alice"}
+    assert not any("Failed" in c.raw_line for c in result.connections_found)
+    root = next(c for c in result.connections_found if c.dst_user == "root")
+    assert root.auth_method == "publickey"
+    assert root.src_ip == "10.10.0.5"
+    assert root.credential_fingerprint == "SHA256:abc123def456"
+    assert all(c.timestamp.startswith("2026-03-15") for c in result.connections_found)
+
+
+def test_journalctl_short_iso_format(metadata):
+    """`-o short-iso` timestamps carry a year — preserved, no inference."""
+    content = (FIXTURES / "journalctl_short_iso.log").read_bytes()
+    result = AuthLogParser().parse(content, metadata)
+    assert {c.dst_user for c in result.connections_found} == {"root", "alice"}
+    assert all(c.timestamp.startswith("2024-03-15") for c in result.connections_found)
+
+
+def test_journalctl_short_full_format(metadata):
+    """`-o short-full` prefixes a weekday + full date; both parse, year preserved."""
+    content = (FIXTURES / "journalctl_short_full.log").read_bytes()
+    result = AuthLogParser().parse(content, metadata)
+    assert {c.dst_user for c in result.connections_found} == {"root", "alice"}
+    assert all(c.timestamp.startswith("2024-03-15") for c in result.connections_found)
+    root = next(c for c in result.connections_found if c.dst_user == "root")
+    assert root.auth_method == "publickey"
+    assert root.credential_fingerprint == "SHA256:abc123def456"
