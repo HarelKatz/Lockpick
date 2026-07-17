@@ -170,11 +170,12 @@ When a bug ships green, add one line: the blind-spot class + the invariant/test 
 4. Register router in `backend/main.py`
 5. If the endpoint ingests parseable evidence files, dispatch through `services/upload_pipeline.process_single_file()` — do not duplicate parser-dispatch logic (Architecture Rule #20)
 6. Alembic migration if schema changed: `cd backend && uv run alembic revision --autogenerate -m "describe"`
-7. Call `log_activity()` before `db.commit()` in every write endpoint (Architecture Rule #7)
-8. Call `broadcast_sync(op_id, event)` after `db.commit()` in every write endpoint (Architecture Rule #18)
-9. Tests in `tests/test_api/`
-10. TypeScript types in `frontend/src/types/index.ts`
-11. API client functions in `frontend/src/api/`
+7. Validate client-supplied foreign keys (`host_id`, `credential_id`, `host_user_id`, …) resolve within the op/host — reject with 400 (see the `_require_*_in_op` / `_require_host_user_on_host` helpers in `routers/connections.py` / `routers/credentials.py`). The REST API is the real surface (CLI + scripts), so this can't be client-only. Applies to create **and** update paths.
+8. Call `log_activity()` before `db.commit()` in every write endpoint (Architecture Rule #7)
+9. Call `broadcast_sync(op_id, event)` after `db.commit()` in every write endpoint (Architecture Rule #18)
+10. Tests in `tests/test_api/`
+11. TypeScript types in `frontend/src/types/index.ts`
+12. API client functions in `frontend/src/api/`
 
 ## Adding a New Parser
 
