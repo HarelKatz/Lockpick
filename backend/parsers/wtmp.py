@@ -1,26 +1,26 @@
 """Parser for wtmp binary login records."""
 from __future__ import annotations
 
+import socket
 import struct
 from datetime import datetime, timezone
 
 from parsers import BaseParser, ConnectionData, ParseResult, UploadMetadata
 
-# utmp record size is 384 bytes on Linux x86_64
-# struct utmp {
-#   short   ut_type;
-#   pid_t   ut_pid;
-#   char    ut_line[32];
-#   char    ut_id[4];
-#   char    ut_user[32];
-#   char    ut_host[256];
-#   struct exit_status ut_exit;    (2 shorts = 4 bytes)
-#   long    ut_session;
-#   struct timeval ut_tv;          (2 longs = 16 bytes)
-#   int32_t ut_addr_v6[4];         (16 bytes)
-#   char    __unused[20];
-# }
-_UTMP_FMT = "=hi32s4s32s256s4sl2l4i20s"
+# utmp record size is 384 bytes on Linux x86_64. On-disk (32-bit-compat) layout —
+# note the 2-byte alignment pad after ut_type, without which this drifts to 382:
+#   short    ut_type;                              // 2  + 2 pad
+#   int32_t  ut_pid;                               // 4
+#   char     ut_line[32];
+#   char     ut_id[4];
+#   char     ut_user[32];
+#   char     ut_host[256];
+#   struct exit_status ut_exit;                    // 4  (2 shorts)
+#   int32_t  ut_session;                           // 4
+#   struct { int32_t tv_sec, tv_usec; } ut_tv;     // 8  (32-bit compat, NOT 8-byte longs)
+#   int32_t  ut_addr_v6[4];                        // 16
+#   char     __unused[20];
+_UTMP_FMT = "=h2xi32s4s32s256s4sl2l4i20s"
 _UTMP_SIZE = struct.calcsize(_UTMP_FMT)
 
 _UT_USER_PROCESS = 7   # USER_PROCESS: normal login
@@ -41,16 +41,19 @@ def _decode_str(b: bytes) -> str:
 
 
 def _addr_to_ip(addr_v6: list[int]) -> str | None:
-    """Convert ut_addr_v6 to a dotted-decimal IP string, or None if zero."""
+    """Convert ut_addr_v6 to an IP string, or None if unset.
+
+    The address is stored in network byte order across four int32 words. Per the
+    glibc / util-linux convention an IPv4 login populates only word 0 (the rest
+    zero); IPv6 uses all four. Re-pack the words to their raw bytes so inet_ntop
+    can format the correct family.
+    """
     if all(a == 0 for a in addr_v6):
         return None
-    # IPv4 in addr_v6[0] (little-endian 32-bit)
-    a = addr_v6[0]
-    b0 = a & 0xFF
-    b1 = (a >> 8) & 0xFF
-    b2 = (a >> 16) & 0xFF
-    b3 = (a >> 24) & 0xFF
-    return f"{b0}.{b1}.{b2}.{b3}"
+    raw = struct.pack("=4i", *addr_v6)
+    if addr_v6[1] == addr_v6[2] == addr_v6[3] == 0:
+        return socket.inet_ntop(socket.AF_INET, raw[:4])
+    return socket.inet_ntop(socket.AF_INET6, raw)
 
 
 class WtmpParser(BaseParser):

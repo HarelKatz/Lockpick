@@ -1,5 +1,6 @@
 """Tests for wtmp parser."""
 import os
+import socket
 import struct
 import sys
 from pathlib import Path
@@ -9,7 +10,13 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
 
 from parsers import UploadMetadata
-from parsers.wtmp import WtmpParser, _UTMP_FMT, _UTMP_SIZE, _UT_USER_PROCESS
+from parsers.wtmp import WtmpParser, _UTMP_SIZE, _UT_USER_PROCESS
+
+# Independent, hardcoded glibc x86-64 `struct utmp` layout (384 bytes). Deliberately NOT
+# parsers.wtmp._UTMP_FMT: packing test records with the parser's own format would round-trip
+# green even if that format is wrong (the 382-vs-384 pad bug this suite must catch).
+_TRUE_UTMP_FMT = "=h2xi32s4s32s256s4sl2l4i20s"
+assert struct.calcsize(_TRUE_UTMP_FMT) == 384
 
 
 @pytest.fixture
@@ -22,10 +29,16 @@ def metadata():
     )
 
 
-def _make_utmp_record(user: str, host: str, ts: int, ut_type: int = _UT_USER_PROCESS) -> bytes:
-    """Build a minimal utmp record."""
+def _make_utmp_record(
+    user: str,
+    host: str,
+    ts: int,
+    ut_type: int = _UT_USER_PROCESS,
+    addr_v6: tuple[int, int, int, int] = (0, 0, 0, 0),
+) -> bytes:
+    """Build a minimal utmp record at the TRUE 384-byte layout (not the parser's format)."""
     return struct.pack(
-        _UTMP_FMT,
+        _TRUE_UTMP_FMT,
         ut_type,         # ut_type
         1234,            # ut_pid
         b"pts/0",        # ut_line
@@ -36,9 +49,24 @@ def _make_utmp_record(user: str, host: str, ts: int, ut_type: int = _UT_USER_PRO
         0,               # ut_session
         ts,              # tv_sec
         0,               # tv_usec
-        0, 0, 0, 0,      # addr_v6
+        *addr_v6,        # ut_addr_v6[4]
         b"\x00" * 20,    # __unused
     )
+
+
+def _ipv4_words(ip: str) -> tuple[int, int, int, int]:
+    """ut_addr_v6 words for an IPv4 login: address in word 0 (network order), rest zero."""
+    return (struct.unpack("=i", socket.inet_aton(ip))[0], 0, 0, 0)
+
+
+def _ipv6_words(ip: str) -> tuple[int, int, int, int]:
+    """ut_addr_v6 words for an IPv6 login: the 16-byte address across all four words."""
+    return struct.unpack("=4i", socket.inet_pton(socket.AF_INET6, ip))
+
+
+def test_record_size_is_384():
+    """The parser's record size must match the real glibc struct utmp (384 bytes), not 382."""
+    assert _UTMP_SIZE == 384
 
 
 def test_parses_valid_records(metadata):
@@ -57,6 +85,20 @@ def test_src_ip_from_host_field(metadata):
     data = _make_utmp_record("bob", "10.10.0.7", 1710507900)
     result = WtmpParser().parse(data, metadata)
     assert result.connections_found[0].src_ip == "10.10.0.7"
+
+
+def test_src_ip_from_addr_v6_ipv4(metadata):
+    """When ut_host is empty, the IPv4 in ut_addr_v6[0] is the source IP."""
+    data = _make_utmp_record("carol", "", 1710508000, addr_v6=_ipv4_words("10.20.0.5"))
+    result = WtmpParser().parse(data, metadata)
+    assert result.connections_found[0].src_ip == "10.20.0.5"
+
+
+def test_src_ip_from_addr_v6_ipv6(metadata):
+    """When ut_host is empty, an IPv6 address spanning all four ut_addr_v6 words is decoded."""
+    data = _make_utmp_record("dave", "", 1710508100, addr_v6=_ipv6_words("2001:db8::1"))
+    result = WtmpParser().parse(data, metadata)
+    assert result.connections_found[0].src_ip == "2001:db8::1"
 
 
 def test_direction_context(metadata):
