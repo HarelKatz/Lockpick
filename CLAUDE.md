@@ -140,6 +140,7 @@ When a bug ships green, add one line: the blind-spot class + the invariant/test 
 - **Model completeness** — isolated host hidden as the window narrowed → e2e "narrowing hides hosts left with no in-window connection" (+ the genuinely-isolated-host visibility fix).
 - **Model completeness** — undated edge must never be hidden → e2e "narrowing the end keeps key-match + undated edges even when their date is out of window".
 - **Layout / rendering** — floating nodes after filtering → e2e `invariants.spec.ts` "every visible node stays finitely in-canvas (full graph and after filtering)": on the settled full graph every visible node is finite and in-canvas; after a host-toggle reflow every visible node stays finite/attached — in-canvas is deliberately *not* asserted post-filter because the app doesn't auto-refit after a toggle. Catches detached / null / NaN positions; `zoomToFit` reframes finite positions so far-but-finite drift is out of scope. Also asserted (full graph) at scale(50) in `invariants-scale.spec.ts`.
+- **Test independence** — `test_wtmp.py` packed its fixtures with the parser's *own* `_UTMP_FMT`, so a 382-vs-384 `struct utmp` size bug round-tripped green and every real wtmp/btmp imported as **zero** logins; a binary-format test must pack at a layout independent of the impl (a hardcoded 384-byte format) + a direct `_UTMP_SIZE == 384` guard → `tests/test_parsers/test_wtmp.py`.
 
 ## Test-Layering Doctrine
 
