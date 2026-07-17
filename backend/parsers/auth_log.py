@@ -29,9 +29,11 @@ _SYSLOG_TS_RE = re.compile(
 
 _AUTH_METHODS = {"publickey", "password", "keyboard-interactive", "hostbased"}
 
-# strptime yields this year when the format carries no year (classic syslog) — the
-# marker that a timestamp needs file-aware year inference (see _resolve_syslog_years).
-_YEARLESS = 1900
+# Classic syslog carries no year. We parse it against a leap-year placeholder (not
+# strptime's default 1900, which is NOT a leap year) so a "Feb 29" survives until the
+# real year is inferred file-aware; a non-leap inference then drops it (see
+# _resolve_syslog_years / _safe_replace_year).
+_YEARLESS_PLACEHOLDER = 2000
 
 
 def _now() -> datetime:
@@ -49,19 +51,24 @@ def _normalise_method(raw: str) -> str:
     return raw if raw in _AUTH_METHODS else "unknown"
 
 
-def _parse_ts_raw(ts_str: str) -> datetime | None:
-    """Parse a leading syslog/ISO timestamp to a naive datetime, or None.
+def _parse_ts_raw(ts_str: str) -> tuple[datetime | None, bool]:
+    """Parse a leading syslog/ISO timestamp; return (datetime, is_yearless).
 
-    Classic syslog ("Mar 15 14:22:00") carries no year, so strptime returns year
-    _YEARLESS (1900); ISO timestamps carry a real year. Year inference for the
-    yearless ones happens later, file-aware, in _resolve_syslog_years.
+    Classic syslog ("Mar 15 14:22:00") carries no year — parsed against a leap-year
+    placeholder and flagged yearless for later file-aware inference. ISO / short-full
+    timestamps ("2024-03-15T…", "2024-03-15 …") carry a real year (is_yearless=False).
     """
-    for fmt in ("%b %d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"):
+    s = ts_str.strip()
+    try:
+        return datetime.strptime(f"{s} {_YEARLESS_PLACEHOLDER}", "%b %d %H:%M:%S %Y"), True
+    except ValueError:
+        pass
+    for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"):
         try:
-            return datetime.strptime(ts_str.strip(), fmt)
+            return datetime.strptime(s, fmt), False
         except ValueError:
             continue
-    return None
+    return None, False
 
 
 def _safe_replace_year(dt: datetime, year: int) -> datetime | None:
@@ -74,7 +81,7 @@ def _safe_replace_year(dt: datetime, year: int) -> datetime | None:
 def _resolve_syslog_years(
     yearless: list[datetime], now: datetime
 ) -> list[datetime | None]:
-    """Assign a year to each yearless (year==_YEARLESS) syslog timestamp.
+    """Assign a year to each yearless (placeholder-year) syslog timestamp.
 
     `yearless` are the parsed datetimes in file order. Logs are assumed
     chronologically ascending (true for syslog / auth.log / journalctl): anchor
@@ -132,9 +139,10 @@ class AuthLogParser(BaseParser):
             if not m:
                 continue
             raw_dt: datetime | None = None
+            yearless = False
             m_ts = _SYSLOG_TS_RE.match(raw_line)
             if m_ts:
-                raw_dt = _parse_ts_raw(m_ts.group("ts"))
+                raw_dt, yearless = _parse_ts_raw(m_ts.group("ts"))
             fp_m = _FP_RE.search(raw_line)
             entries.append(
                 {
@@ -144,16 +152,13 @@ class AuthLogParser(BaseParser):
                     "fingerprint": fp_m.group("fp") if fp_m else None,
                     "raw_line": raw_line[:512],
                     "raw_dt": raw_dt,
+                    "yearless": yearless,
                 }
             )
 
         # Phase 2 — resolve the year for the yearless (classic-syslog) timestamps,
         # in file order, then splice the resolved datetimes back by index.
-        yearless_idx = [
-            i
-            for i, e in enumerate(entries)
-            if e["raw_dt"] is not None and e["raw_dt"].year == _YEARLESS
-        ]
+        yearless_idx = [i for i, e in enumerate(entries) if e["yearless"]]
         resolved = _resolve_syslog_years(
             [entries[i]["raw_dt"] for i in yearless_idx], _now()
         )

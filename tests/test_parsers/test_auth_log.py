@@ -116,8 +116,21 @@ def test_iso_timestamp_year_preserved(metadata, monkeypatch):
     assert dated and all(t.startswith("2024-") for t in dated)
 
 
-def test_feb29_non_leap_no_crash(metadata, monkeypatch):
-    """Feb 29 on a non-leap inferred year drops the timestamp but keeps the login."""
+def test_feb29_resolves_in_leap_year(metadata, monkeypatch):
+    """A classic-syslog 'Feb 29' resolves when the inferred year is a leap year."""
+    monkeypatch.setattr(auth_log, "_now", lambda: datetime(2024, 3, 1, tzinfo=timezone.utc))
+    content = (FIXTURES / "auth_log_feb29.log").read_bytes()
+    result = AuthLogParser().parse(content, metadata)
+    assert len(result.connections_found) == 1
+    assert result.connections_found[0].timestamp.startswith("2024-02-29")
+
+
+def test_feb29_dropped_on_non_leap_inference(metadata, monkeypatch):
+    """Inferred onto a non-leap year, Feb 29 can't exist → drop the timestamp, keep the login.
+
+    This exercises the _safe_replace_year guard for real: a leap-year placeholder lets
+    'Feb 29' parse, so it reaches the resolver where a non-leap inferred year is rejected.
+    """
     monkeypatch.setattr(auth_log, "_now", lambda: datetime(2026, 3, 1, tzinfo=timezone.utc))
     content = (FIXTURES / "auth_log_feb29.log").read_bytes()
     result = AuthLogParser().parse(content, metadata)
