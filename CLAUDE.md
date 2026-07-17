@@ -196,6 +196,7 @@ When a bug ships green, add one line: the blind-spot class + the invariant/test 
 Parsers in `backend/parsers/` implement `BaseParser` — see `parsers/__init__.py` for the authoritative `ParseResult` / `BaseParser` signatures. Register in `parsers/registry.py` (`"file_type": ParserClass`).
 
 **Parser guidelines (must follow):**
+- Wall-clock time: a parser must never call `datetime.now()`/`utcnow()`/`date.today()`/`time.time()` inline — route it through a module-level `_now()` (see `parsers/auth_log.py`). The snapshot suite freezes every parser `_now()` so `real_examples` snapshots don't drift each New Year; `tests/test_parsers/test_time_hygiene.py` fails the build if you bypass it.
 - Never crash on bad input — catch exceptions, append to `warnings`, and continue
 - Decode bytes with `errors='replace'` to handle corrupt input
 - Decompress gzip when applicable: command-output and log parsers that may arrive gzipped (auth.log, ps, netstat, ip/iptables/nft output, etc.) must check gzip magic bytes (`content[:2] == b'\x1f\x8b'`) and decompress before parsing. Parsers for artifacts that never arrive gzipped need not.
