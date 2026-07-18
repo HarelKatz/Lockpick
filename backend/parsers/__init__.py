@@ -29,6 +29,10 @@ class CredentialData:
     username: Optional[str] = None   # which user owns this cred (from metadata or file)
     relationship_type: str = "found_on_disk"  # CredentialLink relationship
     name: Optional[str] = None
+    # Verbatim authorized_keys option prefix (from=/command=/restrict/no-pty/…) when
+    # the credential came from an authorized_keys line. Grant-scoped, not key-scoped:
+    # the same key can be restricted on one host and unrestricted on another.
+    key_options: Optional[str] = None
 
 
 @dataclass
