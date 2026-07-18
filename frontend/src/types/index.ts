@@ -258,7 +258,18 @@ export interface MergeHostResponse {
 
 export type Confidence = 'confirmed' | 'observed' | 'indicator'
 
-export type EvidenceType = 'key_match' | 'connection_log' | 'bash_history' | 'known_hosts'
+// Mirrors the backend `EvidenceItem.type` Literal (backend/schemas.py). Keep in
+// lockstep — adding an indicator parser type means extending
+// `_INDICATOR_PARSER_TYPES`, that Literal, and this union together (Rule #25).
+export type EvidenceType =
+  | 'key_match'
+  | 'connection_log'
+  | 'bash_history'
+  | 'known_hosts'
+  | 'arp'
+  | 'ip_neigh'
+  | 'iptables'
+  | 'nftables'
 
 export interface EvidenceItem {
   type: EvidenceType

@@ -4,15 +4,9 @@
  */
 import { useState } from 'react'
 import type { EvidenceItem, GraphEdge, GraphNode, PathResult, PivotableUser } from '../types'
+import { EVIDENCE_LABELS } from '../utils/evidenceLabels'
 import { classifyPath, type PathType } from './PathFinder'
 import styles from './PathDetailPanel.module.css'
-
-const EVIDENCE_LABELS: Record<string, string> = {
-  key_match: 'Key Match',
-  connection_log: 'Connection Log',
-  bash_history: 'Bash History',
-  known_hosts: 'Known Hosts',
-}
 
 const CONFIDENCE_LABEL: Record<string, string> = {
   confirmed: 'Confirmed',
