@@ -6,6 +6,7 @@ from parsers import (
     ConnectionData,
     CredentialData,
     ParseResult,
+    SshConfigPatternData,
     UploadMetadata,
 )
 
@@ -145,7 +146,19 @@ class AuthorizedKeysParser(BaseParser):
             # Only concrete single hosts become edges here; globs/CIDRs are standing
             # rules handled separately. Confidence is pinned to indicator by
             # parser_file_type (Architecture Rule #27), never `confirmed`.
-            for entry in _from_acl_entries(options or ""):
+            acl = _from_acl_entries(options or "")
+
+            # Globs/CIDRs match a SET of hosts, including hosts not discovered yet, so
+            # they become standing rules rather than one-shot edges. Negations ride
+            # along so exclusions still apply. A rule with no positive entry (e.g.
+            # from="10.0.0.5,!jump") would match nothing — don't store it.
+            rule_entries = [e for e in acl if not _is_literal_acl_entry(e)]
+            if any(not e.startswith("!") for e in rule_entries):
+                result.patterns_found.append(
+                    SshConfigPatternData(aliases=rule_entries, username=username)
+                )
+
+            for entry in acl:
                 if not _is_literal_acl_entry(entry):
                     continue
                 result.connections_found.append(

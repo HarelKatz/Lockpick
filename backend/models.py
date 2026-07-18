@@ -215,6 +215,12 @@ class SshConfigPattern(Base):
     source_host_id = Column(String(36), ForeignKey("hosts.id", ondelete="CASCADE"), nullable=False)
     pattern = Column(String(512), nullable=False)   # space-joined alias list, e.g. "jb.*" or "box? !box0"
     username = Column(String(255), nullable=True)
+    # Provenance, and the semantic direction of the edges this rule materializes.
+    # ssh_config Host blocks are OUTBOUND ("from this host I reach matching hosts");
+    # authorized_keys from= ACLs are INBOUND ("matching hosts may reach this host").
+    # `origin` also supplies ConnectionRecord.parser_file_type for the edges.
+    origin = Column(String(32), nullable=False, server_default="ssh_config")
+    direction = Column(String(16), nullable=False, server_default="outbound")
     created_at = Column(TZDateTime, nullable=False, default=_now)
 
 

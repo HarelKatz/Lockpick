@@ -89,9 +89,15 @@ def test_retroactive_edge_idempotent(client):
 
 # ─── Priority 23: upload-created host matches existing SshConfigPattern ────────
 
-def test_upload_auto_host_does_not_trigger_pattern_retroaction(client):
-    """An auto-host created by an upload is NOT checked against existing SshConfigPatterns.
-    Only explicitly-added hosts (via POST /hosts) trigger retroactive edge creation."""
+def test_upload_auto_host_triggers_pattern_retroaction(client):
+    """A host auto-created by an upload IS checked against stored standing rules.
+
+    Inverted deliberately (Architecture Rule #28). This previously asserted the
+    opposite — apply_patterns_to_host was wired only to POST /hosts and the add-IP
+    route, so a host that appeared via an upload (the usual way hosts appear) never
+    matched a stored rule. That made retroactive matching a coin flip on how the host
+    happened to be created.
+    """
     op_id = _create_op(client)
     src_host_id = _create_host(client, op_id, "jumpbox")
     # Add an IP to the source host so the connection records work
@@ -116,13 +122,13 @@ def test_upload_auto_host_does_not_trigger_pattern_retroaction(client):
     )
     assert resp.status_code == 200
 
-    # The bash_history upload should have created:
-    # 1. A ConnectionRecord from bash_history parse
-    # 2. A ConnectionRecord from pattern match (if apply_patterns_to_host is called)
+    # Two records now: the bash_history parse itself, plus the retroactive pattern
+    # match against the host that upload just auto-created.
     conns = client.get(f"/api/ops/{op_id}/connections").json()
-    # Exactly one connection from the bash_history parse (apply_patterns_to_host is not
-    # called on hosts created by the upload router, only on explicitly added hosts)
-    assert len(conns) == 1
+    assert len(conns) == 2, f"expected bash_history edge + retroactive pattern edge, got {conns}"
+    assert any(
+        c["raw_line"] and "ssh_config pattern match" in c["raw_line"] for c in conns
+    ), "the auto-created host should have matched the stored *.internal pattern"
     # The auto-created host "web.internal" must exist
     hosts = client.get(f"/api/ops/{op_id}/hosts").json()
     nicknames = {h["nickname"] for h in hosts}

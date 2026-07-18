@@ -45,7 +45,11 @@ from services.ip_resolver import (
     resolve_ip,
 )
 from services.key_utils import infer_key_info
-from services.ssh_pattern import ssh_match
+from services.ssh_pattern import apply_patterns_to_host, build_rule_edge, ssh_match
+
+# file_types whose standing rules are authorized_keys `from=` ACLs (inbound grants)
+# rather than ssh_config Host blocks (outbound reachability).
+_ACL_FILE_TYPES = frozenset({"authorized_keys", "public_key"})
 
 log = logging.getLogger(__name__)
 
@@ -506,7 +510,13 @@ def process_single_file(
         db.add(conn_rec)
         new_connections += 1
 
-    # ── 4. SSH config patterns ───────────────────────────────────────────
+    # ── 4. Standing rules (ssh_config Host patterns / authorized_keys from= ACLs) ──
+    # An authorized_keys from= ACL is INBOUND (matching hosts may reach the upload
+    # host); an ssh_config Host block is OUTBOUND. origin also becomes the edge's
+    # parser_file_type, which is what pins from= ACLs to indicator (Rule #27).
+    rule_origin = "authorized_keys" if metadata.file_type in _ACL_FILE_TYPES else "ssh_config"
+    rule_direction = "inbound" if rule_origin == "authorized_keys" else "outbound"
+
     for pat_data in result.patterns_found:
         pattern_str = " ".join(pat_data.aliases)
 
@@ -516,35 +526,39 @@ def process_single_file(
             .filter(Host.op_id == op_id, Host.id != host_id)
             .all()
         )
-        for candidate in candidates:
-            names = [candidate.nickname] + [ip.ip_address for ip in candidate.ips]
-            if not any(ssh_match(n, pat_data.aliases) for n in names):
-                continue
-            dst_ip = candidate.ips[0].ip_address if candidate.ips else candidate.nickname
-            raw = f"ssh_config pattern match: Host {pattern_str}"
-            existing = db.query(ConnectionRecord).filter(
-                ConnectionRecord.src_host_id == host_id,
-                ConnectionRecord.dst_host_id == candidate.id,
-                ConnectionRecord.raw_line == raw,
-            ).first()
-            if existing:
-                continue
-            db.add(ConnectionRecord(
-                id=_uuid(),
+        matched = [
+            c for c in candidates
+            if any(
+                ssh_match(n, pat_data.aliases)
+                for n in [c.nickname] + [ip.ip_address for ip in c.ips]
+            )
+        ]
+
+        # A broad rule (`from="10.0.0.0/8"` on a flat estate) can match most of the op.
+        # Past the cap, record no edges at all rather than burying the graph — the rule
+        # itself is still stored, so a later narrower question can still use it.
+        if len(matched) > settings.standing_rule_max_matches:
+            result.warnings.append(
+                f"Standing rule '{pattern_str}' matched {len(matched)} hosts "
+                f"(> {settings.standing_rule_max_matches}); edges suppressed"
+            )
+            matched = []
+
+        for candidate in matched:
+            if build_rule_edge(
+                db,
                 op_id=op_id,
-                src_host_id=host_id,
-                src_ip=upload_host_ip,
-                src_user=pat_data.username,
-                dst_host_id=candidate.id,
-                dst_ip=dst_ip,
-                connection_type="ssh",
-                direction_context="from_src_logs",
-                raw_line=raw,
+                rule_host_id=host_id,
+                matched_host_id=candidate.id,
+                rule_ip=upload_host_ip,
+                matched_ip=candidate.ips[0].ip_address if candidate.ips else candidate.nickname,
+                username=pat_data.username,
+                origin=rule_origin,
+                direction=rule_direction,
+                pattern=pattern_str,
                 source_file=safe_name,
-                parser_file_type=metadata.file_type,
-                created_at=_now(),
-            ))
-            new_connections += 1
+            ):
+                new_connections += 1
 
         db.add(SshConfigPattern(
             id=_uuid(),
@@ -552,6 +566,8 @@ def process_single_file(
             source_host_id=host_id,
             pattern=pattern_str,
             username=pat_data.username,
+            origin=rule_origin,
+            direction=rule_direction,
             created_at=_now(),
         ))
 
@@ -569,6 +585,19 @@ def process_single_file(
             raw_line=sr.raw_line,
         ))
         new_sudo_rules += 1
+
+    # ── 6. Standing rules vs hosts this upload just discovered ───────────
+    # Hosts auto-created by resolve_ip were previously never checked against stored
+    # standing rules — apply_patterns_to_host was only wired to the manual create-host
+    # and add-IP routes. Since uploads are how hosts usually appear, a CIDR/glob rule
+    # ingested earlier would never reach them (Architecture Rule #28). Flush first so
+    # rules and hosts added above are visible to the queries below.
+    if created_in_this_file:
+        db.flush()
+        for new_host_id in created_in_this_file:
+            new_host = db.get(Host, new_host_id)
+            if new_host is not None:
+                new_connections += apply_patterns_to_host(db, new_host)
 
     return {
         "ok": True,
