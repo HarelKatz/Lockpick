@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "public_key",
+      "key_options": "no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo 'Please login as the user \\\"ec2-user\\\" rather than the user \\\"root\\\".';echo;sleep 10\"",
       "name": "authorized_key from cado_aws_eks_root_with_attacker_kali",
       "relationship_type": "authorized_key",
       "username": null,
@@ -11,6 +12,7 @@
     },
     {
       "cred_type": "public_key",
+      "key_options": null,
       "name": "authorized_key from cado_aws_eks_root_with_attacker_kali",
       "relationship_type": "authorized_key",
       "username": null,

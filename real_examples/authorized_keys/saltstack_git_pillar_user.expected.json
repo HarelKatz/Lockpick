@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "public_key",
+      "key_options": null,
       "name": "authorized_key from saltstack_git_pillar_user",
       "relationship_type": "authorized_key",
       "username": null,
@@ -11,6 +12,7 @@
     },
     {
       "cred_type": "public_key",
+      "key_options": null,
       "name": "authorized_key from saltstack_git_pillar_user",
       "relationship_type": "authorized_key",
       "username": null,

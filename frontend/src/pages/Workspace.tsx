@@ -219,6 +219,9 @@ function CredentialRow({ id, cred, links, hosts, highlighted, onEdit, onDelete, 
                 <span className={styles.linkRelBadge}>{link.relationship_type.replace(/_/g, ' ')}</span>
                 <span className={styles.linkHost}>{host?.nickname ?? link.host_id}</span>
                 {link.username && <span className={styles.linkUser}>@{link.username}</span>}
+                {link.key_options && (
+                  <span className={styles.linkOptions} title={link.key_options}>{link.key_options}</span>
+                )}
                 <div className={styles.rowActions}>
                   <button className={styles.iconBtnSm} onClick={() => onEditLink(link)} title="Edit link" aria-label="Edit link">✎</button>
                   <button className={`${styles.iconBtnSm} ${styles.iconBtnDanger}`} onClick={() => onDeleteLink(link)} title="Remove link" aria-label="Remove link">✕</button>

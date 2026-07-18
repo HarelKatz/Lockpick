@@ -439,9 +439,16 @@ def process_single_file(
                 host_user_id=hu.id if hu else None,
                 relationship_type=cred_data.relationship_type,
                 file_source=safe_name,
+                key_options=cred_data.key_options,
             )
             db.add(link)
             new_links += 1
+        elif existing_link.key_options is None and cred_data.key_options:
+            # Backfill only. The dedup key (credential_id, host_id, relationship_type,
+            # username) excludes key_options, so without this a re-upload — and every
+            # link created before options were parsed — would keep key_options NULL
+            # forever. Never overwrite a recorded value; not a new link, so no counter.
+            existing_link.key_options = cred_data.key_options
 
     # ── 3. ConnectionRecords ─────────────────────────────────────────────
     new_connections = 0

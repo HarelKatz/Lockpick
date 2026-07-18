@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "gcp:client_secret:123",
       "relationship_type": "found_on_disk",
       "username": null,
@@ -11,6 +12,7 @@
     },
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "gcp:refresh_token:123",
       "relationship_type": "found_on_disk",
       "username": null,

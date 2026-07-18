@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "env:DATABASE_URL",
       "relationship_type": "found_on_disk",
       "username": null,
@@ -11,6 +12,7 @@
     },
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "env:NEXTAUTH_SECRET",
       "relationship_type": "found_on_disk",
       "username": null,

@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "kubeconfig:blue-user:token",
       "relationship_type": "found_on_disk",
       "username": "blue-user",

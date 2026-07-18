@@ -129,6 +129,9 @@ export interface CredentialLink {
   host_user_id: string | null
   relationship_type: 'found_on_disk' | 'authorized_key' | 'accepted_password' | 'used_in_connection'
   file_source: string | null
+  /** Verbatim authorized_keys option prefix for this grant. Parser-set, read-only —
+   *  deliberately absent from the Create/Update request types. */
+  key_options: string | null
 }
 
 export type AuthMethod = 'publickey' | 'password' | 'keyboard-interactive' | 'hostbased' | 'unknown'

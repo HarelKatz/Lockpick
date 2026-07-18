@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "gcp:client_secret:764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.apps.googleusercontent.com",
       "relationship_type": "found_on_disk",
       "username": null,
@@ -11,6 +12,7 @@
     },
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "gcp:refresh_token:764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.apps.googleusercontent.com",
       "relationship_type": "found_on_disk",
       "username": null,

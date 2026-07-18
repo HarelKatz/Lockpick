@@ -515,6 +515,22 @@
   font-family: var(--font-mono);
 }
 
+/* Verbatim authorized_keys option prefix — can be long, so clamp and expose the
+   full value via the title attribute rather than wrapping the row. */
+.linkOptions {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  background: var(--bg-surface-2);
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+}
+
 .addLinkBtn {
   align-self: flex-start;
   background: transparent;

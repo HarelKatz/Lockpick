@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "public_key",
+      "key_options": "cert-authority",
       "name": "authorized_key from authorized_keys",
       "relationship_type": "authorized_key",
       "username": null,

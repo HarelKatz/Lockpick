@@ -150,6 +150,11 @@ class CredentialLink(Base):
         nullable=False,
     )
     file_source = Column(String(512), nullable=True)
+    # Verbatim authorized_keys option prefix for this grant (from=/command=/restrict/…).
+    # Grant-scoped, not key-scoped: the same key may be restricted on one host and
+    # unrestricted on another. NULL means "no options recorded" — the upload pipeline
+    # keys on NULL to backfill links created before the options were parsed.
+    key_options = Column(Text, nullable=True)
 
     credential = relationship("Credential", back_populates="links")
     host = relationship("Host", back_populates="credential_links")

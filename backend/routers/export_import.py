@@ -190,6 +190,7 @@ def import_op(body: ImportRequest, db: Session = Depends(get_db)):
             host_user_id=remap(link.host_user_id),
             relationship_type=link.relationship_type,
             file_source=link.file_source,
+            key_options=link.key_options,  # scalar — never remap(), that's for IDs
         ))
 
     # 5. Connections

@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "netrc:api.github.com:technoweenie",
       "relationship_type": "found_on_disk",
       "username": "technoweenie",
@@ -11,6 +12,7 @@
     },
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "netrc:github.com:technoweenie",
       "relationship_type": "found_on_disk",
       "username": "technoweenie",

@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "pgpass:host2:db2",
       "relationship_type": "found_on_disk",
       "username": "user2",
@@ -11,6 +12,7 @@
     },
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "pgpass:host:db",
       "relationship_type": "found_on_disk",
       "username": "user",

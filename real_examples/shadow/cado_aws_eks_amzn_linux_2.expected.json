@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "shadow hash for root",
       "relationship_type": "found_on_disk",
       "username": "root",

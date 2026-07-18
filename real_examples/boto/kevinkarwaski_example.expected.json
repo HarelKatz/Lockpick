@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "boto:Boto:proxy_pass",
       "relationship_type": "found_on_disk",
       "username": "foo",
@@ -11,6 +12,7 @@
     },
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "boto:Credentials:aws_access_key_id",
       "relationship_type": "found_on_disk",
       "username": null,
@@ -19,6 +21,7 @@
     },
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "boto:Credentials:aws_secret_access_key",
       "relationship_type": "found_on_disk",
       "username": null,

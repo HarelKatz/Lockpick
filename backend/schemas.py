@@ -267,6 +267,9 @@ class CredentialLinkRead(BaseModel):
     host_user_id: Optional[str]
     relationship_type: str
     file_source: Optional[str]
+    # Parser-set, never client-supplied — deliberately absent from Create/Update so a
+    # PATCH can't overwrite recorded grant evidence (cf. ConnectionRecord.parser_file_type).
+    key_options: Optional[str]
 
 
 # ─── ConnectionRecord ─────────────────────────────────────────────────────────
@@ -477,6 +480,9 @@ class ExportCredentialLink(BaseModel):
     host_user_id: Optional[str]
     relationship_type: str
     file_source: Optional[str]
+    # `= None` is load-bearing: a bare Optional[str] is *required* in Pydantic v2, so
+    # exports written before this field existed would fail validation on import.
+    key_options: Optional[str] = None
 
 
 class ExportConnection(BaseModel):

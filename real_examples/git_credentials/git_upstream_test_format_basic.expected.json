@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "git:example.com",
       "relationship_type": "found_on_disk",
       "username": "home-user",
@@ -11,6 +12,7 @@
     },
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "git:example.com",
       "relationship_type": "found_on_disk",
       "username": "xdg-user",

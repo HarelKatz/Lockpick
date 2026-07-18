@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "rclone:SAMPLE:token",
       "relationship_type": "found_on_disk",
       "username": null,

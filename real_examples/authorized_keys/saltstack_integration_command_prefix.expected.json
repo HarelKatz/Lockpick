@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "public_key",
+      "key_options": "command=\"/usr/local/lib/ssh-helper\"",
       "name": "authorized_key from saltstack_integration_command_prefix",
       "relationship_type": "authorized_key",
       "username": null,

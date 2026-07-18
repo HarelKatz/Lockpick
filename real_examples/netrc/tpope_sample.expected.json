@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "netrc:api.github.com:somebody",
       "relationship_type": "found_on_disk",
       "username": "somebody",
@@ -11,6 +12,7 @@
     },
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "netrc:api.heroku.com:my@email.com",
       "relationship_type": "found_on_disk",
       "username": "my@email.com",
@@ -19,6 +21,7 @@
     },
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "netrc:default:anonymous",
       "relationship_type": "found_on_disk",
       "username": "anonymous",
@@ -27,6 +30,7 @@
     },
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "netrc:ftp.server:abc",
       "relationship_type": "found_on_disk",
       "username": "abc",

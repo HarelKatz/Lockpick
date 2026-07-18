@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "public_key",
+      "key_options": null,
       "name": "authorized_key from outlaw_attacker_dropped",
       "relationship_type": "authorized_key",
       "username": null,

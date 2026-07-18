@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "mysql:client.cleartextPlugin",
       "relationship_type": "found_on_disk",
       "username": "test",
@@ -11,6 +12,7 @@
     },
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "mysql:client.server1",
       "relationship_type": "found_on_disk",
       "username": "test",
@@ -19,6 +21,7 @@
     },
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "mysql:server2",
       "relationship_type": "found_on_disk",
       "username": "root",

@@ -93,6 +93,7 @@ def _serialize_credential(c) -> dict:
         "name": c.name,
         "username": c.username,
         "relationship_type": c.relationship_type,
+        "key_options": c.key_options,
         "value_length": len(value),
         "value_prefix": value[:_VALUE_PREFIX_LEN],
     }
@@ -152,6 +153,9 @@ def snapshot_from_result(result: ParseResult) -> dict:
             d["username"] or "",
             d["relationship_type"],
             d["value_prefix"],
+            # `value` excludes the option prefix, so same-key/different-options lines
+            # are otherwise indistinguishable to the sort — needed for a total order.
+            d["key_options"] or "",
         ),
     )
     connections = sorted(

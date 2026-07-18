@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "password",
+      "key_options": null,
       "name": "kubeconfig:user3:password",
       "relationship_type": "found_on_disk",
       "username": "foo",

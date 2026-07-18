@@ -3,6 +3,7 @@
   "credentials_found": [
     {
       "cred_type": "private_key",
+      "key_options": null,
       "name": "kubeconfig:docker-desktop:client_key",
       "relationship_type": "found_on_disk",
       "username": "docker-desktop",
@@ -11,6 +12,7 @@
     },
     {
       "cred_type": "private_key",
+      "key_options": null,
       "name": "kubeconfig:minikube:client_key",
       "relationship_type": "found_on_disk",
       "username": "minikube",
