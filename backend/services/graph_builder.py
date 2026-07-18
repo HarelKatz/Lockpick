@@ -25,6 +25,11 @@ _CONFIDENCE_RANK = {"confirmed": 2, "observed": 1, "indicator": 0}
 _INDICATOR_PARSER_TYPES = frozenset({
     "bash_history", "known_hosts",
     "arp", "ip_neigh", "iptables", "nftables",
+    # A from= ACL is a config assertion, not an observed connection. Listing it here
+    # is load-bearing: this check runs FIRST in _classify_connection_evidence, so it
+    # short-circuits the confirmed branch that from_dst_logs + credential_id would
+    # otherwise satisfy (Architecture Rule #27).
+    "authorized_keys",
 })
 
 # Legacy: pre-`parser_file_type` substring fallback for rows persisted before

@@ -12,6 +12,7 @@ const ALL_EVIDENCE_TYPES: EvidenceType[] = [
   'ip_neigh',
   'iptables',
   'nftables',
+  'authorized_keys',
 ]
 
 describe('EVIDENCE_LABELS', () => {

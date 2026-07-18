@@ -148,3 +148,28 @@ def test_import_tolerates_exports_written_before_key_options_existed(client):
     links = _links(client, resp.json()["op_id"])
     assert len(links) == 1
     assert links[0]["key_options"] is None
+
+
+# ─── from= ACL edges end-to-end (Architecture Rule #27) ───────────────────────
+
+def test_from_acl_creates_an_indicator_edge_through_the_real_api(client):
+    """A from= ACL naming a known host must surface as an indicator edge into it."""
+    op_id = _create_op(client)
+    dst_id = _create_host(client, op_id, "target")
+    src_id = _create_host(client, op_id, "bastion")
+    # Give the source host an IP so resolve_ip binds the ACL entry to it.
+    r = client.post(f"/api/hosts/{src_id}/ips", json={"ip_address": "10.0.0.5"})
+    assert r.status_code == 201, r.text
+
+    _upload_authorized_keys(client, op_id, dst_id, f'from="10.0.0.5" {_KEY}\n'.encode())
+
+    graph = client.get(f"/api/ops/{op_id}/graph")
+    assert graph.status_code == 200
+    edges = [
+        e for e in graph.json()["edges"]
+        if e["src_host_id"] == src_id and e["dst_host_id"] == dst_id
+    ]
+    assert len(edges) == 1, f"expected one ACL edge bastion→target, got {edges}"
+    edge = edges[0]
+    assert edge["confidence"] == "indicator"
+    assert any(ev["type"] == "authorized_keys" for ev in edge["evidence"])

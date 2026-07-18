@@ -115,9 +115,61 @@ def test_escaped_quotes_and_separators_inside_option_value(metadata):
 
 
 def test_from_acl_is_captured_verbatim(metadata):
-    """from= rides along in key_options; turning it into edges is a later phase."""
     content = b'from="10.0.0.5,!jump.corp.net" ssh-ed25519 AAAAC3NzaC1lZDI1 ops@bastion\n'
     result = AuthorizedKeysParser().parse(content, metadata)
     cred = result.credentials_found[0]
     assert cred.value == "ssh-ed25519 AAAAC3NzaC1lZDI1 ops@bastion"
     assert cred.key_options == 'from="10.0.0.5,!jump.corp.net"'
+
+
+# ─── from= ACL → inbound edges ────────────────────────────────────────────────
+
+def test_from_literal_emits_inbound_edge(metadata):
+    """The ACL is the destination asserting who may come IN, so dst is the upload host."""
+    content = b'from="10.0.0.5" ssh-rsa AAAAB3NzABC... ops@bastion\n'
+    result = AuthorizedKeysParser().parse(content, metadata)
+    assert len(result.connections_found) == 1
+    conn = result.connections_found[0]
+    assert conn.src_ip == "10.0.0.5"
+    assert conn.dst_ip == "__upload_host__"
+    assert conn.direction_context == "from_dst_logs"
+    assert conn.dst_user == "alice"
+    assert conn.auth_method == "publickey"
+    assert result.stats["from_acl_edges"] == 1
+
+
+def test_from_multiple_literals_emit_one_edge_each(metadata):
+    content = b'from="10.0.0.5,10.0.0.6,bastion.corp.net" ssh-rsa AAAAB3NzABC... k\n'
+    result = AuthorizedKeysParser().parse(content, metadata)
+    assert {c.src_ip for c in result.connections_found} == {
+        "10.0.0.5", "10.0.0.6", "bastion.corp.net",
+    }
+
+
+def test_non_literal_from_entries_emit_no_edge_yet(metadata):
+    """Globs, negations and CIDRs match a SET — they are standing rules, not edges."""
+    content = b'from="*.corp.net,!jump.corp.net,10.0.0.0/24" ssh-rsa AAAAB3NzABC... k\n'
+    result = AuthorizedKeysParser().parse(content, metadata)
+    assert result.connections_found == []
+    # …but the ACL itself is never lost.
+    assert result.credentials_found[0].key_options.startswith('from="')
+
+
+def test_mixed_from_list_emits_only_the_literals(metadata):
+    content = b'from="10.0.0.5,*.corp.net,!jump" ssh-rsa AAAAB3NzABC... k\n'
+    result = AuthorizedKeysParser().parse(content, metadata)
+    assert [c.src_ip for c in result.connections_found] == ["10.0.0.5"]
+
+
+def test_from_inside_a_quoted_command_is_not_treated_as_an_acl(metadata):
+    """A literal 'from=' inside a command= value must not be mistaken for the option."""
+    content = b'command="echo from=\\"10.9.9.9\\"" ssh-rsa AAAAB3NzABC... k\n'
+    result = AuthorizedKeysParser().parse(content, metadata)
+    assert result.connections_found == []
+
+
+def test_options_without_from_emit_no_edges(metadata):
+    content = b"no-pty,no-port-forwarding ssh-rsa AAAAB3NzABC... k\n"
+    result = AuthorizedKeysParser().parse(content, metadata)
+    assert result.connections_found == []
+    assert result.stats["from_acl_edges"] == 0

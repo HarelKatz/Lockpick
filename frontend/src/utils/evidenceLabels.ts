@@ -20,4 +20,5 @@ export const EVIDENCE_LABELS: Record<EvidenceType, string> = {
   ip_neigh: 'IP Neighbor',
   iptables: 'iptables',
   nftables: 'nftables',
+  authorized_keys: 'Authorized Key ACL',
 }

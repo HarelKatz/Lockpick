@@ -1,7 +1,13 @@
 """Parser for .ssh/authorized_keys files."""
 from __future__ import annotations
 
-from parsers import BaseParser, CredentialData, ParseResult, UploadMetadata
+from parsers import (
+    BaseParser,
+    ConnectionData,
+    CredentialData,
+    ParseResult,
+    UploadMetadata,
+)
 
 # Key types we recognise as the start of the key material. A line whose first
 # top-level token is not one of these is treated as having an options prefix.
@@ -43,6 +49,54 @@ def _split_options_and_key(line: str) -> tuple[str | None, str]:
     return head, rest.lstrip()
 
 
+def _split_outside_quotes(s: str, sep: str) -> list[str]:
+    """Split on `sep`, ignoring separators inside double quotes."""
+    out: list[str] = []
+    buf: list[str] = []
+    in_quote = False
+    i = 0
+    while i < len(s):
+        c = s[i]
+        if c == "\\" and in_quote and i + 1 < len(s):
+            buf.append(s[i:i + 2])
+            i += 2
+            continue
+        if c == '"':
+            in_quote = not in_quote
+            buf.append(c)
+        elif c == sep and not in_quote:
+            out.append("".join(buf))
+            buf = []
+        else:
+            buf.append(c)
+        i += 1
+    out.append("".join(buf))
+    return out
+
+
+def _from_acl_entries(options: str) -> list[str]:
+    """Return the comma-separated entries of a `from="…"` option, or []."""
+    for opt in _split_outside_quotes(options, ","):
+        opt = opt.strip()
+        if not opt.lower().startswith("from="):
+            continue
+        value = opt[len("from="):].strip()
+        if len(value) >= 2 and value.startswith('"') and value.endswith('"'):
+            value = value[1:-1]
+        value = value.replace('\\"', '"')
+        return [e.strip() for e in value.split(",") if e.strip()]
+    return []
+
+
+def _is_literal_acl_entry(entry: str) -> bool:
+    """True for a single concrete host — not a negation, glob, or CIDR.
+
+    Negations (`!host`) are exclusions, globs and CIDRs match a set rather than one
+    host; all three are standing rules resolved elsewhere, not one-shot edges.
+    """
+    return not (entry.startswith("!") or "*" in entry or "?" in entry or "/" in entry)
+
+
 class AuthorizedKeysParser(BaseParser):
     """Parses .ssh/authorized_keys — one public key per line."""
 
@@ -58,6 +112,7 @@ class AuthorizedKeysParser(BaseParser):
             return result
 
         keys_found = 0
+        acl_edges = 0
         for lineno, raw_line in enumerate(text.splitlines(), 1):
             line = raw_line.strip()
             if not line or line.startswith("#"):
@@ -85,9 +140,30 @@ class AuthorizedKeysParser(BaseParser):
             result.credentials_found.append(cred)
             keys_found += 1
 
+            # A `from=` ACL is the destination host asserting which sources may use
+            # this key — an inbound grant, so the upload host is the destination.
+            # Only concrete single hosts become edges here; globs/CIDRs are standing
+            # rules handled separately. Confidence is pinned to indicator by
+            # parser_file_type (Architecture Rule #27), never `confirmed`.
+            for entry in _from_acl_entries(options or ""):
+                if not _is_literal_acl_entry(entry):
+                    continue
+                result.connections_found.append(
+                    ConnectionData(
+                        src_ip=entry,
+                        dst_ip="__upload_host__",
+                        connection_type="ssh",
+                        direction_context="from_dst_logs",
+                        dst_user=username,
+                        auth_method="publickey",
+                        raw_line=line[:512],
+                    )
+                )
+                acl_edges += 1
+
         if username:
             # Record that this user account exists on the host
             result.host_users_found.append((username, None, None))
 
-        result.stats = {"keys_parsed": keys_found}
+        result.stats = {"keys_parsed": keys_found, "from_acl_edges": acl_edges}
         return result

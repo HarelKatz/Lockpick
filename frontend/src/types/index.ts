@@ -273,6 +273,7 @@ export type EvidenceType =
   | 'ip_neigh'
   | 'iptables'
   | 'nftables'
+  | 'authorized_keys'
 
 export interface EvidenceItem {
   type: EvidenceType

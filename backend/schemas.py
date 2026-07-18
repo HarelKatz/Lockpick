@@ -345,6 +345,7 @@ class EvidenceItem(BaseModel):
         "key_match", "connection_log",
         "bash_history", "known_hosts",
         "arp", "ip_neigh", "iptables", "nftables",
+        "authorized_keys",
     ]
     detail: str
     credential_id: Optional[str] = None

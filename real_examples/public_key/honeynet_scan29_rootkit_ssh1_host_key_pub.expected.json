@@ -5,6 +5,7 @@
   "hosts_found": [],
   "patterns_found": [],
   "stats": {
+    "from_acl_edges": 0,
     "keys_parsed": 0
   },
   "sudo_rules_found": [],
