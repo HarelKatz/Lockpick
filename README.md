@@ -13,7 +13,7 @@ It is designed to run as a shared server in a trusted network. Every operator re
 ## Features
 
 - **One-click evidence collection** — generate a sudo-free bash collector (`GET /api/ops/{op_id}/collection-script`), run it on a host, and upload the resulting tarball (`POST /api/.../import-archive`) for bulk ingest
-- **44 parsers across 49 evidence file types** — SSH artifacts, system files (`passwd`/`shadow`/`sshd_config`/…), command output (`netstat`/`ss`/`iptables`/…), and credential files (cloud, database, and app secrets)
+- **44 parsers across 50 evidence file types** — SSH artifacts, system files (`passwd`/`shadow`/`sshd_config`/…), command output (`netstat`/`ss`/`iptables`/…), and credential files (cloud, database, and app secrets)
 - **Key-fingerprint pivot detection** — correlates private keys, `authorized_keys`, and connection logs into confirmed pivots
 - **BFS pivot path-finding** — shortest credential-backed path between two hosts (`POST /api/ops/{op_id}/graph/paths`)
 - **Host merge** — collapse duplicate or placeholder hosts, manually or automatically
