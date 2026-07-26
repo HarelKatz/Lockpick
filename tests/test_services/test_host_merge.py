@@ -339,3 +339,35 @@ def test_no_resolutions_keeps_target_values(db_session):
     assert refreshed.nickname == "t"
     assert refreshed.comment == "tgt"
     assert refreshed.status == "compromised"
+
+
+# ─── OS / kernel inventory metadata ───────────────────────────────────────────
+
+def test_merge_fills_empty_target_os_from_source(db_session):
+    """A placeholder target with no OS data inherits the source's — otherwise the
+    only record of what the box runs is deleted with the source row."""
+    op = _op(db_session)
+    src = _host(db_session, op.id, "s")
+    src.os_version = "Ubuntu 22.04.3 LTS"
+    src.kernel_version = "5.15.0-88-generic"
+    tgt = _host(db_session, op.id, "t")
+    db_session.flush()
+
+    merge_hosts(db_session, op.id, src.id, tgt.id)
+
+    refreshed = db_session.query(Host).filter(Host.id == tgt.id).one()
+    assert refreshed.os_version == "Ubuntu 22.04.3 LTS"
+    assert refreshed.kernel_version == "5.15.0-88-generic"
+
+
+def test_merge_never_overwrites_target_os(db_session):
+    op = _op(db_session)
+    src = _host(db_session, op.id, "s")
+    src.os_version = "Debian GNU/Linux 12 (bookworm)"
+    tgt = _host(db_session, op.id, "t")
+    tgt.os_version = "Ubuntu 22.04.3 LTS"
+    db_session.flush()
+
+    merge_hosts(db_session, op.id, src.id, tgt.id)
+
+    assert db_session.query(Host).filter(Host.id == tgt.id).one().os_version == "Ubuntu 22.04.3 LTS"

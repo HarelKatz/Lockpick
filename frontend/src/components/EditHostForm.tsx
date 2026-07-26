@@ -43,6 +43,8 @@ export default function EditHostForm({ host, opId, onSaved, onClose }: Props) {
   const [nickname, setNickname] = useState(host?.nickname ?? '')
   const [comment, setComment] = useState(host?.comment ?? '')
   const [formStatus, setFormStatus] = useState(host?.status ?? '')
+  const [osVersion, setOsVersion] = useState(host?.os_version ?? '')
+  const [kernelVersion, setKernelVersion] = useState(host?.kernel_version ?? '')
   const [ips, setIps] = useState<HostIP[]>(host?.ips ?? [])
   const [pendingIps, setPendingIps] = useState<{ ip_address: string; addr_type: AddrType }[]>([])
   const [users, setUsers] = useState<HostUser[]>(host?.users ?? [])
@@ -151,6 +153,8 @@ export default function EditHostForm({ host, opId, onSaved, onClose }: Props) {
         const newHost = await createHost(opId!, {
           nickname: nickname.trim(),
           comment: comment.trim() || null,
+          os_version: osVersion.trim() || null,
+          kernel_version: kernelVersion.trim() || null,
         })
         // Add any buffered IPs
         const addedIps: HostIP[] = []
@@ -166,6 +170,8 @@ export default function EditHostForm({ host, opId, onSaved, onClose }: Props) {
           nickname: nickname.trim(),
           comment: comment.trim() || null,
           status: formStatus || null,
+          os_version: osVersion.trim() || null,
+          kernel_version: kernelVersion.trim() || null,
         })
         onSaved({ ...updated, ips, users })
       }
@@ -216,6 +222,28 @@ export default function EditHostForm({ host, opId, onSaved, onClose }: Props) {
             </option>
           ))}
         </select>
+      </div>
+
+      <div className={styles.field}>
+        <label>OS Version</label>
+        <input
+          type="text"
+          value={osVersion}
+          onChange={e => setOsVersion(e.target.value)}
+          placeholder="e.g. Ubuntu 22.04.3 LTS"
+          disabled={loading}
+        />
+      </div>
+
+      <div className={styles.field}>
+        <label>Kernel Version</label>
+        <input
+          type="text"
+          value={kernelVersion}
+          onChange={e => setKernelVersion(e.target.value)}
+          placeholder="e.g. 5.15.0-88-generic"
+          disabled={loading}
+        />
       </div>
 
       <div className={styles.field}>

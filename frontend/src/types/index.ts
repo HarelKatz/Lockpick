@@ -106,6 +106,9 @@ export interface Host {
   nickname: string
   comment: string | null
   status: HostStatus | null
+  /** Inventory context only — not consulted by pivot/confidence logic. */
+  os_version: string | null
+  kernel_version: string | null
   created_at: string
   ips: HostIP[]
   users: HostUser[]
@@ -172,6 +175,8 @@ export interface UpdateHostRequest {
   nickname?: string
   comment?: string | null
   status?: string | null
+  os_version?: string | null
+  kernel_version?: string | null
 }
 
 export interface UpdateCredentialRequest {
@@ -213,6 +218,8 @@ export interface CreateOperationRequest {
 export interface CreateHostRequest {
   nickname: string
   comment?: string | null
+  os_version?: string | null
+  kernel_version?: string | null
 }
 
 export interface CreateHostIPRequest {

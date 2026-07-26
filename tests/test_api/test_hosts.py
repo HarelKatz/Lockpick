@@ -300,3 +300,58 @@ def test_add_host_ip_ignores_client_supplied_addr_type(client, host):
     )
     assert resp.status_code == 201
     assert resp.json()["addr_type"] == "ipv6"
+
+
+# ─── OS / kernel inventory metadata ───────────────────────────────────────────
+
+def test_create_host_os_and_kernel_default_to_none(client, op):
+    resp = client.post(f"/api/ops/{op['id']}/hosts", json={"nickname": "bare01"})
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["os_version"] is None
+    assert data["kernel_version"] is None
+
+
+def test_create_host_with_os_and_kernel(client, op):
+    resp = client.post(f"/api/ops/{op['id']}/hosts", json={
+        "nickname": "web01",
+        "os_version": "Ubuntu 22.04.3 LTS",
+        "kernel_version": "5.15.0-88-generic",
+    })
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["os_version"] == "Ubuntu 22.04.3 LTS"
+    assert data["kernel_version"] == "5.15.0-88-generic"
+
+
+def test_update_host_os_and_kernel(client, op):
+    host_id = client.post(f"/api/ops/{op['id']}/hosts", json={"nickname": "web01"}).json()["id"]
+    resp = client.patch(f"/api/hosts/{host_id}", json={
+        "os_version": "Debian GNU/Linux 12 (bookworm)",
+        "kernel_version": "6.1.0-13-amd64",
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["os_version"] == "Debian GNU/Linux 12 (bookworm)"
+    assert data["kernel_version"] == "6.1.0-13-amd64"
+
+
+def test_update_host_omitting_os_leaves_it_intact(client, op):
+    host_id = client.post(f"/api/ops/{op['id']}/hosts", json={
+        "nickname": "web01", "os_version": "Ubuntu 22.04", "kernel_version": "5.15.0",
+    }).json()["id"]
+    resp = client.patch(f"/api/hosts/{host_id}", json={"comment": "renamed only"})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["os_version"] == "Ubuntu 22.04"
+    assert data["kernel_version"] == "5.15.0"
+
+
+@pytest.mark.parametrize("field", ["os_version", "kernel_version"])
+def test_update_host_can_clear_inventory_field_with_null(client, op, field):
+    host_id = client.post(
+        f"/api/ops/{op['id']}/hosts", json={"nickname": "web01", field: "something"}
+    ).json()["id"]
+    resp = client.patch(f"/api/hosts/{host_id}", json={field: None})
+    assert resp.status_code == 200
+    assert resp.json()[field] is None

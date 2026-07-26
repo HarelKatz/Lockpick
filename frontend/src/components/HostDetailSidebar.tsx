@@ -232,6 +232,25 @@ export default function HostDetailSidebar({ node, edges, host, onClose, onHostUp
                 </div>
               </div>
             )}
+            {host && (host.os_version || host.kernel_version) && (
+              <div className={styles.section} data-testid="host-system">
+                <div className={styles.sectionLabel}>System</div>
+                <div className={styles.addrList}>
+                  {host.os_version && (
+                    <div className={styles.addrRow}>
+                      <span className={`${styles.chip} ${styles.sysValue}`}>{host.os_version}</span>
+                      <span className={styles.addrTypeBadge}>OS</span>
+                    </div>
+                  )}
+                  {host.kernel_version && (
+                    <div className={styles.addrRow}>
+                      <span className={`${styles.chip} ${styles.sysValue}`}>{host.kernel_version}</span>
+                      <span className={styles.addrTypeBadge}>kernel</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             {host && host.ips.length > 0 ? (
               <div className={styles.section}>
                 <div className={styles.sectionLabel}>IPs / Hostnames</div>

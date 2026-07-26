@@ -208,6 +208,13 @@ def merge_hosts(
         target.status = source.status
     # "target" or missing → leave target's status untouched.
 
+    # OS/kernel are factual inventory, not an operator judgement call, so they
+    # get no resolution token: fill the target only where it has nothing, never
+    # overwrite. Without this the source row's only copy dies with the merge.
+    for field in ("os_version", "kernel_version"):
+        if not getattr(target, field) and getattr(source, field):
+            setattr(target, field, getattr(source, field))
+
     # ── 9. Delete source ─────────────────────────────────────────────────────────
     db.delete(source)
     db.flush()

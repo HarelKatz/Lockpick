@@ -144,6 +144,8 @@ def import_op(body: ImportRequest, db: Session = Depends(get_db)):
             nickname=h.nickname,
             comment=h.comment,
             status=h.status,
+            os_version=h.os_version,
+            kernel_version=h.kernel_version,
             created_at=h.created_at,
         )
         db.add(host)

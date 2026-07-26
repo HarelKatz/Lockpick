@@ -42,7 +42,13 @@ def _host_q(db: Session):
 @router.post("/ops/{op_id}/hosts", response_model=HostRead, status_code=201)
 def create_host(op_id: str, body: HostCreate, db: Session = Depends(get_db)):
     get_op_or_404(op_id, db)
-    host = Host(op_id=op_id, nickname=body.nickname, comment=body.comment)
+    host = Host(
+        op_id=op_id,
+        nickname=body.nickname,
+        comment=body.comment,
+        os_version=body.os_version,
+        kernel_version=body.kernel_version,
+    )
     db.add(host)
     db.flush()
     host_id = host.id
@@ -81,6 +87,9 @@ def update_host(host_id: str, body: HostUpdate, db: Session = Depends(get_db)):
         host.comment = body.comment
     if "status" in body.model_fields_set:
         host.status = body.status  # None clears it; a valid string sets it
+    for field in ("os_version", "kernel_version"):
+        if field in body.model_fields_set:
+            setattr(host, field, getattr(body, field))  # None clears it
     op_id = host.op_id
     log_activity(db, op_id, "host.update", "host", entity_id=host_id, detail=f"Updated host '{host.nickname}'")
     db.commit()

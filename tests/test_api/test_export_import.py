@@ -434,3 +434,35 @@ def test_export_import_preserves_pattern_connection_records(client, op):
         "Connection records from patterns ARE exported (connections table is included); "
         "but SshConfigPattern table itself is not — new hosts added after import won't match"
     )
+
+
+def test_roundtrip_host_os_and_kernel_preserved(client, op):
+    """Host.os_version / kernel_version must survive export → import unchanged."""
+    client.post(f"/api/ops/{op['id']}/hosts", json={
+        "nickname": "web01",
+        "os_version": "Ubuntu 22.04.3 LTS",
+        "kernel_version": "5.15.0-88-generic",
+    })
+
+    export_data = client.get(f"/api/ops/{op['id']}/export").json()
+    import_resp = client.post("/api/ops/import", json={"data": export_data})
+    assert import_resp.status_code == 201
+
+    hosts = client.get(f"/api/ops/{import_resp.json()['op_id']}/hosts").json()
+    assert len(hosts) == 1
+    assert hosts[0]["os_version"] == "Ubuntu 22.04.3 LTS"
+    assert hosts[0]["kernel_version"] == "5.15.0-88-generic"
+
+
+def test_import_old_export_without_host_os_and_kernel(client, op):
+    """Importing a pre-inventory-fields export must succeed (backwards compat)."""
+    client.post(f"/api/ops/{op['id']}/hosts", json={"nickname": "legacy01"})
+    export_data = client.get(f"/api/ops/{op['id']}/export").json()
+    for host in export_data["hosts"]:
+        host.pop("os_version", None)
+        host.pop("kernel_version", None)
+
+    resp = client.post("/api/ops/import", json={"data": export_data})
+    assert resp.status_code == 201
+    hosts = client.get(f"/api/ops/{resp.json()['op_id']}/hosts").json()
+    assert hosts[0]["os_version"] is None

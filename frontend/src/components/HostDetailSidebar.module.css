@@ -193,6 +193,13 @@
   gap: 6px;
 }
 
+/* OS / kernel values are free text (a pasted `uname -a` can be one long unbroken
+   run), so wrap inside the chip rather than pushing the sidebar sideways. */
+.sysValue {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .addrTypeBadge {
   color: var(--text-muted);
   font-size: 10px;

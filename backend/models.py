@@ -52,6 +52,9 @@ class Host(Base):
         ),
         nullable=True,
     )
+    # Inventory context only — never consulted by pivot/confidence logic.
+    os_version = Column(String(255), nullable=True)      # e.g. "Ubuntu 22.04.3 LTS"
+    kernel_version = Column(String(255), nullable=True)  # e.g. "5.15.0-88-generic"
     created_at = Column(TZDateTime, nullable=False, default=_now)
 
     operation = relationship("Operation", back_populates="hosts")

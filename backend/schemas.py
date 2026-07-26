@@ -147,6 +147,8 @@ class HostNoteRead(BaseModel):
 class HostCreate(BaseModel):
     nickname: str
     comment: Optional[str] = None
+    os_version: Optional[str] = None
+    kernel_version: Optional[str] = None
 
 
 _HOST_STATUS = Literal[
@@ -158,6 +160,8 @@ class HostUpdate(BaseModel):
     nickname: Optional[str] = None
     comment: Optional[str] = None
     status: Optional[_HOST_STATUS] = None
+    os_version: Optional[str] = None
+    kernel_version: Optional[str] = None
 
 
 class HostRead(BaseModel):
@@ -168,6 +172,8 @@ class HostRead(BaseModel):
     nickname: str
     comment: Optional[str]
     status: Optional[_HOST_STATUS] = None
+    os_version: Optional[str] = None
+    kernel_version: Optional[str] = None
     created_at: datetime
     ips: list[HostIPRead] = []
     users: list[HostUserRead] = []
@@ -461,6 +467,9 @@ class ExportHost(BaseModel):
     nickname: str
     comment: Optional[str]
     status: Optional[str] = None
+    # Defaulted so a pre-inventory-fields export still validates on import
+    os_version: Optional[str] = None
+    kernel_version: Optional[str] = None
     created_at: datetime
     ips: list[ExportHostIP]
     users: list[ExportHostUser]
