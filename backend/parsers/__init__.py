@@ -70,6 +70,21 @@ class SudoRuleData:
 
 
 @dataclass
+class SystemInfoData:
+    """Inventory facts about the host the file was collected FROM.
+
+    Unlike every other ParseResult payload this describes `metadata.host_id`
+    itself, not a host discovered inside the file — so it can never create a
+    host record. Fields left None mean "this artifact doesn't know": `uname`
+    knows the kernel but not the distro, `/etc/os-release` the reverse, and the
+    pipeline only fills blanks (Architecture Rule #29), so the two compose
+    without either clobbering the other or an operator's manual edit.
+    """
+    os_version: Optional[str] = None
+    kernel_version: Optional[str] = None
+
+
+@dataclass
 class ParseResult:
     """Aggregate output from a parser."""
     hosts_found: list[HostData] = field(default_factory=list)
@@ -79,6 +94,8 @@ class ParseResult:
     host_users_found: list[tuple[str, Optional[str], Optional[str]]] = field(default_factory=list)
     patterns_found: list[SshConfigPatternData] = field(default_factory=list)
     sudo_rules_found: list[SudoRuleData] = field(default_factory=list)
+    # Inventory facts about the source host (metadata.host_id), not a discovered one
+    system_info: Optional[SystemInfoData] = None
     warnings: list[str] = field(default_factory=list)
     stats: dict = field(default_factory=dict)
 

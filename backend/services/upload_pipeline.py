@@ -586,6 +586,21 @@ def process_single_file(
         ))
         new_sudo_rules += 1
 
+    # ── 5b. Inventory facts about the source host ────────────────────────
+    # system_info describes metadata.host_id itself, never a discovered host, so
+    # it is applied here and creates nothing. Fill-if-empty (Architecture Rule
+    # #29): `uname` and `/etc/os-release` each know half, so they compose — and
+    # an operator's hand-checked value outranks a later artifact.
+    new_system_fields = 0
+    if result.system_info is not None:
+        source_host = db.get(Host, host_id)
+        if source_host is not None:
+            for field_name in ("os_version", "kernel_version"):
+                value = getattr(result.system_info, field_name)
+                if value and not getattr(source_host, field_name):
+                    setattr(source_host, field_name, value)
+                    new_system_fields += 1
+
     # ── 6. Standing rules vs hosts this upload just discovered ───────────
     # Hosts auto-created by resolve_ip were previously never checked against stored
     # standing rules — apply_patterns_to_host was only wired to the manual create-host
@@ -609,6 +624,7 @@ def process_single_file(
         "new_connections": new_connections,
         "new_hosts": len(created_in_this_file),
         "new_sudo_rules": new_sudo_rules,
+        "new_system_fields": new_system_fields,
         "warnings": list(result.warnings) + helper_warnings,
         "merge_candidates": merge_candidates,
         "auto_merges": auto_merges,

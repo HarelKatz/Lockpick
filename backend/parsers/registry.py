@@ -23,6 +23,8 @@ from parsers.git_credentials import GitCredentialsParser
 from parsers.ifcfg import IfcfgParser
 from parsers.ip_addr import IpAddrParser
 from parsers.ip_neigh import IpNeighParser
+from parsers.os_release import OsReleaseParser
+from parsers.uname_output import UnameOutputParser
 from parsers.ip_route import IpRouteParser
 from parsers.iptables import IptablesParser
 from parsers.known_hosts import KnownHostsParser
@@ -84,6 +86,8 @@ PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "ip_addr": IpAddrParser,
     "ip_route": IpRouteParser,
     "ip_neigh": IpNeighParser,
+    "os_release": OsReleaseParser,
+    "uname_output": UnameOutputParser,
     "arp": ArpParser,
     "netstat": NetstatParser,
     "ss_output": SsOutputParser,

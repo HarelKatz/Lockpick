@@ -86,3 +86,40 @@ def test_roundtrip_script_to_import(client, tmp_path):
     # file or a skip with warnings. A manifest with no files at all would
     # indicate a script regression.
     assert data["files_processed"] + data["files_skipped"] >= 1
+
+
+def test_roundtrip_populates_host_kernel_version(client, tmp_path):
+    """End-to-end proof of Architecture Rule #29: the script collects `uname -a`,
+    the import dispatches it to `uname_output`, and the source host's
+    kernel_version ends up matching this machine's actual kernel."""
+    result = subprocess.run(
+        ["bash", str(SCRIPT_PATH)],
+        env={
+            "OUT_DIR": str(tmp_path),
+            "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+            "HOME": os.environ.get("HOME", "/root"),
+        },
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, f"script failed: {result.stderr}"
+    tarball = next(iter(tmp_path.glob("lockpick_*.tar.gz")))
+
+    op_id = _create_op(client, "KernelOp")
+    host_id = _create_host(client, op_id, "kernel-target")
+    with open(tarball, "rb") as f:
+        r = client.post(
+            f"/api/ops/{op_id}/hosts/{host_id}/import-archive",
+            files={"file": ("collected.tar.gz", f.read(), "application/gzip")},
+        )
+    assert r.status_code == 200, r.text
+
+    expected = subprocess.run(["uname", "-r"], capture_output=True, text=True).stdout.strip()
+    host = client.get(f"/api/hosts/{host_id}").json()
+    assert host["kernel_version"] == expected
+
+    # /etc/os-release is near-universal but not POSIX-guaranteed, so only assert
+    # os_version when this machine actually has the file the script collects.
+    if Path("/etc/os-release").exists():
+        assert host["os_version"]

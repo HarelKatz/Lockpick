@@ -91,7 +91,8 @@ async def upload_file(
             f"Parsed {file_type} file '{filename}': "
             f"{result['new_credentials']} creds, {result['new_credential_links']} links, "
             f"{result['new_connections']} connections, {result['new_hosts']} hosts, "
-            f"{result['new_sudo_rules']} sudo rules"
+            f"{result['new_sudo_rules']} sudo rules, "
+            f"{result['new_system_fields']} system fields"
         ),
     )
     # One activity entry per auto-merge that happened during parsing — gives

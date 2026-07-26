@@ -1,0 +1,5 @@
+NAME="Alpine Linux"
+ID=alpine
+VERSION_ID=3.18.4
+PRETTY_NAME=
+HOME_URL="https://alpinelinux.org/"

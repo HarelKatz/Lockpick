@@ -166,6 +166,7 @@ gather_file /etc/shadow          shadow        ""
 gather_file /etc/ssh/sshd_config sshd_config   ""
 gather_file /etc/hosts           etc_hosts     ""
 gather_file /etc/sudoers         sudoers       ""
+gather_file /etc/os-release      os_release    ""
 
 # ── 4. Log files ──────────────────────────────────────────────────────────────
 gather_file /var/log/auth.log    auth_log      ""
@@ -190,6 +191,7 @@ gather_cmd docker_ps     "" docker ps --all --no-trunc
 gather_cmd docker_network "" docker network ls
 gather_cmd kubectl_pods  "" kubectl get pods -A -o wide
 gather_cmd last_output   "" last -F
+gather_cmd uname_output  "" uname -a
 
 # ── 6. Manifest emission ──────────────────────────────────────────────────────
 # JSON shape:

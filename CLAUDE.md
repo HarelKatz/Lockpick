@@ -206,6 +206,7 @@ Parsers in `backend/parsers/` implement `BaseParser` — see `parsers/__init__.p
 - Decode bytes with `errors='replace'` to handle corrupt input
 - Decompress gzip when applicable: command-output and log parsers that may arrive gzipped (auth.log, ps, netstat, ip/iptables/nft output, etc.) must check gzip magic bytes (`content[:2] == b'\x1f\x8b'`) and decompress before parsing. Parsers for artifacts that never arrive gzipped need not.
 - Use `metadata.host_id` as the source host for all emitted records
+- Inventory facts about the *upload host itself* (OS version, kernel version) go in `result.system_info` (`SystemInfoData`), never a `HostData` — it applies straight to `metadata.host_id` and creates no host row. Leave a field `None` when the artifact genuinely doesn't know it (`uname` has no distro; `/etc/os-release` has no kernel) — the pipeline fills blanks only, so a placeholder would block the other artifact from ever filling it (Architecture Rule #29)
 - Return counts in `result.stats` (e.g. `{"hosts": 3, "connections": 12}`) — the UI shows this summary
 - IP matching: use `resolve_ip()` from `services/ip_resolver.py` to map raw IPs to existing hosts
 - Multi-identifier hosts: when a parser finds multiple identifiers for the SAME host (e.g. a multi-IP nmap host, or `/etc/hosts` line with IP + hostnames), emit ONE `HostData` with the primary in `ip_address` and the rest in `aliases` — never emit separate `HostData` per identifier. The pipeline adds aliases as additional `HostIP` rows on the resolved host
