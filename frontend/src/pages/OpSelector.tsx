@@ -107,6 +107,8 @@ interface EditOpModalProps {
 function EditOpModal({ op, onClose, onSaved }: EditOpModalProps) {
   const [name, setName] = useState(op.name)
   const [description, setDescription] = useState(op.description ?? '')
+  const [summary, setSummary] = useState(op.summary ?? '')
+  const [briefing, setBriefing] = useState(op.briefing ?? '')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -119,6 +121,8 @@ function EditOpModal({ op, onClose, onSaved }: EditOpModalProps) {
       const data: UpdateOperationRequest = {
         name: name.trim(),
         description: description.trim() || null,
+        summary: summary.trim() || null,
+        briefing: briefing.trim() || null,
       }
       const updated = await updateOperation(op.id, data)
       onSaved(updated)
@@ -152,6 +156,16 @@ function EditOpModal({ op, onClose, onSaved }: EditOpModalProps) {
             <label htmlFor="edit-op-desc">Description</label>
             <textarea id="edit-op-desc" value={description} onChange={e => setDescription(e.target.value)}
               placeholder="Optional notes about this operation" rows={3} disabled={loading} />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="edit-op-summary">Summary</label>
+            <textarea id="edit-op-summary" value={summary} onChange={e => setSummary(e.target.value)}
+              placeholder="Short status line shown in the op header (markdown)" rows={2} disabled={loading} />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="edit-op-briefing">Briefing</label>
+            <textarea id="edit-op-briefing" value={briefing} onChange={e => setBriefing(e.target.value)}
+              placeholder="Long-form briefing — scope, RoE, objectives (markdown)" rows={6} disabled={loading} />
           </div>
           {error && <p className={styles.error}>{error}</p>}
           <div className={styles.formActions}>

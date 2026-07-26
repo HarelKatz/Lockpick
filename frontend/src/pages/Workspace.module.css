@@ -62,12 +62,70 @@
   white-space: nowrap;
 }
 
+.opMetaRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
 .opDescription {
   font-size: var(--font-size-xs);
   color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Op summary — shares the meta row with the description. Ellipsized on one line
+   so a long (or multi-line markdown) summary can never grow the header. */
+.opSummary {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 420px;
+}
+
+/* Separator only when a description precedes it — a lone summary gets no bullet */
+.opDescription + .opSummary::before {
+  content: '·';
+  margin-right: 10px;
+  color: var(--border);
+}
+
+/* ─── Briefing (collapsible) ─────────────────────────────────────────────── */
+
+.briefing {
+  flex: 0 0 auto;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.briefingToggle {
+  cursor: pointer;
+  padding: 6px 24px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+.briefingToggle:hover {
+  color: var(--text-primary);
+}
+
+.briefingBody {
+  padding: 0 24px 12px;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 30vh;
+  overflow-y: auto;
 }
 
 /* ─── Header actions ─────────────────────────────────────────────────────── */

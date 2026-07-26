@@ -130,6 +130,8 @@ def import_op(body: ImportRequest, db: Session = Depends(get_db)):
         id=new_op_id,
         name=new_op_name,
         description=src.operation.description,
+        summary=src.operation.summary,
+        briefing=src.operation.briefing,
         created_at=src.operation.created_at,
     )
     db.add(op)

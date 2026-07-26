@@ -10,11 +10,15 @@ from pydantic import BaseModel, ConfigDict, field_validator
 class OperationCreate(BaseModel):
     name: str
     description: Optional[str] = None
+    summary: Optional[str] = None
+    briefing: Optional[str] = None
 
 
 class OperationUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+    summary: Optional[str] = None
+    briefing: Optional[str] = None
 
 
 class OperationRead(BaseModel):
@@ -23,6 +27,9 @@ class OperationRead(BaseModel):
     id: str
     name: str
     description: Optional[str]
+    # Defaulted (unlike description) so a pre-briefing-fields export still validates on import
+    summary: Optional[str] = None
+    briefing: Optional[str] = None
     created_at: datetime
 
 

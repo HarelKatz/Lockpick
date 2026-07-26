@@ -29,6 +29,8 @@ class Operation(Base):
     id = Column(String(36), primary_key=True, default=_uuid)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
+    summary = Column(Text, nullable=True)   # short markdown, shown in the op header
+    briefing = Column(Text, nullable=True)  # long markdown, collapsible in the op detail view
     created_at = Column(TZDateTime, nullable=False, default=_now)
 
     hosts = relationship("Host", back_populates="operation", cascade="all, delete-orphan")

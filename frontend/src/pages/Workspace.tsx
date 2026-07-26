@@ -697,8 +697,19 @@ export default function Workspace({ op, onBack }: Props) {
             <span className={styles.opName}>{op.name}</span>
             <span className={styles.opUuid}>{op.id}</span>
           </div>
-          {op.description && (
-            <span className={styles.opDescription}>{op.description}</span>
+          {/* description + summary share one ellipsized row so the header height
+              is identical whether or not a summary is set */}
+          {(op.description || op.summary) && (
+            <div className={styles.opMetaRow}>
+              {op.description && (
+                <span className={styles.opDescription} title={op.description}>{op.description}</span>
+              )}
+              {op.summary && (
+                <span className={styles.opSummary} title={op.summary} data-testid="op-summary">
+                  {op.summary}
+                </span>
+              )}
+            </div>
           )}
         </div>
         <div className={styles.headerActions}>
@@ -739,6 +750,16 @@ export default function Workspace({ op, onBack }: Props) {
           </button>
         </div>
       </header>
+
+      {/* Op briefing — long-form markdown, collapsed by default. Native <details>
+          so keyboard toggling (Enter/Space) works without extra state. Capped
+          height + own scroll so opening it can never squeeze the panel below. */}
+      {op.briefing && (
+        <details className={styles.briefing} data-testid="op-briefing">
+          <summary className={styles.briefingToggle}>Briefing</summary>
+          <div className={styles.briefingBody}>{op.briefing}</div>
+        </details>
+      )}
 
       {/* Tab content area — both panels always rendered with real dimensions.
           visibility:hidden (not display:none) keeps real dimensions in layout

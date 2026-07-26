@@ -6,6 +6,10 @@ export interface Operation {
   id: string
   name: string
   description: string | null
+  /** Short markdown blurb, rendered in the op header. */
+  summary: string | null
+  /** Long markdown briefing, collapsible in the op detail view. */
+  briefing: string | null
   created_at: string
 }
 
@@ -160,6 +164,8 @@ export interface ConnectionRecord {
 export interface UpdateOperationRequest {
   name?: string
   description?: string | null
+  summary?: string | null
+  briefing?: string | null
 }
 
 export interface UpdateHostRequest {
@@ -200,6 +206,8 @@ export interface UpdateConnectionRequest {
 export interface CreateOperationRequest {
   name: string
   description?: string | null
+  summary?: string | null
+  briefing?: string | null
 }
 
 export interface CreateHostRequest {

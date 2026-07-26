@@ -14,7 +14,12 @@ router = APIRouter(tags=["operations"])
 
 @router.post("/ops", response_model=OperationRead, status_code=201)
 def create_operation(body: OperationCreate, db: Session = Depends(get_db)):
-    op = Operation(name=body.name, description=body.description)
+    op = Operation(
+        name=body.name,
+        description=body.description,
+        summary=body.summary,
+        briefing=body.briefing,
+    )
     db.add(op)
     db.flush()
     log_activity(db, op.id, "operation.create", "operation", detail=f"Created operation '{op.name}'")
@@ -38,10 +43,15 @@ def get_operation(op_id: str, db: Session = Depends(get_db)):
 def update_operation(op_id: str, body: OperationUpdate, db: Session = Depends(get_db)):
     op = get_op_or_404(op_id, db)
     old_name = op.name
-    if body.name is not None:
-        op.name = body.name
-    if body.description is not None:
-        op.description = body.description
+    # exclude_unset so an omitted key leaves the column alone, while an explicit
+    # null *clears* it — the edit modal sends null for a blanked optional field.
+    # name is NOT NULL, so a null there is ignored rather than applied.
+    provided = body.model_dump(exclude_unset=True)
+    if provided.get("name") is not None:
+        op.name = provided["name"]
+    for field in ("description", "summary", "briefing"):
+        if field in provided:
+            setattr(op, field, provided[field])
     log_activity(db, op.id, "operation.update", "operation", entity_id=op.id, detail=f"Updated operation '{old_name}'")
     db.commit()
     db.refresh(op)

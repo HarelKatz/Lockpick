@@ -65,6 +65,76 @@ def test_update_operation(client):
     assert data["description"] == "Updated"
 
 
+def test_create_operation_with_summary_and_briefing(client):
+    resp = client.post("/api/ops", json={
+        "name": "Briefed Op",
+        "summary": "Internal net, 3 footholds.",
+        "briefing": "## Scope\n\n- 10.0.0.0/24 in scope\n- No DoS",
+    })
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["summary"] == "Internal net, 3 footholds."
+    assert data["briefing"] == "## Scope\n\n- 10.0.0.0/24 in scope\n- No DoS"
+
+
+def test_create_operation_summary_and_briefing_default_to_none(client):
+    resp = client.post("/api/ops", json={"name": "Bare Op"})
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["summary"] is None
+    assert data["briefing"] is None
+
+
+def test_update_operation_summary_and_briefing(client):
+    op_id = client.post("/api/ops", json={"name": "Op"}).json()["id"]
+    resp = client.patch(f"/api/ops/{op_id}", json={
+        "summary": "Now 5 hosts owned.",
+        "briefing": "Long form notes.",
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["summary"] == "Now 5 hosts owned."
+    assert data["briefing"] == "Long form notes."
+    assert data["name"] == "Op"
+
+
+def test_update_operation_omitting_summary_leaves_it_intact(client):
+    """A PATCH that only renames must not wipe the briefing fields."""
+    op_id = client.post("/api/ops", json={
+        "name": "Op", "summary": "keep me", "briefing": "keep me too",
+    }).json()["id"]
+    resp = client.patch(f"/api/ops/{op_id}", json={"name": "Renamed"})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["name"] == "Renamed"
+    assert data["summary"] == "keep me"
+    assert data["briefing"] == "keep me too"
+
+
+def test_update_operation_can_clear_summary_with_empty_string(client):
+    op_id = client.post("/api/ops", json={"name": "Op", "summary": "temporary"}).json()["id"]
+    resp = client.patch(f"/api/ops/{op_id}", json={"summary": ""})
+    assert resp.status_code == 200
+    assert resp.json()["summary"] == ""
+
+
+@pytest.mark.parametrize("field", ["description", "summary", "briefing"])
+def test_update_operation_can_clear_optional_field_with_null(client, field):
+    """An explicit null clears the field — that is what the edit modal sends."""
+    op_id = client.post("/api/ops", json={"name": "Op", field: "temporary"}).json()["id"]
+    resp = client.patch(f"/api/ops/{op_id}", json={field: None})
+    assert resp.status_code == 200
+    assert resp.json()[field] is None
+
+
+def test_update_operation_null_name_is_ignored(client):
+    """name is NOT NULL — an explicit null must not blank it."""
+    op_id = client.post("/api/ops", json={"name": "Keep Me"}).json()["id"]
+    resp = client.patch(f"/api/ops/{op_id}", json={"name": None})
+    assert resp.status_code == 200
+    assert resp.json()["name"] == "Keep Me"
+
+
 def test_delete_operation(client):
     create_resp = client.post("/api/ops", json={"name": "To Delete"})
     op_id = create_resp.json()["id"]

@@ -249,6 +249,38 @@ def test_roundtrip_host_status_preserved(client, op):
     assert hosts[0]["status"] == "compromised"
 
 
+def test_roundtrip_summary_and_briefing_preserved(client, op):
+    """Operation.summary/briefing must survive export → import unchanged."""
+    client.patch(f"/api/ops/{op['id']}", json={
+        "summary": "3 footholds, DC not reached.",
+        "briefing": "## Rules of engagement\n\n- No DoS\n- 09:00-17:00 only",
+    })
+
+    export_data = client.get(f"/api/ops/{op['id']}/export").json()
+    assert export_data["operation"]["summary"] == "3 footholds, DC not reached."
+
+    import_resp = client.post("/api/ops/import", json={"data": export_data})
+    assert import_resp.status_code == 201
+    new_op_id = import_resp.json()["op_id"]
+
+    imported = client.get(f"/api/ops/{new_op_id}").json()
+    assert imported["summary"] == "3 footholds, DC not reached."
+    assert imported["briefing"] == "## Rules of engagement\n\n- No DoS\n- 09:00-17:00 only"
+
+
+def test_import_old_export_without_summary_and_briefing(client, op):
+    """Importing a pre-briefing-fields export must succeed (backwards compat)."""
+    export_data = client.get(f"/api/ops/{op['id']}/export").json()
+    export_data["operation"].pop("summary", None)
+    export_data["operation"].pop("briefing", None)
+
+    resp = client.post("/api/ops/import", json={"data": export_data})
+    assert resp.status_code == 201
+    imported = client.get(f"/api/ops/{resp.json()['op_id']}").json()
+    assert imported["summary"] is None
+    assert imported["briefing"] is None
+
+
 def test_import_old_export_without_addr_type(client, op):
     """Importing an export that lacks addr_type must succeed (backwards compat)."""
     host_id = client.post(
