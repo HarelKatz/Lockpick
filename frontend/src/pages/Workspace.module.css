@@ -16,6 +16,10 @@
   border-bottom: 1px solid var(--border);
   min-height: 52px;
   flex-shrink: 0;
+  /* Below ~505px the back button + actions + tab bar alone exceed the viewport
+     and nothing left can shrink, so the tab bar wraps to a second row rather
+     than pushing the whole page into a horizontal scroll. */
+  flex-wrap: wrap;
 }
 
 .backBtn {
@@ -46,6 +50,7 @@
   display: flex;
   align-items: baseline;
   gap: 10px;
+  min-width: 0;
 }
 
 .opName {
@@ -53,13 +58,21 @@
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* The op UUID is 36 unbreakable mono chars. Without an overflow rule its
+   min-content width pins the header open and the whole page scrolls sideways on
+   a narrow viewport — so it ellipsizes and yields space to the op name (full
+   value stays in the title attribute). */
 .opUuid {
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
   color: var(--text-muted);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .opMetaRow {

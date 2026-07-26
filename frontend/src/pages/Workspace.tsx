@@ -694,8 +694,8 @@ export default function Workspace({ op, onBack }: Props) {
         <button className={styles.backBtn} onClick={onBack}>← Operations</button>
         <div className={styles.opInfo}>
           <div className={styles.opNameRow}>
-            <span className={styles.opName}>{op.name}</span>
-            <span className={styles.opUuid}>{op.id}</span>
+            <span className={styles.opName} title={op.name}>{op.name}</span>
+            <span className={styles.opUuid} title={op.id}>{op.id}</span>
           </div>
           {/* description + summary share one ellipsized row so the header height
               is identical whether or not a summary is set */}

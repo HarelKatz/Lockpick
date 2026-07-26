@@ -8,7 +8,6 @@
 
 ## Now — foundations (isolated, dependency-free; complete + trust the graph before building analytics on it)
 
-- **Chrome overflows below ~700px viewport** — at a 500px-wide viewport the page scrolls sideways by ~138px. Two offenders, neither of them the `key_options` chip (which was verified clean at every width): `.opUuid` in the Workspace op header renders the raw 36-char UUID unclamped, and the graph toolbar (`credFilterSelect` + status pills) is always laid out even on the Data tab. Found during the `key_options` browser verification. Decide per-offender: truncate/hide the UUID below a breakpoint, and stop laying the graph toolbar out when the Graph tab is inactive. Effort S.
 - **Shell-history inline credential & endpoint mining** — extend the bash/zsh/fish history parsers (today SSH-destinations only; each defines its own regex — only bash uses `_SSH_RE`, zsh/fish use `_SSH_CMD_RE` + a destination walker) to also mine inline secrets and non-SSH pivot endpoints. The secret regexes are **private** constants in `ps_output.py` (`_SECRET_PATTERNS`, `_DB_URL_RE`), not a shared module — reuse means importing private symbols (parser coupling) or extracting a shared module (churns `ps_output` snapshots). The non-SSH-endpoint half is net-new (`ps_output` only extracts SSH-family endpoints; its DB-URL regex discards the host). Effort M.
 
 ## Next — analytics engine (reads the completed graph; dependency-ordered)
