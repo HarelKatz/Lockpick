@@ -14,10 +14,12 @@ Usage::
 
     uv run --project backend python tests/e2e/seed_e2e.py [--url http://localhost:8000]
 
-Seeds two ops — the ``normal()`` graph fixture and a generated ``scale(50)`` op
-for the graph/layout invariant suite — and prints their ids as the FINAL two
-stdout lines (normal, then scale), consumed by the Playwright global-setup.
-Human-readable progress goes to stderr.
+Seeds three ops — the ``normal()`` graph fixture, a generated ``scale(50)`` op
+for the graph/layout invariant suite, and a one-host ``key_options()`` op whose
+authorized_keys carries option prefixes (for the Workspace credential-row layout
+spec) — and prints their ids as the FINAL three stdout lines (normal, scale,
+key-options), consumed by the Playwright global-setup. Human-readable progress
+goes to stderr.
 """
 from __future__ import annotations
 
@@ -77,10 +79,20 @@ def main() -> int:
             f"{len(scale_lo.graph['nodes'])} nodes, {len(scale_lo.graph['edges'])} edges"
         )
 
-    # FINAL two stdout lines: the normal op id, then the scale op id
-    # (consumed by Playwright global-setup, which reads the last two lines).
+        # Third op: one host whose authorized_keys carries option prefixes, so the
+        # Workspace Data tab renders credential-link rows both with and without the
+        # `key_options` chip (frontend/e2e/credential-row.spec.ts).
+        keyopts_lo = builder.apply_topology(
+            profiles.key_options(), name=f"{args.name} — Key Options"
+        )
+        _log(f"key-options op created: {keyopts_lo.op_id}")
+
+    # FINAL three stdout lines: the normal op id, the scale op id, then the
+    # key-options op id (consumed by Playwright global-setup, which reads the
+    # last three lines).
     print(lo.op_id)
     print(scale_lo.op_id)
+    print(keyopts_lo.op_id)
     return 0
 
 

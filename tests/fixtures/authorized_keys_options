@@ -1,0 +1,8 @@
+# Option-prefix shapes for the Workspace credential-row `key_options` chip.
+# Line order is the contract the e2e spec relies on: (1) NO options — the
+# baseline row, (2) a short options prefix, (3) a very long one lifted from
+# real_examples/authorized_keys/cado_aws_eks_root_with_attacker_kali (quoted
+# value containing spaces, commas, semicolons and escaped quotes).
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFC6G6GGOwK2Vrl0cXpGLaDA14IaJhYrz+/B5UKV6fnY plain@nooptions
+command="/usr/local/bin/backup",no-pty ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEjUIiNedeQ4addNvaAl4DHXT3gq0FI0ruRYup1BPodJ backup@ops
+no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command="echo 'Please login as the user \"ec2-user\" rather than the user \"root\".';echo;sleep 10" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINoVpIvz79t+8w394O6LJ5FV+5BWtleu4RLhmcNp2tQK castle

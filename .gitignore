@@ -50,6 +50,7 @@ frontend/.vite/
 frontend/e2e/.data/
 frontend/e2e/.op-id
 frontend/e2e/.op-id-scale
+frontend/e2e/.op-id-keyopts
 frontend/playwright-report/
 frontend/test-results/
 frontend/.last-run.json

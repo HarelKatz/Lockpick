@@ -19,7 +19,8 @@ from typing import Any
 
 from . import shapes
 
-NETWORK_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "network"
+FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures"
+NETWORK_DIR = FIXTURES_DIR / "network"
 NETWORK_TOPOLOGY = NETWORK_DIR / "topology.json"
 
 # The seed's manual timestamped connections — between hosts with no key-match
@@ -100,6 +101,32 @@ def edge_cases() -> dict:
         shapes.isolated_host("ec_" + "long_nickname_" * 6 + "host"),
         shapes.undated_edge("ec_undated_a", "ec_undated_b"),
     ))
+
+
+def key_options() -> dict:
+    """A one-host op whose authorized_keys carries option prefixes.
+
+    Substrate for the Workspace credential-row layout checks: uploading
+    ``tests/fixtures/authorized_keys_options`` yields three credential links on
+    one host — one with NO ``key_options`` (the baseline row), one with a short
+    prefix, and one with a very long prefix. The chip is a CSS concern the graph
+    hook cannot see, so the e2e spec measures real geometry against these rows.
+    """
+    return {
+        "hosts": [
+            shapes.host(
+                "keyopts",
+                ip="10.90.200.1",
+                files=[
+                    {
+                        "path": str(FIXTURES_DIR / "authorized_keys_options"),
+                        "file_type": "authorized_keys",
+                        "username": "deploy",
+                    }
+                ],
+            )
+        ]
+    }
 
 
 def scale(n: int) -> dict:

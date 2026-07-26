@@ -15,6 +15,29 @@ export function seededScaleOpId(): string {
   return readFileSync(path.join(HERE, '.op-id-scale'), 'utf8').trim()
 }
 
+/** The one-host `key_options()` op id seeded by global-setup (Workspace credential rows). */
+export function seededKeyOptionsOpId(): string {
+  return readFileSync(path.join(HERE, '.op-id-keyopts'), 'utf8').trim()
+}
+
+/**
+ * Land directly on a seeded op's **Data** tab (the Workspace list panels), the
+ * same sessionStorage shortcut `gotoGraph` uses but with the tab key set to
+ * 'data'. Waits for the Credentials section to render. Returns the op.
+ */
+export async function gotoData(page: Page, opId: string) {
+  await page.goto('/')
+  const ops = await (await page.request.get('/api/ops')).json()
+  const op = ops.find((o: { id: string }) => o.id === opId) ?? ops[0]
+  await page.evaluate((o) => {
+    sessionStorage.setItem('lockpick_selected_op', JSON.stringify(o))
+    sessionStorage.setItem(`lockpick_tab_${o.id}`, 'data')
+  }, op)
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Credentials' })).toBeVisible({ timeout: 15_000 })
+  return op
+}
+
 /**
  * Land directly on a seeded op's Graph tab, bypassing the OpSelector by injecting
  * the same sessionStorage keys App.tsx reads on boot. Defaults to the normal op;

@@ -8,6 +8,7 @@ const REPO = path.resolve(HERE, '..', '..')
 const SEED = path.join(REPO, 'tests', 'e2e', 'seed_e2e.py')
 const OP_ID_FILE = path.join(HERE, '.op-id')
 const SCALE_OP_ID_FILE = path.join(HERE, '.op-id-scale')
+const KEYOPTS_OP_ID_FILE = path.join(HERE, '.op-id-keyopts')
 
 const BACKEND_PORT = process.env.E2E_BACKEND_PORT || '8137'
 const BACKEND_URL = `http://127.0.0.1:${BACKEND_PORT}`
@@ -35,12 +36,17 @@ export default async function globalSetup() {
     ['run', '--project', path.join(REPO, 'backend'), 'python', SEED, '--url', BACKEND_URL],
     { encoding: 'utf8' },
   )
-  // The seed prints two ids as its final two stdout lines: normal, then scale.
+  // The seed prints three ids as its final three stdout lines: normal, scale,
+  // then key-options.
   const lines = out.trim().split('\n').map((l) => l.trim()).filter(Boolean)
+  const keyOptsOpId = lines.pop()
   const scaleOpId = lines.pop()
   const opId = lines.pop()
-  if (!opId || !scaleOpId) throw new Error('[global-setup] seed did not produce both op ids')
+  if (!opId || !scaleOpId || !keyOptsOpId) {
+    throw new Error('[global-setup] seed did not produce all three op ids')
+  }
   writeFileSync(OP_ID_FILE, opId)
   writeFileSync(SCALE_OP_ID_FILE, scaleOpId)
-  console.log(`[global-setup] seeded ops normal=${opId} scale=${scaleOpId}`)
+  writeFileSync(KEYOPTS_OP_ID_FILE, keyOptsOpId)
+  console.log(`[global-setup] seeded ops normal=${opId} scale=${scaleOpId} keyopts=${keyOptsOpId}`)
 }
