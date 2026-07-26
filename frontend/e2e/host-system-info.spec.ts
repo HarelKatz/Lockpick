@@ -30,6 +30,25 @@ async function setSystemFields(page: Page, hostId: string, fields: Record<string
   expect(resp.ok()).toBeTruthy()
 }
 
+/**
+ * The detail sidebar slides in, so geometry sampled right after `clickNode` is
+ * mid-transition. Poll until its left edge stops moving between frames.
+ */
+async function settleSidebar(page: Page) {
+  await expect
+    .poll(async () => {
+      const a = await page.evaluate(
+        () => document.querySelector('[data-testid="host-system"]')?.getBoundingClientRect().x ?? -1,
+      )
+      await page.waitForTimeout(120)
+      const b = await page.evaluate(
+        () => document.querySelector('[data-testid="host-system"]')?.getBoundingClientRect().x ?? -1,
+      )
+      return a >= 0 && a === b
+    }, { timeout: 5_000 })
+    .toBe(true)
+}
+
 async function openFirstHost(page: Page): Promise<string> {
   const ids = await hostIdsByNickname(page, seededOpId())
   const hostId = Object.values(ids)[0]
@@ -84,23 +103,31 @@ test.describe('host system info', () => {
 
     const section = sidebar(page)
     await expect(section).toBeVisible()
+    await settleSidebar(page)
+
+    // One evaluate = one frame. Measuring the chip and its section in separate
+    // Playwright calls straddles the sidebar's open transition — the panel drifts
+    // ~95px horizontally between samples and the comparison becomes nonsense.
+    const geom = await page.evaluate(() => {
+      const sec = document.querySelector('[data-testid="host-system"]')!.getBoundingClientRect()
+      const chips = document.querySelectorAll('[data-testid="host-system"] [class*="sysValue"]')
+      const os = chips[0].getBoundingClientRect()
+      const kernel = chips[chips.length - 1].getBoundingClientRect()
+      const doc = document.documentElement
+      return {
+        secRight: sec.x + sec.width,
+        kernelRight: kernel.x + kernel.width,
+        kernelHeight: kernel.height,
+        osHeight: os.height,
+        pageOverflow: doc.scrollWidth - doc.clientWidth,
+      }
+    })
 
     // The value stays within its own section box…
-    const chip = section.locator('[class*="sysValue"]').last()
-    const chipBox = (await chip.boundingBox())!
-    const sectionBox = (await section.boundingBox())!
-    expect(chipBox.x + chipBox.width).toBeLessThanOrEqual(sectionBox.x + sectionBox.width + 1)
-
+    expect(geom.kernelRight).toBeLessThanOrEqual(geom.secRight + 1)
     // …by wrapping (taller than the single-line OS row), not by running off.
-    const osChip = section.locator('[class*="sysValue"]').first()
-    const osBox = (await osChip.boundingBox())!
-    expect(chipBox.height).toBeGreaterThan(osBox.height)
-
+    expect(geom.kernelHeight).toBeGreaterThan(geom.osHeight)
     // And the page itself still never scrolls sideways.
-    const overflow = await page.evaluate(() => {
-      const el = document.documentElement
-      return el.scrollWidth - el.clientWidth
-    })
-    expect(overflow).toBeLessThanOrEqual(0)
+    expect(geom.pageOverflow).toBeLessThanOrEqual(0)
   })
 })
