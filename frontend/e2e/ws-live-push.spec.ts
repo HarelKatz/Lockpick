@@ -41,18 +41,7 @@ test('the WebSocket upgrade survives the dev proxy', async ({ page }) => {
   expect(outcome).toBe('open')
 })
 
-// KNOWN GAP — kept as an executable repro, not a gate.
-//
-// With the proxy fixed the socket connects and reports "Live", but a host
-// created from another client does not appear in the Data tab within 15s.
-// `Workspace.tsx` handles the event (250ms debounce → `fetchAll(true)` +
-// `graphReloadRef`), so the socket opening is evidently not sufficient — the
-// event either is not delivered or does not reach that handler. Seen to work
-// exactly once out of five runs, so it is not a pure timing margin.
-//
-// Diagnose with systematic-debugging before flipping this on; see TODO.md
-// "Live push connects but the Data tab does not refresh".
-test.fixme('a change made elsewhere arrives without a reload', async ({ page }) => {
+test('a change made elsewhere arrives without a reload', async ({ page }) => {
   await gotoData(page, seededOpId())
   await expect(page.getByText('Live', { exact: true })).toBeVisible({ timeout: 15_000 })
 
@@ -65,8 +54,15 @@ test.fixme('a change made elsewhere arrives without a reload', async ({ page }) 
 
   try {
     // No page.reload() anywhere — if this appears, the broadcast reached the UI.
-    // .first(): a host renders in both the filter panel and the host grid.
-    await expect(page.getByText(nickname, { exact: true }).first()).toBeVisible({ timeout: 15_000 })
+    //
+    // Scoped to <main>, and that is load-bearing: Workspace keeps BOTH panels
+    // mounted and hides the inactive one with `visibility: hidden` (so
+    // ForceGraph's ResizeObserver keeps measuring), so a host also renders in
+    // the graph panel's filter list. That copy comes first in DOM order, so an
+    // unscoped `.first()` selects a permanently-invisible element and this test
+    // can never pass — which is exactly how it fooled me into filing a
+    // non-existent live-push bug.
+    await expect(page.getByRole('main').getByText(nickname, { exact: true })).toBeVisible({ timeout: 15_000 })
   } finally {
     await page.request.delete(`/api/hosts/${hostId}`)
   }

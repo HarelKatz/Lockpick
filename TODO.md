@@ -8,8 +8,6 @@
 
 ## Now — foundations (isolated, dependency-free; complete + trust the graph before building analytics on it)
 
-- **Live push connects but the Data tab does not refresh** — with the Vite `ws: true` proxy fix in place the socket opens and the header reports "Live", but a host created by another client does not appear in the Data tab within 15s. `Workspace.tsx` looks correct on paper (WS handler → 250 ms debounce → `fetchAll(true)` + `graphReloadRef`), so the question is whether the event is delivered to that handler at all — instrument `useOpWebSocket`'s `onmessage` first, then the handler, then `fetchAll`. Observed working exactly once in five runs, so it is not a timing margin. Executable repro is committed and skipped: `frontend/e2e/ws-live-push.spec.ts` → un-`fixme` the third test. Use **systematic-debugging**; it is a behavioural mystery, not a layout one. Effort M.
-
 - **Shell-history inline credential & endpoint mining** — extend the bash/zsh/fish history parsers (today SSH-destinations only; each defines its own regex — only bash uses `_SSH_RE`, zsh/fish use `_SSH_CMD_RE` + a destination walker) to also mine inline secrets and non-SSH pivot endpoints. The secret regexes are **private** constants in `ps_output.py` (`_SECRET_PATTERNS`, `_DB_URL_RE`), not a shared module — reuse means importing private symbols (parser coupling) or extracting a shared module (churns `ps_output` snapshots). The non-SSH-endpoint half is net-new (`ps_output` only extracts SSH-family endpoints; its DB-URL regex discards the host). Effort M.
 
 ## Next — analytics engine (reads the completed graph; dependency-ordered)
